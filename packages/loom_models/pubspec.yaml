@@ -1,0 +1,8 @@
+name: loom_models
+description: Shared immutable domain models for Loom Next.
+publish_to: "none"
+version: 0.4.0
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+dev_dependencies:
+  test: ^1.25.0

@@ -1,0 +1,23 @@
+name: loom_design
+description: Reusable Loom Glass design tokens, primitives, and responsive layout utilities.
+publish_to: "none"
+version: 0.1.0
+environment:
+  sdk: ">=3.6.2 <4.0.0"
+  flutter: ">=3.22.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  amicons: ^1.0.1
+  liquid_glass_easy: ^4.2.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/wallpapers/loom-doodles.png
+    - assets/branding/loom_logo.png
+    - assets/branding/loom_logo_light.png
+    - assets/branding/loom_launcher.png

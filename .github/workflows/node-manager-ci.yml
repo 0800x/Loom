@@ -1,0 +1,121 @@
+name: Node manager TUI
+
+on:
+  push:
+    paths:
+      - 'tools/loom_node_manager/**'
+      - 'services/loom_server/src/**'
+      - 'services/loom_server/package.json'
+      - 'services/loom_server/deploy/**'
+      - 'services/loom_server/scripts/linux/**'
+      - 'services/loom_server/scripts/windows/**'
+      - 'scripts/install-loom-node.sh'
+      - '.github/workflows/node-manager-ci.yml'
+  pull_request:
+    paths:
+      - 'tools/loom_node_manager/**'
+      - 'services/loom_server/src/**'
+      - 'services/loom_server/package.json'
+      - 'services/loom_server/deploy/**'
+      - 'services/loom_server/scripts/linux/**'
+      - 'services/loom_server/scripts/windows/**'
+      - 'scripts/install-loom-node.sh'
+      - '.github/workflows/node-manager-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/loom_node_manager
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate Linux installer scripts
+        working-directory: ${{ github.workspace }}
+        run: |
+          bash -n scripts/install-loom-node.sh
+          for script in services/loom_server/scripts/linux/*.sh; do bash -n "$script"; done
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          cache-dependency-path: tools/loom_node_manager/go.mod
+      - run: go mod download
+      - run: go test -mod=mod ./...
+      - run: go vet -mod=mod ./...
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            output: loom-node-manager
+            bundle_suffix: linux-amd64
+          - goos: linux
+            goarch: arm64
+            output: loom-node-manager
+            bundle_suffix: linux-arm64
+          - goos: windows
+            goarch: amd64
+            output: loom-node-manager.exe
+            bundle_suffix: windows-amd64
+    defaults:
+      run:
+        working-directory: tools/loom_node_manager
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          cache-dependency-path: tools/loom_node_manager/go.mod
+      - run: go mod download
+      - name: Build static manager
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: '0'
+        run: |
+          mkdir -p dist
+          go build -buildvcs=false -mod=mod -trimpath -ldflags="-s -w -X main.buildCommit=$GITHUB_SHA -X main.buildBranch=$GITHUB_REF_NAME -X main.buildRepository=$GITHUB_REPOSITORY" -o "dist/${{ matrix.output }}" .
+      - name: Assemble server bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$GITHUB_WORKSPACE"
+          VERSION="$(node -e "const fs=require('fs'); console.log(JSON.parse(fs.readFileSync('$GITHUB_WORKSPACE/services/loom_server/package.json','utf8')).version)")"
+          NAME="loom-node-${VERSION}-${{ matrix.bundle_suffix }}"
+          OUT="$RUNNER_TEMP/$NAME"
+          mkdir -p "$OUT/bin"
+          MANAGER_VERSION="$(sed -n 's/^const version = "\([^"]*\)"/\1/p' main.go)"
+          printf '%s\n' "commit=$GITHUB_SHA" "branch=$GITHUB_REF_NAME" "repository=$GITHUB_REPOSITORY" "manager_version=$MANAGER_VERSION" > "$OUT/build-info.env"
+          cp "$ROOT/services/loom_server/package.json" "$OUT/package.json"
+          cp -a "$ROOT/services/loom_server/src" "$OUT/src"
+          cp -a "$ROOT/services/loom_server/deploy" "$OUT/deploy"
+          rm -f "$OUT/deploy/.env"
+
+          if [[ "${{ matrix.goos }}" == "linux" ]]; then
+            mkdir -p "$OUT/scripts/linux"
+            cp -a "$ROOT/services/loom_server/scripts/linux/." "$OUT/scripts/linux/"
+            cp "dist/${{ matrix.output }}" "$OUT/bin/loom-node-manager"
+            chmod +x "$OUT/bin/loom-node-manager" "$OUT/scripts/linux/"*.sh
+            tar -C "$RUNNER_TEMP" -czf "$RUNNER_TEMP/$NAME.tar.gz" "$NAME"
+            echo "BUNDLE_PATH=$RUNNER_TEMP/$NAME.tar.gz" >> "$GITHUB_ENV"
+          else
+            mkdir -p "$OUT/scripts/windows"
+            cp -a "$ROOT/services/loom_server/scripts/windows/." "$OUT/scripts/windows/"
+            cp "dist/${{ matrix.output }}" "$OUT/bin/loom-node-manager.exe"
+            (cd "$RUNNER_TEMP" && zip -qr "$NAME.zip" "$NAME")
+            echo "BUNDLE_PATH=$RUNNER_TEMP/$NAME.zip" >> "$GITHUB_ENV"
+          fi
+      - uses: actions/upload-artifact@v6
+        with:
+          name: loom-node-${{ matrix.bundle_suffix }}
+          path: ${{ env.BUNDLE_PATH }}
+          if-no-files-found: error

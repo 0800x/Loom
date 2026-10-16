@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package loom.protocol.v2;
+
+// Loom Architecture v2 envelope wire contract.
+//
+// These messages use ordinary Protocol Buffers wire encoding. They are NOT a
+// canonical signing format. Account/device authorization and revocation objects
+// must use a separately specified canonical representation.
+
+message InnerEnvelopeV2 {
+  uint32 version = 1;
+  string message_id = 2;
+  string conversation_ref = 3;
+  string sender_account_id = 4;
+  string sender_device_id = 5;
+  string recipient_account_id = 6;
+  string recipient_device_id = 7;
+  InnerContentKindV2 content_kind = 8;
+  bytes content_payload = 9;
+  uint64 created_at_unix_ms = 10;
+  optional string reply_to_message_id = 11;
+  ReceiptPolicyV2 receipt_policy = 12;
+}
+
+enum InnerContentKindV2 {
+  INNER_CONTENT_KIND_UNSPECIFIED = 0;
+  INNER_CONTENT_KIND_TEXT = 1;
+  INNER_CONTENT_KIND_DELIVERY_RECEIPT = 2;
+  INNER_CONTENT_KIND_SESSION_CONTROL = 3;
+  INNER_CONTENT_KIND_ATTACHMENT_REFERENCE = 4;
+}
+
+enum ReceiptPolicyV2 {
+  RECEIPT_POLICY_UNSPECIFIED = 0;
+  RECEIPT_POLICY_NONE = 1;
+  RECEIPT_POLICY_DELIVERED = 2;
+  RECEIPT_POLICY_DELIVERED_AND_READ = 3;
+}
+
+message DeliveryReceiptV2 {
+  uint32 version = 1;
+  string for_message_id = 2;
+  string recipient_device_id = 3;
+  DeliveryReceiptStatusV2 status = 4;
+  optional uint64 received_at_unix_ms = 5;
+}
+
+enum DeliveryReceiptStatusV2 {
+  DELIVERY_RECEIPT_STATUS_UNSPECIFIED = 0;
+  DELIVERY_RECEIPT_STATUS_DELIVERED = 1;
+}
+
+// Carries the session-provider output inside OuterEnvelopeV2.encrypted_payload.
+// `ciphertext` owns any provider-specific ratchet header bytes. Routers do not
+// parse this message; authorized endpoints do.
+message SessionCiphertextV2 {
+  uint32 version = 1;
+  string protocol_version = 2;
+  string session_locator = 3;
+  bytes ciphertext = 4;
+}
+
+message OuterEnvelopeV2 {
+  uint32 version = 1;
+  string packet_id = 2;
+  RoutingHintV2 routing_hint = 3;
+  uint64 expires_at_bucket_unix_ms = 4;
+  PriorityClassV2 priority = 5;
+  uint32 initial_hop_limit = 6;
+  ForwardingStateV2 forwarding_state = 7;
+  bytes encrypted_payload = 8;
+}
+
+message RoutingHintV2 {
+  RoutingScopeV2 scope = 1;
+  bytes mailbox_token = 2;
+}
+
+enum RoutingScopeV2 {
+  ROUTING_SCOPE_UNSPECIFIED = 0;
+  ROUTING_SCOPE_LOCAL_DEVICE = 1;
+  ROUTING_SCOPE_DOMESTIC_RELAY = 2;
+  ROUTING_SCOPE_GLOBAL_RELAY = 3;
+}
+
+enum PriorityClassV2 {
+  PRIORITY_CLASS_UNSPECIFIED = 0;
+  PRIORITY_CLASS_NORMAL = 1;
+  PRIORITY_CLASS_URGENT = 2;
+}
+
+message ForwardingStateV2 {
+  uint32 hops_used = 1;
+  uint32 copies_remaining = 2;
+}

@@ -1,0 +1,13 @@
+# Production reverse proxy for the Loom Node bundle.
+# LOOM_PUBLIC_DOMAIN is supplied by docker-compose.production.yml.
+{$LOOM_PUBLIC_DOMAIN} {
+    encode zstd gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer"
+    }
+
+    reverse_proxy loom-node:7483
+}

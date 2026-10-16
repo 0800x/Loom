@@ -1,0 +1,154 @@
+name: Architecture v2 security and DTN contracts
+
+on:
+  push:
+    paths:
+      - 'packages/loom_sessions/**'
+      - 'packages/loom_session_vodozemac_poc/**'
+      - 'packages/loom_storage/**'
+      - 'packages/loom_protocol/**'
+      - 'packages/loom_dtn/**'
+      - 'packages/loom_messaging/**'
+      - 'packages/loom_transport/**'
+      - 'native/loom_vodozemac_poc/**'
+      - 'apps/loom/lib/features/messaging/application/android_ble_radio_adapter.dart'
+      - 'apps/loom/lib/features/messaging/application/v2_messaging_runtime.dart'
+      - 'apps/loom/android/app/src/main/kotlin/app/loom/messenger/LoomBleBridge.kt'
+      - 'apps/loom/android/app/src/main/kotlin/app/loom/messenger/NearbyForegroundService.kt'
+      - 'apps/loom/android/app/src/main/AndroidManifest.xml'
+      - 'services/loom_server/src/delivery/**'
+      - 'services/loom_server/test/v2_delivery_*.test.ts'
+      - 'services/loom_server/src/index.ts'
+      - '.github/workflows/session-security-ci.yml'
+  pull_request:
+    paths:
+      - 'packages/loom_sessions/**'
+      - 'packages/loom_session_vodozemac_poc/**'
+      - 'packages/loom_storage/**'
+      - 'packages/loom_protocol/**'
+      - 'packages/loom_dtn/**'
+      - 'packages/loom_messaging/**'
+      - 'packages/loom_transport/**'
+      - 'native/loom_vodozemac_poc/**'
+      - 'apps/loom/lib/features/messaging/application/android_ble_radio_adapter.dart'
+      - 'apps/loom/lib/features/messaging/application/v2_messaging_runtime.dart'
+      - 'apps/loom/android/app/src/main/kotlin/app/loom/messenger/LoomBleBridge.kt'
+      - 'apps/loom/android/app/src/main/kotlin/app/loom/messenger/NearbyForegroundService.kt'
+      - 'apps/loom/android/app/src/main/AndroidManifest.xml'
+      - 'services/loom_server/src/delivery/**'
+      - 'services/loom_server/test/v2_delivery_*.test.ts'
+      - 'services/loom_server/src/index.ts'
+      - '.github/workflows/session-security-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DART_VERSION: 3.13.0
+  NODE_VERSION: 22.16.0
+
+jobs:
+  validate:
+    name: Architecture v2 (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - packages/loom_sessions
+          - packages/loom_session_vodozemac_poc
+          - packages/loom_protocol
+          - packages/loom_storage
+          - packages/loom_dtn
+          - packages/loom_messaging
+          - packages/loom_transport
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_VERSION }}
+      - name: Resolve dependencies
+        working-directory: ${{ matrix.package }}
+        run: dart pub get
+      - name: Check formatting
+        working-directory: ${{ matrix.package }}
+        run: dart format --output=none --set-exit-if-changed .
+      - name: Analyze
+        working-directory: ${{ matrix.package }}
+        run: dart analyze --fatal-infos
+      - name: Test
+        working-directory: ${{ matrix.package }}
+        run: dart test
+
+  vodozemac-poc:
+    name: Vodozemac provider PoC + Dart FFI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_VERSION }}
+      - name: Record Rust toolchain
+        working-directory: native/loom_vodozemac_poc
+        run: rustc --version && cargo --version
+      - name: Check Rust formatting
+        working-directory: native/loom_vodozemac_poc
+        run: cargo fmt --check
+      - name: Lint Rust PoC
+        working-directory: native/loom_vodozemac_poc
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Execute Rust PoC and malformed-input tests
+        working-directory: native/loom_vodozemac_poc
+        run: cargo test --locked
+      - name: Build Rust cdylib
+        working-directory: native/loom_vodozemac_poc
+        run: cargo build --locked --release
+      - name: Resolve Dart adapter dependencies
+        working-directory: packages/loom_session_vodozemac_poc
+        run: dart pub get
+      - name: Check Dart adapter formatting
+        working-directory: packages/loom_session_vodozemac_poc
+        run: dart format --output=none --set-exit-if-changed .
+      - name: Analyze Dart adapter
+        working-directory: packages/loom_session_vodozemac_poc
+        run: dart analyze --fatal-infos
+      - name: Execute all Dart-Rust provider and prekey lifecycle tests
+        working-directory: packages/loom_session_vodozemac_poc
+        env:
+          LOOM_VODOZEMAC_POC_LIB: ${{ github.workspace }}/native/loom_vodozemac_poc/target/release/libloom_vodozemac_poc.so
+        run: dart test
+
+  vodozemac-host-build:
+    name: Vodozemac PoC host build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Record Rust toolchain
+        working-directory: native/loom_vodozemac_poc
+        run: rustc --version && cargo --version
+      - name: Build host cdylib
+        working-directory: native/loom_vodozemac_poc
+        run: cargo build --locked --release
+
+  node-v2-delivery:
+    name: Node v2 opaque delivery
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Resolve dependencies
+        working-directory: services/loom_server
+        run: npm install --ignore-scripts
+      - name: Test v2 delivery service
+        working-directory: services/loom_server
+        run: node --experimental-strip-types --test test/v2_delivery_*.test.ts

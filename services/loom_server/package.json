@@ -1,0 +1,22 @@
+{
+  "name": "@loom/node-server",
+  "version": "0.10.9",
+  "private": true,
+  "type": "module",
+  "description": "Loom self-hosted Node runtime",
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "scripts": {
+    "start": "node --experimental-strip-types src/index.ts",
+    "validate": "node --experimental-strip-types --test test/*.test.ts",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1123.0",
+    "livekit-server-sdk": "2.19.1",
+    "pg": "8.23.0",
+    "qrcode": "1.5.4",
+    "ws": "8.21.3"
+  }
+}

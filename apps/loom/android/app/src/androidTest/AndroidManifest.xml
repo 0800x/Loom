@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- AndroidX 1.3 is constrained by Flutter integration_test. These test-only
+         activities require explicit exported values on Android 12+. -->
+    <application>
+        <activity android:name="androidx.test.core.app.InstrumentationActivityInvoker$BootstrapActivity" android:exported="true" />
+        <activity android:name="androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity" android:exported="true" />
+        <activity android:name="androidx.test.core.app.InstrumentationActivityInvoker$EmptyFloatingActivity" android:exported="true" />
+    </application>
+</manifest>

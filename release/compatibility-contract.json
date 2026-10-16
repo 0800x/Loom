@@ -1,0 +1,229 @@
+{
+  "apps/loom/android/app/src/main/kotlin/app/loom/messenger/LoomWifiAwareBridge.kt": [
+    "loom-accept-v2",
+    "loom-connect-v2"
+  ],
+  "apps/loom/android/app/src/main/kotlin/app/loom/messenger/LoomWifiDirectBridge.kt": [
+    "Loom-v2",
+    "loom-nearby-v2"
+  ],
+  "apps/loom/lib/dev/preview_data.dart": [
+    "loom-federation-v1"
+  ],
+  "apps/loom/lib/features/calls/application/call_session_controller.dart": [
+    "loom-call-audio-v1",
+    "loom-call-video-v1"
+  ],
+  "apps/loom/lib/features/messaging/application/android_state_protector.dart": [
+    "Loom-Provider"
+  ],
+  "apps/loom/lib/features/settings/presentation/nearby_mode_screen.dart": [
+    "loom-nearby-snapshot-v3"
+  ],
+  "native/loom_mls/src/lib.rs": [
+    "Loom-GroupCall",
+    "Loom-MLS"
+  ],
+  "services/loom_server/src/registration/approval_store.ts": [
+    "Loom-Identity"
+  ],
+  "services/loom_server/src/calls/federated_call_signal.ts": [
+    "loom-call-federation-v1"
+  ],
+  "services/loom_server/src/groups/group_store.ts": [
+    "Loom-MLS",
+    "Loom-MLSDevice"
+  ],
+  "services/loom_server/src/bootstrap/server.ts": [
+    "Loom-Device",
+    "Loom-Identity",
+    "Loom-MLS",
+    "loom-call-signaling-v1",
+    "loom-device-link-v1",
+    "loom-device-request-v1",
+    "loom-federation-v1",
+    "loom-node-challenge-v1",
+    "loom-node-v1",
+    "loom-sync-v1"
+  ],
+  "services/loom_server/src/storage/postgres_store.ts": [
+    "Loom-Identity"
+  ],
+  "services/loom_server/src/storage/sqlite_store.ts": [
+    "Loom-Identity"
+  ],
+  "services/loom_server/src/federation/node_registry.ts": [
+    "loom-federation-v1"
+  ],
+  "services/loom_server/src/federation/protocol.ts": [
+    "loom-federation-handshake-response-v1",
+    "loom-federation-handshake-v1",
+    "loom-federation-v1"
+  ],
+  "services/loom_server/src/federation/event.ts": [
+    "Loom-Receipt",
+    "loom-federation-v1"
+  ],
+  "services/loom_server/src/federation/service.ts": [
+    "Loom-Receipt"
+  ],
+  "services/loom_server/src/federation/user_protocol.ts": [
+    "loom-federation-v1"
+  ],
+  "services/loom_server/src/lan/lan_discovery.ts": [
+    "loom-lan-announcement-v1"
+  ],
+  "services/loom_server/src/http/landing_page.ts": [
+    "/.well-known/loom/server"
+  ],
+  "services/loom_server/src/delivery/v2_proximity_delivery_receipt_auth.ts": [
+    "loom-proximity-recipient-delivery-v1"
+  ],
+  "services/loom_server/src/delivery/v2_delivery_routes.ts": [
+    "loom-delivery-v2"
+  ],
+  "services/loom_server/src/delivery/v2_proximity_gateway_auth.ts": [
+    "loom-proximity-gateway-lease-v1",
+    "loom-proximity-gateway-proof-v1"
+  ],
+  "services/loom_server/src/delivery/v2_direct_auth.ts": [
+    "loom-direct-node-v1"
+  ],
+  "services/loom_server/src/delivery/legacy_direct_message_routes.ts": [
+    "loom-nearby-message-gateway-v1"
+  ],
+  "services/loom_server/src/security/device_link_store.ts": [
+    "loom-device-link-v2"
+  ],
+  "services/loom_server/src/security/device_request_proof.ts": [
+    "Loom-Device"
+  ],
+  "packages/loom_session_vodozemac_poc/lib/src/prekey_bundle.dart": [
+    "Loom-Vodozemac"
+  ],
+  "packages/loom_session_vodozemac_poc/lib/src/handle_prekey_lifecycle.dart": [
+    "Loom-vodozemac"
+  ],
+  "packages/loom_session_vodozemac_poc/lib/src/prekey_lifecycle.dart": [
+    "Loom-vodozemac"
+  ],
+  "packages/loom_transport/lib/src/proximity_gateway_bootstrap.dart": [
+    "Loom-Proximity",
+    "loom-proximity-gateway-bootstrap-v1"
+  ],
+  "packages/loom_transport/lib/src/direct_node_delivery.dart": [
+    "loom-direct-node-v1"
+  ],
+  "packages/loom_transport/lib/src/store_carry_forward.dart": [
+    "Loom-Relay"
+  ],
+  "packages/loom_transport/lib/src/nearby_legacy_message_gateway.dart": [
+    "loom-nearby-message-gateway-v1"
+  ],
+  "packages/loom_transport/lib/src/proximity_delivery_receipt.dart": [
+    "loom-proximity-gateway-proof-v1",
+    "loom-proximity-recipient-delivery-v1"
+  ],
+  "packages/loom_transport/lib/src/proximity_gateway.dart": [
+    "loom-proximity-gateway-lease-v1",
+    "loom-proximity-gateway-proof-v1"
+  ],
+  "packages/loom_transport/lib/src/nearby_dtn_peer_bootstrap.dart": [
+    "Loom-Nearby",
+    "loom-nearby-dtn-peer-bootstrap-v1"
+  ],
+  "packages/loom_transport/lib/src/group_session.dart": [
+    "Loom-GroupCall",
+    "Loom-MLSDevice"
+  ],
+  "packages/loom_identity/lib/src/device_directory_v2.dart": [
+    "Loom-DeviceAuthorization",
+    "Loom-DeviceDirectorySnapshot",
+    "Loom-DeviceRevocation"
+  ],
+  "packages/loom_sessions/lib/src/prekey_authorization.dart": [
+    "Loom-DevicePrekeyAuthorization"
+  ],
+  "packages/loom_federation/lib/src/request_auth.dart": [
+    "Loom-Node",
+    "Loom-Nonce",
+    "Loom-Signature",
+    "Loom-Timestamp",
+    "loom-federation-request-v1",
+    "loom-federation-v1"
+  ],
+  "packages/loom_federation/lib/src/event.dart": [
+    "loom-federation-v1"
+  ],
+  "packages/loom_federation/lib/src/peer_auth.dart": [
+    "loom-node-auth-v1"
+  ],
+  "packages/loom_models/lib/group_models.dart": [
+    "Loom-MLS",
+    "Loom-MLSDevice"
+  ],
+  "packages/loom_protocol/lib/src/messaging_client.dart": [
+    "Loom-Conversation",
+    "Loom-Encrypted"
+  ],
+  "packages/loom_protocol/lib/src/nearby_message_receipt.dart": [
+    "loom-nearby-message-receipt-v1"
+  ],
+  "packages/loom_protocol/lib/src/node_identity_challenge.dart": [
+    "loom-node-challenge-v1"
+  ],
+  "packages/loom_protocol/lib/src/protocol_versions.dart": [
+    "Loom-Direct",
+    "Loom-Identity",
+    "Loom-Session"
+  ],
+  "packages/loom_protocol/lib/src/device_request_proof.dart": [
+    "Loom-Content",
+    "Loom-Device",
+    "Loom-Request"
+  ],
+  "packages/loom_protocol/lib/src/direct_user_security_resolver.dart": [
+    "loom-federation-v1"
+  ],
+  "packages/loom_protocol/lib/src/lan_announcement.dart": [
+    "loom-lan-announcement-v1"
+  ],
+  "packages/loom_protocol/lib/src/node_client.dart": [
+    "Loom-Identity",
+    "loom-federation-v1"
+  ],
+  "packages/loom_crypto_bridge/lib/src/legacy_envelope_adapter.dart": [
+    "Loom-DeviceEnvelope"
+  ],
+  "packages/loom_crypto_bridge/lib/src/relay_sealing.dart": [
+    "Loom-Relay"
+  ],
+  "packages/loom_crypto_bridge/lib/src/self_message_codec.dart": [
+    "Loom-Self",
+    "loom-self-message-v1"
+  ],
+  "packages/loom_crypto_bridge/lib/src/device_security_core.dart": [
+    "Loom-Nearby",
+    "loom-call-audio-v1",
+    "loom-call-video-v1"
+  ],
+  "packages/loom_crypto_bridge/lib/src/device_link_codec.dart": [
+    "Loom-Device",
+    "loom-device-link-v2"
+  ],
+  "packages/loom_crypto_bridge/lib/src/nearby_security.dart": [
+    "Loom-Nearby"
+  ],
+  "packages/loom_crypto_bridge/lib/src/legacy_dtn_compatibility.dart": [
+    "Loom-Legacy"
+  ],
+  "packages/loom_crypto_bridge/lib/src/app_lock.dart": [
+    "loom-protected-v1"
+  ],
+  "packages/loom_crypto_bridge/lib/src/recovery_file_codec.dart": [
+    "Loom-Recovery"
+  ],
+  "packages/loom_crypto_bridge/lib/src/direct_message_codec.dart": [
+    "Loom-Direct"
+  ]
+}

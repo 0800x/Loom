@@ -1,0 +1,29 @@
+// CI init script. Flutter must run its normal release plugin generation before
+// Gradle starts. Add the stable Dart registrant URI only after that pub step.
+// No SDK, Java registrant, runtime plugin or compiled binary is patched.
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+gradle.settingsEvaluated { settings ->
+    def expectedRoot = System.getenv('LOOM_ANDROID_PROJECT_DIR')
+    if (!expectedRoot) throw new GradleException('LOOM_ANDROID_PROJECT_DIR must identify the application Android directory')
+    // Init scripts also run for included SDK/plugin builds. Only mutate Loom.
+    if (settings.settingsDir.canonicalFile != new File(expectedRoot).canonicalFile) return
+    def config = new File(settings.settingsDir, '../.dart_tool/package_config.json')
+    def data = new JsonSlurper().parse(config)
+    if (data.configVersion != 2) throw new GradleException('Expected package configuration version 2')
+    def app = data.packages.find { it.name == 'loom_next' }
+    if (app == null) throw new GradleException('Loom application package is missing')
+    def alias = [name: 'loom_generated_registrant', rootUri: 'flutter_build/',
+                 packageUri: '', languageVersion: app.languageVersion]
+    def existing = data.packages.findAll { it.name == alias.name }
+    if (!existing.isEmpty() && existing != [alias]) {
+        throw new GradleException('Generated registrant package name is already in use')
+    }
+    new File(config.parentFile, 'flutter_build').mkdirs()
+    if (existing.isEmpty()) {
+        data.packages.add(alias)
+        config.text = JsonOutput.prettyPrint(JsonOutput.toJson(data)) + '\n'
+    }
+    logger.lifecycle('Generated Android registrant uses a stable package URI')
+}

@@ -1,0 +1,462 @@
+{
+  "captureRevision": "08e13d6b50674f145ec797abaf41d9b2b3436732",
+  "captureSourceTree": "9360d91362129cb04ff3f78d494bbdbafeac332a",
+  "locale": "en",
+  "images": [
+    {
+      "file": "desktop-dark-chats-en.png",
+      "sha256": "d1301a83f66cf5dba38ec98a09d85095b39441d70673edf0084ac9d99c97e4ad",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "desktop-dark-conversation-en.png",
+      "sha256": "b80266d4197e88fa520794d0a77c76838c445d8d25f4c7db6cc57a69136a39f8",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "desktop-light-chats-en.png",
+      "sha256": "576df8598a605281dae29dfba48ea0f7c834303c019aba5d261cdc9a3a559d4c",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "desktop-light-conversation-en.png",
+      "sha256": "88bc5e03d92e8c6812fdcafa87c0539a38a5afc40dbaf9397d95fcdc9f1fe4ef",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "desktop-light-music-mini-en.png",
+      "sha256": "a05dde06accf9ee4569edea3200f2d8c40954ebefe3180e8b5eb2a196f6a6a78",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "desktop-light-music-player-en.png",
+      "sha256": "5cdc0bca53ce77d3200504228f6f14d15af435c9aa8781f8ec0bc197a49741bd",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "desktop-oled-chats-en.png",
+      "sha256": "c780eb1031f048f0306778e1ad1ba3afd44eb58448de9ecf9d03189299d2598c",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "desktop-oled-conversation-en.png",
+      "sha256": "c780eb1031f048f0306778e1ad1ba3afd44eb58448de9ecf9d03189299d2598c",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "mobile-dark-chats-en.png",
+      "sha256": "a378a532365daad6796ddc3394d45f6ee57e6b94658b390c3572bf7d5cac1427",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "mobile-dark-conversation-en.png",
+      "sha256": "17900e361a783129dc493ad00fae6b32e09a27ee7ed50cb8de811cbf36192c8f",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "mobile-dark-onboarding-en.png",
+      "sha256": "d94cb5266aa9ad0f276a820f89fdec7b9795e68c9f0f7fb20bc37601f2d91a29",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "mobile-dark-settings-en.png",
+      "sha256": "01528e90dd128341ac00a09f1aa5908e31df144c76e0e13e47d7a0aab17e82c9",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "mobile-light-chats-en.png",
+      "sha256": "54abec8a00a2be2c4ac8fc2d098fb93c0f45369b88efca1ad6472ec032bdabdb",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "mobile-light-conversation-en.png",
+      "sha256": "3789a640201136dee077b573b150ced9639c1f46096e5ea83227735c31b474c0",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "mobile-light-onboarding-en.png",
+      "sha256": "9b1d3c6ad8b1411e5a91ecf36780247c5f32516e7885d18d72fff093238046e8",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "mobile-light-settings-en.png",
+      "sha256": "cb9b002145383e85d42b3643ab42853dc320417f94afa29e98fcc59a2f65ba0b",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "mobile-oled-chats-en.png",
+      "sha256": "846276758298844af8e8b1e159e000ff756ffec914a01e67aa6a82eb87f979be",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "mobile-oled-conversation-en.png",
+      "sha256": "6103234fbd36f1fae63478f37a76b8a8c75c6a64b7d39edeb2b1e44ca9c353c0",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "mobile-oled-onboarding-en.png",
+      "sha256": "33ba8a8560c7fa725f909eb5a1503a737a8aaa8afc61083b9b285a199a5ff02e",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "mobile-oled-settings-en.png",
+      "sha256": "2728b7f4995ef4a04cee58517d160c7e109a9896c0d7d2e474f7190dfb18199e",
+      "renderer": "Flutter production-widget render",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "flutter": "3.47.0",
+        "dart": "3.13.0"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "node-landing-en.png",
+      "sha256": "0be5bc9e1e377153e08d300b20bcd522e690cb465b8e26cc29b8b04238c48a04",
+      "renderer": "Chromium native browser capture",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "chromium": "155.0.8059.79",
+        "node": "v24.19.0",
+        "playwright": "1.62.1"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Inspected current capture for clipping, fictional content and renderer labeling."
+    },
+    {
+      "file": "tui-calling-en.png",
+      "sha256": "b8afc17eb0d7fd5fb77268d4e018c9c77636160816e021a4f86a89ad5ff9aeae",
+      "renderer": "Bubble Tea v2 PTY capture rendered by xterm/Pillow",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "xtermHeadless": "6.0.0",
+        "pillow": "12.3.0",
+        "go": "go1.27.2",
+        "binaryModules": [
+          "path\tgithub.com/0800x/Loom/tools/loom_node_manager",
+          "mod\tgithub.com/0800x/Loom/tools/loom_node_manager\t(devel)",
+          "dep\tcharm.land/bubbletea/v2\tv2.0.8\th1:SxTJMhCAI3lbPmy4SgX5LWZ24AdINr4I6UEqzZvYJuY=",
+          "dep\tcharm.land/lipgloss/v2\tv2.0.5\th1:kbNxgeeUOYv5J0YdpxFjfvf3dFvqH8Aci4zB6xqFtrY=",
+          "dep\tgithub.com/charmbracelet/colorprofile\tv0.4.3\th1:QPa1IWkYI+AOB+fE+mg/5/4HRMZcaXex9t5KX76i20Q=",
+          "dep\tgithub.com/charmbracelet/ultraviolet\tv0.0.0-20260703014108-f5a850f9c2b7\th1:3FmWoGNWK4STvqg0O0Aeav2T7rodWJAPeF0QpH+8gFw=",
+          "dep\tgithub.com/charmbracelet/x/ansi\tv0.11.7\th1:kzv1kJvjg2S3r9KHo8hDdHFQLEqn4RBCb39dAYC84jI=",
+          "dep\tgithub.com/charmbracelet/x/term\tv0.2.2\th1:xVRT/S2ZcKdhhOuSP4t5cLi5o+JxklsoEObBSgfgZRk=",
+          "dep\tgithub.com/charmbracelet/x/termios\tv0.1.1\th1:o3Q2bT8eqzGnGPOYheoYS8eEleT5ZVNYNy8JawjaNZY=",
+          "dep\tgithub.com/charmbracelet/x/windows\tv0.2.2\th1:IofanmuvaxnKHuV04sC0eBy/smG6kIKrWG2/jYn2GuM=",
+          "dep\tgithub.com/clipperhouse/displaywidth\tv0.11.0\th1:lBc6kY44VFw+TDx4I8opi/EtL9m20WSEFgwIwO+UVM8=",
+          "dep\tgithub.com/clipperhouse/uax29/v2\tv2.7.0\th1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJv2v7Vk=",
+          "dep\tgithub.com/lucasb-eyer/go-colorful\tv1.4.0\th1:UtrWVfLdarDgc44HcS7pYloGHJUjHV/4FwW4TvVgFr4=",
+          "dep\tgithub.com/mattn/go-runewidth\tv0.0.23\th1:7ykA0T0jkPpzSvMS5i9uoNn2Xy3R383f9HDx3RybWcw=",
+          "dep\tgithub.com/muesli/cancelreader\tv0.2.2\th1:3I4Kt4BQjOR54NavqnDogx/MIoWBFa0StPA8ELUXHmA=",
+          "dep\tgithub.com/rivo/uniseg\tv0.4.7\th1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=",
+          "dep\tgithub.com/xo/terminfo\tv0.0.0-20220910002029-abceb7e1c41e\th1:JVG44RsyaB9T2KIHavMF/ppJZNG9ZpyihvCd0w101no=",
+          "dep\tgolang.org/x/sync\tv0.21.0\th1:HLII4xRRTtCRkxYp4HNFF0Js/Og6q2i++KXbg0gHCwM=",
+          "dep\tgolang.org/x/sys\tv0.46.0\th1:noSf2Fq6F8DBgS+LysIkx7rIExoNHJsxOAtPp4rthXw=",
+          "build\t-buildmode=exe",
+          "build\t-compiler=gc",
+          "build\t-trimpath=true",
+          "build\tDefaultGODEBUG=cryptocustomrand=1,httpservecontentmaxranges=1,tlssecpmlkem=0,tracebacklabels=0,urlstrictcolons=0,x509sslcertoverrideplatform=0",
+          "build\tCGO_ENABLED=0",
+          "build\tGOARCH=amd64",
+          "build\tGOOS=linux",
+          "build\tGOAMD64=v1"
+        ],
+        "manager": "Loom Node Manager 0.8.4 92d037b35b (main)"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Visually inspected the current CI manager in its read-only fixture. xterm decodes actual terminal cursor erases; no screenshot content is invented.",
+      "sourceRevision": "92d037b35ba6f4b4807e15e57143e19ee4387afa"
+    },
+    {
+      "file": "tui-overview-en.png",
+      "sha256": "f128d712dcd55cf77610ad4959d62d87be4c9e29ed5a0971c9659d5abffbac61",
+      "renderer": "Bubble Tea v2 PTY capture rendered by xterm/Pillow",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "xtermHeadless": "6.0.0",
+        "pillow": "12.3.0",
+        "go": "go1.27.2",
+        "binaryModules": [
+          "path\tgithub.com/0800x/Loom/tools/loom_node_manager",
+          "mod\tgithub.com/0800x/Loom/tools/loom_node_manager\t(devel)",
+          "dep\tcharm.land/bubbletea/v2\tv2.0.8\th1:SxTJMhCAI3lbPmy4SgX5LWZ24AdINr4I6UEqzZvYJuY=",
+          "dep\tcharm.land/lipgloss/v2\tv2.0.5\th1:kbNxgeeUOYv5J0YdpxFjfvf3dFvqH8Aci4zB6xqFtrY=",
+          "dep\tgithub.com/charmbracelet/colorprofile\tv0.4.3\th1:QPa1IWkYI+AOB+fE+mg/5/4HRMZcaXex9t5KX76i20Q=",
+          "dep\tgithub.com/charmbracelet/ultraviolet\tv0.0.0-20260703014108-f5a850f9c2b7\th1:3FmWoGNWK4STvqg0O0Aeav2T7rodWJAPeF0QpH+8gFw=",
+          "dep\tgithub.com/charmbracelet/x/ansi\tv0.11.7\th1:kzv1kJvjg2S3r9KHo8hDdHFQLEqn4RBCb39dAYC84jI=",
+          "dep\tgithub.com/charmbracelet/x/term\tv0.2.2\th1:xVRT/S2ZcKdhhOuSP4t5cLi5o+JxklsoEObBSgfgZRk=",
+          "dep\tgithub.com/charmbracelet/x/termios\tv0.1.1\th1:o3Q2bT8eqzGnGPOYheoYS8eEleT5ZVNYNy8JawjaNZY=",
+          "dep\tgithub.com/charmbracelet/x/windows\tv0.2.2\th1:IofanmuvaxnKHuV04sC0eBy/smG6kIKrWG2/jYn2GuM=",
+          "dep\tgithub.com/clipperhouse/displaywidth\tv0.11.0\th1:lBc6kY44VFw+TDx4I8opi/EtL9m20WSEFgwIwO+UVM8=",
+          "dep\tgithub.com/clipperhouse/uax29/v2\tv2.7.0\th1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJv2v7Vk=",
+          "dep\tgithub.com/lucasb-eyer/go-colorful\tv1.4.0\th1:UtrWVfLdarDgc44HcS7pYloGHJUjHV/4FwW4TvVgFr4=",
+          "dep\tgithub.com/mattn/go-runewidth\tv0.0.23\th1:7ykA0T0jkPpzSvMS5i9uoNn2Xy3R383f9HDx3RybWcw=",
+          "dep\tgithub.com/muesli/cancelreader\tv0.2.2\th1:3I4Kt4BQjOR54NavqnDogx/MIoWBFa0StPA8ELUXHmA=",
+          "dep\tgithub.com/rivo/uniseg\tv0.4.7\th1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=",
+          "dep\tgithub.com/xo/terminfo\tv0.0.0-20220910002029-abceb7e1c41e\th1:JVG44RsyaB9T2KIHavMF/ppJZNG9ZpyihvCd0w101no=",
+          "dep\tgolang.org/x/sync\tv0.21.0\th1:HLII4xRRTtCRkxYp4HNFF0Js/Og6q2i++KXbg0gHCwM=",
+          "dep\tgolang.org/x/sys\tv0.46.0\th1:noSf2Fq6F8DBgS+LysIkx7rIExoNHJsxOAtPp4rthXw=",
+          "build\t-buildmode=exe",
+          "build\t-compiler=gc",
+          "build\t-trimpath=true",
+          "build\tDefaultGODEBUG=cryptocustomrand=1,httpservecontentmaxranges=1,tlssecpmlkem=0,tracebacklabels=0,urlstrictcolons=0,x509sslcertoverrideplatform=0",
+          "build\tCGO_ENABLED=0",
+          "build\tGOARCH=amd64",
+          "build\tGOOS=linux",
+          "build\tGOAMD64=v1"
+        ],
+        "manager": "Loom Node Manager 0.8.4 92d037b35b (main)"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Visually inspected the current CI manager in its read-only fixture. xterm decodes actual terminal cursor erases; no screenshot content is invented.",
+      "sourceRevision": "92d037b35ba6f4b4807e15e57143e19ee4387afa"
+    },
+    {
+      "file": "tui-services-en.png",
+      "sha256": "eb00d7774f9f5487fd1e270926e17a62a1bdc523215823affcfb315a681405a6",
+      "renderer": "Bubble Tea v2 PTY capture rendered by xterm/Pillow",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "xtermHeadless": "6.0.0",
+        "pillow": "12.3.0",
+        "go": "go1.27.2",
+        "binaryModules": [
+          "path\tgithub.com/0800x/Loom/tools/loom_node_manager",
+          "mod\tgithub.com/0800x/Loom/tools/loom_node_manager\t(devel)",
+          "dep\tcharm.land/bubbletea/v2\tv2.0.8\th1:SxTJMhCAI3lbPmy4SgX5LWZ24AdINr4I6UEqzZvYJuY=",
+          "dep\tcharm.land/lipgloss/v2\tv2.0.5\th1:kbNxgeeUOYv5J0YdpxFjfvf3dFvqH8Aci4zB6xqFtrY=",
+          "dep\tgithub.com/charmbracelet/colorprofile\tv0.4.3\th1:QPa1IWkYI+AOB+fE+mg/5/4HRMZcaXex9t5KX76i20Q=",
+          "dep\tgithub.com/charmbracelet/ultraviolet\tv0.0.0-20260703014108-f5a850f9c2b7\th1:3FmWoGNWK4STvqg0O0Aeav2T7rodWJAPeF0QpH+8gFw=",
+          "dep\tgithub.com/charmbracelet/x/ansi\tv0.11.7\th1:kzv1kJvjg2S3r9KHo8hDdHFQLEqn4RBCb39dAYC84jI=",
+          "dep\tgithub.com/charmbracelet/x/term\tv0.2.2\th1:xVRT/S2ZcKdhhOuSP4t5cLi5o+JxklsoEObBSgfgZRk=",
+          "dep\tgithub.com/charmbracelet/x/termios\tv0.1.1\th1:o3Q2bT8eqzGnGPOYheoYS8eEleT5ZVNYNy8JawjaNZY=",
+          "dep\tgithub.com/charmbracelet/x/windows\tv0.2.2\th1:IofanmuvaxnKHuV04sC0eBy/smG6kIKrWG2/jYn2GuM=",
+          "dep\tgithub.com/clipperhouse/displaywidth\tv0.11.0\th1:lBc6kY44VFw+TDx4I8opi/EtL9m20WSEFgwIwO+UVM8=",
+          "dep\tgithub.com/clipperhouse/uax29/v2\tv2.7.0\th1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJv2v7Vk=",
+          "dep\tgithub.com/lucasb-eyer/go-colorful\tv1.4.0\th1:UtrWVfLdarDgc44HcS7pYloGHJUjHV/4FwW4TvVgFr4=",
+          "dep\tgithub.com/mattn/go-runewidth\tv0.0.23\th1:7ykA0T0jkPpzSvMS5i9uoNn2Xy3R383f9HDx3RybWcw=",
+          "dep\tgithub.com/muesli/cancelreader\tv0.2.2\th1:3I4Kt4BQjOR54NavqnDogx/MIoWBFa0StPA8ELUXHmA=",
+          "dep\tgithub.com/rivo/uniseg\tv0.4.7\th1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=",
+          "dep\tgithub.com/xo/terminfo\tv0.0.0-20220910002029-abceb7e1c41e\th1:JVG44RsyaB9T2KIHavMF/ppJZNG9ZpyihvCd0w101no=",
+          "dep\tgolang.org/x/sync\tv0.21.0\th1:HLII4xRRTtCRkxYp4HNFF0Js/Og6q2i++KXbg0gHCwM=",
+          "dep\tgolang.org/x/sys\tv0.46.0\th1:noSf2Fq6F8DBgS+LysIkx7rIExoNHJsxOAtPp4rthXw=",
+          "build\t-buildmode=exe",
+          "build\t-compiler=gc",
+          "build\t-trimpath=true",
+          "build\tDefaultGODEBUG=cryptocustomrand=1,httpservecontentmaxranges=1,tlssecpmlkem=0,tracebacklabels=0,urlstrictcolons=0,x509sslcertoverrideplatform=0",
+          "build\tCGO_ENABLED=0",
+          "build\tGOARCH=amd64",
+          "build\tGOOS=linux",
+          "build\tGOAMD64=v1"
+        ],
+        "manager": "Loom Node Manager 0.8.4 92d037b35b (main)"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Visually inspected the current CI manager in its read-only fixture. xterm decodes actual terminal cursor erases; no screenshot content is invented.",
+      "sourceRevision": "92d037b35ba6f4b4807e15e57143e19ee4387afa"
+    },
+    {
+      "file": "tui-updates-en.png",
+      "sha256": "727474eb9f447f9ce86dffd807e8abcc84ddd4d39e28538850bbf18ff8a9a506",
+      "renderer": "Bubble Tea v2 PTY capture rendered by xterm/Pillow",
+      "fixture": "fictional; no real account, node or conversation",
+      "toolchains": {
+        "xtermHeadless": "6.0.0",
+        "pillow": "12.3.0",
+        "go": "go1.27.2",
+        "binaryModules": [
+          "path\tgithub.com/0800x/Loom/tools/loom_node_manager",
+          "mod\tgithub.com/0800x/Loom/tools/loom_node_manager\t(devel)",
+          "dep\tcharm.land/bubbletea/v2\tv2.0.8\th1:SxTJMhCAI3lbPmy4SgX5LWZ24AdINr4I6UEqzZvYJuY=",
+          "dep\tcharm.land/lipgloss/v2\tv2.0.5\th1:kbNxgeeUOYv5J0YdpxFjfvf3dFvqH8Aci4zB6xqFtrY=",
+          "dep\tgithub.com/charmbracelet/colorprofile\tv0.4.3\th1:QPa1IWkYI+AOB+fE+mg/5/4HRMZcaXex9t5KX76i20Q=",
+          "dep\tgithub.com/charmbracelet/ultraviolet\tv0.0.0-20260703014108-f5a850f9c2b7\th1:3FmWoGNWK4STvqg0O0Aeav2T7rodWJAPeF0QpH+8gFw=",
+          "dep\tgithub.com/charmbracelet/x/ansi\tv0.11.7\th1:kzv1kJvjg2S3r9KHo8hDdHFQLEqn4RBCb39dAYC84jI=",
+          "dep\tgithub.com/charmbracelet/x/term\tv0.2.2\th1:xVRT/S2ZcKdhhOuSP4t5cLi5o+JxklsoEObBSgfgZRk=",
+          "dep\tgithub.com/charmbracelet/x/termios\tv0.1.1\th1:o3Q2bT8eqzGnGPOYheoYS8eEleT5ZVNYNy8JawjaNZY=",
+          "dep\tgithub.com/charmbracelet/x/windows\tv0.2.2\th1:IofanmuvaxnKHuV04sC0eBy/smG6kIKrWG2/jYn2GuM=",
+          "dep\tgithub.com/clipperhouse/displaywidth\tv0.11.0\th1:lBc6kY44VFw+TDx4I8opi/EtL9m20WSEFgwIwO+UVM8=",
+          "dep\tgithub.com/clipperhouse/uax29/v2\tv2.7.0\th1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJv2v7Vk=",
+          "dep\tgithub.com/lucasb-eyer/go-colorful\tv1.4.0\th1:UtrWVfLdarDgc44HcS7pYloGHJUjHV/4FwW4TvVgFr4=",
+          "dep\tgithub.com/mattn/go-runewidth\tv0.0.23\th1:7ykA0T0jkPpzSvMS5i9uoNn2Xy3R383f9HDx3RybWcw=",
+          "dep\tgithub.com/muesli/cancelreader\tv0.2.2\th1:3I4Kt4BQjOR54NavqnDogx/MIoWBFa0StPA8ELUXHmA=",
+          "dep\tgithub.com/rivo/uniseg\tv0.4.7\th1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=",
+          "dep\tgithub.com/xo/terminfo\tv0.0.0-20220910002029-abceb7e1c41e\th1:JVG44RsyaB9T2KIHavMF/ppJZNG9ZpyihvCd0w101no=",
+          "dep\tgolang.org/x/sync\tv0.21.0\th1:HLII4xRRTtCRkxYp4HNFF0Js/Og6q2i++KXbg0gHCwM=",
+          "dep\tgolang.org/x/sys\tv0.46.0\th1:noSf2Fq6F8DBgS+LysIkx7rIExoNHJsxOAtPp4rthXw=",
+          "build\t-buildmode=exe",
+          "build\t-compiler=gc",
+          "build\t-trimpath=true",
+          "build\tDefaultGODEBUG=cryptocustomrand=1,httpservecontentmaxranges=1,tlssecpmlkem=0,tracebacklabels=0,urlstrictcolons=0,x509sslcertoverrideplatform=0",
+          "build\tCGO_ENABLED=0",
+          "build\tGOARCH=amd64",
+          "build\tGOOS=linux",
+          "build\tGOAMD64=v1"
+        ],
+        "manager": "Loom Node Manager 0.8.4 92d037b35b (main)"
+      },
+      "nativeDeviceIntegration": false,
+      "visuallyReviewed": true,
+      "review": "Visually inspected the current CI manager in its read-only fixture. xterm decodes actual terminal cursor erases; no screenshot content is invented.",
+      "sourceRevision": "92d037b35ba6f4b4807e15e57143e19ee4387afa"
+    }
+  ],
+  "note": "Visual-review flags must be updated only after inspecting every image. Playback state is mocked; widget rendering does not verify native playback."
+}

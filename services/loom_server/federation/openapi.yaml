@@ -1,0 +1,61 @@
+openapi: 3.1.0
+info:
+  title: Loom Federation v1
+  version: 0.6.0
+  description: Phase 6 server-to-server contract. Runtime implementation is Phase 7.
+paths:
+  /federation/v1/info:
+    get:
+      summary: Read public federation capabilities
+      responses:
+        '200':
+          description: Federation capability document
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [nodeId, protocol, publicKey, fingerprint, mode]
+                properties:
+                  nodeId: { type: string }
+                  protocol: { type: string, const: loom-federation-v1 }
+                  publicKey: { type: string }
+                  fingerprint: { type: string }
+                  mode: { type: string }
+  /federation/v1/events:
+    post:
+      summary: Deliver one authenticated federation event
+      parameters:
+        - in: header
+          name: X-Loom-Federation-Version
+          required: true
+          schema: { type: string, const: loom-federation-v1 }
+        - in: header
+          name: X-Loom-Node-Id
+          required: true
+          schema: { type: string }
+        - in: header
+          name: X-Loom-Timestamp
+          required: true
+          schema: { type: string, format: date-time }
+        - in: header
+          name: X-Loom-Nonce
+          required: true
+          schema: { type: string }
+        - in: header
+          name: X-Loom-Signature
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version, eventId, originNodeId, destination, conversationId, type, createdAt, expiresAt, hopCount, maxHops, nonce, body, signature]
+      responses:
+        '202': { description: Event authenticated and accepted for idempotent processing }
+        '400': { description: Invalid schema or bounds }
+        '401': { description: Invalid peer authentication }
+        '403': { description: Federation policy or authorization rejection }
+        '409': { description: Duplicate/replayed event }
+        '429': { description: Rate limit/resource quota exceeded }

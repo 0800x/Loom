@@ -1,0 +1,40 @@
+READ-ONLY FIXTURE • fictional status • production actions disabled                                                      
+Loom Node Manager  v0.8.4  /  Overview                                                                                  
+  •  focus: sections                                                                                                    
+╭─────────────────────────╮ ╭──────────────────────────────────────────────────────────────────────────────────────────╮
+│ SECTIONS                │ │ Overview                                                                                 │
+│  > Overview             │ │ NODE                                                                                     │
+│   Services              │ │ Name                   Loom Example Node                                                 │
+│   Users                 │ │ Domain                 node.example.org                                                  │
+│   Registration          │ │ Node ID                fictional-node                                                    │
+│   Federation            │ │ Version                0.10.9                                                            │
+│   Federation Queue      │ │ Uptime                 1d 00h 00m                                                        │
+│   Calls                 │ │ Federation mode                                                                          │
+│   Groups                │ │                                                                                          │
+│   Public page           │ │ SYSTEM                                                                                   │
+│   Network & TLS         │ │ CPU [  ░░░░░░░░░░░░░░░░░░░░░░░░]   0.0%  0 logical CPUs                                  │
+│   Database              │ │ Memory [  ░░░░░░░░░░░░░░░░░░░░░░░░]   0.0%  — / —                                        │
+│   Storage               │ │ Disk / [  ░░░░░░░░░░░░░░░░░░░░░░░░]   0.0%  — / —                                        │
+│   Security              │ │ Live system gauges refresh every 2 seconds.                                              │
+│   Logs                  │ │ SERVICES                                                                                 │
+│   Backup                │ │ Node readiness          ● HEALTHY                                                        │
+│   Maintenance           │ │ PostgreSQL              ● HEALTHY                                                        │
+│   Updates               │ │ Object storage          ● HEALTHY                                                        │
+│                         │ │ Public HTTPS            ● UNVERIFIED                                                     │
+│                         │ │                                                                                          │
+│                         │ │ USERS / MESSAGING                                                                        │
+│                         │ │ Registered accounts    —                                                                 │
+│                         │ │ Devices                —                                                                 │
+│                         │ │ Pending registrations  0                                                                 │
+│                         │ │ Conversations          —                                                                 │
+│                         │ │ Messages               —                                                                 │
+│                         │ │ Awaiting local routing —                                                                 │
+│                         │ │ Live message streams   Unknown — update the running Node                                 │
+│                         │ │ Calls                  Direct and group calls enabled                                    │
+│                         │ │                                                                                          │
+│                         │ │ FEDERATION                                                                               │
+╰─────────────────────────╯ ╰──────────────────────────────────────────────────────────────────────────────────────────╯
+Lines 1–31 / 48  •  PgUp/PgDn scroll                                                                                    
+Waiting for Node diagnostics                                                                                            
+↑/↓ move  Enter select  r refresh  ? help  q quit                                                                       
+                                                                                                                        

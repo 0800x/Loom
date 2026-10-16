@@ -1,0 +1,1 @@
+{"name":"loom-terminal-capture","private":true,"version":"1.0.0","type":"module","dependencies":{"@xterm/headless":"6.0.0"}}

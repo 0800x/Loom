@@ -1,0 +1,101 @@
+name: loom_next
+description: Loom privacy-first resilient communication client.
+publish_to: "none"
+version: 0.1.0+28
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+  flutter: ">=3.44.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_webrtc: 1.6.2+hotfix.3
+  livekit_client: 2.13.0
+  amicons: ^1.0.1
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.4.0
+  loom_design:
+    path: ../../packages/loom_design
+  loom_models:
+    path: ../../packages/loom_models
+  loom_protocol:
+    path: ../../packages/loom_protocol
+  loom_crypto_bridge:
+    path: ../../packages/loom_crypto_bridge
+  loom_identity:
+    path: ../../packages/loom_identity
+  loom_sessions:
+    path: ../../packages/loom_sessions
+  loom_storage:
+    path: ../../packages/loom_storage
+  loom_dtn:
+    path: ../../packages/loom_dtn
+  loom_messaging:
+    path: ../../packages/loom_messaging
+  loom_transport:
+    path: ../../packages/loom_transport
+  loom_calls:
+    path: ../../packages/loom_calls
+  cryptography: ^2.9.0
+  bip39_mnemonic: ^4.1.0
+  camera: ^0.12.1
+  camera_android: ^0.10.12
+  audio_service: ^0.18.19
+  # Share the current File API with the encrypted conference SDK.
+  flutter_cache_manager: 3.4.1
+  audio_session: ^0.2.4
+  audio_metadata_reader: ^1.8.0
+  media_kit: ^1.2.6
+  media_kit_libs_video: ^1.0.7
+  video_player_media_kit: ^2.0.0
+  image_picker: ^1.2.3
+  photo_manager: ^3.12.0
+  video_player: ^2.14.1
+  video_compress:
+    path: ../../packages/loom_video_compress
+  record: ^7.1.1
+  image: ^4.5.4
+  geolocator: ^14.1.1
+  flutter_map: ^8.3.2
+  latlong2: ^0.9.1
+  url_launcher: ^6.3.3
+  file_selector: ^1.1.0
+  # Built-in Kotlin / AGP 9 support and content-provider error handling.
+  file_selector_android: ^0.5.2+11
+  path_provider: ^2.1.5
+  package_info_plus: 10.2.1
+  sqlite3_flutter_libs: ^0.5.42
+dependency_overrides:
+  # Native source forks use the same AGP 9 / built-in Kotlin as Loom.
+  record_android:
+    path: ../../packages/loom_record_android
+dev_dependencies:
+  flutter_secure_storage: ^10.3.1
+  file_selector_platform_interface: ^2.7.0
+  integration_test:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  # Match the current File API required by desktop and conference plugins.
+  file: ^7.0.1
+  # Isolate real disk-cache widget tests from device temporary files.
+  path_provider_platform_interface: ^2.1.2
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/legal/LICENSE
+    - assets/legal/COPYRIGHT
+    - assets/fonts/OFL.txt
+    - assets/audio/incoming_call.wav
+    - assets/audio/outgoing_call.wav
+  fonts:
+    - family: Vazirmatn
+      fonts:
+        - asset: assets/fonts/Vazirmatn-Variable.ttf
+
+
+
+
+

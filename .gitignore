@@ -1,0 +1,91 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+.pub/
+build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+
+# Generated Flutter platform build state (platform source itself is NOT ignored)
+**/android/.gradle/
+**/android/local.properties
+**/android/**/key.properties
+**/ios/Pods/
+**/ios/.symlinks/
+**/macos/Pods/
+**/macos/.symlinks/
+**/windows/flutter/ephemeral/
+**/linux/flutter/ephemeral/
+
+# Package lock policy: commit app lockfiles when generated; ignore library-package locks
+packages/**/pubspec.lock
+
+# IDE / editors
+.idea/
+.vscode/
+*.iml
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+*.cer
+*.der
+*.secrets.*
+credentials.json
+
+# Logs / coverage / test output
+*.log
+coverage/
+test-results/
+*.lcov
+
+# Local databases, queues and caches
+*.db
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+*.db-journal
+*.partial
+
+# Node
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+services/loom_server/data/
+
+# Rust/native build output
+native/**/target/
+
+# Temporary archives and local handoff bundles
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.tmp
+*.bak
+
+# Generated native MLS libraries (built by scripts/build-mls.*).
+/apps/loom/android/app/src/main/jniLibs/**/libloom_mls.so
+/native/loom_mls/target/
+
+# Release outputs and local Python caches
+/dist/
+**/__pycache__/
+*.pyc
