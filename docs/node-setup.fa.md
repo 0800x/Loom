@@ -170,7 +170,7 @@ secret و اتصال تنظیمات تماس به نود خودکار انجام
 bash install.sh --downloads liara --go-mirror runflare
 ```
 
-گزینه‌های مجاز `profile`، `official`، `liara`، `runflare` و `goproxy-cn`
+گزینه‌های مجاز `profile`، `official`، `liara`، `runflare`، `parspack` و `goproxy-cn`
 هستند. انتخاب ذخیره می‌شود و هم برای ساخت Node Manager و هم MinIO استفاده
 می‌شود؛ تنظیمات عمومی Go و منابع Docker/npm/APT تغییر نمی‌کنند.
 رانفلر آدرس `https://mirror-go.runflare.com` و Goproxy.cn آدرس
@@ -185,3 +185,20 @@ bash install.sh --downloads liara --go-mirror runflare
 
 [مستندات رانفلر](https://runflare.com/mirrors/go-mirror/) ·
 [مستندات Goproxy.cn](https://goproxy.cn/)
+
+## پارس‌پک و نسخهٔ پایهٔ Alpine
+
+برای ماژول‌های Go پارس‌پک، گزینهٔ `--go-mirror parspack` به آدرس رسمی
+`https://mirror.abrha.net/repository/go/` وصل می‌شود. کنترل checksum روشن
+می‌ماند؛ نمونهٔ `GOSUMDB=off` در راهنمای ارائه‌دهنده اعمال نمی‌شود.
+
+سازندهٔ TUI و MinIO از Go 1.25.14 با Alpine 3.23 و digest ثابت استفاده
+می‌کنند. تگ شناور `-alpine` دیگر باعث مهاجرت خودکار به نسخه‌ای نمی‌شود که
+میرور APK هنوز ندارد. امضای پکیج‌ها بررسی می‌شود و مخازن دو نسخهٔ Alpine
+با هم ترکیب نمی‌شوند.
+
+[راهنمای Go پارس‌پک](https://docs.parspack.com/reference/mirror/golang/) ·
+[فهرست میرورهای NuGet](https://github.com/VahidN/nuget-net-melli-mirrors)
+
+فهرست دوم مخصوص NuGet/.NET است؛ آدرس‌های آن جایگزین Go یا APK نیستند.
+نصاب لینوکس تنظیمات سراسری NuGet و گزینه‌های audit آن را تغییر نمی‌دهد.

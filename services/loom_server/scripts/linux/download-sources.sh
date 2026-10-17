@@ -32,8 +32,9 @@ loom_go_mirror() {
     official) LOOM_GO_PROXY='https://proxy.golang.org' ;;
     liara) LOOM_GO_PROXY='https://package-mirror.liara.ir/repository/go/' ;;
     runflare) LOOM_GO_PROXY='https://mirror-go.runflare.com' ;;
+    parspack) LOOM_GO_PROXY='https://mirror.abrha.net/repository/go/' ;;
     goproxy-cn) LOOM_GO_PROXY='https://goproxy.cn' ;;
-    *) echo 'Go mirror must be profile, official, liara, runflare or goproxy-cn.' >&2; return 2 ;;
+    *) echo 'Go mirror must be profile, official, liara, runflare, parspack or goproxy-cn.' >&2; return 2 ;;
   esac
   export LOOM_GO_MIRROR LOOM_GO_PROXY
 }

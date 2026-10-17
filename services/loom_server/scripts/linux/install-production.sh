@@ -65,7 +65,7 @@ With no --domain on a first interactive install, the installer asks for it on
 Options:
   --tls public|local             Public CA or explicit local certificate
   --downloads official|liara|arvan Per-install dependency sources
-  --go-mirror PROFILE             profile | official | liara | runflare | goproxy-cn
+  --go-mirror PROFILE             profile | official | liara | runflare | parspack | goproxy-cn
   --domain HOSTNAME               Public DNS hostname
   --operator-name NAME            Operator display name
   --jurisdiction TEXT             Network jurisdiction label
@@ -423,7 +423,7 @@ build_or_install_manager() {
     -e CGO_ENABLED=0 -e GOOS=linux -e GOARCH="$goarch" \
     -e LOOM_SOURCE_COMMIT="$INSTALL_COMMIT" -e LOOM_SOURCE_BRANCH="$UPDATE_BRANCH" -e LOOM_SOURCE_REPOSITORY="$UPDATE_REPOSITORY" \
     -e PATH=/usr/local/go/bin:/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-    -v "$build_dir:/work:Z" -w /work/src "${LOOM_DOCKER_PREFIX}golang:1.25.14-alpine" \
+    -v "$build_dir:/work:Z" -w /work/src "${LOOM_DOCKER_PREFIX}golang:1.25.14-alpine3.23@sha256:27b3069b25647beacd3745b0b2c83e2f9b8d3935455a32cd4531236ee1c960e0" \
     sh -c 'set -eu; if [ -n "$LOOM_ALPINE_MIRROR" ]; then v=$(cut -d. -f1,2 /etc/alpine-release); printf "%s/v%s/main\n%s/v%s/community\n" "$LOOM_ALPINE_MIRROR" "$v" "$LOOM_ALPINE_MIRROR" "$v" > /etc/apk/repositories; fi; apk add --no-cache git; /usr/local/go/bin/go version; echo "Downloading manager modules from $GOPROXY (10-minute limit)"; timeout -s TERM -k 10 600 /usr/local/go/bin/go mod download -x; /usr/local/go/bin/go test -mod=readonly ./...; /usr/local/go/bin/go build -buildvcs=false -mod=readonly -trimpath -ldflags="-s -w -X main.buildCommit=$LOOM_SOURCE_COMMIT -X main.buildBranch=$LOOM_SOURCE_BRANCH -X main.buildRepository=$LOOM_SOURCE_REPOSITORY" -o /work/loom-node-manager .'
   loom_install_manager_binary "$build_dir/loom-node-manager" "$target"
   rm -rf "$build_dir"

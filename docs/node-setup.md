@@ -101,7 +101,7 @@ bash install.sh --downloads liara --go-mirror runflare
 ```
 
 `--go-mirror` accepts `profile` (follow the download profile), `official`,
-`liara`, `runflare`, or `goproxy-cn`. The choice is saved for future setup and
+`liara`, `runflare`, `parspack`, or `goproxy-cn`. The choice is saved for future setup and
 updates. It affects both Node Manager and the source-built storage service;
 it does not edit global Go configuration or switch Docker/npm/APT sources.
 Runflare documents `https://mirror-go.runflare.com`; Goproxy.cn documents
@@ -118,6 +118,25 @@ small servers; a quiet interval alone does not establish a network failure.
 
 Provider documentation: [Runflare Go mirror](https://runflare.com/mirrors/go-mirror/)
 and [Goproxy.cn](https://goproxy.cn/).
+
+### ParsPack and package ecosystems
+
+ParsPack Go is available with `--go-mirror parspack`, using the provider's
+published endpoint `https://mirror.abrha.net/repository/go/`. Go checksum
+verification remains enabled; the installer does not apply the provider guide's
+`GOSUMDB=off` example. Reachability of both modules and authenticated checksum
+metadata is required.
+
+The builder uses Go 1.25.14 on explicit Alpine 3.23, pinned by image digest.
+It does not follow the moving `-alpine` tag, which can switch to a release that
+a selected APK mirror has not synchronized. APK signatures remain required;
+packages from another Alpine release are never mixed into the image.
+
+[ParsPack Go documentation](https://docs.parspack.com/reference/mirror/golang/)
+and [NuGet mirror directory](https://github.com/VahidN/nuget-net-melli-mirrors)
+are additional references. The latter covers .NET/NuGet, not Go modules or
+Alpine APK packages. Its endpoints are not inserted into the Linux installer;
+no global NuGet configuration or audit settings are changed.
 
 ## Linux distributions
 

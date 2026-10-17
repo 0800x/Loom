@@ -19,6 +19,7 @@ on:
       - 'scripts/test-node-production.py'
       - 'scripts/probe-go-mirrors.py'
       - 'scripts/test-ubuntu-docker-packages.sh'
+      - 'scripts/test-alpine-toolchain.py'
       - 'scripts/initialize-release-history.py'
       - 'scripts/test-initial-release-history.py'
       - 'release/node-channel.json'
@@ -42,6 +43,7 @@ on:
       - 'scripts/test-node-production.py'
       - 'scripts/probe-go-mirrors.py'
       - 'scripts/test-ubuntu-docker-packages.sh'
+      - 'scripts/test-alpine-toolchain.py'
       - 'scripts/initialize-release-history.py'
       - 'scripts/test-initial-release-history.py'
       - 'release/node-channel.json'
@@ -62,7 +64,7 @@ on:
         description: Independent Go module mirror for the production fixture
         type: choice
         default: profile
-        options: [profile, official, liara, runflare, goproxy-cn]
+        options: [profile, official, liara, runflare, parspack, goproxy-cn]
 
 permissions:
   contents: read
@@ -151,6 +153,8 @@ jobs:
         run: python3 scripts/probe-go-mirrors.py
       - name: Install the selected Docker package family in isolated Ubuntu
         run: bash scripts/test-ubuntu-docker-packages.sh
+      - name: Verify the exact builder and signed Liara Alpine packages
+        run: python3 scripts/test-alpine-toolchain.py
       - name: Real production startup, retained storage and credential preservation
         env:
           LOOM_TEST_DOWNLOAD_PROFILE: ${{ inputs.downloads || 'official' }}

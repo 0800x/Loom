@@ -178,7 +178,7 @@ install_docker_debian_like ubuntu
 
     def test_go_mirror_is_independent_and_persisted_defaults_are_retained(self):
         helper=SETUP.with_name('download-sources.sh')
-        proxies={'official':'https://proxy.golang.org','liara':'https://package-mirror.liara.ir/repository/go/','runflare':'https://mirror-go.runflare.com','goproxy-cn':'https://goproxy.cn'}
+        proxies={'official':'https://proxy.golang.org','liara':'https://package-mirror.liara.ir/repository/go/','runflare':'https://mirror-go.runflare.com','parspack':'https://mirror.abrha.net/repository/go/','goproxy-cn':'https://goproxy.cn'}
         for mirror, proxy in proxies.items():
             command='set -euo pipefail; source "$1"; loom_download_profile arvan; loom_go_mirror "$2"; printf "%s\\n%s\\n%s\\n" "$LOOM_DOCKER_PREFIX" "$LOOM_GO_PROXY" "$LOOM_NPM_REGISTRY"'
             result=subprocess.run(['bash','-c',command,'fixture',str(helper),mirror],capture_output=True,text=True)

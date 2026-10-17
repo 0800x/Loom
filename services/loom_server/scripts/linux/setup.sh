@@ -64,7 +64,7 @@ Usage:
 
 Options:
   --downloads official|liara|arvan  Per-install dependency sources
-  --go-mirror profile|official|liara|runflare|goproxy-cn  Override Go downloads only
+  --go-mirror profile|official|liara|runflare|parspack|goproxy-cn  Override Go downloads only
   --tls public|local    Public CA or explicitly trusted local certificate
   --domain HOSTNAME     Hostname or IPv4 address
   --operator-name NAME

@@ -10,6 +10,7 @@ import zipfile
 MIRRORS = {
     'liara': 'https://package-mirror.liara.ir/repository/go',
     'runflare': 'https://mirror-go.runflare.com',
+    'parspack': 'https://mirror.abrha.net/repository/go',
     'goproxy-cn': 'https://goproxy.cn',
     'official': 'https://proxy.golang.org',
 }
