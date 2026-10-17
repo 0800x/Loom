@@ -34,8 +34,10 @@ with tempfile.TemporaryDirectory(prefix='loom-production-fixture-') as temp:
     env_path.write_text(env_path.read_text().replace('LOOM_HOST_PORT=7483','LOOM_HOST_PORT=0')+'LOOM_BUILD_COMMIT='+revision+'\n')
     selected_profile=os.environ.get('LOOM_TEST_DOWNLOAD_PROFILE','official')
     if selected_profile not in ('official','liara','arvan'): raise ValueError('Unknown fixture download profile')
+    go_mirror=os.environ.get('LOOM_TEST_GO_MIRROR','profile')
+    if go_mirror not in ('profile','official','liara','runflare','goproxy-cn'): raise ValueError('Unknown Go mirror')
     helper=SERVER/'scripts/linux/download-sources.sh'
-    policy=run(['bash','-c', 'source "$1"; loom_download_profile "$2"; printf "LOOM_DOCKER_PREFIX=%s\\nLOOM_GO_PROXY=%s\\nLOOM_NPM_REGISTRY=%s\\nLOOM_ALPINE_MIRROR=%s\\n" "$LOOM_DOCKER_PREFIX" "$LOOM_GO_PROXY" "$LOOM_NPM_REGISTRY" "$LOOM_ALPINE_MIRROR"', 'fixture', str(helper), selected_profile])
+    policy=run(['bash','-c', 'source "$1"; loom_download_profile "$2"; loom_go_mirror "$3"; printf "LOOM_DOCKER_PREFIX=%s\\nLOOM_GO_PROXY=%s\\nLOOM_NPM_REGISTRY=%s\\nLOOM_ALPINE_MIRROR=%s\\n" "$LOOM_DOCKER_PREFIX" "$LOOM_GO_PROXY" "$LOOM_NPM_REGISTRY" "$LOOM_ALPINE_MIRROR"', 'fixture', str(helper), selected_profile, go_mirror])
     if policy.returncode: raise RuntimeError('Fixture download policy failed')
     env_path.write_text(env_path.read_text()+policy.stdout)
     original=env_path.read_bytes()

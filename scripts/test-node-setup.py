@@ -176,6 +176,26 @@ install_docker_debian_like ubuntu
         invalid = subprocess.run(['bash', str(SETUP), '--plan', '--yes', '--downloads', 'https://untrusted.example'], capture_output=True)
         self.assertNotEqual(invalid.returncode, 0)
 
+    def test_go_mirror_is_independent_and_persisted_defaults_are_retained(self):
+        helper=SETUP.with_name('download-sources.sh')
+        proxies={'official':'https://proxy.golang.org','liara':'https://package-mirror.liara.ir/repository/go/','runflare':'https://mirror-go.runflare.com','goproxy-cn':'https://goproxy.cn'}
+        for mirror, proxy in proxies.items():
+            command='set -euo pipefail; source "$1"; loom_download_profile arvan; loom_go_mirror "$2"; printf "%s\\n%s\\n%s\\n" "$LOOM_DOCKER_PREFIX" "$LOOM_GO_PROXY" "$LOOM_NPM_REGISTRY"'
+            result=subprocess.run(['bash','-c',command,'fixture',str(helper),mirror],capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stderr)
+            self.assertEqual(result.stdout.splitlines(),['docker.arvancloud.ir/',proxy,'https://package-mirror.liara.ir/repository/npm/'])
+            preview=subprocess.run(['bash',str(SETUP),'--plan','--yes','--domain','chat.example.org','--go-mirror',mirror],capture_output=True,text=True)
+            self.assertEqual(preview.returncode,0,preview.stderr)
+            self.assertIn(proxy,preview.stdout)
+        result=subprocess.run(['bash',str(SETUP),'--plan','--yes','--domain','chat.example.org','--go-mirror','http://unapproved.example'],capture_output=True)
+        self.assertNotEqual(result.returncode,0)
+        with tempfile.TemporaryDirectory() as temp:
+            env=Path(temp)/'deploy/.env';env.parent.mkdir();env.write_text('LOOM_GO_MIRROR=runflare\nLOOM_PUBLIC_DOMAIN=chat.example.org\n')
+            preview=subprocess.run(['bash',str(SETUP),'--plan','--yes','--turn','off','--group-calls','off'],env={**os.environ,'LOOM_NODE_HOME':temp},capture_output=True,text=True)
+            self.assertEqual(preview.returncode,0,preview.stderr)
+            self.assertIn('https://mirror-go.runflare.com',preview.stdout)
+            self.assertEqual(env.read_text(),'LOOM_GO_MIRROR=runflare\nLOOM_PUBLIC_DOMAIN=chat.example.org\n')
+
     def test_mirror_apt_uses_temporary_signed_sources(self):
         helper = SETUP.with_name('download-sources.sh')
         # Real temporary source generation; apt/dpkg are command doubles.

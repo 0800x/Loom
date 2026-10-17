@@ -19,6 +19,7 @@ UPDATE_REPOSITORY="${LOOM_UPDATE_REPOSITORY:-0800x/Loom}"
 UPDATE_SOURCE_DIR="${LOOM_UPDATE_SOURCE_DIR:-}"
 UPDATE_SOURCE_EXPLICIT=0
 DOWNLOAD_PROFILE=""
+GO_MIRROR=""
 TLS_MODE=""
 
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
@@ -64,6 +65,7 @@ With no --domain on a first interactive install, the installer asks for it on
 Options:
   --tls public|local             Public CA or explicit local certificate
   --downloads official|liara|arvan Per-install dependency sources
+  --go-mirror PROFILE             profile | official | liara | runflare | goproxy-cn
   --domain HOSTNAME               Public DNS hostname
   --operator-name NAME            Operator display name
   --jurisdiction TEXT             Network jurisdiction label
@@ -93,6 +95,7 @@ USAGE
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --tls) TLS_MODE="${2:-}"; shift 2 ;;
+    --go-mirror) GO_MIRROR="${2:-}"; shift 2 ;;
     --downloads) DOWNLOAD_PROFILE="${2:-}"; shift 2 ;;
     --domain) DOMAIN="${2:-}"; shift 2 ;;
     --operator-name) OPERATOR_NAME="${2:-}"; shift 2 ;;
@@ -421,7 +424,7 @@ build_or_install_manager() {
     -e LOOM_SOURCE_COMMIT="$INSTALL_COMMIT" -e LOOM_SOURCE_BRANCH="$UPDATE_BRANCH" -e LOOM_SOURCE_REPOSITORY="$UPDATE_REPOSITORY" \
     -e PATH=/usr/local/go/bin:/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     -v "$build_dir:/work:Z" -w /work/src "${LOOM_DOCKER_PREFIX}golang:1.25.14-alpine" \
-    sh -c 'set -eu; if [ -n "$LOOM_ALPINE_MIRROR" ]; then v=$(cut -d. -f1,2 /etc/alpine-release); printf "%s/v%s/main\n%s/v%s/community\n" "$LOOM_ALPINE_MIRROR" "$v" "$LOOM_ALPINE_MIRROR" "$v" > /etc/apk/repositories; fi; apk add --no-cache git; /usr/local/go/bin/go version; /usr/local/go/bin/go test -mod=readonly ./...; /usr/local/go/bin/go build -buildvcs=false -mod=readonly -trimpath -ldflags="-s -w -X main.buildCommit=$LOOM_SOURCE_COMMIT -X main.buildBranch=$LOOM_SOURCE_BRANCH -X main.buildRepository=$LOOM_SOURCE_REPOSITORY" -o /work/loom-node-manager .'
+    sh -c 'set -eu; if [ -n "$LOOM_ALPINE_MIRROR" ]; then v=$(cut -d. -f1,2 /etc/alpine-release); printf "%s/v%s/main\n%s/v%s/community\n" "$LOOM_ALPINE_MIRROR" "$v" "$LOOM_ALPINE_MIRROR" "$v" > /etc/apk/repositories; fi; apk add --no-cache git; /usr/local/go/bin/go version; echo "Downloading manager modules from $GOPROXY (10-minute limit)"; timeout -s TERM -k 10 600 /usr/local/go/bin/go mod download -x; /usr/local/go/bin/go test -mod=readonly ./...; /usr/local/go/bin/go build -buildvcs=false -mod=readonly -trimpath -ldflags="-s -w -X main.buildCommit=$LOOM_SOURCE_COMMIT -X main.buildBranch=$LOOM_SOURCE_BRANCH -X main.buildRepository=$LOOM_SOURCE_REPOSITORY" -o /work/loom-node-manager .'
   loom_install_manager_binary "$build_dir/loom-node-manager" "$target"
   rm -rf "$build_dir"
   trap - RETURN
@@ -887,6 +890,9 @@ if [[ -z "$DOWNLOAD_PROFILE" && -f "$EXISTING_ENV" ]]; then
   DOWNLOAD_PROFILE="$(read_env_value "$EXISTING_ENV" LOOM_DOWNLOAD_PROFILE)"
 fi
 loom_download_profile "${DOWNLOAD_PROFILE:-official}"
+if [[ -z "$GO_MIRROR" && -f "$EXISTING_ENV" ]]; then GO_MIRROR="$(read_env_value "$EXISTING_ENV" LOOM_GO_MIRROR)"; fi
+loom_go_mirror "${GO_MIRROR:-profile}"
+ui_info "Go module downloads: $LOOM_GO_PROXY"
 ui_step 1 7 "Ensuring Docker Engine + Compose v2"
 ensure_docker
 ensure_runtime_tools
@@ -912,6 +918,7 @@ set_env_value "$EXISTING_ENV" LOOM_TLS_MODE "$TLS_MODE"
 set_env_value "$EXISTING_ENV" LOOM_DOWNLOAD_PROFILE "$LOOM_DOWNLOAD_PROFILE"
 set_env_value "$EXISTING_ENV" LOOM_DOCKER_PREFIX "$LOOM_DOCKER_PREFIX"
 set_env_value "$EXISTING_ENV" LOOM_GO_PROXY "$LOOM_GO_PROXY"
+set_env_value "$EXISTING_ENV" LOOM_GO_MIRROR "$LOOM_GO_MIRROR"
 set_env_value "$EXISTING_ENV" LOOM_NPM_REGISTRY "$LOOM_NPM_REGISTRY"
 set_env_value "$EXISTING_ENV" LOOM_ALPINE_MIRROR "$LOOM_ALPINE_MIRROR"
 set_env_value "$EXISTING_ENV" LOOM_BUILD_COMMIT "${INSTALL_COMMIT:-unknown}"

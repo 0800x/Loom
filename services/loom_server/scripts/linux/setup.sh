@@ -29,6 +29,8 @@ PLAN=0
 TEXT_UI=0
 DOWNLOAD_PROFILE=official
 DOWNLOAD_SET=0
+GO_MIRROR=profile
+GO_MIRROR_SET=0
 TLS_MODE=public
 TLS_SET=0
 CALLS_ONLY=0
@@ -62,6 +64,7 @@ Usage:
 
 Options:
   --downloads official|liara|arvan  Per-install dependency sources
+  --go-mirror profile|official|liara|runflare|goproxy-cn  Override Go downloads only
   --tls public|local    Public CA or explicitly trusted local certificate
   --domain HOSTNAME     Hostname or IPv4 address
   --operator-name NAME
@@ -89,6 +92,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --calls-only) CALLS_ONLY=1; shift ;;
     --tls) TLS_MODE="${2:-}"; TLS_SET=1; shift 2 ;;
+    --go-mirror) GO_MIRROR="${2:-}"; GO_MIRROR_SET=1; shift 2 ;;
     --downloads) DOWNLOAD_PROFILE="${2:-}"; DOWNLOAD_SET=1; shift 2 ;;
     --domain) DOMAIN="${2:-}"; DOMAIN_SET=1; shift 2 ;;
     --operator-name) OPERATOR_NAME="${2:-}"; OPERATOR_SET=1; shift 2 ;;
@@ -300,6 +304,7 @@ disable_calls() {
 
 if [[ -f "$ENV_FILE" ]]; then
   EXISTING_INSTALL=1
+  if [[ $GO_MIRROR_SET -eq 0 ]]; then GO_MIRROR="$(read_env_value "$ENV_FILE" LOOM_GO_MIRROR)"; GO_MIRROR="${GO_MIRROR:-profile}"; fi
   if [[ $TLS_SET -eq 0 ]]; then TLS_MODE="$(read_env_value "$ENV_FILE" LOOM_TLS_MODE)"; TLS_MODE="${TLS_MODE:-public}"; fi
   if [[ $DOWNLOAD_SET -eq 0 ]]; then DOWNLOAD_PROFILE="$(read_env_value "$ENV_FILE" LOOM_DOWNLOAD_PROFILE)"; DOWNLOAD_PROFILE="${DOWNLOAD_PROFILE:-official}"; fi
   load_existing_default "$DOMAIN_SET" DOMAIN LOOM_PUBLIC_DOMAIN
@@ -333,6 +338,7 @@ case "$VIDEO" in yes|no) ;; *) echo 'Invalid video choice' >&2; exit 2 ;; esac
 case "$GROUP_CALLS" in on|off|keep) ;; *) echo 'Invalid group calls choice' >&2; exit 2 ;; esac
 
 loom_download_profile "$DOWNLOAD_PROFILE"
+loom_go_mirror "$GO_MIRROR"
 case "$TLS_MODE" in public|local) ;; *) echo "TLS mode must be public or local" >&2; exit 2 ;; esac
 if [[ "$TLS_MODE" == local && $EXISTING_INSTALL -eq 0 && $GROUP_SET -eq 0 ]]; then GROUP_CALLS=off; fi
 
@@ -472,6 +478,7 @@ if [[ $interactive -eq 1 ]]; then
     printf '\nChoose download sources. This does not change Docker or repository settings for other applications.\n'
     prompt_choice_into DOWNLOAD_PROFILE "Download sources" "$DOWNLOAD_PROFILE" 'official liara arvan'
     loom_download_profile "$DOWNLOAD_PROFILE"
+    loom_go_mirror "$GO_MIRROR"
   fi
 
   if [[ $TLS_SET -eq 0 ]]; then
@@ -525,6 +532,8 @@ if [[ "$TLS_MODE" == local ]]; then
 fi
 printf '\n%bReady to %s%b\n' "$BOLD" "$([[ $EXISTING_INSTALL -eq 1 ]] && echo reconfigure || echo install)" "$RESET"
 printf '  %-18s %s\n' 'Download sources' "$DOWNLOAD_PROFILE"
+printf '  %-18s %s\n' 'Go mirror' "$GO_MIRROR"
+printf '  %-18s %s\n' 'Go proxy' "$LOOM_GO_PROXY"
 printf '  %-18s %s\n' 'Domain' "$DOMAIN"
 printf '  %-18s %s\n' 'Operator' "$OPERATOR_NAME"
 printf '  %-18s %s\n' 'Jurisdiction' "$JURISDICTION"
@@ -554,6 +563,7 @@ fi
 args=(
   --tls "$TLS_MODE"
   --downloads "$DOWNLOAD_PROFILE"
+  --go-mirror "$GO_MIRROR"
   --domain "$DOMAIN"
   --operator-name "$OPERATOR_NAME"
   --jurisdiction "$JURISDICTION"

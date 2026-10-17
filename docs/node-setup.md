@@ -90,6 +90,35 @@ Provider references: [Liara Go](https://docs.liara.ir/mirrors/go/),
 [Arvan Docker](https://www.arvancloud.ir/fa/dev/docker) and
 [Arvan Linux repositories](https://www.arvancloud.ir/fa/dev/linux-repository).
 
+## Choose a different Go mirror
+
+Docker/APT and Go modules can use different providers. Both Iran download
+profiles use Liara Go by default; selecting Arvan alone does not change Go.
+If module downloads stall, rerun the verified installer with:
+
+```bash
+bash install.sh --downloads liara --go-mirror runflare
+```
+
+`--go-mirror` accepts `profile` (follow the download profile), `official`,
+`liara`, `runflare`, or `goproxy-cn`. The choice is saved for future setup and
+updates. It affects both Node Manager and the source-built storage service;
+it does not edit global Go configuration or switch Docker/npm/APT sources.
+Runflare documents `https://mirror-go.runflare.com`; Goproxy.cn documents
+`https://goproxy.cn`. Neither is a guarantee of reachability from your server.
+
+Storage builds now show module download requests separately from compilation.
+Module downloads have a ten-minute limit. BuildKit caches verified modules and
+compiled packages across interrupted builds, so retrying can reuse completed
+work. Do not prune Docker build caches when recovering from a network failure.
+Checksum verification remains enabled; no mirror switching follows a failure.
+The compile phase uses downloaded modules with network module fetching disabled
+and prints package names as it progresses. Compilation can still be slow on
+small servers; a quiet interval alone does not establish a network failure.
+
+Provider documentation: [Runflare Go mirror](https://runflare.com/mirrors/go-mirror/)
+and [Goproxy.cn](https://goproxy.cn/).
+
 ## Linux distributions
 
 Automatic package routes cover Ubuntu, Debian, Fedora, CentOS Stream, RHEL,

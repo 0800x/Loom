@@ -17,6 +17,7 @@ on:
       - 'install.sh'
       - 'scripts/test-node-setup.py'
       - 'scripts/test-node-production.py'
+      - 'scripts/probe-go-mirrors.py'
       - 'scripts/test-ubuntu-docker-packages.sh'
       - 'scripts/initialize-release-history.py'
       - 'scripts/test-initial-release-history.py'
@@ -39,6 +40,7 @@ on:
       - 'install.sh'
       - 'scripts/test-node-setup.py'
       - 'scripts/test-node-production.py'
+      - 'scripts/probe-go-mirrors.py'
       - 'scripts/test-ubuntu-docker-packages.sh'
       - 'scripts/initialize-release-history.py'
       - 'scripts/test-initial-release-history.py'
@@ -55,6 +57,12 @@ on:
           - official
           - liara
           - arvan
+
+      go_mirror:
+        description: Independent Go module mirror for the production fixture
+        type: choice
+        default: profile
+        options: [profile, official, liara, runflare, goproxy-cn]
 
 permissions:
   contents: read
@@ -127,26 +135,32 @@ jobs:
       - name: Verify pinned dependencies through the selected download profile
         env:
           LOOM_TEST_DOWNLOAD_PROFILE: ${{ inputs.downloads || 'official' }}
+          LOOM_TEST_GO_MIRROR: ${{ inputs.go_mirror || 'profile' }}
           GOSUMDB: sum.golang.org
           GOMODCACHE: ${{ runner.temp }}/loom-profile-modules
         run: |
           source services/loom_server/scripts/linux/download-sources.sh
           loom_download_profile "$LOOM_TEST_DOWNLOAD_PROFILE"
+          loom_go_mirror "$LOOM_TEST_GO_MIRROR"
           export GOPROXY="$LOOM_GO_PROXY"
           mkdir -p "$RUNNER_TEMP/loom-profile-check"
           cd "$RUNNER_TEMP/loom-profile-check"
           go mod init example.org/loom-profile-check
           go mod download google.golang.org/api@v0.230.0 github.com/klauspost/compress@v1.18.0 github.com/minio/console@v1.7.7-0.20250905210349-2017f33b26e1 github.com/pierrec/lz4/v4@v4.1.22
+      - name: Public Go mirror reachability (diagnostic only)
+        run: python3 scripts/probe-go-mirrors.py
       - name: Install the selected Docker package family in isolated Ubuntu
         run: bash scripts/test-ubuntu-docker-packages.sh
       - name: Real production startup, retained storage and credential preservation
         env:
           LOOM_TEST_DOWNLOAD_PROFILE: ${{ inputs.downloads || 'official' }}
+          LOOM_TEST_GO_MIRROR: ${{ inputs.go_mirror || 'profile' }}
         run: python3 scripts/test-node-production.py
       - name: Native TURN authentication in an isolated fixture
         env:
           LOOM_TEST_DOCKER: '1'
           LOOM_TEST_DOWNLOAD_PROFILE: ${{ inputs.downloads || 'official' }}
+          LOOM_TEST_GO_MIRROR: ${{ inputs.go_mirror || 'profile' }}
         run: python3 scripts/test-node-setup.py
 
   build:

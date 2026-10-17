@@ -17,7 +17,15 @@ RUN curl --proto '=https' --tlsv1.2 -fsSL --retry 3 \
 # and the public checksum database; integrity failures never bypass either.
 ENV CGO_ENABLED=0 GOMAXPROCS=2 \
     GOPROXY="$LOOM_GO_PROXY" GOSUMDB=sum.golang.org
-RUN go build -p 2 -mod=readonly -trimpath -buildvcs=false \
+# Cache verified modules across interrupted builds. Download and compilation
+# have separate output; a stalled network cannot wait indefinitely.
+RUN --mount=type=cache,id=loom-minio-gomod,target=/go/pkg/mod,sharing=locked \
+    --mount=type=cache,id=loom-minio-gobuild,target=/root/.cache/go-build,sharing=locked \
+    echo "Downloading MinIO modules from $GOPROXY (10-minute limit)" \
+ && timeout -s TERM -k 10 600 go mod download -x \
+ && go mod verify \
+ && echo 'Module download complete; compiling MinIO (package names show progress)' \
+ && GOPROXY=off go build -v -p 2 -mod=readonly -trimpath -buildvcs=false \
     -ldflags='-s -w -X github.com/minio/minio/cmd.Version=2026-02-12T20:18:48Z -X github.com/minio/minio/cmd.ReleaseTag=DEVELOPMENT.2026-02-12T20-18-48Z -X github.com/minio/minio/cmd.CommitID=7aac2a2c5b7c882e68c1ce017d8256be2feea27f -X github.com/minio/minio/cmd.ShortCommitID=7aac2a2c5b7c' \
     -o /out/minio .
 
