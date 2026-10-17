@@ -133,6 +133,33 @@ class SetupTests(unittest.TestCase):
             finally:
                 os.close(fd)
 
+    def test_installed_bundle_contains_storage_build_inputs(self):
+        installer = SETUP.with_name('install-production.sh').read_text()
+        copy_bundle = installer[installer.index('copy_bundle()'):installer.index('write_env()')]
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            repo = root / 'source'; (repo / 'scripts').mkdir(parents=True)
+            (repo / 'scripts/install-loom-node.sh').write_text('# fixture bootstrap\n')
+            (repo / '.loom-verified-source').write_text('fixture\n')
+            home = root / 'installed'
+            script = 'set -euo pipefail\n' + copy_bundle + r"""
+SOURCE_ROOT="$1"; SCRIPT_DIR="$SOURCE_ROOT/scripts/linux"; REPO_ROOT="$2"; INSTALL_DIR="$3"
+VERIFIED_COMMIT=fixture
+loom_require_root_owned(){ return 1; }
+ui_warn(){ :; }
+build_or_install_manager(){ :; }
+write_launcher(){ :; }
+copy_bundle
+"""
+            result = subprocess.run(['bash', '-c', script, 'fixture', str(SETUP.parents[2]), str(repo), str(home)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            # Check the installed build context, not the complete source checkout.
+            for line in (home / 'deploy/Dockerfile.storage').read_text().splitlines():
+                if line.startswith('COPY ') and not line.startswith('COPY --from='):
+                    source = line.split()[1]
+                    self.assertTrue((home / source).is_file(), 'Missing installed Docker input: ' + source)
+            self.assertEqual((home / 'scripts/linux/go-build-resources.sh').read_bytes(), SETUP.with_name('go-build-resources.sh').read_bytes())
+
     def test_local_certificate_san_reuse_and_mismatch(self):
         helper = SETUP.with_name('local-tls.sh')
         for host, option in [('192.0.2.24', '-verify_ip'), ('loom.local', '-verify_hostname')]:

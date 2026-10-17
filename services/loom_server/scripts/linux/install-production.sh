@@ -452,7 +452,7 @@ copy_bundle() {
   install -m 0755 "$SCRIPT_DIR/install-production.sh" "$INSTALL_DIR/scripts/linux/install-production.sh"
   [[ -f "$SCRIPT_DIR/manager.sh" ]] && install -m 0755 "$SCRIPT_DIR/manager.sh" "$INSTALL_DIR/scripts/linux/manager.sh"
   [[ -f "$SCRIPT_DIR/validate-node.sh" ]] && install -m 0755 "$SCRIPT_DIR/validate-node.sh" "$INSTALL_DIR/scripts/linux/validate-node.sh"
-  for component in local-tls.sh download-sources.sh install-state.sh diagnose-node.sh platform.sh install-safety.sh manager.sh uninstall-production.sh setup.sh install-cli.sh loom-cli.sh repair-update.sh; do
+  for component in go-build-resources.sh local-tls.sh download-sources.sh install-state.sh diagnose-node.sh platform.sh install-safety.sh manager.sh uninstall-production.sh setup.sh install-cli.sh loom-cli.sh repair-update.sh; do
     install -m 0755 "$SCRIPT_DIR/$component" "$INSTALL_DIR/scripts/linux/$component"
   done
   printf '%s\n' 'loom-install-v1:/opt/loom-node' > "$INSTALL_DIR/.loom-install-owner"

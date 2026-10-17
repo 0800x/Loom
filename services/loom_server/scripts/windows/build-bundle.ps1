@@ -25,6 +25,9 @@ try {
     New-Item -ItemType Directory -Force -Path (Join-Path $bundleRoot "scripts\windows") | Out-Null
     New-Item -ItemType Directory -Force -Path (Join-Path $bundleRoot "deploy") | Out-Null
 
+    New-Item -ItemType Directory -Force -Path (Join-Path $bundleRoot "scripts\linux") | Out-Null
+    Copy-Item (Join-Path $serverRoot "scripts\linux\go-build-resources.sh") (Join-Path $bundleRoot "scripts\linux\go-build-resources.sh")
+
     Copy-Item (Join-Path $serverRoot "package.json") $bundleRoot
     Copy-Item (Join-Path $serverRoot "package-lock.json") $bundleRoot
     Copy-Item (Join-Path $serverRoot "src") (Join-Path $bundleRoot "src") -Recurse

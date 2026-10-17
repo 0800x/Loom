@@ -26,7 +26,22 @@ def run(args, **kwargs):
 
 with tempfile.TemporaryDirectory(prefix='loom-production-fixture-') as temp:
     home=Path(temp)/'server'
-    shutil.copytree(SERVER,home,ignore=shutil.ignore_patterns('node_modules','.env','*.log'))
+    # Stage through the actual installer allowlist. A whole checkout conceals
+    # files omitted from the installed Docker build context.
+    fixture_repo=Path(temp)/'source'; (fixture_repo/'scripts').mkdir(parents=True)
+    (fixture_repo/'scripts/install-loom-node.sh').write_text('# isolated fixture bootstrap\n')
+    (fixture_repo/'.loom-verified-source').write_text(revision+'\n')
+    copy_bundle=installer[installer.index('copy_bundle()'):installer.index('write_env()')]
+    stage='set -euo pipefail\n'+copy_bundle+r"""
+SOURCE_ROOT="$1"; SCRIPT_DIR="$SOURCE_ROOT/scripts/linux"; REPO_ROOT="$2"; INSTALL_DIR="$3"; VERIFIED_COMMIT="$4"
+loom_require_root_owned(){ return 1; }
+ui_warn(){ :; }
+build_or_install_manager(){ :; }
+write_launcher(){ :; }
+copy_bundle
+"""
+    staged=run(['bash','-c',stage,'fixture',str(SERVER),str(fixture_repo),str(home),revision])
+    if staged.returncode: raise RuntimeError('Installed production bundle staging failed: '+staged.stderr)
     body='set -euo pipefail\n'+random_secret+write_env+'\nINSTALL_DIR="$1"; DOMAIN=chat.example.org; PROXY_MODE=nginx; OPERATOR_NAME="Example operator"; JURISDICTION=Unspecified; REGISTRATION=approval; FEDERATION=trusted; write_env\n'
     result=run(['bash','-c',body,'fixture',str(home)])
     if result.returncode:raise RuntimeError('Production environment generation failed')
