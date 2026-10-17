@@ -1,0 +1,40 @@
+READ-ONLY FIXTURE • fictional status • production actions disabled                                                      
+Loom Node Manager  v0.8.4  /  Services                                                                                  
+  •  focus: sections                                                                                                    
+╭─────────────────────────╮ ╭──────────────────────────────────────────────────────────────────────────────────────────╮
+│ SECTIONS                │ │ Services                                                                                 │
+│   Overview              │ │                                                                                          │
+│  > Services             │ │ Docker                  ● READY                                                          │
+│   Users                 │ │ Compose                 ● READY                                                          │
+│   Registration          │ │                                                                                          │
+│   Federation            │ │ docker compose ps                                                                        │
+│   Federation Queue      │ │ NAME                 STATUS                                                              │
+│   Calls                 │ │ loom-node            Up (healthy)                                                        │
+│   Groups                │ │ postgres             Up (healthy)                                                        │
+│   Public page           │ │ attachment-store     Up (healthy)                                                        │
+│   Network & TLS         │ │ turn                 Up                                                                  │
+│   Database              │ │ group-media          Up                                                                  │
+│   Storage               │ │                                                                                          │
+│   Security              │ │ Contextual controls                                                                      │
+│   Logs                  │ │ > [ Restart Node ]                                                                       │
+│   Backup                │ │   restart only the Loom application container                                            │
+│   Maintenance           │ │   [ Node logs ]                                                                          │
+│   Updates               │ │   follow Loom Node logs                                                                  │
+│                         │ │   [ Restart PostgreSQL ]                                                                 │
+│                         │ │   restart PostgreSQL; persistent volume is preserved                                     │
+│                         │ │   [ PostgreSQL console ]                                                                 │
+│                         │ │   open interactive psql                                                                  │
+│                         │ │   [ Restart MinIO ]                                                                      │
+│                         │ │   restart object storage; persistent volume is preserved                                 │
+│                         │ │   [ Restart Caddy ]                                                                      │
+│                         │ │   restart the bundled reverse proxy when its profile is active                           │
+│                         │ │                                                                                          │
+│                         │ │                                                                                          │
+│                         │ │ LAST OPERATION                                                                           │
+│                         │ │ READ-ONLY CAPTURE FIXTURE • fictional status • actions disabled                          │
+│                         │ │                                                                                          │
+╰─────────────────────────╯ ╰──────────────────────────────────────────────────────────────────────────────────────────╯
+Ctrl+←/→ sections  •  Tab focus                                                                                         
+Waiting for Node diagnostics                                                                                            
+↑/↓ move  Enter select  r refresh  ? help  q quit                                                                       
+                                                                                                                        

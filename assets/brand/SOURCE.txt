@@ -1,0 +1,5 @@
+Loom icon assets
+Original: extracted and vector-traced from the approved raster icon (close approximation, not original editable source).
+Color launcher: muted coral #F4A28C on #111318.
+Animated SVG: looping soft entrance; respects reduced motion.
+PNG: sizes 16,32,48,64,128,256,512,1024.

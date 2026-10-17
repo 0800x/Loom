@@ -1,0 +1,16 @@
+# Merge with docker-compose.production.yml. Keep the SFU signaling port private.
+services:
+  livekit:
+    image: ${LOOM_DOCKER_PREFIX:-}livekit/livekit-server:v1.13.9
+    restart: unless-stopped
+    labels:
+      org.loom.installation: /opt/loom-node
+    command: ["--config", "/etc/livekit.yaml", "--node-ip", "${LOOM_GROUP_CALLS_PUBLIC_IP:?set server public IPv4}"]
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    ports:
+      - "7881:7881/tcp"
+      - "50000-50100:50000-50100/udp"
+    # Never publish or directly reverse-proxy 7880.
+    expose:
+      - "7880"

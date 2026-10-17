@@ -1,0 +1,19 @@
+name: loom_node_ui
+description: Desktop manager for a self-hosted Loom Node.
+publish_to: "none"
+version: 0.7.1+2
+environment:
+  sdk: ">=3.6.2 <4.0.0"
+  flutter: ">=3.22.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  amicons: ^1.0.1
+  loom_design:
+    path: ../../packages/loom_design
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+flutter:
+  uses-material-design: true

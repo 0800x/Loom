@@ -1,0 +1,18 @@
+name: loom_storage
+description: Offline-first SQLite persistence for Loom Next messaging and public security state.
+publish_to: "none"
+version: 0.10.0
+environment:
+  sdk: ">=3.7.0 <4.0.0"
+dependencies:
+  loom_federation:
+    path: ../loom_federation
+  loom_identity:
+    path: ../loom_identity
+  loom_models:
+    path: ../loom_models
+  loom_sessions:
+    path: ../loom_sessions
+  sqlite3: ^2.7.5
+dev_dependencies:
+  test: ^1.25.0

@@ -1,0 +1,69 @@
+[?2026$p[?2027$p[>4m[=0;1u[?1049h[?25l[?5W[?2004h[>4;2m[=1;1u[?u[H[2JREAD-ONLY FIXTURE • fictional status • production actions disabled
+[1mLoom Node Manager[m  v0.8.4  /  Overview[m
+  •  focus: sections
+╭─────────────────────────╮ ╭──────────────────────────────────────────────────────────────────────────────────────────╮
+│ SECTIONS[16X[5;27H│ │ [1mOverview[m[80X[80C │
+│  [1m> Overview[m             │ │ [1mNODE[m[84X[84C │
+│   Services[14X[7;27H│ │ Name[18X[7;53H Loom Example Node[48X[48C │
+│   Users[17X[8;27H│ │ Domain[16X[8;53H node.example.org[49X[49C │
+│   Registration          │ │ Node ID[15X[9;53H fictional-node[51X[51C │
+│   Federation            │ │ Version[15X[10;53H 0.10.9[59X[59C │
+│   Federation Queue      │ │ Uptime[16X[11;53H 1d 00h 00m[55X[55C │
+│   Calls[17X[12;27H│ │ Federation mode       [66X[66C │
+│   Groups[16X[13;27H│ │ [88X[88C │
+│   Public page           │ │ [1mSYSTEM[m[82X[82C │
+│   Network & TLS         │ │ CPU [  ░░░░░░░░░░░░░░░░░░░░░░░░]   0.0%  0 logical CPUs[33X[33C │
+│   Database[14X[16;27H│ │ Memory [  ░░░░░░░░░░░░░░░░░░░░░░░░]   0.0%  — / —[39X[39C │
+│   Storage[15X[17;27H│ │ Disk / [  ░░░░░░░░░░░░░░░░░░░░░░░░]   0.0%  — / —[39X[39C │
+│   Security[14X[18;27H│ │ Live system gauges refresh every 2 seconds.[45X[45C │
+│   Logs[18X[19;27H│ │ [1mSERVICES[m[80X[80C │
+│   Backup[16X[20;27H│ │ Node readiness          [1m● HEALTHY[m [54X[54C │[m
+│   Maintenance           │ │ PostgreSQL              [1m● HEALTHY[m [54X[54C │[m
+│   Updates[15X[22;27H│ │ Object storage          [1m● HEALTHY[m [54X[54C │[m
+│[25X[23;27H│ │ Public HTTPS            [1m● UNVERIFIED[m [51X[51C │[m
+│[25X[24;27H│ │ [88X[88C │
+│[25X[25;27H│ │ [1mUSERS / MESSAGING[m[71X[71C │
+│[25X[26;27H│ │ Registered accounts    —[64X[64C │
+│[25X[27;27H│ │ Devices[15X[27;53H —[64X[64C │
+│[25X[28;27H│ │ Pending registrations  0[64X[64C │
+│[25X[29;27H│ │ Conversations          —[64X[64C │
+│[25X[30;27H│ │ Messages[14X[30;53H —[64X[64C │
+│[25X[31;27H│ │ Awaiting local routing —[64X[64C │
+│[25X[32;27H│ │ Live message streams   Unknown — update the running Node[32X[32C │
+│[25X[33;27H│ │ Calls[17X[33;53H Direct and group calls enabled[35X[35C │
+│[25X[34;27H│ │ [88X[88C │
+│[25X[35;27H│ │ [1mFEDERATION[m[78X[78C │
+╰─────────────────────────╯ ╰──────────────────────────────────────────────────────────────────────────────────────────╯
+Lines 1–31 / 48  •  PgUp/PgDn scroll
+Waiting for Node diagnostics
+↑/↓ move  Enter select  r refresh  ? help  q quit[2;31HServices[5;31H[1mServices[m
+[3G  Overview[14X[6;27H│ │ [88X
+[3G [1m> Services[m             │ │ Docker[16X[7;53H  [1m● READY[m         [m[8;31HCompose[15X[8;53H  [1m● READY[m        [m[9;31H[88X
+[1mdocker compose ps[m            [11;31HNAME[17X[11;52HSTATUS[61X[12;31Hloom-node            Up (healthy)[55X[13;31Hpostgres             Up (healthy)[14;31Hattachment-store     Up (healthy)[55X[15;31Hturn[17X[15;52HUp[65X[16;31Hgroup-media          Up[65X[17;31H[88X
+[1mContextual controls[m[24X[19;31H> [ Restart Node ][70X[20;31H  restart only the Loom application container[21;31H  [ Node logs ][73X[22;31H  follow Loom Node logs           [23;31H  [ Restart PostgreSQL ][64X[24;33Hrestart PostgreSQL; persistent volume is preserved[36X[25;31H  [ PostgreSQL console ][64X[26;31H  open interactive psql [27;31H  [ Restart MinIO ][69X[28;31H  restart object storage; persistent volume is preserved[29;31H  [ Restart Caddy ][69X[30;31H  restart the bundled reverse proxy when its profile is active[31;31H[88X
+[88X
+[1mLAST OPERATION[m[39X[34;31HREAD-ONLY CAPTURE FIXTURE • fictional status • actions disabled[35;31H[88X
+
+Ctrl+←/→ sections  •  Tab focu[C[K[2;31HCalls[K[5;31H[1mVoice & video calls[m[7;3H  Services[14X[7;27H│ │ Calling[15X[7;53H  [1m● Enabled[m [m[8;31HVoice policy            [1m● Allowed[m [m[9;31HVideo policy            [1m● Allowed[m [54X[m[10;31HDirect-call RTC         [1m● Ready[m [m[11;31HGroup calling           [1m● Enabled[m [54X[m
+[3G [1m> Calls[m [15X[12;27H│ │ Group participant limit 8[63X[m[13;31HTURN credentials        [1m● Configured[m [51X[m[14;31HConnected devices      0[64X[15;31HPending calls          0[64X[16;31HFederation failures    0[64X[17;31HBackground push         [1m● Not configured[m [47X[m[18;31H[88X
+Group calls use the private media service; direct calls require TURN.[20;31HConfiguration readiness is not a connectivity test. Check the required firewall/relay   [21;31Hports.         [22;31HWebRTC media is not queued through Nearby/DTN.[42X[23;33H[22X
+[86X
+[1mContextual controls[m[69X[26;31H> [ Set up group calls ][64X[27;33Hautomatic media service, private keys and settings; review before applying            [28;33H[ Disable group calls ][31X[29;33Hend group calls and stop media service; keep configuration for next time              [30;33H[ Check group media service ][57X[31;33Hverify Node policy and authenticated private media API; no settings changed           [32;33H[ Group media logs ][33;31H  open recent media service logs[34;31H  [ Configure TURN ][43X[35;31H  guided calling setup; secret entry is hidden; confirmation before applying            
+
+Lines 1–31 / 47  •  PgUp/PgDn scroll[2;31HDatabase[5;31H[1mDatabase[m           [7;31HPostgreSQL              [1m● HEALTHY[m[8;31HLatency[15X[8;53H 3 ms       [9;31HAccounts[14X[9;53H —          [10;32Hevices[15X[10;53H —        [11;31HSessions[14X[11;53H —          
+[3G  Calls[17X[12;27H│ │ Conversations          — [13;31HMessages[14X[13;53H —             [14;31HEvents[16X[14;53H —[15;31HFederation outbox pending 0
+[3G [1m> Database[m             │ │ Federation outbox retrying 0[m[17;31HFederation outbox failed 0[15X[18;31HFederation received total 0[61X[19;31H[69X
+[85X
+[1mContextual controls[m[69X[22;31H> [ Refresh database ][24X[23;33Hreload health, latency and row counts[49X[24;33H[ Open psql ][25;31H  interactive PostgreSQL console[26;31H  [ Clean expired sessions ][27;33Hdelete only sessions beyond refresh lifetime[30X[28;33H[ Restart PostgreSQL ][64X[29;33Hrestart database service[48X[30;33H[29X
+[86X
+[1mLAST OPERATION[m[74X[33;31HREAD-ONLY CAPTURE FIXTURE • fictional status • actions disabled[25X[34;31H[88X
+[88X
+
+Ctrl+←/→ sections  •  Tab focu[C[K[22;35r[35;1H[3S[1;40r[2;31HUpdate[C[K[5;31H[1mUpdates[m [7;31HState[17X[7;53H  [1mUpdate check unavailable[m [m[8;31HManager[15X[8;53H 0.8.4[9;31HManager build          92d037b35b[10;31HInstalled record       unknown[11;31HRunning Node           unknown[12;31HRepository             0800x/Loom[13;31HBranch[16X[13;53H main[14;31HInstallation path       [15;31HSource checkout        Remote checkout on install
+[3G  Database[14X[16;27H│ │ Installation           Install update (explicit action)[17;31H[88X
+[88X
+Read-only fixture: no remote update check performed[37X[21;31HUpdate status refreshes automatically every 60 seconds by comparing full commit SHAs.
+[3G [1m> Updates[m              │ │ Nothing is installed until you explicitly choose Install update.[m[23;33H[26X
+[1mContextual controls[m[27X[25;31H> [ Check now ]         [26;35Hfresh latest commit now; background checks run every 60 seconds[7B│[25X[33;27H│ │[90X[90C│
+│[25X[34;27H│ │[90X[90C│
+│[25X[35;27H│ │[90X[90C│

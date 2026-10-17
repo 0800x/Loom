@@ -1,0 +1,89 @@
+name: Node UI and iOS compile checks
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: 3.47.0
+
+jobs:
+  ios-simulator-compile:
+    name: iOS simulator compile
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Compile Loom for the iOS simulator
+        working-directory: apps/loom
+        run: |
+          flutter pub get
+          flutter build ios --simulator --debug
+      - name: Archive simulator application
+        run: ditto -c -k --sequesterRsrc --keepParent apps/loom/build/ios/iphonesimulator/Runner.app loom-ios-simulator.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: loom-ios-simulator-engineering-app
+          path: loom-ios-simulator.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  node-manager-windows-build:
+    name: Node Manager Windows engineering build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Build Node Manager for Windows
+        working-directory: apps/loom_node_ui
+        run: |
+          flutter pub get
+          flutter build windows --release
+      - name: Archive release directory
+        shell: pwsh
+        run: Compress-Archive -Path apps/loom_node_ui/build/windows/x64/runner/Release/* -DestinationPath loom-node-manager-windows-x64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: loom-node-manager-windows-engineering-bundle
+          path: loom-node-manager-windows-x64.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  node-manager-macos-build:
+    name: Node Manager macOS engineering build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Build Node Manager for macOS
+        working-directory: apps/loom_node_ui
+        run: |
+          flutter pub get
+          flutter build macos --release
+      - name: Archive application bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_path=$(find apps/loom_node_ui/build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)
+          test -n "$app_path"
+          ditto -c -k --sequesterRsrc --keepParent "$app_path" loom-node-manager-macos.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: loom-node-manager-macos-engineering-app
+          path: loom-node-manager-macos.zip
+          if-no-files-found: error
+          retention-days: 14

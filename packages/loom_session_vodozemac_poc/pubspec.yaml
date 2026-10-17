@@ -1,0 +1,15 @@
+name: loom_session_vodozemac_poc
+description: Non-shipping Loom Architecture v2 vodozemac session-provider adapter proof of concept.
+publish_to: "none"
+version: 0.1.0
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+dependencies:
+  loom_sessions:
+    path: ../loom_sessions
+  crypto: ^3.0.6
+  ffi: ^2.1.3
+dev_dependencies:
+  loom_storage:
+    path: ../loom_storage
+  test: ^1.25.0

@@ -1,0 +1,40 @@
+READ-ONLY FIXTURE • fictional status • production actions disabled                                                      
+Loom Node Manager  v0.8.4  /  Calls                                                                                     
+  •  focus: sections                                                                                                    
+╭─────────────────────────╮ ╭──────────────────────────────────────────────────────────────────────────────────────────╮
+│ SECTIONS                │ │ Voice & video calls                                                                      │
+│   Overview              │ │                                                                                          │
+│   Services              │ │ Calling                 ● Enabled                                                        │
+│   Users                 │ │ Voice policy            ● Allowed                                                        │
+│   Registration          │ │ Video policy            ● Allowed                                                        │
+│   Federation            │ │ Direct-call RTC         ● Ready                                                          │
+│   Federation Queue      │ │ Group calling           ● Enabled                                                        │
+│  > Calls                │ │ Group participant limit 8                                                                │
+│   Groups                │ │ TURN credentials        ● Configured                                                     │
+│   Public page           │ │ Connected devices      0                                                                 │
+│   Network & TLS         │ │ Pending calls          0                                                                 │
+│   Database              │ │ Federation failures    0                                                                 │
+│   Storage               │ │ Background push         ● Not configured                                                 │
+│   Security              │ │                                                                                          │
+│   Logs                  │ │ Group calls use the private media service; direct calls require TURN.                    │
+│   Backup                │ │ Configuration readiness is not a connectivity test. Check the required firewall/relay    │
+│   Maintenance           │ │ ports.                                                                                   │
+│   Updates               │ │ WebRTC media is not queued through Nearby/DTN.                                           │
+│                         │ │                                                                                          │
+│                         │ │                                                                                          │
+│                         │ │ Contextual controls                                                                      │
+│                         │ │ > [ Set up group calls ]                                                                 │
+│                         │ │   automatic media service, private keys and settings; review before applying             │
+│                         │ │   [ Disable group calls ]                                                                │
+│                         │ │   end group calls and stop media service; keep configuration for next time               │
+│                         │ │   [ Check group media service ]                                                          │
+│                         │ │   verify Node policy and authenticated private media API; no settings changed            │
+│                         │ │   [ Group media logs ]                                                                   │
+│                         │ │   open recent media service logs                                                         │
+│                         │ │   [ Configure TURN ]                                                                     │
+│                         │ │   guided calling setup; secret entry is hidden; confirmation before applying             │
+╰─────────────────────────╯ ╰──────────────────────────────────────────────────────────────────────────────────────────╯
+Lines 1–31 / 47  •  PgUp/PgDn scroll                                                                                    
+Waiting for Node diagnostics                                                                                            
+↑/↓ move  Enter select  r refresh  ? help  q quit                                                                       
+                                                                                                                        

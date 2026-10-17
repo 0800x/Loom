@@ -1,0 +1,40 @@
+READ-ONLY FIXTURE • fictional status • production actions disabled                                                      
+Loom Node Manager  v0.8.4  /  Updates                                                                                   
+  •  focus: sections                                                                                                    
+╭─────────────────────────╮ ╭──────────────────────────────────────────────────────────────────────────────────────────╮
+│ SECTIONS                │ │ Updates                                                                                  │
+│   Overview              │ │                                                                                          │
+│   Services              │ │ State                   Update check unavailable                                         │
+│   Users                 │ │ Manager                0.8.4                                                             │
+│   Registration          │ │ Manager build          92d037b35b                                                        │
+│   Federation            │ │ Installed record       unknown                                                           │
+│   Federation Queue      │ │ Running Node           unknown                                                           │
+│   Calls                 │ │ Repository             0800x/Loom                                                        │
+│   Groups                │ │ Branch                 main                                                              │
+│   Public page           │ │ Installation path                                                                        │
+│   Network & TLS         │ │ Source checkout        Remote checkout on install                                        │
+│   Database              │ │ Installation           Install update (explicit action)                                  │
+│   Storage               │ │                                                                                          │
+│   Security              │ │                                                                                          │
+│   Logs                  │ │ Read-only fixture: no remote update check performed                                      │
+│   Backup                │ │                                                                                          │
+│   Maintenance           │ │ Update status refreshes automatically every 60 seconds by comparing full commit SHAs.    │
+│  > Updates              │ │ Nothing is installed until you explicitly choose Install update.                         │
+│                         │ │                                                                                          │
+│                         │ │ Contextual controls                                                                      │
+│                         │ │ > [ Check now ]                                                                          │
+│                         │ │   refresh latest commit now; background checks run every 60 seconds                      │
+│                         │ │                                                                                          │
+│                         │ │                                                                                          │
+│                         │ │ LAST OPERATION                                                                           │
+│                         │ │ READ-ONLY CAPTURE FIXTURE • fictional status • actions disabled                          │
+│                         │ │                                                                                          │
+│                         │ │                                                                                          │
+│                         │ │                                                                                          │
+│                         │ │                                                                                          │
+│                         │ │                                                                                          │
+╰─────────────────────────╯ ╰──────────────────────────────────────────────────────────────────────────────────────────╯
+Ctrl+←/→ sections  •  Tab focus                                                                                         
+Waiting for Node diagnostics                                                                                            
+↑/↓ move  Enter select  r refresh  ? help  q quit                                                                       
+                                                                                                                        

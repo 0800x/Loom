@@ -1,0 +1,57 @@
+name: Initialize release history
+on:
+  push:
+    branches: [main]
+    paths: ['.github/clean-history-request.json']
+permissions:
+  contents: read
+jobs:
+  initialize:
+    if: github.repository == '0800x/Loom' && github.event.head_commit.message == 'Initialize release history'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Verify the reviewed revision and successful required checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json, re, subprocess
+          from pathlib import Path
+          request=json.loads(Path('.github/clean-history-request.json').read_text())
+          if set(request) != {'reviewedRevision','nodeValidationRun','releaseValidationRun','approvedByOwner'} or request['approvedByOwner'] is not True:
+              raise ValueError('Invalid initialization approval')
+          revision=request['reviewedRevision']
+          if not re.fullmatch('[a-f0-9]{40}',revision): raise ValueError('Invalid reviewed revision')
+          run=json.loads(subprocess.check_output(['gh','api','repos/0800x/Loom/actions/runs/'+str(int(request['nodeValidationRun']))]))
+          if run['head_sha'] != revision or run['conclusion'] != 'success' or run['name'] != 'Node manager TUI':
+              raise ValueError('Required current-revision validation has not succeeded')
+          release=json.loads(subprocess.check_output(['gh','api','repos/0800x/Loom/actions/runs/'+str(int(request['releaseValidationRun']))]))
+          if release['head_sha'] != revision or release['conclusion'] != 'success' or release['name'] != 'Loom release builds':
+              raise ValueError('Required release validation has not succeeded')
+          Path('/tmp/loom-reviewed-revision').write_text(revision)
+          PY
+      - name: Prepare and apply the clean main history
+        env:
+          GIT_AUTHOR_NAME: Loom
+          GIT_AUTHOR_EMAIL: 341820738+0800x@users.noreply.github.com
+          GIT_COMMITTER_NAME: Loom
+          GIT_COMMITTER_EMAIL: 341820738+0800x@users.noreply.github.com
+        run: |
+          python3 scripts/initialize-release-history.py --reviewed-revision "$(cat /tmp/loom-reviewed-revision)" > /tmp/loom-initial-history.json
+          head="$(python3 -c 'import json;print(json.load(open("/tmp/loom-initial-history.json"))["head"])')"
+          git push --force-with-lease="refs/heads/main:$GITHUB_SHA" origin "$head:refs/heads/main"
+          echo 'Main now contains Initial release and Configure verified installer.'
+          echo 'Existing tags and releases were not modified.'
+      - name: Validate the initialized main and active installer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run node-manager-ci.yml --repo 0800x/Loom --ref main
+          gh workflow run loom-alpha.yml --repo 0800x/Loom --ref main -f android_signing=existing-production-key

@@ -1,0 +1,12 @@
+name: loom_dtn
+description: Durable transport-independent DTN packet custody and routing-state contracts for Loom Architecture v2.
+publish_to: "none"
+version: 0.1.0
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+dependencies:
+  loom_protocol:
+    path: ../loom_protocol
+  sqlite3: ^2.7.5
+dev_dependencies:
+  test: ^1.25.0

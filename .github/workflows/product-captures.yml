@@ -1,0 +1,39 @@
+name: English product captures
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/loom/**'
+      - 'packages/loom_design/**'
+      - '.github/workflows/product-captures.yml'
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.0'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+        working-directory: apps/loom
+      - name: Clear earlier captures in the disposable CI checkout
+        run: rm -rf docs/screenshots/loom-current
+      - name: Render production widgets with fictional English fixtures
+        working-directory: apps/loom
+        env:
+          LOOM_UX_EVIDENCE: ../../docs/screenshots/loom-current
+        run: flutter test test/product_screenshots_test.dart
+      - name: Record capture provenance
+        run: python scripts/capture-provenance.py docs/screenshots/loom-current
+      - uses: actions/upload-artifact@v4
+        with:
+          name: loom-english-product-captures
+          path: docs/screenshots/loom-current/
+          if-no-files-found: error
+          retention-days: 14

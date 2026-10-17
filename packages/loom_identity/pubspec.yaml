@@ -1,0 +1,11 @@
+name: loom_identity
+description: Architecture v2 account and device authorization contracts for Loom.
+publish_to: "none"
+version: 0.1.0
+environment:
+  sdk: ">=3.7.0 <4.0.0"
+dependencies:
+  crypto: ^3.0.6
+  cryptography: ^2.9.0
+dev_dependencies:
+  test: ^1.25.0

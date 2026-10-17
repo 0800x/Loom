@@ -1,0 +1,1 @@
+enum LoomNodeSelectionPurpose { register, signIn }

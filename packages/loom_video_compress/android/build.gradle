@@ -1,0 +1,27 @@
+group 'com.example.video_compress'
+version '1.0-SNAPSHOT'
+
+// Local upstream fork: honor Loom's single AGP version and built-in Kotlin.
+buildscript {
+    repositories { google(); mavenCentral() }
+    dependencies {
+        classpath "com.android.tools.build:gradle:${project.findProperty('loomAgpVersion') ?: '9.1.0'}"
+    }
+}
+apply plugin: 'com.android.library'
+android {
+    namespace 'com.example.video_compress'
+    compileSdk 36
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    sourceSets {
+        main.kotlin.srcDirs += 'src/main/kotlin'
+    }
+    defaultConfig { minSdkVersion 24 }
+    lint { disable 'InvalidPackage' }
+}
+dependencies {
+    implementation 'com.otaliastudios:transcoder:0.10.5'
+}

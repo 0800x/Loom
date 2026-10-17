@@ -1,0 +1,224 @@
+name: Node manager TUI
+
+on:
+  push:
+    paths:
+      - 'tools/loom_node_manager/**'
+      - 'apps/loom/lib/main.dart'
+      - 'apps/loom/lib/features/nodes/application/local_https_trust.dart'
+      - 'apps/loom/lib/features/onboarding/presentation/onboarding_node_selection_screen.dart'
+      - 'apps/loom/test/local_https_trust_test.dart'
+      - 'services/loom_server/src/**'
+      - 'services/loom_server/package.json'
+      - 'services/loom_server/package-lock.json'
+      - 'services/loom_server/deploy/**'
+      - 'services/loom_server/scripts/linux/**'
+      - 'services/loom_server/scripts/windows/**'
+      - 'install.sh'
+      - 'scripts/test-node-setup.py'
+      - 'scripts/test-node-production.py'
+      - 'scripts/test-ubuntu-docker-packages.sh'
+      - 'scripts/initialize-release-history.py'
+      - 'scripts/test-initial-release-history.py'
+      - 'release/node-channel.json'
+      - 'scripts/install-loom-node.sh'
+      - '.github/workflows/node-manager-ci.yml'
+  pull_request:
+    paths:
+      - 'tools/loom_node_manager/**'
+      - 'apps/loom/lib/main.dart'
+      - 'apps/loom/lib/features/nodes/application/local_https_trust.dart'
+      - 'apps/loom/lib/features/onboarding/presentation/onboarding_node_selection_screen.dart'
+      - 'apps/loom/test/local_https_trust_test.dart'
+      - 'services/loom_server/src/**'
+      - 'services/loom_server/package.json'
+      - 'services/loom_server/package-lock.json'
+      - 'services/loom_server/deploy/**'
+      - 'services/loom_server/scripts/linux/**'
+      - 'services/loom_server/scripts/windows/**'
+      - 'install.sh'
+      - 'scripts/test-node-setup.py'
+      - 'scripts/test-node-production.py'
+      - 'scripts/test-ubuntu-docker-packages.sh'
+      - 'scripts/initialize-release-history.py'
+      - 'scripts/test-initial-release-history.py'
+      - 'release/node-channel.json'
+      - 'scripts/install-loom-node.sh'
+      - '.github/workflows/node-manager-ci.yml'
+  workflow_dispatch:
+    inputs:
+      downloads:
+        description: Download profile for the real production fixture
+        type: choice
+        default: official
+        options:
+          - official
+          - liara
+          - arvan
+
+permissions:
+  contents: read
+
+jobs:
+  local-https-client:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.0'
+          channel: stable
+          cache: true
+      - name: Resolve application dependencies
+        working-directory: apps/loom
+        run: flutter pub get
+      - name: Analyze local HTTPS and onboarding
+        working-directory: apps/loom
+        run: flutter analyze --fatal-infos lib/main.dart lib/features/nodes/application/local_https_trust.dart lib/features/onboarding/presentation/onboarding_node_selection_screen.dart test/local_https_trust_test.dart
+      - name: Verify certificate trust, real TLS handshake and removal
+        working-directory: apps/loom
+        run: flutter test test/local_https_trust_test.dart
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/loom_node_manager
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate Linux installer scripts
+        working-directory: ${{ github.workspace }}
+        run: |
+          bash -n install.sh scripts/install-loom-node.sh
+          python3 scripts/test-node-setup.py
+          python3 scripts/test-initial-release-history.py
+          for script in services/loom_server/scripts/linux/*.sh; do bash -n "$script"; done
+      - name: Verify public installer pins and complete download preview
+        working-directory: ${{ github.workspace }}
+        run: bash install.sh --plan --yes --domain chat.example.org --turn off --group-calls off
+      - name: Verify immutable source acquisition and preview
+        working-directory: ${{ github.workspace }}
+        run: |
+          export LOOM_REF="$GITHUB_SHA"
+          export LOOM_SOURCE_SHA256="$(git archive --format=tar "$GITHUB_SHA" | sha256sum | cut -d' ' -f1)"
+          bash scripts/install-loom-node.sh --preview-wizard --yes --domain chat.example.org --turn off --group-calls off
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          cache-dependency-path: tools/loom_node_manager/go.mod
+      - run: go mod download
+      - run: go test -mod=mod ./...
+      - run: go vet -mod=mod ./...
+      - name: Verify privileged worker isolation and protected approvals
+        run: |
+          go test -mod=readonly -c -o "$RUNNER_TEMP/loom-manager-tests"
+          sudo env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/root "$RUNNER_TEMP/loom-manager-tests" -test.v -test.run '^Test(NetworkWorkerDropsRootPrivileges|AuthenticatedReleaseApprovalPermissions|Publisher.*)$'
+
+  turn-integration:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+      - name: Verify pinned dependencies through the selected download profile
+        env:
+          LOOM_TEST_DOWNLOAD_PROFILE: ${{ inputs.downloads || 'official' }}
+          GOSUMDB: sum.golang.org
+          GOMODCACHE: ${{ runner.temp }}/loom-profile-modules
+        run: |
+          source services/loom_server/scripts/linux/download-sources.sh
+          loom_download_profile "$LOOM_TEST_DOWNLOAD_PROFILE"
+          export GOPROXY="$LOOM_GO_PROXY"
+          mkdir -p "$RUNNER_TEMP/loom-profile-check"
+          cd "$RUNNER_TEMP/loom-profile-check"
+          go mod init example.org/loom-profile-check
+          go mod download google.golang.org/api@v0.230.0 github.com/klauspost/compress@v1.18.0 github.com/minio/console@v1.7.7-0.20250905210349-2017f33b26e1 github.com/pierrec/lz4/v4@v4.1.22
+      - name: Install the selected Docker package family in isolated Ubuntu
+        run: bash scripts/test-ubuntu-docker-packages.sh
+      - name: Real production startup, retained storage and credential preservation
+        env:
+          LOOM_TEST_DOWNLOAD_PROFILE: ${{ inputs.downloads || 'official' }}
+        run: python3 scripts/test-node-production.py
+      - name: Native TURN authentication in an isolated fixture
+        env:
+          LOOM_TEST_DOCKER: '1'
+          LOOM_TEST_DOWNLOAD_PROFILE: ${{ inputs.downloads || 'official' }}
+        run: python3 scripts/test-node-setup.py
+
+  build:
+    needs: [test, turn-integration, local-https-client]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            output: loom-node-manager
+            bundle_suffix: linux-amd64
+          - goos: linux
+            goarch: arm64
+            output: loom-node-manager
+            bundle_suffix: linux-arm64
+          - goos: windows
+            goarch: amd64
+            output: loom-node-manager.exe
+            bundle_suffix: windows-amd64
+    defaults:
+      run:
+        working-directory: tools/loom_node_manager
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          cache-dependency-path: tools/loom_node_manager/go.mod
+      - run: go mod download
+      - name: Build static manager
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: '0'
+        run: |
+          mkdir -p dist
+          go build -buildvcs=false -mod=mod -trimpath -ldflags="-s -w -X main.buildCommit=$GITHUB_SHA -X main.buildBranch=$GITHUB_REF_NAME -X main.buildRepository=$GITHUB_REPOSITORY" -o "dist/${{ matrix.output }}" .
+      - name: Assemble server bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$GITHUB_WORKSPACE"
+          VERSION="$(node -e "const fs=require('fs'); console.log(JSON.parse(fs.readFileSync('$GITHUB_WORKSPACE/services/loom_server/package.json','utf8')).version)")"
+          NAME="loom-node-${VERSION}-${{ matrix.bundle_suffix }}"
+          OUT="$RUNNER_TEMP/$NAME"
+          mkdir -p "$OUT/bin"
+          MANAGER_VERSION="$(sed -n 's/^const version = "\([^"]*\)"/\1/p' main.go)"
+          printf '%s\n' "commit=$GITHUB_SHA" "branch=$GITHUB_REF_NAME" "repository=$GITHUB_REPOSITORY" "manager_version=$MANAGER_VERSION" > "$OUT/build-info.env"
+          cp "$ROOT/services/loom_server/package.json" "$OUT/package.json"
+          cp "$ROOT/services/loom_server/package-lock.json" "$OUT/package-lock.json"
+          cp -a "$ROOT/services/loom_server/src" "$OUT/src"
+          cp -a "$ROOT/services/loom_server/deploy" "$OUT/deploy"
+          rm -f "$OUT/deploy/.env"
+
+          if [[ "${{ matrix.goos }}" == "linux" ]]; then
+            mkdir -p "$OUT/scripts/linux"
+            cp -a "$ROOT/services/loom_server/scripts/linux/." "$OUT/scripts/linux/"
+            cp "dist/${{ matrix.output }}" "$OUT/bin/loom-node-manager"
+            chmod +x "$OUT/bin/loom-node-manager" "$OUT/scripts/linux/"*.sh
+            tar -C "$RUNNER_TEMP" -czf "$RUNNER_TEMP/$NAME.tar.gz" "$NAME"
+            echo "BUNDLE_PATH=$RUNNER_TEMP/$NAME.tar.gz" >> "$GITHUB_ENV"
+          else
+            mkdir -p "$OUT/scripts/windows"
+            cp -a "$ROOT/services/loom_server/scripts/windows/." "$OUT/scripts/windows/"
+            cp "dist/${{ matrix.output }}" "$OUT/bin/loom-node-manager.exe"
+            (cd "$RUNNER_TEMP" && zip -qr "$NAME.zip" "$NAME")
+            echo "BUNDLE_PATH=$RUNNER_TEMP/$NAME.zip" >> "$GITHUB_ENV"
+          fi
+      - uses: actions/upload-artifact@v6
+        with:
+          name: loom-node-${{ matrix.bundle_suffix }}
+          path: ${{ env.BUNDLE_PATH }}
+          if-no-files-found: error

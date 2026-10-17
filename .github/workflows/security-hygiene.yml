@@ -1,0 +1,27 @@
+name: Security and repository hygiene
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate production security configuration
+        run: python3 scripts/validate-security-config.py
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Repository audit
+        run: python3 scripts/repository_audit.py
+      - name: Deterministic chaos primitives
+        run: node scripts/chaos_node.mjs
+

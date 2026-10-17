@@ -1,0 +1,18 @@
+name: loom_transport
+description: Transport-independent outbound queue and sync coordination for Loom Next.
+publish_to: "none"
+version: 0.10.0
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+dependencies:
+  loom_dtn:
+    path: ../loom_dtn
+  loom_models:
+    path: ../loom_models
+  loom_protocol:
+    path: ../loom_protocol
+  loom_storage:
+    path: ../loom_storage
+  cryptography: ^2.9.0
+dev_dependencies:
+  test: ^1.25.0

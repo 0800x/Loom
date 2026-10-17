@@ -1,0 +1,497 @@
+name: Loom release builds
+on:
+  workflow_dispatch:
+    inputs:
+      android_signing:
+        description: Android signing mode (existing protected keystore required for signed builds)
+        type: choice
+        options: [unsigned-engineering, existing-production-key]
+        default: existing-production-key
+  push:
+    branches: [main]
+    tags: ['v0.1.0-alpha.1']
+permissions:
+  contents: read
+concurrency:
+  group: loom-alpha-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
+env:
+  CI: 'true'
+  FLUTTER_SUPPRESS_ANALYTICS: 'true'
+  FLUTTER_VERSION: '3.47.0'
+  LOOM_VERSION: '0.1.0-alpha.1'
+  XCODE_VERSION: '26.3'
+  APPROVED_LOOM_REVISION: ${{ vars.APPROVED_LOOM_REVISION }}
+  APPROVED_LOOM_TAG: ${{ vars.APPROVED_LOOM_TAG }}
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python scripts/release.py preflight
+  validate:
+    needs: preflight
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python scripts/release.py preflight
+          python scripts/test-release.py
+          python scripts/test-release-assembly.py
+          python scripts/test-build-metadata.py
+          python scripts/test-native-package-config.py
+          python scripts/test-macos-debug-symbols.py
+          python scripts/repository_audit.py
+          python scripts/validate-security-config.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.2'
+          cache-dependency-path: tools/loom_node_manager/go.sum
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+      - name: Server contract tests
+        working-directory: services/loom_server
+        run: |
+          npm install --ignore-scripts --no-package-lock --no-audit --no-fund
+          npm test
+      - name: TUI tests and analyzer
+        working-directory: tools/loom_node_manager
+        run: |
+          go test -mod=readonly ./...
+          go vet -mod=readonly ./...
+      - name: Native cryptography tests
+        run: |
+          cargo test --locked --manifest-path native/loom_mls/Cargo.toml
+          cargo build --locked --manifest-path native/loom_mls/Cargo.toml
+          cargo fmt --check --manifest-path native/loom_vodozemac_poc/Cargo.toml
+          cargo clippy --locked --manifest-path native/loom_vodozemac_poc/Cargo.toml --all-targets -- -D warnings
+          cargo test --locked --manifest-path native/loom_vodozemac_poc/Cargo.toml
+          cargo build --locked --manifest-path native/loom_vodozemac_poc/Cargo.toml
+      - name: Dart and Flutter analyzers and tests
+        env:
+          LOOM_TEST_MLS_LIBRARY: ${{ github.workspace }}/native/loom_mls/target/debug/libloom_mls.so
+          LOOM_VODOZEMAC_POC_LIB: ${{ github.workspace }}/native/loom_vodozemac_poc/target/debug/libloom_vodozemac_poc.so
+        shell: bash
+        run: |
+          set -euo pipefail
+          for project in packages/loom_models packages/loom_protocol packages/loom_federation packages/loom_storage packages/loom_transport packages/loom_dtn packages/loom_identity packages/loom_sessions packages/loom_messaging packages/loom_session_vodozemac_poc; do
+            (cd "$project"; dart pub get; dart analyze --fatal-infos; dart test)
+          done
+          for project in packages/loom_crypto_bridge packages/loom_design packages/loom_calls apps/loom apps/loom_node_ui; do
+            (cd "$project"; flutter pub get; flutter analyze --fatal-infos; flutter test)
+          done
+      - name: Verify generated registrant URI with the application package config
+        working-directory: apps/loom
+        run: |
+          python ../../scripts/prepare-native-package-config.py .
+          dart --packages=.dart_tool/package_config.json ../../scripts/check-native-package-config.dart .dart_tool/package_config.json
+      - name: Current widget captures
+        working-directory: apps/loom
+        env:
+          LOOM_UX_EVIDENCE: ../../docs/screenshots/loom-current
+        run: |
+          rm -rf ../../docs/screenshots/loom-current
+          flutter test test/product_screenshots_test.dart
+      - name: Capture provenance
+        run: python scripts/capture-provenance.py docs/screenshots/loom-current
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Loom-0.1.0-alpha.1-widget-captures
+          path: docs/screenshots/loom-current/
+          if-no-files-found: error
+  android:
+    needs: preflight
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: loom-release-signing
+    env:
+      LOOM_ANDROID_ENGINEERING_UNSIGNED: ${{ github.ref_type != 'tag' && inputs.android_signing != 'existing-production-key' && 'true' || 'false' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Select and load the existing protected Android signing identity
+        env:
+          EXPLICIT_ENGINEERING: ${{ github.event_name == 'workflow_dispatch' && inputs.android_signing == 'unsigned-engineering' }}
+          EXPECTED_CERTIFICATE: ${{ vars.LOOM_ANDROID_CERT_SHA256 }}
+          KEYSTORE: ${{ secrets.LOOM_ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.LOOM_ANDROID_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.LOOM_ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.LOOM_ANDROID_KEY_ALIAS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$EXPLICIT_ENGINEERING" == true ]]; then
+            echo 'Explicit unsigned engineering validation; APKs are not installable as-is.'
+            echo 'LOOM_ANDROID_ENGINEERING_UNSIGNED=true' >> "$GITHUB_ENV"
+            exit 0
+          fi
+          if [[ -z "$KEYSTORE" && -z "$STORE_PASSWORD" && -z "$KEY_PASSWORD" && -z "$KEY_ALIAS" ]]; then
+            echo '::warning::Existing Android signing credentials are missing. Building clearly labeled unsigned diagnostics only; the installable-candidate check will fail.'
+            echo 'LOOM_ANDROID_ENGINEERING_UNSIGNED=true' >> "$GITHUB_ENV"
+            exit 0
+          fi
+          for NAME in KEYSTORE STORE_PASSWORD KEY_PASSWORD KEY_ALIAS; do
+            if [[ -z "${!NAME}" ]]; then echo "::error::Incomplete existing Android signing configuration: $NAME"; exit 1; fi
+          done
+          if [[ ! "${EXPECTED_CERTIFICATE//:/}" =~ ^[a-fA-F0-9]{64}$ ]]; then
+            echo '::error::Set the existing certificate SHA256 in LOOM_ANDROID_CERT_SHA256 before signing.'
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/loom-existing.jks"
+          chmod 600 "$RUNNER_TEMP/loom-existing.jks"
+          echo 'LOOM_ANDROID_ENGINEERING_UNSIGNED=false' >> "$GITHUB_ENV"
+          printf 'LOOM_ANDROID_KEYSTORE=%s\n' "$RUNNER_TEMP/loom-existing.jks" >> "$GITHUB_ENV"
+          printf 'LOOM_ANDROID_STORE_PASSWORD=%s\n' "$STORE_PASSWORD" >> "$GITHUB_ENV"
+          printf 'LOOM_ANDROID_KEY_PASSWORD=%s\n' "$KEY_PASSWORD" >> "$GITHUB_ENV"
+          printf 'LOOM_ANDROID_KEY_ALIAS=%s\n' "$KEY_ALIAS" >> "$GITHUB_ENV"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+      - name: Make room on the ephemeral Android runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_HOME"
+          test -d "$ANDROID_HOME/cmdline-tools"
+          df -h "$GITHUB_WORKSPACE"
+          # SDK tools and Java remain; the required NDK is installed below.
+          sudo rm -rf /usr/share/dotnet /usr/local/share/powershell /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo rm -rf "$ANDROID_HOME/system-images" "$ANDROID_HOME/ndk"
+          python -c 'import shutil; free=shutil.disk_usage(".").free; print("Available GiB:", round(free/2**30, 1)); assert free >= 24*2**30, "Android build requires at least 24 GiB free"'
+      - name: Native MLS dependencies
+        run: |
+          cargo install cargo-ndk --version 4.1.2 --locked
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;28.2.13676358'
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.2.13676358" >> "$GITHUB_ENV"
+          echo "RUSTFLAGS=--remap-path-prefix=$GITHUB_WORKSPACE=/loom --remap-path-prefix=$HOME/.cargo=/cargo" >> "$GITHUB_ENV"
+      - name: Build three ABI APKs
+        working-directory: apps/loom
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get
+          python ../../scripts/prepare-native-package-config.py .
+          dart --packages=.dart_tool/package_config.json ../../scripts/check-native-package-config.dart .dart_tool/package_config.json
+          # Keep Flutter's release-mode native plugin generation enabled. With
+          # --no-pub Flutter 3.47 retains the debug integration_test registrant.
+          flutter precache --android
+          python ../../scripts/test-android-package-config-gradle.py
+          export LOOM_ANDROID_PROJECT_DIR="$PWD/android"
+          mkdir -p "$HOME/.gradle/init.d"
+          cp ../../scripts/prepare-android-package-config.gradle "$HOME/.gradle/init.d/loom-package-config.gradle"
+          flutter build apk --release --split-per-abi --split-debug-info="$RUNNER_TEMP/loom-symbols/android"
+          dart --packages=.dart_tool/package_config.json ../../scripts/check-native-package-config.dart .dart_tool/package_config.json
+      - name: Verify included native libraries and signing
+        env:
+          EXPECTED_CERTIFICATE: ${{ vars.LOOM_ANDROID_CERT_SHA256 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          MODE=release
+          if [[ "$LOOM_ANDROID_ENGINEERING_UNSIGNED" != true ]]; then SIGNING=existing-production-key; else SIGNING=unsigned-engineering; fi
+          for ABI in armeabi-v7a arm64-v8a x86_64; do
+            APK="apps/loom/build/app/outputs/flutter-apk/app-$ABI-$MODE.apk"
+            python scripts/release.py inspect-apk "$APK" "$ABI"
+            if [[ "$LOOM_ANDROID_ENGINEERING_UNSIGNED" != true ]]; then
+              "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify "$APK"
+              python scripts/verify-android-signature.py "$APK" "$ANDROID_HOME/build-tools/36.0.0/apksigner"
+            elif "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify "$APK" >/dev/null 2>&1; then
+              echo 'Engineering artifact unexpectedly signed; refusing ambiguous signing identity' >&2
+              exit 1
+            fi
+            cp "$APK" "dist/Loom-$LOOM_VERSION-android-$ABI-$SIGNING.apk"
+          done
+          python scripts/audit-artifact.py dist
+          python scripts/release.py manifest --directory dist --platform android --arch armeabi-v7a,arm64-v8a,x86_64 --signing "$SIGNING" --toolchain 'flutter=flutter --version' --toolchain 'rust=rustc --version' --toolchain 'java=java -version'
+      - name: Remove signing file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/loom-existing.jks"
+      - name: Upload eligible Android candidate
+        if: env.LOOM_ANDROID_ENGINEERING_UNSIGNED != 'true' || (github.event_name == 'workflow_dispatch' && inputs.android_signing == 'unsigned-engineering')
+        uses: actions/upload-artifact@v4
+        with:
+          name: Loom-0.1.0-alpha.1-android
+          path: dist/
+          if-no-files-found: error
+      - name: Upload unsigned diagnostics separately from release candidates
+        if: env.LOOM_ANDROID_ENGINEERING_UNSIGNED == 'true' && !(github.event_name == 'workflow_dispatch' && inputs.android_signing == 'unsigned-engineering')
+        uses: actions/upload-artifact@v4
+        with:
+          name: Loom-diagnostics-0.1.0-alpha.1-android-attempt-${{ github.run_attempt }}
+          path: dist/
+          if-no-files-found: error
+      - name: Require signed APKs for the installable candidate
+        if: github.ref_type == 'tag' || github.event_name == 'push' || inputs.android_signing == 'existing-production-key'
+        shell: bash
+        run: |
+          if [[ "$LOOM_ANDROID_ENGINEERING_UNSIGNED" == true ]]; then
+            echo '::error::APK compilation was diagnostic only. Add the existing keystore credentials to loom-release-signing and its approved certificate digest; signed release remains blocked.'
+            exit 1
+          fi
+  desktop:
+    needs: preflight
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            platform: linux
+            arch: x64
+          - runner: windows-2025
+            platform: windows
+            arch: x64
+          - runner: macos-15-intel
+            platform: macos
+            arch: x64
+          - runner: macos-15
+            platform: macos
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Select the required macOS SDK
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEVELOPER="/Applications/Xcode_${XCODE_VERSION}.app/Contents/Developer"
+          test -d "$DEVELOPER"
+          sudo xcode-select --switch "$DEVELOPER"
+          xcodebuild -version
+          xcrun --sdk macosx --show-sdk-version
+      - name: Parse the owner-run signing setup script without creating a key
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'scripts/setup-first-android-key.ps1'), [ref]$tokens, [ref]$parseErrors) | Out-Null
+          if ($parseErrors.Count -ne 0) { $parseErrors | Format-List; throw 'Signing setup syntax check failed' }
+      - name: Rust path remapping
+        shell: bash
+        run: echo "RUSTFLAGS=--remap-path-prefix=$GITHUB_WORKSPACE=/loom --remap-path-prefix=$HOME/.cargo=/cargo" >> "$GITHUB_ENV"
+      - name: Native compiler path remapping
+        if: matrix.platform == 'linux'
+        shell: bash
+        run: |
+          echo "CFLAGS=-ffile-prefix-map=$GITHUB_WORKSPACE=/loom -fdebug-prefix-map=$GITHUB_WORKSPACE=/loom" >> "$GITHUB_ENV"
+          echo "CXXFLAGS=-ffile-prefix-map=$GITHUB_WORKSPACE=/loom -fdebug-prefix-map=$GITHUB_WORKSPACE=/loom" >> "$GITHUB_ENV"
+      - name: Linux runtime and build dependencies
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev libmpv-dev libpulse-dev libasound2-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+      - name: Build complete client
+        if: matrix.platform != 'macos'
+        working-directory: apps/loom
+        run: |
+          flutter pub get
+          python ../../scripts/prepare-native-package-config.py .
+          dart --packages=.dart_tool/package_config.json ../../scripts/check-native-package-config.dart .dart_tool/package_config.json
+          flutter build ${{ matrix.platform }} --no-pub --release --split-debug-info="${{ runner.temp }}/loom-symbols/${{ matrix.platform }}-${{ matrix.arch }}"
+      - name: Build macOS application and native MLS for exact architecture
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ '${{ matrix.arch }}' == arm64 ]]; then RUST_TARGET=aarch64-apple-darwin; APPLE_ARCH=arm64; else RUST_TARGET=x86_64-apple-darwin; APPLE_ARCH=x86_64; fi
+          rustup target add "$RUST_TARGET"
+          cargo build --locked --release --target "$RUST_TARGET" --manifest-path native/loom_mls/Cargo.toml
+          cd apps/loom
+          flutter pub get
+          python ../../scripts/prepare-native-package-config.py .
+          dart --packages=.dart_tool/package_config.json ../../scripts/check-native-package-config.dart .dart_tool/package_config.json
+          flutter build macos --no-pub --release --config-only --split-debug-info="$RUNNER_TEMP/loom-symbols/macos-${{ matrix.arch }}"
+          LOOM_CLANG_MAPPING="-ffile-prefix-map=$GITHUB_WORKSPACE=/loom -fdebug-prefix-map=$GITHUB_WORKSPACE=/loom"
+          LOOM_C_FLAGS='OTHER_CFLAGS=$(inherited) '"$LOOM_CLANG_MAPPING"
+          LOOM_CXX_FLAGS='OTHER_CPLUSPLUSFLAGS=$(inherited) '"$LOOM_CLANG_MAPPING"
+          LOOM_SWIFT_FLAGS='OTHER_SWIFT_FLAGS=$(inherited) -file-prefix-map '"$GITHUB_WORKSPACE=/loom"
+          LOOM_LD_FLAGS='OTHER_LDFLAGS=$(inherited) -Wl,-oso_prefix,'"$GITHUB_WORKSPACE/"
+          xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release -derivedDataPath build/macos ARCHS="$APPLE_ARCH" ONLY_ACTIVE_ARCH=YES CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=NO "$LOOM_C_FLAGS" "$LOOM_CXX_FLAGS" "$LOOM_SWIFT_FLAGS" "$LOOM_LD_FLAGS" build
+          APP=$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)
+          test -n "$APP"
+          cp "../../native/loom_mls/target/$RUST_TARGET/release/libloom_mls.dylib" "$APP/Contents/Frameworks/"
+          install_name_tool -id '@rpath/libloom_mls.dylib' "$APP/Contents/Frameworks/libloom_mls.dylib"
+          # Remove Mach-O debug symbol tables (including absolute N_OSO paths)
+          # before signing; keep runtime symbols and load commands intact.
+          python ../../scripts/strip-macos-debug.py "$APP"
+          codesign --force --deep --sign - "$APP"
+          codesign --verify --deep --strict "$APP"
+          EXECUTABLE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Contents/Info.plist")
+          lipo "$APP/Contents/MacOS/$EXECUTABLE" -verify_arch "$APPLE_ARCH"
+      - name: Package and inspect Linux application bundle
+        if: matrix.platform == 'linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/release.py inspect-native apps/loom/build/linux/x64/release/bundle/lib/libloom_mls.so x64
+          python scripts/release.py runtime-dependencies apps/loom/build/linux/x64/release/bundle/loom linux-runtime-dependencies.txt
+          mkdir -p dist
+          cp release/linux-runtime.md apps/loom/build/linux/x64/release/bundle/RUNTIME.md
+          cp linux-runtime-dependencies.txt apps/loom/build/linux/x64/release/bundle/
+          tar -C apps/loom/build/linux/x64/release -czf "dist/Loom-$LOOM_VERSION-linux-x64.tar.gz" bundle
+      - name: Package Windows portable bundle and installer
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          python scripts/release.py inspect-native apps/loom/build/windows/x64/runner/Release/loom_mls.dll x64
+          if ($LASTEXITCODE -ne 0) { throw 'Missing or incompatible MLS DLL' }
+          foreach ($runtime in @('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll')) {
+            $runtimePath = "apps/loom/build/windows/x64/runner/Release/$runtime"
+            if (-not (Test-Path $runtimePath)) { throw "Missing app-local C++ runtime: $runtime" }
+            python scripts/release.py inspect-native $runtimePath x64
+            if ($LASTEXITCODE -ne 0) { throw "Incompatible app-local C++ runtime: $runtime" }
+          }
+          Copy-Item release/windows-runtime.md apps/loom/build/windows/x64/runner/Release/RUNTIME.md
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Get-ChildItem apps/loom/build/windows/x64/runner/Release -Recurse -Filter *.pdb | Remove-Item
+          Compress-Archive -Path apps/loom/build/windows/x64/runner/Release/* -DestinationPath "dist/Loom-$env:LOOM_VERSION-windows-x64-portable.zip"
+          choco install innosetup --yes --no-progress
+          if ($LASTEXITCODE -ne 0) { throw 'Installer compiler unavailable' }
+          $compiler = Get-ChildItem "${env:ProgramFiles(x86)}\Inno Setup *\ISCC.exe" | Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $compiler) { throw 'Installer compiler not found' }
+          & $compiler.FullName "/DReleaseVersion=$env:LOOM_VERSION" release/windows-installer.iss
+          if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed' }
+      - name: Package full unsigned macOS .app
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find apps/loom/build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)
+          test -n "$APP"
+          python scripts/release.py inspect-native "$APP/Contents/Frameworks/libloom_mls.dylib" '${{ matrix.arch }}'
+          mkdir -p dist
+          ditto -c -k --sequesterRsrc --keepParent "$APP" "dist/Loom-$LOOM_VERSION-macos-${{ matrix.arch }}-adhoc.zip"
+          STAGE="$RUNNER_TEMP/loom-dmg"
+          mkdir -p "$STAGE"
+          ditto "$APP" "$STAGE/$(basename "$APP")"
+          ln -s /Applications "$STAGE/Applications"
+          DMG="dist/Loom-$LOOM_VERSION-macos-${{ matrix.arch }}-adhoc.dmg"
+          hdiutil create -volname Loom -srcfolder "$STAGE" -format UDZO -ov "$DMG"
+          hdiutil verify "$DMG"
+          MOUNT="$RUNNER_TEMP/loom-dmg-mount"
+          mkdir -p "$MOUNT"
+          hdiutil attach "$DMG" -readonly -nobrowse -mountpoint "$MOUNT"
+          codesign --verify --deep --strict "$MOUNT/$(basename "$APP")"
+          test -f "$MOUNT/$(basename "$APP")/Contents/Frameworks/libloom_mls.dylib"
+          hdiutil detach "$MOUNT"
+      - name: Build manifest and checksums
+        shell: bash
+        run: |
+          python scripts/audit-artifact.py dist
+          python scripts/test-build-metadata.py
+          python scripts/release.py manifest --directory dist --platform '${{ matrix.platform }}' --arch '${{ matrix.arch }}' --signing '${{ matrix.platform == 'macos' && 'adhoc-engineering' || 'unsigned-engineering' }}' --toolchain 'flutter=flutter --version' --toolchain 'rust=rustc --version'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Loom-0.1.0-alpha.1-${{ matrix.platform }}-${{ matrix.arch }}
+          path: dist/
+          if-no-files-found: error
+      - name: Keep failed payload audit diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Loom-0.1.0-alpha.1-audit-${{ matrix.platform }}-${{ matrix.arch }}
+          path: dist/identity-audit.json
+          if-no-files-found: ignore
+  node:
+    needs: preflight
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+          - os: linux
+            arch: arm64
+          - os: windows
+            arch: amd64
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.2'
+          cache-dependency-path: tools/loom_node_manager/go.sum
+      - name: Build and package read-only-source server bundle
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: '0'
+        run: python scripts/package-node.py '${{ matrix.os }}' '${{ matrix.arch }}'
+      - run: |
+          python scripts/audit-artifact.py dist
+          python scripts/release.py manifest --directory dist --platform 'node-${{ matrix.os }}' --arch '${{ matrix.arch }}' --signing unsigned-engineering --toolchain 'go=go version'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Loom-0.1.0-alpha.1-node-${{ matrix.os }}-${{ matrix.arch }}
+          path: dist/
+          if-no-files-found: error
+  draft:
+    needs: [validate, android, desktop, node]
+    if: github.repository == '0800x/Loom' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    environment: loom-alpha-publishing
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Loom-0.1.0-alpha.1-*
+          path: candidate
+      - name: Verify every artifact manifest before assembly
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then
+            python scripts/verify-candidate.py candidate
+          else
+            python scripts/verify-candidate.py candidate --engineering
+          fi
+      - name: Prepare release assets and checksums
+        run: python scripts/assemble-release.py candidate release-assets
+      - name: Create draft prerelease after all required jobs succeed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/create-draft.py release-assets

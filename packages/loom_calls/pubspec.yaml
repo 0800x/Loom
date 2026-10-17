@@ -1,0 +1,20 @@
+name: loom_calls
+description: 1:1 WebRTC call engine for Loom Next Phase 5.
+publish_to: "none"
+version: 0.6.0
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+  flutter: ">=3.22.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_webrtc: 1.6.2+hotfix.3
+  loom_models:
+    path: ../loom_models
+  loom_protocol:
+    path: ../loom_protocol
+  sqlite3: ^2.7.5
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0

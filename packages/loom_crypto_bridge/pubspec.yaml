@@ -1,0 +1,22 @@
+name: loom_crypto_bridge
+description: Auditable identity, device-key, verification, recovery, and MLS boundary for Loom Next.
+publish_to: "none"
+version: 0.10.0
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+dependencies:
+  bip39_mnemonic: ^4.1.0
+  loom_models:
+    path: ../loom_models
+  loom_sessions:
+    path: ../loom_sessions
+  ffi: ^2.1.3
+  cryptography: ^2.9.0
+  flutter:
+    sdk: flutter
+  flutter_secure_storage: ^10.3.1
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  test: ^1.25.0

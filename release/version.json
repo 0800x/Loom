@@ -1,0 +1,16 @@
+{
+  "name": "Loom",
+  "version": "0.1.0-alpha.1",
+  "channel": "alpha",
+  "releaseBranch": "main",
+  "published": false,
+  "components": {
+    "client": "0.1.0+28",
+    "node": "0.10.10",
+    "terminalManager": "0.8.6",
+    "nodeUi": "0.7.1+2"
+  },
+  "protocolNamespace": "Loom",
+  "compatibilityEpoch": 1,
+  "acceptsEarlierNamespace": false
+}

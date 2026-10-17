@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package loom.protocol.v2;
+
+// Hop-local DTN framing carried inside an already authenticated/encrypted peer
+// channel. This schema is a wire field map, not a canonical signature format.
+message DtnPeerFrameV2 {
+  uint32 version = 1;
+
+  oneof body {
+    DtnPacketTransferV2 packet_transfer = 2;
+    DtnHopTransferAckV2 hop_ack = 3;
+  }
+}
+
+message DtnPacketTransferV2 {
+  string transmission_id = 1;
+  bytes outer_envelope = 2;
+
+  // Optional hop-local route sidecar. Receivers must cryptographically verify
+  // the referenced Destination Node before uplink; this field is not identity
+  // evidence and older peers may omit it.
+  string destination_node_domain = 3;
+}
+
+message DtnHopTransferAckV2 {
+  string transmission_id = 1;
+  string packet_id = 2;
+  uint64 accepted_at_unix_ms = 3;
+  bool duplicate = 4;
+}

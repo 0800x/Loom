@@ -1,0 +1,16 @@
+[package]
+name = "loom_vodozemac_poc"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Non-shipping Loom Architecture v2 vodozemac session-provider proof of concept"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde_json = "1.0"
+vodozemac = { version = "=0.10.0", default-features = false }
+
+[dev-dependencies]
+anyhow = "1.0"

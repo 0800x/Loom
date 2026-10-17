@@ -1,0 +1,45 @@
+name: Loom Node runtime
+
+on:
+  push:
+    paths:
+      - 'services/loom_server/**'
+      - '.github/workflows/node-ci.yml'
+  pull_request:
+    paths:
+      - 'services/loom_server/**'
+      - '.github/workflows/node-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  easy-mode-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+      - name: Install production adapters
+        working-directory: services/loom_server
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Run Node tests
+        working-directory: services/loom_server
+        run: npm test
+      - name: Validate every TypeScript source with Node strip-types
+        shell: bash
+        run: |
+          set -euo pipefail
+          find services/loom_server/src services/loom_server/test -name '*.ts' -print0 | while IFS= read -r -d '' file; do
+            echo "STRIP $file"
+            FILE="$file" node --input-type=module -e '
+              import { readFileSync } from "node:fs";
+              import { stripTypeScriptTypes } from "node:module";
+              const file = process.env.FILE;
+              stripTypeScriptTypes(readFileSync(file, "utf8"), {
+                mode: "strip",
+                sourceUrl: file,
+              });
+            '
+          done
