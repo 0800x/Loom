@@ -4,8 +4,8 @@ umask 077
 
 # Updated only after the referenced source has passed the Node installer checks.
 # This first-party bootstrap is the trust entry point; its pins verify all later code.
-LOOM_INSTALL_REVISION='57883b7725f1bbac04dad83cc6f75226ec21d5d1'
-LOOM_INSTALL_ARCHIVE_SHA256='fe9a8eebb0c006f7e937cec557e0ed466988ebc42316f6c0f4d131ff581fc568'
+LOOM_INSTALL_REVISION='34f669794e5ca74c75d5bfc0259c1e2c932bb72c'
+LOOM_INSTALL_ARCHIVE_SHA256='ee731eb4d9958bc592ab60b6fed10b1e1217caeb93df72dd47144db5e8ea163b'
 LOOM_INSTALL_BOOTSTRAP_SHA256='30a8aedb246bb00da4790cc5828290330f89bb3bcd7c9f7b27c8a91c5c2e1ed4'
 
 if [[ "${1:-}" == --help || "${1:-}" == -h ]]; then
