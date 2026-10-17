@@ -20,6 +20,7 @@ on:
       - 'scripts/probe-go-mirrors.py'
       - 'scripts/test-ubuntu-docker-packages.sh'
       - 'scripts/test-alpine-toolchain.py'
+      - 'scripts/test-go-build-resources.py'
       - 'scripts/initialize-release-history.py'
       - 'scripts/test-initial-release-history.py'
       - 'release/node-channel.json'
@@ -44,6 +45,7 @@ on:
       - 'scripts/probe-go-mirrors.py'
       - 'scripts/test-ubuntu-docker-packages.sh'
       - 'scripts/test-alpine-toolchain.py'
+      - 'scripts/test-go-build-resources.py'
       - 'scripts/initialize-release-history.py'
       - 'scripts/test-initial-release-history.py'
       - 'release/node-channel.json'
@@ -102,6 +104,7 @@ jobs:
         run: |
           bash -n install.sh scripts/install-loom-node.sh
           python3 scripts/test-node-setup.py
+          python3 scripts/test-go-build-resources.py
           python3 scripts/test-initial-release-history.py
           for script in services/loom_server/scripts/linux/*.sh; do bash -n "$script"; done
       - name: Verify public installer pins and complete download preview

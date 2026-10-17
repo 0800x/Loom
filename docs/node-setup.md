@@ -21,6 +21,7 @@ need typing. Use `--text` for line prompts on a basic terminal. The menus offer 
 | Question | Choices |
 | --- | --- |
 | Download sources | `official`, `liara` (Iran mirrors), or `arvan` (Arvan Docker/Ubuntu/Alpine, Liara Go/npm/Debian) |
+| Go modules | `profile`, `official`, `liara`, `parspack`, `runflare`, or `goproxy-cn`; independent of Docker/APK/npm |
 | HTTPS mode | `public` for a public CA certificate; `local` for an explicitly trusted local certificate |
 | Server address | Your hostname or IPv4 address, without a scheme, port or path |
 | Registration | `approval` to review requests, `open` to allow sign-ups, `closed` to stop new registrations |
@@ -108,12 +109,12 @@ Runflare documents `https://mirror-go.runflare.com`; Goproxy.cn documents
 `https://goproxy.cn`. Neither is a guarantee of reachability from your server.
 
 Storage builds now show module download requests separately from compilation.
-Module downloads have a ten-minute limit. BuildKit caches verified modules and
+Module downloads have a ten-minute limit. The interactive **Go modules** menu exposes every supported provider; a command-line mirror becomes its initially selected option. BuildKit caches verified modules and
 compiled packages across interrupted builds, so retrying can reuse completed
 work. Do not prune Docker build caches when recovering from a network failure.
 Checksum verification remains enabled; no mirror switching follows a failure.
 The compile phase uses downloaded modules with network module fetching disabled
-and prints package names as it progresses. Compilation can still be slow on
+and prints package names as it progresses. Download and compilation appear as separate build steps. Compiler parallelism follows CPU quota and available RAM (at most eight workers), instead of a fixed two-worker limit. Compilation can still be slow on
 small servers; a quiet interval alone does not establish a network failure.
 
 Provider documentation: [Runflare Go mirror](https://runflare.com/mirrors/go-mirror/)

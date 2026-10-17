@@ -40,19 +40,18 @@ if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
   BOLD=$'\033[1m'
   DIM=$'\033[2m'
   PURPLE=$'\033[38;5;141m'
-  CYAN=$'\033[38;5;45m'
+  CYAN=$'\033[38;5;85m'
+  SELECT=$'\033[48;5;23m\033[38;5;231m'
   GREEN=$'\033[38;5;84m'
   YELLOW=$'\033[38;5;220m'
   RED=$'\033[38;5;203m'
 else
-  RESET="" BOLD="" DIM="" PURPLE="" CYAN="" GREEN="" YELLOW="" RED=""
+  RESET="" BOLD="" DIM="" PURPLE="" CYAN="" GREEN="" YELLOW="" RED="" SELECT=""
 fi
 
 logo() {
-  printf '%b' "$PURPLE$BOLD"
-  printf '\nLoom · Home Node\n'
-  printf '%b\n' "$RESET"
-  printf '%bLoom Node Setup%b  %bsecure self-hosted messaging%b\n\n' "$BOLD" "$RESET" "$DIM" "$RESET"
+  printf '\n%bLOOM%b  Home Node\n' "$CYAN$BOLD" "$RESET"
+  printf '%bYour server. Your conversations.%b\n\n' "$DIM" "$RESET"
 }
 
 usage() {
@@ -369,7 +368,13 @@ choice_description() {
     'HTTPS mode:local') echo 'Offline certificate; import and verify it on clients' ;;
     'Download sources:official') echo 'Upstream registries and configured OS repositories' ;;
     'Download sources:liara') echo 'Iran: Liara Docker, Go, npm and package mirrors' ;;
-    'Download sources:arvan') echo 'Iran: Arvan Docker; Liara Go, npm and packages' ;;
+    'Download sources:arvan') echo 'Arvan Docker/Ubuntu/Alpine; Liara npm and Go' ;;
+    'Go modules:profile') echo 'Follow the package source selection' ;;
+    'Go modules:official') echo 'Go official module proxy' ;;
+    'Go modules:liara') echo 'Liara · Iran' ;;
+    'Go modules:parspack') echo 'ParsPack · Iran' ;;
+    'Go modules:runflare') echo 'Runflare · Iran' ;;
+    'Go modules:goproxy-cn') echo 'Goproxy.cn · independent Go proxy' ;;
     Registration:approval) echo 'Review registration requests' ;;
     Registration:open) echo 'Anyone can create an account' ;;
     Registration:closed) echo 'Existing accounts only' ;;
@@ -391,7 +396,7 @@ choice_description() {
 terminal_choice_into() {
   local target="$1" label="$2" default="$3" allowed="$4"
   local -a choices
-  local selected=0 i key tail lines=0 rows cols rendered
+  local selected=0 i key tail lines=0 rows cols rendered marker description
   read -r -a choices <<< "$allowed"
   for i in "${!choices[@]}"; do
     [[ "${choices[i]}" != "$default" ]] || selected=$i
@@ -404,18 +409,36 @@ terminal_choice_into() {
     rendered="$label  (Up/Down, Enter; Esc cancels)"
     printf '\r\033[K%.*s\n' "$cols" "$rendered" >/dev/tty
     for i in "${!choices[@]}"; do
-      if (( i == selected )); then
-        rendered="  > ${choices[i]} - $(choice_description "$label" "${choices[i]}")"
+      marker=' '
+      (( i != selected )) || marker='>'
+      description="$(choice_description "$label" "${choices[i]}")"
+      if (( cols >= 64 )); then
+        printf -v rendered '  %s %-14s %s' "$marker" "${choices[i]}" "$description"
       else
-        rendered="    ${choices[i]} - $(choice_description "$label" "${choices[i]}")"
+        rendered="  $marker ${choices[i]}"
       fi
-      printf '\r\033[K%.*s\n' "$cols" "$rendered" >/dev/tty
+      if (( i == selected )); then
+        printf '\r\033[K%b%.*s%b\n' "$SELECT$BOLD" "$cols" "$rendered" "$RESET" >/dev/tty
+      else
+        printf '\r\033[K%b%.*s%b\n' "$DIM" "$cols" "$rendered" "$RESET" >/dev/tty
+      fi
     done
-    lines=$((${#choices[@]} + 1))
+    rendered="$(choice_description "$label" "${choices[selected]}")"
+    printf '\r\033[K%b%.*s%b\n' "$DIM" "$cols" "$rendered" "$RESET" >/dev/tty
+    rendered='Up/Down: choose   Enter: continue   Esc: cancel'
+    printf '\r\033[K%b%.*s%b\n' "$DIM" "$cols" "$rendered" "$RESET" >/dev/tty
+    lines=$((${#choices[@]} + 3))
     key=''
     IFS= read -r -s -n 1 key </dev/tty || { echo 'Setup input closed' >&2; exit 2; }
     case "$key" in
-      '') printf -v "$target" '%s' "${choices[selected]}"; return ;;
+      '')
+        # Keep only a compact receipt instead of every completed menu.
+        printf '\033[%sA' "$lines" >/dev/tty
+        for ((i=0; i<lines; i++)); do printf '\r\033[K\n' >/dev/tty; done
+        printf '\033[%sA' "$lines" >/dev/tty
+        rendered="$label: ${choices[selected]}"
+        printf '\r\033[K%b%.*s%b\n' "$CYAN$BOLD" "$cols" "$rendered" "$RESET" >/dev/tty
+        printf -v "$target" '%s' "${choices[selected]}"; return ;;
       $'\033')
         tail=''
         IFS= read -r -s -n 2 -t 0.3 tail </dev/tty || true
@@ -472,14 +495,18 @@ fi
 
 if [[ $interactive -eq 1 ]]; then
   printf '%bConfiguration%b\n' "$BOLD" "$RESET"
-  printf '%bType your domain. Use Up/Down and Enter for the remaining choices. Use --text for line prompts.%b\n\n' "$DIM" "$RESET"
+  printf '%bUse Up/Down and Enter to choose. Only the server address needs typing.%b\n\n' "$DIM" "$RESET"
 
   if [[ $DOWNLOAD_SET -eq 0 ]]; then
-    printf '\nChoose download sources. This does not change Docker or repository settings for other applications.\n'
+    printf '\nChoose a source for system packages and container images.\n'
     prompt_choice_into DOWNLOAD_PROFILE "Download sources" "$DOWNLOAD_PROFILE" 'official liara arvan'
     loom_download_profile "$DOWNLOAD_PROFILE"
     loom_go_mirror "$GO_MIRROR"
   fi
+
+  printf '\nChoose a Go mirror for module downloads.\n'
+  prompt_choice_into GO_MIRROR "Go modules" "$GO_MIRROR" 'profile official liara parspack runflare goproxy-cn'
+  loom_go_mirror "$GO_MIRROR"
 
   if [[ $TLS_SET -eq 0 ]]; then
     prompt_choice_into TLS_MODE "HTTPS mode" "$TLS_MODE" 'public local'
@@ -530,7 +557,7 @@ if [[ "$TLS_MODE" == local ]]; then
   [[ "$PROXY" != caddy ]] || { echo 'Local certificates use the Nginx proxy; select auto or nginx.' >&2; exit 2; }
   PROXY=nginx
 fi
-printf '\n%bReady to %s%b\n' "$BOLD" "$([[ $EXISTING_INSTALL -eq 1 ]] && echo reconfigure || echo install)" "$RESET"
+printf '\n%bReview · ready to %s%b\n' "$BOLD" "$([[ $EXISTING_INSTALL -eq 1 ]] && echo reconfigure || echo install)" "$RESET"
 printf '  %-18s %s\n' 'Download sources' "$DOWNLOAD_PROFILE"
 printf '  %-18s %s\n' 'Go mirror' "$GO_MIRROR"
 printf '  %-18s %s\n' 'Go proxy' "$LOOM_GO_PROXY"

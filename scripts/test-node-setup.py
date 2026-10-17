@@ -42,7 +42,7 @@ class SetupTests(unittest.TestCase):
         if pid == 0:
             os.execvp('bash', ['bash', str(SETUP), '--plan', '--text'])
         output = bytearray()
-        prompts = [(b'Download sources', b'official\n'), (b'HTTPS mode', b'public\n'), (b'Server hostname or IPv4', b'chat.example.org\n'), (b'Registration', b'invalid\nopen\n'), (b'Federation', b'disabled\n'), (b'Voice calls', b'auto\n'), (b'Video calls', b'no\n'), (b'Group calls (', b'on\n')]
+        prompts = [(b'Download sources', b'official\n'), (b'Go modules', b'parspack\n'), (b'HTTPS mode', b'public\n'), (b'Server hostname or IPv4', b'chat.example.org\n'), (b'Registration', b'invalid\nopen\n'), (b'Federation', b'disabled\n'), (b'Voice calls', b'auto\n'), (b'Video calls', b'no\n'), (b'Group calls (', b'on\n')]
         index, deadline = 0, time.monotonic() + 15
         try:
             while time.monotonic() < deadline:
@@ -66,6 +66,8 @@ class SetupTests(unittest.TestCase):
             text = output.decode()
             self.assertIn('Invalid choice:', text)
             self.assertIn('Registration       open', text)
+            self.assertIn('Go mirror          parspack', text)
+            self.assertIn('mirror.abrha.net', text)
             self.assertIn('Video calls        no', text)
         finally:
             os.close(fd)
@@ -79,14 +81,14 @@ class SetupTests(unittest.TestCase):
                 os.environ['TERM'] = 'xterm'
                 os.execvp('bash', ['bash', str(SETUP), '--plan'])
             output, pending = bytearray(), bytearray()
-            prompts = [(b'Download sources  (', b'\n'), (b'HTTPS mode  (', b'\n'), (b'Server hostname or IPv4', b'chat.example.org\n'),
+            prompts = [(b'Download sources  (', b'\n'), (b'Go modules  (', b'\x1b[B\x1b[B\x1b[B\n'), (b'HTTPS mode  (', b'\n'), (b'Server hostname or IPv4', b'chat.example.org\n'),
                        (b'Registration  (', b'\x1b[B\n'),
                        (b'Federation  (', b'\x1b[B\n'),
                        (b'Voice calls  (', b'\x1b' if cancel else b'\n'),
                        (b'Video calls  (', b'\x1b[B\n'),
                        (b'Group calls (', b'\x1b[B\n')]
             if cancel:
-                prompts = prompts[:6]
+                prompts = prompts[:7]
             index, deadline = 0, time.monotonic() + 15
             try:
                 while time.monotonic() < deadline:
@@ -112,7 +114,7 @@ class SetupTests(unittest.TestCase):
                 self.assertEqual(os.waitstatus_to_exitcode(status), 130 if cancel else 0, output.decode(errors='replace'))
                 self.assertEqual(index, len(prompts))
                 if not cancel:
-                    for expected in ('Registration       open', 'Federation         disabled',
+                    for expected in ('Go mirror          parspack', 'Registration       open', 'Federation         disabled',
                                      'Video calls        no', 'Group calls        off'):
                         self.assertIn(expected, output.decode(errors='replace'))
                 else:

@@ -37,20 +37,19 @@ else
 fi
 
 ui_banner() {
-  printf '\n%b╭──────────────────────────────────────────────╮%b\n' "$UI_PURPLE$UI_BOLD" "$UI_RESET"
-  printf '%b│            Loom Node Installer             │%b\n' "$UI_PURPLE$UI_BOLD" "$UI_RESET"
-  printf '%b╰──────────────────────────────────────────────╯%b\n\n' "$UI_PURPLE$UI_BOLD" "$UI_RESET"
+  printf '\n%bLOOM%b  Home Node\n' "$UI_CYAN$UI_BOLD" "$UI_RESET"
+  printf '%bInstall · configure · connect%b\n' "$UI_MUTED" "$UI_RESET"
 }
 
 ui_step() {
   local current="$1" total="$2" text="$3"
-  printf '\n%b[%s/%s]%b %b%s%b\n' "$UI_PURPLE$UI_BOLD" "$current" "$total" "$UI_RESET" "$UI_BOLD" "$text" "$UI_RESET"
+  printf '\n%b%s / %s%b  %b%s%b\n' "$UI_CYAN$UI_BOLD" "$current" "$total" "$UI_RESET" "$UI_BOLD" "$text" "$UI_RESET"
 }
 
-ui_ok() { printf '%b✓%b %s\n' "$UI_GREEN$UI_BOLD" "$UI_RESET" "$*"; }
-ui_info() { printf '%b•%b %s\n' "$UI_CYAN$UI_BOLD" "$UI_RESET" "$*"; }
-ui_warn() { printf '%b!%b %s\n' "$UI_YELLOW$UI_BOLD" "$UI_RESET" "$*" >&2; }
-ui_fail() { printf '%b✗%b %s\n' "$UI_RED$UI_BOLD" "$UI_RESET" "$*" >&2; }
+ui_ok() { printf '%b  ready%b  %s\n' "$UI_GREEN" "$UI_RESET" "$*"; }
+ui_info() { printf '%b  info%b   %s\n' "$UI_MUTED" "$UI_RESET" "$*"; }
+ui_warn() { printf '%b  note%b   %s\n' "$UI_YELLOW" "$UI_RESET" "$*" >&2; }
+ui_fail() { printf '%b  error%b  %s\n' "$UI_RED" "$UI_RESET" "$*" >&2; }
 
 usage() {
   cat <<'USAGE'
@@ -423,8 +422,9 @@ build_or_install_manager() {
     -e CGO_ENABLED=0 -e GOOS=linux -e GOARCH="$goarch" \
     -e LOOM_SOURCE_COMMIT="$INSTALL_COMMIT" -e LOOM_SOURCE_BRANCH="$UPDATE_BRANCH" -e LOOM_SOURCE_REPOSITORY="$UPDATE_REPOSITORY" \
     -e PATH=/usr/local/go/bin:/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    -v "$SCRIPT_DIR/go-build-resources.sh:/usr/local/lib/loom/go-build-resources.sh:ro,Z" \
     -v "$build_dir:/work:Z" -w /work/src "${LOOM_DOCKER_PREFIX}golang:1.25.14-alpine3.23@sha256:27b3069b25647beacd3745b0b2c83e2f9b8d3935455a32cd4531236ee1c960e0" \
-    sh -c 'set -eu; if [ -n "$LOOM_ALPINE_MIRROR" ]; then v=$(cut -d. -f1,2 /etc/alpine-release); printf "%s/v%s/main\n%s/v%s/community\n" "$LOOM_ALPINE_MIRROR" "$v" "$LOOM_ALPINE_MIRROR" "$v" > /etc/apk/repositories; fi; apk add --no-cache git; /usr/local/go/bin/go version; echo "Downloading manager modules from $GOPROXY (10-minute limit)"; timeout -s TERM -k 10 600 /usr/local/go/bin/go mod download -x; /usr/local/go/bin/go test -mod=readonly ./...; /usr/local/go/bin/go build -buildvcs=false -mod=readonly -trimpath -ldflags="-s -w -X main.buildCommit=$LOOM_SOURCE_COMMIT -X main.buildBranch=$LOOM_SOURCE_BRANCH -X main.buildRepository=$LOOM_SOURCE_REPOSITORY" -o /work/loom-node-manager .'
+    sh -c 'set -eu; if [ -n "$LOOM_ALPINE_MIRROR" ]; then v=$(cut -d. -f1,2 /etc/alpine-release); printf "%s/v%s/main\n%s/v%s/community\n" "$LOOM_ALPINE_MIRROR" "$v" "$LOOM_ALPINE_MIRROR" "$v" > /etc/apk/repositories; fi; apk add --no-cache git; /usr/local/go/bin/go version; echo "Downloading manager modules from $GOPROXY (10-minute limit)"; timeout -s TERM -k 10 600 /usr/local/go/bin/go mod download -x; . /usr/local/lib/loom/go-build-resources.sh; loom_go_build_resources; /usr/local/go/bin/go test -p "$LOOM_GO_BUILD_JOBS" -mod=readonly ./...; /usr/local/go/bin/go build -p "$LOOM_GO_BUILD_JOBS" -buildvcs=false -mod=readonly -trimpath -ldflags="-s -w -X main.buildCommit=$LOOM_SOURCE_COMMIT -X main.buildBranch=$LOOM_SOURCE_BRANCH -X main.buildRepository=$LOOM_SOURCE_REPOSITORY" -o /work/loom-node-manager .'
   loom_install_manager_binary "$build_dir/loom-node-manager" "$target"
   rm -rf "$build_dir"
   trap - RETURN
