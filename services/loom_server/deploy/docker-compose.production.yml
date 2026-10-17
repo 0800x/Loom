@@ -40,7 +40,8 @@ services:
   minio-init:
     labels:
       org.loom.installation: /opt/loom-node
-    image: loom-node-source:${LOOM_BUILD_COMMIT:-engineering}
+    # Independent exporters must never publish to the same image tag.
+    image: loom-node-init-source:${LOOM_BUILD_COMMIT:-engineering}
     build:
       context: ..
       dockerfile: deploy/Dockerfile

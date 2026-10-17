@@ -60,6 +60,13 @@ with tempfile.TemporaryDirectory(prefix='loom-production-fixture-') as temp:
         result=run(command)
         if result.returncode: raise RuntimeError('Mirror Compose configuration rejected: '+profile)
         services=json.loads(result.stdout)['services']
+        exporters={}
+        for name, service in services.items():
+            if 'build' not in service: continue
+            image=service.get('image')
+            if not image: raise RuntimeError('Build service lacks an explicit image target: '+name)
+            if image in exporters: raise RuntimeError('Concurrent build exporters share an image tag: '+exporters[image]+' and '+name)
+            exporters[image]=name
         if services['postgres']['image'] != prefix+'postgres:17-alpine': raise RuntimeError('PostgreSQL mirror missing')
         for service in ('minio', 'minio-init', 'loom-node'):
             if services[service]['build']['args']['LOOM_DOCKER_PREFIX'] != prefix: raise RuntimeError('Build-base mirror missing')
@@ -74,6 +81,12 @@ with tempfile.TemporaryDirectory(prefix='loom-production-fixture-') as temp:
         if len(identity)!=64:raise RuntimeError('Persistent identity was not created by the production runtime')
         operation(['exec','-T','loom-node','node','-e',"fetch('http://127.0.0.1:7483/readyz').then(r=>process.exit(r.ok?0:1))"])
         print('Fresh production runtime is ready',flush=True)
+        # Rebuild both cached Node targets together, including when their tags
+        # already exist. Containerd stores reject concurrent exports to one tag.
+        operation(['build','loom-node','minio-init'])
+        images=operation(['images','--format','json'])
+        if not images: raise RuntimeError('Built production images are unavailable')
+        print('Concurrent Node and bucket-initializer rebuild completed with distinct image targets',flush=True)
         # Simulate the reported retained-volume/missing-config situation.
         missing=home/'deploy/missing.env'
         guard='source "$1"; loom_guard_persistent_install "$2"'
