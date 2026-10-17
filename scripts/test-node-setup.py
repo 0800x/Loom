@@ -28,6 +28,19 @@ def functions():
     return SOURCE[SOURCE.index('read_env_value()'):SOURCE.index('if [[ -f "$ENV_FILE" ]]; then\n  EXISTING_INSTALL=1')]
 
 
+def reap_pty_child(pid, deadline):
+    # PTY EOF can precede child exit; allow it to finish within the same timeout.
+    while True:
+        waited, status = os.waitpid(pid, os.WNOHANG)
+        if waited:
+            return status
+        if time.monotonic() >= deadline:
+            os.kill(pid, 15)
+            os.waitpid(pid, 0)
+            return None
+        time.sleep(.01)
+
+
 class SetupTests(unittest.TestCase):
     def test_preview_is_read_only_and_rejects_invalid_choices(self):
         good = subprocess.run(['bash', str(SETUP), '--plan', '--yes', '--domain', 'chat.example.org', '--turn', 'off', '--group-calls', 'off'], capture_output=True, text=True)
@@ -57,9 +70,8 @@ class SetupTests(unittest.TestCase):
                     output.extend(chunk)
                     if index < len(prompts) and prompts[index][0] in output:
                         os.write(fd, prompts[index][1]); index += 1
-            waited, status = os.waitpid(pid, os.WNOHANG)
-            if not waited:
-                os.kill(pid, 15); os.waitpid(pid, 0)
+            status = reap_pty_child(pid, deadline)
+            if status is None:
                 self.fail('Wizard did not finish: ' + output.decode(errors='replace'))
             self.assertEqual(os.waitstatus_to_exitcode(status), 0, output.decode(errors='replace'))
             self.assertEqual(index, len(prompts))
@@ -107,9 +119,8 @@ class SetupTests(unittest.TestCase):
                         if b'Server hostname' in prompts[index][0] or pending.endswith(b'\r\n'):
                             os.write(fd, prompts[index][1])
                             index += 1; pending.clear()
-                waited, status = os.waitpid(pid, os.WNOHANG)
-                if not waited:
-                    os.kill(pid, 15); os.waitpid(pid, 0)
+                status = reap_pty_child(pid, deadline)
+                if status is None:
                     self.fail('Menu did not finish: ' + output.decode(errors='replace'))
                 self.assertEqual(os.waitstatus_to_exitcode(status), 130 if cancel else 0, output.decode(errors='replace'))
                 self.assertEqual(index, len(prompts))
