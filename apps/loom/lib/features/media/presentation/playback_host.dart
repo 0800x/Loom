@@ -401,8 +401,29 @@ class LoomAudioTile extends StatelessWidget {
           textDirection: TextDirection.ltr,
           style: TextStyle(fontSize: 11, color: color.withValues(alpha: .85)),
         );
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
+        return AnimatedContainer(
+          duration: _motionDuration(context, 240),
+          curve: Curves.easeInOutCubicEmphasized,
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          padding: music ? const EdgeInsets.all(12) : EdgeInsets.zero,
+          decoration: music
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(22),
+                  gradient: LinearGradient(
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
+                    colors: [
+                      context.loom.primary.withValues(
+                        alpha: active ? .16 : .08,
+                      ),
+                      context.loom.surfaceElevated,
+                    ],
+                  ),
+                  border: Border.all(
+                    color: context.loom.primary.withValues(alpha: .12),
+                  ),
+                )
+              : null,
           child: Row(
             children: [
               if (music)

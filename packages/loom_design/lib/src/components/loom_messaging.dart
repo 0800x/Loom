@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/semantics.dart' show CustomSemanticsAction;
 
 import '../loom_icons.dart';
+import '../loom_surface_motion.dart';
 import '../loom_chat_layout.dart';
 import '../loom_accessibility.dart';
 import '../loom_interactions.dart';
@@ -31,6 +32,7 @@ class LoomChatRow extends StatelessWidget {
     required this.draftLabel,
     required this.typingLabel,
     this.onTap,
+    this.onTapWithOrigin,
     super.key,
   });
 
@@ -49,10 +51,12 @@ class LoomChatRow extends StatelessWidget {
   final String draftLabel;
   final String typingLabel;
   final VoidCallback? onTap;
+  final ValueChanged<Rect?>? onTapWithOrigin;
 
   @override
   Widget build(BuildContext context) {
     final p = context.loom;
+    final avatarKey = GlobalKey();
     final previewColor = typing ? p.connectivity : p.textSecondary;
     final radius = BorderRadius.circular(LoomRadii.control);
     return Padding(
@@ -60,9 +64,12 @@ class LoomChatRow extends StatelessWidget {
       child: Semantics(
         selected: selected,
         child: LoomPressable(
-          enabled: onTap != null,
+          enabled: onTap != null || onTapWithOrigin != null,
           child: InkWell(
-            onTap: onTap,
+            onTap: onTapWithOrigin != null
+                ? () =>
+                    onTapWithOrigin!(LoomOrigin.of(avatarKey.currentContext))
+                : onTap,
             borderRadius: radius,
             child: AnimatedContainer(
               duration: LoomAccessibility.fromContext(context).reduceMotion
@@ -85,7 +92,11 @@ class LoomChatRow extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  avatar ?? LoomAvatar(label: name, presence: presence),
+                  KeyedSubtree(
+                    key: avatarKey,
+                    child:
+                        avatar ?? LoomAvatar(label: name, presence: presence),
+                  ),
                   const SizedBox(width: LoomSpacing.sm),
                   Expanded(
                     child: Column(

@@ -577,10 +577,7 @@ class _RichMessageContentState extends State<_RichMessageContent> {
       final mine =
           widget.message.record.senderAddress.toLowerCase() ==
           widget.messaging?.onboarding.receipt?.address.toLowerCase();
-      final width = media['width'] as int?, height = media['height'] as int?;
-      final ratio = width != null && height != null
-          ? (width / height).clamp(.75, 1.8).toDouble()
-          : 1.3;
+      final ratio = LoomMediaPreparation.displayAspectRatio(media);
       final duration = media['durationMs'] is int
           ? Duration(milliseconds: media['durationMs'] as int)
           : null;

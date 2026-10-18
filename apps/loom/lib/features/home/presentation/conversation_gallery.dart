@@ -14,12 +14,23 @@ class _GalleryItem {
 }
 
 class _GalleryDraft {
-  _GalleryDraft(String text) : caption = TextEditingController(text: text);
+  _GalleryDraft(String text) : caption = TextEditingController(text: text) {
+    LoomAppLock.instance.addListener(_locked);
+  }
+  void _locked() {
+    if (LoomAppLock.instance.locked) batch.stop();
+  }
+
   final batch = MediaBatchController<_GalleryItem>();
   final TextEditingController caption;
   LoomVisibleMessage? reply;
   bool replyCaptured = false;
+  Future<void>? upload;
+  bool disposed = false;
   void dispose() {
+    if (disposed) return;
+    disposed = true;
+    LoomAppLock.instance.removeListener(_locked);
     batch.dispose();
     caption.dispose();
   }
@@ -42,6 +53,7 @@ class _AttachmentGallery extends StatefulWidget {
 
 class _AttachmentGalleryState extends State<_AttachmentGallery>
     with WidgetsBindingObserver {
+  bool _handedOff = false;
   final _assets = <AssetEntity>[];
   final _galleryScroll = ScrollController();
   List<AssetPathEntity> _albums = [];
@@ -224,14 +236,27 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
   }
 
   Future<void> _send() async {
-    final caption = widget.draft.caption.text;
-    await batch.send(
-      (item, withCaption) => widget.send(item, withCaption ? caption : ''),
-      authorized: widget.authorized,
-    );
-    if (mounted && batch.pending.isEmpty && batch.error == null) {
-      Navigator.pop(context, 'sent');
-    }
+    if (batch.sending || batch.pending.isEmpty || !widget.authorized()) return;
+    final draft = widget.draft;
+    final caption = draft.caption.text;
+    final send = widget.send;
+    draft.upload = batch
+        .send(
+          (item, withCaption) => send(item, withCaption ? caption : ''),
+          authorized: widget.authorized,
+        )
+        .then((_) {
+          if (!draft.disposed &&
+              draft.batch.pending.isEmpty &&
+              draft.batch.error == null) {
+            draft.caption.clear();
+            draft.reply = null;
+            draft.replyCaptured = false;
+          }
+        });
+    _handedOff = true;
+    unawaited(draft.upload!);
+    if (mounted) Navigator.pop(context, 'queued');
   }
 
   Future<void> _previewSelection() async {
@@ -262,7 +287,7 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
     WidgetsBinding.instance.removeObserver(this);
     if (_mobile) PhotoManager.removeChangeCallback(_libraryChanged);
     _galleryScroll.dispose();
-    batch.stop(); // never dispose the reusable draft here
+    if (!_handedOff) batch.stop(); // the chat owns a handed-off upload
     batch.removeListener(_changed);
     LoomAppLock.instance.removeListener(_locked);
     super.dispose();
@@ -591,75 +616,81 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
                 Padding(
                   padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
                   child: LayoutBuilder(
-                    builder: (context, bounds) => LoomGlassSurface(
-                      liveBackdrop: true,
-                      radius: 24,
-                      padding: const EdgeInsets.all(4),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children:
-                              <Widget>[
-                                    _category(
-                                      LoomIcons.photo_library_outlined,
-                                      tr(context, 'Gallery', 'گالری'),
-                                      null,
-                                      selected: true,
-                                    ),
-                                    _category(
-                                      LoomIcons.gif_box_outlined,
-                                      'GIF',
-                                      'gif',
-                                    ),
-                                    _category(
-                                      LoomIcons.music_note_outlined,
-                                      tr(context, 'Music', 'موسیقی'),
-                                      'music',
-                                    ),
-                                    _category(
-                                      LoomIcons.attach_file_rounded,
-                                      tr(context, 'File', 'فایل'),
-                                      'file',
-                                    ),
-                                    _category(
-                                      LoomIcons.location_on_outlined,
-                                      tr(context, 'Location', 'موقعیت'),
-                                      'location',
-                                    ),
-                                    _category(
-                                      LoomIcons.share_location_outlined,
-                                      tr(
-                                        context,
-                                        'Live location',
-                                        'موقعیت زنده',
-                                      ),
-                                      'live',
-                                    ),
-                                    if (widget.canShareAddress)
+                    builder: (context, bounds) => ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.sizeOf(context).height * .30,
+                      ),
+                      child: LoomGlassSurface(
+                        liveBackdrop: true,
+                        radius: 24,
+                        padding: const EdgeInsets.all(4),
+                        child: SingleChildScrollView(
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children:
+                                <Widget>[
                                       _category(
-                                        LoomIcons.person_outline,
-                                        tr(context, 'My address', 'نشانی من'),
-                                        'contact',
+                                        LoomIcons.photo_library_outlined,
+                                        tr(context, 'Gallery', 'گالری'),
+                                        null,
+                                        selected: true,
                                       ),
-                                    _category(
-                                      LoomIcons.content_paste,
-                                      tr(context, 'Paste text', 'درج متن'),
-                                      'paste',
-                                    ),
-                                  ]
-                                  .map(
-                                    (item) => SizedBox(
-                                      width: 92,
-                                      height:
-                                          40 +
-                                          MediaQuery.textScalerOf(
-                                                context,
-                                              ).scale(12) *
-                                              2.4,
-                                      child: item,
-                                    ),
-                                  )
-                                  .toList(),
+                                      _category(
+                                        LoomIcons.gif_box_outlined,
+                                        'GIF',
+                                        'gif',
+                                      ),
+                                      _category(
+                                        LoomIcons.music_note_outlined,
+                                        tr(context, 'Music', 'موسیقی'),
+                                        'music',
+                                      ),
+                                      _category(
+                                        LoomIcons.attach_file_rounded,
+                                        tr(context, 'File', 'فایل'),
+                                        'file',
+                                      ),
+                                      _category(
+                                        LoomIcons.location_on_outlined,
+                                        tr(context, 'Location', 'موقعیت'),
+                                        'location',
+                                      ),
+                                      _category(
+                                        LoomIcons.share_location_outlined,
+                                        tr(
+                                          context,
+                                          'Live location',
+                                          'موقعیت زنده',
+                                        ),
+                                        'live',
+                                      ),
+                                      if (widget.canShareAddress)
+                                        _category(
+                                          LoomIcons.person_outline,
+                                          tr(context, 'My address', 'نشانی من'),
+                                          'contact',
+                                        ),
+                                      _category(
+                                        LoomIcons.content_paste,
+                                        tr(context, 'Paste text', 'درج متن'),
+                                        'paste',
+                                      ),
+                                    ]
+                                    .map(
+                                      (item) => SizedBox(
+                                        width: (bounds.maxWidth - 24) / 4,
+                                        height:
+                                            40 +
+                                            MediaQuery.textScalerOf(
+                                                  context,
+                                                ).scale(12) *
+                                                2.4,
+                                        child: item,
+                                      ),
+                                    )
+                                    .toList(),
+                          ),
                         ),
                       ),
                     ),
@@ -819,4 +850,43 @@ class _GalleryThumbState extends State<_GalleryThumb> {
       ),
     ),
   );
+}
+
+/// Bridge the platform-independent batch notifier into the chat widget tree.
+class _MediaBatchProgress extends StatefulWidget {
+  const _MediaBatchProgress({required this.batch, required this.builder});
+  final MediaBatchController<_GalleryItem> batch;
+  final WidgetBuilder builder;
+  @override
+  State<_MediaBatchProgress> createState() => _MediaBatchProgressState();
+}
+
+class _MediaBatchProgressState extends State<_MediaBatchProgress> {
+  void _changed() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.batch.addListener(_changed);
+  }
+
+  @override
+  void didUpdateWidget(covariant _MediaBatchProgress oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.batch != widget.batch) {
+      oldWidget.batch.removeListener(_changed);
+      widget.batch.addListener(_changed);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.batch.removeListener(_changed);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context);
 }

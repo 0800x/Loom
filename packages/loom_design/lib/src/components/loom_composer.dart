@@ -209,8 +209,8 @@ class _LoomGlassComposerState extends State<LoomGlassComposer> {
       child: LoomGlassSurface(
         strength: LoomGlassStrength.standard,
         liveBackdrop: true,
-        radius: 30,
-        padding: const EdgeInsets.fromLTRB(6, 3, 6, 3),
+        radius: 26,
+        padding: const EdgeInsets.fromLTRB(4, 0, 2, 0),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -274,7 +274,7 @@ class _LoomGlassComposerState extends State<LoomGlassComposer> {
                           focusedBorder: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: LoomSpacing.sm,
-                            vertical: 12,
+                            vertical: 9,
                           ),
                         ),
                       ),
