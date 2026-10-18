@@ -50,3 +50,12 @@ Server and client tests cover matching namespace delivery and rejection of
 unsupported proofs, recovery formats and protected envelopes. Native MLS tests
 cover sealing, restore, tampering, replay, membership and call exporters. Hardware
 acceptance remains necessary for media, calls and Android radios.
+
+## Server password hash upgrade
+
+The security hardening release reads legacy scrypt hashes and upgrades them only
+on successful login. New account and approval hashes have explicit versioned
+parameters in the existing TEXT field. Older server binaries cannot read these
+new hashes. Avoid an in-place binary rollback; keep a coordinated pre-upgrade
+backup. Message, recovery, identity and session derivation formats are unchanged.
+See [the password migration ADR](adr/004-password-hash-migration.md).

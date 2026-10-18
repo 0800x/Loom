@@ -41,7 +41,7 @@ test('same-Node direct ciphertext routes without enabling federation or network 
   const nodeIdentity = LoomNodeIdentity.loadOrCreate(dir);
   const service = new FederationService(config, nodeIdentity, nodes, routing);
   try {
-    const alice = accounts.register({
+    const alice = await accounts.register({
       username: 'alice',
       displayName: 'Alice',
       password: 'correct horse battery staple',
@@ -49,7 +49,7 @@ test('same-Node direct ciphertext routes without enabling federation or network 
       identity: identityMaterial(),
       protocolVersion: 'Loom-Identity-v1',
     }, config.publicDomain);
-    const bob = accounts.register({
+    const bob = await accounts.register({
       username: 'bob',
       displayName: 'Bob',
       password: 'correct horse battery staple',

@@ -1,8 +1,9 @@
+import { passwordHasher } from '../security/password_hash.ts';
 import { type ProfileUpdate, profileRevision } from '../profile/profile.ts';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { createHash, randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { validateIdentityPublicMaterial } from '../identity/public_material.ts';
 
 export interface RegistrationInput {
@@ -190,7 +191,7 @@ export class SqliteStore {
     `);
   }
 
-  register(input: RegistrationInput, domain: string): { accountId: string; deviceId: string; address: string; accessToken: string; refreshToken: string; accessTokenExpiresInSeconds: number } {
+  async register(input: RegistrationInput, domain: string): Promise<{ accountId: string; deviceId: string; address: string; accessToken: string; refreshToken: string; accessTokenExpiresInSeconds: number }> {
     if (input.protocolVersion !== 'Loom-Identity-v1') throw new Error('unsupported_identity_protocol');
     const username = input.username.trim().toLowerCase();
     if (!/^[a-z0-9_][a-z0-9_.-]{2,31}$/.test(username)) throw new Error('invalid_username');
@@ -202,13 +203,13 @@ export class SqliteStore {
     const existingIdentity = this.db.prepare(`SELECT 1 FROM accounts WHERE identity_id=?`).get(identity.identityId);
     if (existingIdentity) throw new Error('identity_already_registered');
     const salt = randomBytes(16);
-    const passwordHash = scryptSync(input.password, salt, 32);
+    const passwordHash = await passwordHasher.hash(input.password, salt);
     const accountId = `acc_${randomUUID()}`;
     const deviceId = `dev_${randomUUID()}`;
     const now = new Date().toISOString();
     const transaction = () => this.withTransaction(() => {
       this.db.prepare(`INSERT INTO accounts(id,username,display_name,identity_id,identity_public_key,identity_fingerprint,password_salt,password_hash,created_at) VALUES(?,?,?,?,?,?,?,?,?)`)
-        .run(accountId, username, input.displayName.trim(), identity.identityId, identity.publicKey, identity.fingerprint, salt.toString('base64'), passwordHash.toString('base64'), now);
+        .run(accountId, username, input.displayName.trim(), identity.identityId, identity.publicKey, identity.fingerprint, salt.toString('base64'), passwordHash, now);
       this.db.prepare(`INSERT INTO devices(id,account_id,name,created_at) VALUES(?,?,?,?)`).run(deviceId, accountId, input.deviceName.trim().slice(0, 100) || 'Loom device', now);
     });
     try {
@@ -223,13 +224,17 @@ export class SqliteStore {
     return { accountId, deviceId, address: `@${username}:${domain}`, ...session };
   }
 
-  login(username: string, password: string, deviceName = 'Loom device'): { accountId: string; deviceId: string; username: string; identityId: string; accessToken: string; refreshToken: string; accessTokenExpiresInSeconds: number } {
+  async login(username: string, password: string, deviceName = 'Loom device'): Promise<{ accountId: string; deviceId: string; username: string; identityId: string; accessToken: string; refreshToken: string; accessTokenExpiresInSeconds: number }> {
     const row = this.db.prepare(`SELECT id, username, identity_id, password_salt, password_hash FROM accounts WHERE username=?`).get(username.trim().toLowerCase()) as Record<string, unknown> | undefined;
     if (!row) throw new Error('invalid_credentials');
     const salt = Buffer.from(String(row.password_salt), 'base64');
-    const expected = Buffer.from(String(row.password_hash), 'base64');
-    const actual = scryptSync(password, salt, expected.length);
-    if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) throw new Error('invalid_credentials');
+    const oldHash=String(row.password_hash);
+    const checked=await passwordHasher.verify(password,salt,oldHash);
+    if(!checked.valid)throw new Error('invalid_credentials');
+    if(checked.legacy){
+      const upgraded=await passwordHasher.hash(password,salt);
+      this.db.prepare('UPDATE accounts SET password_hash=? WHERE id=? AND password_hash=?').run(upgraded,String(row.id),oldHash);
+    }
     const accountId = String(row.id);
     const deviceId = `dev_${randomUUID()}`;
     this.db.prepare(`INSERT INTO devices(id,account_id,name,created_at) VALUES(?,?,?,?)`)
