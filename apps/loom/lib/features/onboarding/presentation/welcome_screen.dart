@@ -1,5 +1,5 @@
+import '../../../app/dev_surface_policy.dart';
 import 'package:loom_design/loom_design.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/loom_strings.dart';
@@ -240,7 +240,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        if (kDebugMode) ...[
+                        if (loomDevelopmentSurfacesEnabled) ...[
                           const SizedBox(height: LoomSpacing.md),
                           TextButton(
                             onPressed: () =>
