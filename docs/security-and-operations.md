@@ -90,3 +90,11 @@ Full queues reject new admission for retry; existing data is not deleted.
 Delivered history is excluded from these active/failed queue limits and still
 requires operator storage monitoring/backup/retention planning. A malicious peer
 cannot bypass the authenticated per-peer inbound event quota by changing IP.
+
+## Android screen and certificate protection
+
+Android screenshot protection applies to the whole app, including recovery with
+App Lock disabled. See [permission purposes](android-permissions.md). Imported
+local TLS leaves are pinned only to an explicitly confirmed HTTPS origin; legacy
+unscoped trust files require re-import. Remove them in server selection to revoke
+trust and close pinned clients. Other hosts continue to require system-trusted TLS.
