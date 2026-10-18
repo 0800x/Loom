@@ -44,6 +44,10 @@ void main() {
           expect(tester.takeException(), isNull);
           final field = tester.widget<TextField>(find.byType(TextField));
           expect(field.textAlignVertical, TextAlignVertical.center);
+          expect(
+            tester.getSize(find.byType(LoomGlassComposer)).height,
+            lessThanOrEqualTo(50),
+          );
           final input = tester.getRect(find.byType(TextField));
           final send = tester.getRect(find.byTooltip('ارسال'));
           expect(

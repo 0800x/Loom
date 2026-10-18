@@ -64,7 +64,7 @@ abstract final class LoomSizing {
   static const double profileTabsHeight = 38;
   static const double headerMinHeight = 58;
   static const double searchHeight = 44;
-  static const double composerMinHeight = 52;
+  static const double composerMinHeight = 48;
   static const double audioRowMin = 72;
   static const double messageMax = 600;
   static const double onboardingMax = 620;
