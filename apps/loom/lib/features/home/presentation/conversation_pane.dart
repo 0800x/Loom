@@ -28,6 +28,7 @@ class _ConversationPaneState extends State<_ConversationPane>
   final composerFocus = FocusNode();
   late final ScrollController messageScroll;
   bool sending = false;
+  bool _uploading = false;
   bool _mediaPreviewOpen = false;
   bool searching = false;
   String query = '';
@@ -322,14 +323,14 @@ class _ConversationPaneState extends State<_ConversationPane>
       }
       // A slow key lookup must never erase text typed since Send, or a draft
       // belonging to a different conversation opened while queueing.
-      if (queued && widget.drafts[conversation.id] == submitted) {
+      if (queued && widget.drafts[conversation.id]?.text == submitted.text) {
         widget.drafts.remove(conversation.id);
       }
       if (!mounted) {
         return;
       }
       if (queued && widget.conversation?.id == conversation.id) {
-        if (composer.value == submitted) {
+        if (composer.text == submitted.text) {
           composer.clear();
         }
         if (messageScroll.hasClients) {
@@ -369,7 +370,7 @@ class _ConversationPaneState extends State<_ConversationPane>
   Future<void> _insertKeyboardMedia(KeyboardInsertedContent content) async {
     final target = widget.conversation;
     final session = widget.messaging;
-    if (target == null || session == null || LoomAppLock.instance.locked) {
+    if (target == null || session == null || _uploading || LoomAppLock.instance.locked) {
       return;
     }
     var data = content.data;
@@ -466,7 +467,7 @@ class _ConversationPaneState extends State<_ConversationPane>
   Future<void> _sendAttachment(String choice) async {
     final messaging = widget.messaging;
     final conversation = widget.conversation;
-    if (messaging == null || conversation == null || sending) {
+    if (messaging == null || conversation == null || sending || _uploading) {
       return;
     }
     try {
@@ -555,7 +556,7 @@ class _ConversationPaneState extends State<_ConversationPane>
           if (ok &&
               mounted &&
               widget.conversation?.id == conversation.id &&
-              composer.value == submitted) {
+              composer.text == submitted.text) {
             composer.clear();
           }
           if (!ok && mounted) {
@@ -721,6 +722,7 @@ class _ConversationPaneState extends State<_ConversationPane>
         pending == null ||
         pending.conversationId != conversation.id ||
         sending ||
+        _uploading ||
         _mediaPreviewOpen ||
         LoomAppLock.instance.locked) {
       return;
@@ -742,7 +744,6 @@ class _ConversationPaneState extends State<_ConversationPane>
           widget.conversation?.id != conversation.id) {
         return;
       }
-      setState(() => sending = false);
       if (!mounted) {
         return;
       }
@@ -926,7 +927,7 @@ class _ConversationPaneState extends State<_ConversationPane>
             !LoomAppLock.instance.locked) {
           composer.text = caption.text;
           messaging.discardPendingMedia();
-          setState(() => sending = false);
+          setState(() => _uploading = false);
           _mediaPreviewOpen = false;
           await _sendAttachment(
             pending.kind == 'video_note'
@@ -945,7 +946,7 @@ class _ConversationPaneState extends State<_ConversationPane>
           return;
         }
         final submitted = composer.value;
-        setState(() => sending = true);
+        setState(() => _uploading = true);
         // Give the progress surface a frame before preparation/encryption.
         await WidgetsBinding.instance.endOfFrame;
         prepared = await LoomMediaPreparation.prepare(
@@ -993,7 +994,7 @@ class _ConversationPaneState extends State<_ConversationPane>
             !pending.sticker &&
             mounted &&
             widget.conversation?.id == conversation.id &&
-            composer.value == submitted) {
+            composer.text == submitted.text) {
           composer.clear();
         }
         if (!ok && mounted) {
@@ -1009,7 +1010,7 @@ class _ConversationPaneState extends State<_ConversationPane>
       } finally {
         caption.dispose();
         if (mounted) {
-          setState(() => sending = false);
+          setState(() => _uploading = false);
         }
       }
     } catch (_) {
@@ -1030,7 +1031,7 @@ class _ConversationPaneState extends State<_ConversationPane>
       }
       await prepared?.dispose();
       if (mounted) {
-        setState(() => sending = false);
+        setState(() => _uploading = false);
       }
     }
   }
@@ -1038,6 +1039,7 @@ class _ConversationPaneState extends State<_ConversationPane>
   Rect? _attachmentOrigin;
 
   Future<void> _attach() async {
+    if (_uploading) return;
     final draftId = _draftId;
     final address = widget.messaging?.onboarding.receipt?.address;
     if (draftId == null) return;
@@ -1090,8 +1092,15 @@ class _ConversationPaneState extends State<_ConversationPane>
         },
       ),
     );
+    if (choice == 'queued') {
+      if (mounted && draftId == _draftId) {
+        if (composer.text == submitted.text) composer.clear();
+        setState(() {});
+      }
+      return;
+    }
     if (choice == 'sent') {
-      if (mounted && draftId == _draftId && composer.value == submitted) {
+      if (mounted && draftId == _draftId && composer.text == submitted.text) {
         composer.clear();
       }
       widget.drafts.galleries.remove(draftId);
@@ -2041,13 +2050,57 @@ class _ConversationPaneState extends State<_ConversationPane>
                                 ),
                               ),
                       ),
+                      if (_uploading)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(48, 8, 12, 4),
+                          child: ListTile(
+                            leading: const SizedBox.square(dimension: 24,
+                                child: CircularProgressIndicator(strokeWidth: 2)),
+                            title: Text(tr(context, 'Sending media…', 'در حال ارسال مدیا…')),
+                            subtitle: Text(tr(context, 'You can keep typing', 'می‌توانید به نوشتن ادامه دهید')),
+                          ),
+                        ),
+                      if (widget.drafts.galleries[conversation?.id] case final gallery?)
+                        AnimatedBuilder(
+                          animation: gallery.batch,
+                          builder: (context, _) {
+                            final batch = gallery.batch;
+                            if (batch.pending.isEmpty && !batch.sending) {
+                              return const SizedBox.shrink();
+                            }
+                            return Align(
+                              alignment: AlignmentDirectional.centerEnd,
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(48, 8, 12, 4),
+                                child: Material(
+                                  color: context.loom.surfaceElevated,
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: ListTile(
+                                    dense: true,
+                                    leading: batch.sending
+                                        ? const SizedBox.square(dimension: 24,
+                                            child: CircularProgressIndicator(strokeWidth: 2))
+                                        : const Icon(LoomIcons.refresh_rounded),
+                                    title: Text(batch.sending
+                                        ? tr(context, 'Sending media…', 'در حال ارسال مدیا…')
+                                        : tr(context, 'Media kept for retry', 'مدیا برای تلاش دوباره حفظ شد')),
+                                    subtitle: Text(batch.sending
+                                        ? '${batch.completed} / ${batch.total}'
+                                        : tr(context, 'Tap to review and retry', 'برای بررسی و تلاش دوباره بزنید')),
+                                    onTap: batch.sending ? null : _attach,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       if (preview || conversation != null)
                         Padding(
                           padding: EdgeInsets.fromLTRB(
                             10,
                             4,
                             10,
-                            10 + MediaQuery.paddingOf(context).bottom,
+                            4 + MediaQuery.paddingOf(context).bottom,
                           ),
                           child: _InlineVoiceComposer(
                             key: ValueKey(
@@ -2057,12 +2110,12 @@ class _ConversationPaneState extends State<_ConversationPane>
                             focusNode: composerFocus,
                             enabled: canCompose,
                             sending: sending,
-                            onContentInserted: !preview && canCompose
+                            onContentInserted: !preview && canCompose && !_uploading
                                 ? (content) =>
                                       unawaited(_insertKeyboardMedia(content))
                                 : null,
                             onSend: preview ? null : _send,
-                            onAttach: canCompose ? _attach : null,
+                            onAttach: canCompose && !_uploading ? _attach : null,
                             onAttachmentOrigin: (rect) =>
                                 _attachmentOrigin = rect,
                             onVideoSend: (file, duration) async {

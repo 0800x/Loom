@@ -1343,10 +1343,10 @@ class _FolderConversationPage extends StatelessWidget {
               typing: item.typing,
               delivery: item.delivery,
               selected: false,
-              onTap: () {
+              onTapWithOrigin: (origin) {
                 onConversationOrigin?.call(
                   'preview',
-                  LoomOrigin.of(rowContext),
+                  origin,
                 );
                 onConversationSelected('preview');
               },
@@ -1494,10 +1494,10 @@ class _FolderConversationPage extends StatelessWidget {
                   MediaQuery.sizeOf(context).width >=
                       LoomBreakpoints.expanded &&
                   selectedConversationId == conversation.id,
-              onTap: () {
+              onTapWithOrigin: (origin) {
                 onConversationOrigin?.call(
                   conversation.id,
-                  LoomOrigin.of(rowContext),
+                  origin,
                 );
                 onConversationSelected(conversation.id);
               },

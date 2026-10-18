@@ -1,0 +1,31 @@
+name: Chat UX review
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.0'
+      - run: flutter pub get
+        working-directory: packages/loom_design
+      - run: flutter pub get
+        working-directory: apps/loom
+      - name: Produce a formatter patch for review
+        run: |
+          dart format packages/loom_design/lib packages/loom_design/test apps/loom/lib apps/loom/test
+          git diff --binary > chat-ux-format.patch
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chat-ux-format
+          path: chat-ux-format.patch
+      - run: flutter analyze --fatal-infos && flutter test
+        working-directory: packages/loom_design
+      - run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+      - run: flutter analyze --fatal-infos && flutter test
+        working-directory: apps/loom

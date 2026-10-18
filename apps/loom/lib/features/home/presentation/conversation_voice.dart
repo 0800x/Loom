@@ -340,7 +340,11 @@ class _RoundVideoMessageState extends State<_RoundVideoMessage>
     }
     final player = _player;
     final frame = AspectRatio(
-      aspectRatio: widget.round ? 1 : widget.aspectRatio,
+      aspectRatio: widget.round
+          ? 1
+          : _ready && player != null && player.value.aspectRatio > 0
+              ? player.value.aspectRatio
+              : widget.aspectRatio,
       child: Material(
         color: Colors.black,
         child: InkWell(
@@ -360,7 +364,7 @@ class _RoundVideoMessageState extends State<_RoundVideoMessage>
                       fit: StackFit.expand,
                       children: [
                         FittedBox(
-                          fit: BoxFit.cover,
+                          fit: widget.round ? BoxFit.cover : BoxFit.contain,
                           child: SizedBox(
                             width: value.size.width,
                             height: value.size.height,

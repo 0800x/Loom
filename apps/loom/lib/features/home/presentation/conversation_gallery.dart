@@ -14,12 +14,22 @@ class _GalleryItem {
 }
 
 class _GalleryDraft {
-  _GalleryDraft(String text) : caption = TextEditingController(text: text);
+  _GalleryDraft(String text) : caption = TextEditingController(text: text) {
+    LoomAppLock.instance.addListener(_locked);
+  }
+  void _locked() {
+    if (LoomAppLock.instance.locked) batch.stop();
+  }
   final batch = MediaBatchController<_GalleryItem>();
   final TextEditingController caption;
   LoomVisibleMessage? reply;
   bool replyCaptured = false;
+  Future<void>? upload;
+  bool disposed = false;
   void dispose() {
+    if (disposed) return;
+    disposed = true;
+    LoomAppLock.instance.removeListener(_locked);
     batch.dispose();
     caption.dispose();
   }
@@ -42,6 +52,7 @@ class _AttachmentGallery extends StatefulWidget {
 
 class _AttachmentGalleryState extends State<_AttachmentGallery>
     with WidgetsBindingObserver {
+  bool _handedOff = false;
   final _assets = <AssetEntity>[];
   final _galleryScroll = ScrollController();
   List<AssetPathEntity> _albums = [];
@@ -224,14 +235,23 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
   }
 
   Future<void> _send() async {
-    final caption = widget.draft.caption.text;
-    await batch.send(
-      (item, withCaption) => widget.send(item, withCaption ? caption : ''),
+    if (batch.sending || batch.pending.isEmpty || !widget.authorized()) return;
+    final draft = widget.draft;
+    final caption = draft.caption.text;
+    final send = widget.send;
+    draft.upload = batch.send(
+      (item, withCaption) => send(item, withCaption ? caption : ''),
       authorized: widget.authorized,
-    );
-    if (mounted && batch.pending.isEmpty && batch.error == null) {
-      Navigator.pop(context, 'sent');
-    }
+    ).then((_) {
+      if (!draft.disposed && draft.batch.pending.isEmpty && draft.batch.error == null) {
+        draft.caption.clear();
+        draft.reply = null;
+        draft.replyCaptured = false;
+      }
+    });
+    _handedOff = true;
+    unawaited(draft.upload!);
+    if (mounted) Navigator.pop(context, 'queued');
   }
 
   Future<void> _previewSelection() async {
@@ -262,7 +282,7 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
     WidgetsBinding.instance.removeObserver(this);
     if (_mobile) PhotoManager.removeChangeCallback(_libraryChanged);
     _galleryScroll.dispose();
-    batch.stop(); // never dispose the reusable draft here
+    if (!_handedOff) batch.stop(); // the chat owns a handed-off upload
     batch.removeListener(_changed);
     LoomAppLock.instance.removeListener(_locked);
     super.dispose();
@@ -596,8 +616,9 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
                       radius: 24,
                       padding: const EdgeInsets.all(4),
                       child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
                           children:
                               <Widget>[
                                     _category(
@@ -649,7 +670,7 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
                                   ]
                                   .map(
                                     (item) => SizedBox(
-                                      width: 92,
+                                      width: (bounds.maxWidth - 24) / 4,
                                       height:
                                           40 +
                                           MediaQuery.textScalerOf(

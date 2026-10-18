@@ -318,7 +318,11 @@ class LoomComposerMorph extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reduced = LoomAccessibility.fromContext(context).reduceMotion;
-    return AnimatedSwitcher(
+    return AnimatedSize(
+      duration: reduced ? Duration.zero : const Duration(milliseconds: 260),
+      curve: Curves.easeInOutCubicEmphasized,
+      alignment: Alignment.bottomCenter,
+      child: AnimatedSwitcher(
       duration: reduced ? Duration.zero : const Duration(milliseconds: 200),
       reverseDuration:
           reduced ? Duration.zero : const Duration(milliseconds: 140),
@@ -340,6 +344,7 @@ class LoomComposerMorph extends StatelessWidget {
               ),
             ),
       child: child,
+      ),
     );
   }
 }
