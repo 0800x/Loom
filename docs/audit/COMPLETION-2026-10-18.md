@@ -13,12 +13,11 @@ ADR 004 and compatibility.md document legacy verification and rollback limitatio
 No wallet address was changed. The unrelated Windows build-bundle.ps1 checkout
 line-ending difference is excluded from every commit.
 
-**Verdict: BLOCKED for merge approval / signed distribution.** The OSV gate reports
-RUSTSEC-2026-0173 (unmaintained proc-macro-error2 2.0.1, no fixed version returned).
-No advisory is suppressed. All 562 inventory entries now have preserved notice
-texts; final binary/platform attribution still needs review. Final hosted checks
-must be green. The implementation is suitable for further
-alpha testing, not a security certification or beta recommendation.
+**Verdict: ALPHA-FOR-TESTING, subject to final-head CI.** N5 is repaired by the
+upstream diagnostic backport in [N5 closure](N5-CLOSURE-2026-10-18.md); no advisory
+is suppressed. All 560 current inventory entries have preserved notice texts.
+Physical validation, final binary attribution, independent review and signed
+release gates remain external. This is not a beta or security certification.
 
 ## Findings and disposition
 
@@ -39,7 +38,7 @@ boundary, not that every external deployment/platform has been validated.
 | V10 | VERIFIED, fixed in source | High | apps/loom/android/app/src/main/kotlin/app/loom/messenger/MainActivity.kt:54; LoomAppLockBridge.kt:184 | FLAG_SECURE is set before Flutter startup and retained independently of App Lock. Recovery UI has no word-to-clipboard action; public call notifications are generic. No claim of physical Android screenshot/Doze testing. |
 | V11 | VERIFIED, unchanged format | High residual | packages/loom_crypto_bridge/lib/src/recovery_file_codec.dart:8; apps/loom/lib/features/onboarding/presentation/recovery_screen.dart:91 | Encrypted codec uses Argon2id 19456 KiB, two iterations, p=1, AES-256-GCM, random salt and password minimum 12. Shipping onboarding file/PDF/QR exports instead use plaintext words with explicit warning. Password/chats and device-local MLS/session ratchet state are not restored by identity recovery. No recovery-format change authorized here. |
 | V12 | VERIFIED partial gap, fixed for production images | High | services/loom_server/deploy/Dockerfile:1; deploy/docker-compose.production.yml:6; scripts/validate-security-config.py:17 | Newly pinned previously mutable Node/Alpine/Postgres/Caddy tags to registry-verified digests; existing pins untouched. Local source images require build rather than mutable-tag pull. npm integrity, Go sums and signed package verification retained. Reachability of every censorship-region mirror is UNCONFIRMED. |
-| V13 | UNCONFIRMED comprehensive compliance | Medium | THIRD_PARTY_NOTICES.md:1; docs/license-compatibility.md:1 | Generated 562-entry inventory and preserved upstream texts with byte-digest validation. All notice texts are preserved; final binary/platform attribution needs review. Namespace change does not establish new authorship; no blanket provenance/license clearance. |
+| V13 | UNCONFIRMED comprehensive compliance | Medium | THIRD_PARTY_NOTICES.md:1; docs/license-compatibility.md:1 | Generated 560-entry inventory and preserved upstream texts with byte-digest validation. All notice texts are preserved; final binary/platform attribution needs review. Namespace change does not establish new authorship; no blanket provenance/license clearance. |
 | V14 | VERIFIED bounded paths; exhaustive adversarial coverage UNCONFIRMED | Medium | packages/loom_dtn/lib/src/replica_intake_store.dart:131; packages/loom_transport/lib/src/nearby_legacy_message_gateway.dart:379; apps/loom/lib/features/messaging/application/product_messaging_policy.dart:32 | Existing expiry/seven-day custody/hop limits, storage-pressure handling and bounded gateway concurrency retained. v2Required dispatch forbids legacy fallback. Legacy compatibility still exists deliberately; real radio/hostile-carrier stress is not claimed. |
 | S1 | VERIFIED, implemented | High | services/loom_server/src/security/password_hash.ts:3 | Async scrypt N=131072,r=8,p=1; two concurrent jobs/eight queued; strict descriptors, canonical hash encoding, legacy N=16384 verification and successful-login CAS rehash in SQLite/Postgres. ADR 004 records compatibility. |
 | S2 | VERIFIED, implemented | High | services/loom_server/src/security/rate_limiter.ts:10; src/bootstrap/server.ts:234 | Earlier S2 commits retained; per-IP/class/account/device keys and trusted-proxy policy, saturation/debt and v2 429 regressions tested. Distributed/persistent quota coordination is not implemented. |
@@ -129,16 +128,15 @@ checks apply. No false green result is claimed for external release gates.
 | ID | Status | Severity | File:line | Disposition |
 | --- | --- | --- | --- | --- |
 | N4 | VERIFIED, fixed | Medium | native/loom_mls/Cargo.lock:1; docs/adr/011-optional-kem-dependency-patch.md:1 | Optional KEM lock included RUSTSEC-2026-0330/0331. Upstream adapter Rust unchanged; manifest selects fixed KEM. Active RustCrypto provider unchanged. |
-| N5 | VERIFIED, open | Low maintenance / OSV unknown | native/loom_mls/Cargo.lock:1 | RUSTSEC-2026-0173 has no reported fixed version; inactive optional dependency chain, cargo tree had no active path. Do not silently suppress or rewrite crypto to force green. |
+| N5 | VERIFIED, fixed; final CI required | Low maintenance / OSV unknown | native/loom_mls/Cargo.lock:1 | Removed the abandoned diagnostic dependency with the upstream syn::Error backport; see N5-CLOSURE-2026-10-18.md and ADR 012. No crypto source or successful extraction bodies changed. |
 | N6 | VERIFIED, fixed | Low | .github/workflows/flutter-ci.yml:1; scripts/test-node-production.py:87 | Per-project formatter context, cross-package design resolution and exact pinned-image fixture expectations corrected after hosted evidence. Final rerun pending. |
 | N7 | VERIFIED residual | High if artifact stolen | apps/loom/lib/features/onboarding/presentation/recovery_screen.dart:91 | Shipping recovery file/QR/PDF is plaintext, despite separate encrypted codec existing. UI explicitly warns. No claim all exports use Argon2id; changing this product/format boundary needs its own decision and ADR. |
-| N8 | VERIFIED, fixed for inventory | Medium distribution | THIRD_PARTY_NOTICES.md:1 | All 562 entries now have preserved notice text and immutable references for recovered sources. CI rejects missing texts; final platform binary attribution remains unverified. |
+| N8 | VERIFIED, fixed for inventory | Medium distribution | THIRD_PARTY_NOTICES.md:1 | All 560 current entries now have preserved notice text and immutable references for recovered sources. CI rejects missing texts; final platform binary attribution remains unverified. |
 
 ## DECISIONS NEEDED
 
-1. Choose an upstream-supported resolution for the unmaintained optional dependency
-   chain, or document a separately reviewed maintenance-risk policy. This run does
-   not suppress the OSV gate or invent a cryptographic replacement.
+1. Remove the documented vendor patch once a compatible upstream release replaces
+   the abandoned diagnostic wrapper; no advisory exception is needed.
 2. Review final binary/platform/license obligations, including Apple distribution,
    before signing a release; the ten inventory notice gaps are resolved.
 3. Establish publisher signing identity/key distribution, monitored private
@@ -228,4 +226,8 @@ no connected physical device. These checks are not claimed complete.
 Official crate metadata still lists hax-lib/macros 0.3.7 as the newest compatible
 0.3 release; 0.4.2 is a separate semver line. core-models 0.0.7 is latest. Blindly
 substituting a cryptographic/proof dependency or ignoring RUSTSEC-2026-0173 is not
-a verified fix. N5 remains open and the existing OSV gate remains blocking.
+a verified fix. That historical blocker is superseded by the diagnostic-only
+backport documented in N5-CLOSURE-2026-10-18.md.
+
+The subsequent N5 closure report supersedes the earlier OSV/open-maintenance
+status above; historical command results are retained as originally executed.

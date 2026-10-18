@@ -7,6 +7,13 @@ on:
 permissions:
   contents: read
 jobs:
+  hax-macro-backport:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - run: rustup toolchain install nightly-2026-10-17 --profile minimal
+      - run: python3 scripts/test-hax-macro-backport.py
   npm-audit:
     runs-on: ubuntu-latest
     steps:

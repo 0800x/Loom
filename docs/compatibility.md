@@ -1,5 +1,9 @@
 # Loom protocol compatibility
 
+The Hax diagnostic backport in ADR 012 only changes extraction-time compiler
+error reporting. Normal runtime macro bodies, provider selection, MLS wire/state
+formats and key derivation are unchanged; no data migration is required.
+
 The first public alpha uses the Loom wire namespace. This is a deliberate breaking
 change from earlier internal builds. It changes authenticated bytes, not only
 screen labels.
