@@ -1,0 +1,10 @@
+{
+  "source": "Docker Hub registry-1.docker.io authenticated manifest endpoint",
+  "retrieved": "2026-10-18",
+  "digests": {
+    "node:22.16.0-bookworm-slim": "sha256:048ed02c5fd52e86fda6fbd2f6a76cf0d4492fd6c6fee9e2c463ed5108da0e34",
+    "alpine:3.22": "sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8",
+    "postgres:17-alpine": "sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24",
+    "caddy:2-alpine": "sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f"
+  }
+}

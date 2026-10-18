@@ -15,4 +15,10 @@ uninstall=(root/'services/loom_server/scripts/linux/uninstall-production.sh').re
 assert 'IGNORECASE' not in uninstall
 assert 'loom_require_install_owner' in uninstall
 assert 'label=org.loom.installation=/opt/loom-node' in uninstall
+# Mirrors must preserve content addressing for every production container image.
+for relative in ['services/loom_server/deploy/Dockerfile', 'services/loom_server/deploy/Dockerfile.storage', 'services/loom_server/deploy/docker-compose.production.yml']:
+    for line in (root/relative).read_text().splitlines():
+        match=re.match(r'\s*(?:FROM|image:)\s+(\S+)',line)
+        if match:
+            assert re.search(r'@sha256:[0-9a-f]{64}$',match[1]), (relative, match[1])
 print('Production security configuration checks passed')
