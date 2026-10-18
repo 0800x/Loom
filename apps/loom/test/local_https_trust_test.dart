@@ -25,7 +25,10 @@ void main() {
       final temp = await Directory.systemTemp.createTemp(
         'loom-local-tls-test-',
       );
-      addTearDown(() async => temp.delete(recursive: true));
+      addTearDown(() async {
+        HttpOverrides.global = null;
+        await temp.delete(recursive: true);
+      });
       final result = await Process.run('openssl', [
         'req',
         '-x509',
@@ -92,30 +95,19 @@ void main() {
       await LoomLocalHttpsTrust.accept(
         bytes,
         directory: trust,
-        context: explicitContext,
+        endpoint: Uri.parse('https://127.0.0.1:${server.port}'),
+        confirmedFingerprint: fingerprint,
       );
       expect(await request(explicitContext), 'verified');
       expect(await LoomLocalHttpsTrust.fingerprints(directory: trust), [
         fingerprint,
       ]);
       final restoredContext = SecurityContext();
-      expect(
-        await LoomLocalHttpsTrust.load(
-          directory: trust,
-          context: restoredContext,
-        ),
-        0,
-      );
+      expect(await LoomLocalHttpsTrust.load(directory: trust), 0);
       expect(await request(restoredContext), 'verified');
       await LoomLocalHttpsTrust.forget(fingerprint, directory: trust);
       expect(await LoomLocalHttpsTrust.fingerprints(directory: trust), isEmpty);
-      expect(
-        await LoomLocalHttpsTrust.load(
-          directory: trust,
-          context: SecurityContext(),
-        ),
-        0,
-      );
+      expect(await LoomLocalHttpsTrust.load(directory: trust), 0);
       await expectLater(
         request(SecurityContext()),
         throwsA(isA<HandshakeException>()),

@@ -1,10 +1,7 @@
 part of 'messenger_shell.dart';
 
 class LoomConversationMediaScreen extends StatelessWidget {
-  const LoomConversationMediaScreen({
-    required this.conversationId,
-    super.key,
-  });
+  const LoomConversationMediaScreen({required this.conversationId, super.key});
   final String conversationId;
 
   @override
@@ -155,8 +152,9 @@ class _SharedMediaThumbnailState extends State<_SharedMediaThumbnail> {
           folder = await (await getTemporaryDirectory()).createTemp(
             'loom_thumb_',
           );
-          final file = await File('${folder.path}/video.mp4')
-              .writeAsBytes(clear, flush: true);
+          final file = await File(
+            '${folder.path}/video.mp4',
+          ).writeAsBytes(clear, flush: true);
           thumbnail = await VideoCompress.getByteThumbnail(
             file.path,
             quality: 65,

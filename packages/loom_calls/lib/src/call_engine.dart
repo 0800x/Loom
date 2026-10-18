@@ -219,14 +219,20 @@ class LoomCallEngine extends ChangeNotifier {
       throw const LoomProtocolException('Pending call has expired');
     }
     _starting = true;
-    final gathered =
-        _incomingIce.take(pending.callId, pending.callerIdentityId);
+    final gathered = _incomingIce.take(
+      pending.callId,
+      pending.callerIdentityId,
+    );
     _resetPerCallInternals();
-    _pendingRemoteCandidates.addAll(gathered.map((signal) => RTCIceCandidate(
+    _pendingRemoteCandidates.addAll(
+      gathered.map(
+        (signal) => RTCIceCandidate(
           signal.candidate,
           signal.sdpMid,
           signal.sdpMLineIndex,
-        )));
+        ),
+      ),
+    );
     _set(
       LoomCallSnapshot(
         lifecycle: LoomCallLifecycle.preparing,
@@ -337,8 +343,7 @@ class LoomCallEngine extends ChangeNotifier {
     _set(_state.copyWith(speakerEnabled: enabled));
   }
 
-  Future<void> hangUp() =>
-      _finish(LoomCallEndReason.localHangup, signal: true);
+  Future<void> hangUp() => _finish(LoomCallEndReason.localHangup, signal: true);
 
   Future<void> restartIce() async {
     final peer = _peer;
@@ -376,9 +381,7 @@ class LoomCallEngine extends ChangeNotifier {
     final config = await api.fetchRtcConfiguration();
     _requireActiveAttempt(callId);
     if (!config.expiresAt.isAfter(DateTime.now().toUtc())) {
-      throw const LoomProtocolException(
-        'RTC credentials are already expired',
-      );
+      throw const LoomProtocolException('RTC credentials are already expired');
     }
     localRenderer = RTCVideoRenderer();
     remoteRenderer = RTCVideoRenderer();
@@ -514,11 +517,13 @@ class LoomCallEngine extends ChangeNotifier {
         signal.candidate != null &&
         !_remoteDescriptionSet) {
       if (_pendingRemoteCandidates.length < 256) {
-        _pendingRemoteCandidates.add(RTCIceCandidate(
-          signal.candidate,
-          signal.sdpMid,
-          signal.sdpMLineIndex,
-        ));
+        _pendingRemoteCandidates.add(
+          RTCIceCandidate(
+            signal.candidate,
+            signal.sdpMid,
+            signal.sdpMLineIndex,
+          ),
+        );
       }
       return;
     }

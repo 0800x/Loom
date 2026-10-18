@@ -11,12 +11,7 @@ import 'group_call_models.dart';
 import 'group_call_media.dart';
 
 class LoomGroupCallLobby {
-  const LoomGroupCallLobby(
-    this.available,
-    this.video,
-    this.maximum,
-    this.call,
-  );
+  const LoomGroupCallLobby(this.available, this.video, this.maximum, this.call);
   final bool available, video;
   final int maximum;
   final LoomGroupCallSnapshot? call;
@@ -60,9 +55,7 @@ class LoomGroupCallController extends ChangeNotifier {
   LoomGroupCallParticipant? get own =>
       call?.participants.where((p) => p.id == ownParticipantId).firstOrNull;
   void _guard(int generation) {
-    if (_disposed ||
-        LoomAppLock.instance.locked ||
-        generation != _generation) {
+    if (_disposed || LoomAppLock.instance.locked || generation != _generation) {
       throw StateError('Call closed');
     }
   }
@@ -489,15 +482,13 @@ class LoomGroupCallController extends ChangeNotifier {
   }
 }
 
-class LoomGroupCallScope
-    extends InheritedNotifier<LoomGroupCallController> {
+class LoomGroupCallScope extends InheritedNotifier<LoomGroupCallController> {
   const LoomGroupCallScope({
     required LoomGroupCallController controller,
     required super.child,
     super.key,
   }) : super(notifier: controller);
-  static LoomGroupCallController of(BuildContext context) =>
-      maybeOf(context)!;
+  static LoomGroupCallController of(BuildContext context) => maybeOf(context)!;
   static LoomGroupCallController? maybeOf(BuildContext context) => context
       .dependOnInheritedWidgetOfExactType<LoomGroupCallScope>()
       ?.notifier;

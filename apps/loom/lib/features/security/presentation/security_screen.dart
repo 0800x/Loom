@@ -252,16 +252,13 @@ class _SecurityScreenState extends State<SecurityScreen> {
     builder: (context, _) {
       final palette = context.loom;
       return Scaffold(
-        appBar: LoomGlassAppBar(
-          title: Text(tr(context, 'Security', 'امنیت')),
-        ),
+        appBar: LoomGlassAppBar(title: Text(tr(context, 'Security', 'امنیت'))),
         body: controller.loading
             ? const Center(child: CircularProgressIndicator())
             : ListView(
                 padding: const EdgeInsets.all(LoomSpacing.md),
                 children: <Widget>[
-                  if (LoomOnboardingScope.of(context).committedIdentity !=
-                      null)
+                  if (LoomOnboardingScope.of(context).committedIdentity != null)
                     _recoveryBackupSection(context),
                   if (controller.error != null)
                     Padding(

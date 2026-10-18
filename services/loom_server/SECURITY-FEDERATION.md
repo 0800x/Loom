@@ -62,9 +62,34 @@ Secrets:
 - Node/admin/session tokens are never exposed through federation APIs or diagnostics.
 - Private identity/device keys remain in platform secure storage on the client.
 
-### Still required before merge
+### Implemented device-bound request proofs
 
-Authenticated client operations must become device-bound strongly enough that theft of a bearer token alone is not treated as equivalent to possession of the registered device key. The registered device signing key should authenticate a versioned request proof containing the method, path/query, body digest, timestamp, nonce and session/device binding. The Node must enforce timestamp windows and durable/TTL replay suppression. Initial device-key binding must itself be authenticated by the user's identity key rather than trusting bearer possession alone.
+Ordinary authenticated client routes call `LoomNodeServer.authenticated()`, which
+validates the bearer session, account/device quotas and `DeviceRequestVerifier`.
+The Ed25519 proof signs the versioned `Loom-Device-Request-v1` canonical domain,
+method, exact path/query, body SHA-256, timestamp, nonce, device ID and credential
+SHA-256. The timestamp window is ±2 minutes. GET/HEAD require the empty body
+hash; JSON readers compare the declared digest with the bytes actually read.
+
+Replay nonces are stored durably per device for 10 minutes in
+`device_request_nonces`. Expired entries are deleted when admitting a new nonce;
+there is no independent periodic cleanup job. Restart does not clear live nonce
+history. See `src/security/device_request_proof.ts`,
+`src/security/device_bundle_store.ts` and `test/device_request_proof.test.ts`.
+
+The initial PUT to the session's own device-key-bundle endpoint is exempt from
+request proof only while no registered signing key exists. Publication still
+checks account/device ownership, revocation, device signature and account identity
+signature. A different key cannot silently replace an existing bundle.
+See `test/device_bundle_security.test.ts`.
+
+Password login/registration, refresh and device-link redemption bootstrap, admin
+bearer APIs, signed federation requests and self-certifying direct/gateway ingress
+use their respective authentication boundaries; they are not ordinary
+registered-device request-proof routes. The delivery adapter uses the same
+`authenticated()` callback for its session routes. All HTTP routes now pass
+through common IP/class/credential/concurrency admission before adapter dispatch.
+These implemented controls do not constitute an independent security audit.
 
 ## Client ↔ Client invariants
 

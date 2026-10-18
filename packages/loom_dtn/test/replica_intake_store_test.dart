@@ -10,8 +10,9 @@ void main() {
 
   test('accepts exact prepared peer transfer into durable carried custody', () {
     final senderDir = Directory.systemTemp.createTempSync('loom-dtn-sender-');
-    final receiverDir =
-        Directory.systemTemp.createTempSync('loom-dtn-receiver-');
+    final receiverDir = Directory.systemTemp.createTempSync(
+      'loom-dtn-receiver-',
+    );
     addTearDown(() => senderDir.deleteSync(recursive: true));
     addTearDown(() => receiverDir.deleteSync(recursive: true));
 
@@ -92,8 +93,9 @@ void main() {
 
   test('duplicate forwarding revision is ACKable and never inflates copies',
       () {
-    final directory =
-        Directory.systemTemp.createTempSync('loom-dtn-duplicate-');
+    final directory = Directory.systemTemp.createTempSync(
+      'loom-dtn-duplicate-',
+    );
     addTearDown(() => directory.deleteSync(recursive: true));
     final path = '${directory.path}${Platform.pathSeparator}dtn.sqlite3';
     final packetStore = LoomSqlitePacketStore.openFile(path);
@@ -173,46 +175,47 @@ void main() {
   });
 
   test(
-      'looped copy of local packet is duplicate without overwriting correlation',
-      () {
-    final directory = Directory.systemTemp.createTempSync('loom-dtn-loop-');
-    addTearDown(() => directory.deleteSync(recursive: true));
-    final path = '${directory.path}${Platform.pathSeparator}dtn.sqlite3';
-    final packetStore = LoomSqlitePacketStore.openFile(path);
-    final intake = LoomSqliteReplicaIntakeStore.openExistingFile(path);
-    addTearDown(packetStore.close);
-    addTearDown(intake.close);
+    'looped copy of local packet is duplicate without overwriting correlation',
+    () {
+      final directory = Directory.systemTemp.createTempSync('loom-dtn-loop-');
+      addTearDown(() => directory.deleteSync(recursive: true));
+      final path = '${directory.path}${Platform.pathSeparator}dtn.sqlite3';
+      final packetStore = LoomSqlitePacketStore.openFile(path);
+      final intake = LoomSqliteReplicaIntakeStore.openExistingFile(path);
+      addTearDown(packetStore.close);
+      addTearDown(intake.close);
 
-    packetStore.putLocalOutbound(
-      operationId: 'operation-replica-0004',
-      messageId: 'message-replica-0004',
-      packetId: 'packet-replica-000004',
-      exactOuterEnvelopeBytes: _outerWire(
+      packetStore.putLocalOutbound(
+        operationId: 'operation-replica-0004',
+        messageId: 'message-replica-0004',
         packetId: 'packet-replica-000004',
-        expiresAt: DateTime.utc(2026, 9, 6, 12),
-        hopsUsed: 0,
-        copiesRemaining: 4,
-      ),
-      now: now,
-    );
+        exactOuterEnvelopeBytes: _outerWire(
+          packetId: 'packet-replica-000004',
+          expiresAt: DateTime.utc(2026, 9, 6, 12),
+          hopsUsed: 0,
+          copiesRemaining: 4,
+        ),
+        now: now,
+      );
 
-    final result = intake.acceptReplica(
-      exactOuterEnvelopeBytes: _outerWire(
-        packetId: 'packet-replica-000004',
-        expiresAt: DateTime.utc(2026, 9, 6, 12),
-        hopsUsed: 2,
-        copiesRemaining: 1,
-      ),
-      now: now.add(const Duration(minutes: 1)),
-    );
-    expect(result.disposition, LoomReplicaIntakeDisposition.duplicate);
+      final result = intake.acceptReplica(
+        exactOuterEnvelopeBytes: _outerWire(
+          packetId: 'packet-replica-000004',
+          expiresAt: DateTime.utc(2026, 9, 6, 12),
+          hopsUsed: 2,
+          copiesRemaining: 1,
+        ),
+        now: now.add(const Duration(minutes: 1)),
+      );
+      expect(result.disposition, LoomReplicaIntakeDisposition.duplicate);
 
-    final persisted = packetStore.read('packet-replica-000004')!;
-    expect(persisted.origin, LoomDtnPacketOrigin.localOutbound);
-    expect(persisted.operationId, 'operation-replica-0004');
-    expect(persisted.messageId, 'message-replica-0004');
-    expect(persisted.copiesRemaining, 4);
-  });
+      final persisted = packetStore.read('packet-replica-000004')!;
+      expect(persisted.origin, LoomDtnPacketOrigin.localOutbound);
+      expect(persisted.operationId, 'operation-replica-0004');
+      expect(persisted.messageId, 'message-replica-0004');
+      expect(persisted.copiesRemaining, 4);
+    },
+  );
 
   test('untrusted forwarding copy budget is clamped locally', () {
     final directory = Directory.systemTemp.createTempSync('loom-dtn-clamp-');

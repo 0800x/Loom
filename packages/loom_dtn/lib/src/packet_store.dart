@@ -2,10 +2,7 @@ import 'dart:typed_data';
 
 import 'package:loom_protocol/loom_protocol.dart';
 
-enum LoomDtnPacketOrigin {
-  localOutbound,
-  carriedReplica,
-}
+enum LoomDtnPacketOrigin { localOutbound, carriedReplica }
 
 enum LoomDtnPacketState {
   queued,
@@ -138,10 +135,7 @@ abstract interface class LoomPacketStore {
 
   LoomStoredDtnPacket? read(String packetId);
 
-  List<LoomStoredDtnPacket> listEligible(
-    DateTime now, {
-    int limit = 50,
-  });
+  List<LoomStoredDtnPacket> listEligible(DateTime now, {int limit = 50});
 
   LoomStoredDtnPacket recordAttempt(
     String packetId, {
@@ -150,15 +144,9 @@ abstract interface class LoomPacketStore {
     String? errorCode,
   });
 
-  LoomStoredDtnPacket markGatewayAccepted(
-    String packetId,
-    DateTime acceptedAt,
-  );
+  LoomStoredDtnPacket markGatewayAccepted(String packetId, DateTime acceptedAt);
 
-  LoomStoredDtnPacket markRelayAccepted(
-    String packetId,
-    DateTime acceptedAt,
-  );
+  LoomStoredDtnPacket markRelayAccepted(String packetId, DateTime acceptedAt);
 
   LoomStoredDtnPacket markRecipientConfirmed(
     String packetId,
@@ -183,6 +171,8 @@ abstract interface class LoomPacketStore {
 /// Includes retained ciphertext that may only be offered to the sealed recipient
 /// after relay tokens are spent; callers must still enforce forwarding budgets.
 abstract interface class LoomNearbyPacketSource {
-  List<LoomStoredDtnPacket> listNearbyCandidates(DateTime now,
-      {int limit = 50});
+  List<LoomStoredDtnPacket> listNearbyCandidates(
+    DateTime now, {
+    int limit = 50,
+  });
 }

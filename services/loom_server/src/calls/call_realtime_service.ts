@@ -1,3 +1,4 @@
+import { BoundedMap } from '../security/bounded_map.ts';
 import { LoomRateLimiter } from '../security/rate_limiter.ts';
 import { requireCallPolicy } from './call_policy.ts';
 import { validCallSdp } from './sdp.ts';
@@ -138,8 +139,8 @@ function socketOpen(socket: WebSocket): boolean {
 export class LoomCallRealtimeService {
   private readonly frameLimiter = new LoomRateLimiter();
   private readonly connections = new Map<string, Set<Connection>>();
-  private readonly pending = new Map<string, PendingOffer>();
-  private readonly seen = new Map<string, number>();
+  private readonly pending = new BoundedMap<string, PendingOffer>(4096);
+  private readonly seen = new BoundedMap<string, number>(100000);
   private readonly config: LoomNodeConfig;
   private readonly federation: FederationService;
   private readonly federatedCalls: LoomFederatedCallGateway;

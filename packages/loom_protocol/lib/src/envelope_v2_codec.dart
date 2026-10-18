@@ -125,10 +125,14 @@ abstract final class LoomEnvelopeV2Codec {
       conversationRef: _requireField(conversationRef, 'conversation_ref'),
       senderAccountId: _requireField(senderAccountId, 'sender_account_id'),
       senderDeviceId: _requireField(senderDeviceId, 'sender_device_id'),
-      recipientAccountId:
-          _requireField(recipientAccountId, 'recipient_account_id'),
-      recipientDeviceId:
-          _requireField(recipientDeviceId, 'recipient_device_id'),
+      recipientAccountId: _requireField(
+        recipientAccountId,
+        'recipient_account_id',
+      ),
+      recipientDeviceId: _requireField(
+        recipientDeviceId,
+        'recipient_device_id',
+      ),
       contentKind: _requireField(contentKind, 'content_kind'),
       contentPayload: _requireField(contentPayload, 'content_payload'),
       createdAt: _dateFromUnixMs(
@@ -360,8 +364,10 @@ abstract final class LoomEnvelopeV2Codec {
     );
     final receipt = LoomDeliveryReceiptV2(
       forMessageId: _requireField(forMessageId, 'for_message_id'),
-      recipientDeviceId:
-          _requireField(recipientDeviceId, 'recipient_device_id'),
+      recipientDeviceId: _requireField(
+        recipientDeviceId,
+        'recipient_device_id',
+      ),
       status: _requireField(status, 'status'),
       receivedAt: receivedAtMs == null
           ? null
@@ -669,7 +675,8 @@ final class _ProtoReader {
     final length = readVarint();
     if (length < 0 || length > maxBytes) {
       throw const FormatException(
-          'Length-delimited protobuf field exceeds limit');
+        'Length-delimited protobuf field exceeds limit',
+      );
     }
     final end = _offset + length;
     if (end < _offset || end > _bytes.length) {

@@ -311,7 +311,12 @@ class LoomMessageBubble extends StatelessWidget {
                   : p.textPrimary;
           final secondary = foreground.withValues(alpha: .85);
           final maxWidth = (bounds.maxWidth * .86)
-              .clamp(0.0, presentation == LoomMessagePresentation.voice ? 260.0 : LoomSizing.messageMax)
+              .clamp(
+                0.0,
+                presentation == LoomMessagePresentation.voice
+                    ? 260.0
+                    : LoomSizing.messageMax,
+              )
               .toDouble();
           final radius = BorderRadius.only(
             topLeft: Radius.circular(grouped && !mine ? 6 : 20),
@@ -409,8 +414,7 @@ class LoomMessageBubble extends StatelessWidget {
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
-                              ?.copyWith(
-                                  color: p.textPrimary),
+                              ?.copyWith(color: p.textPrimary),
                         ),
                       ],
                     ),
@@ -518,15 +522,18 @@ class LoomMessageBubble extends StatelessWidget {
                       minHeight: onActions != null || onReply != null ? 48 : 0,
                     ),
                     margin: EdgeInsets.only(
-                        top: grouped
-                            ? 2
-                            : compact
-                                ? 3
-                                : 7,
-                        bottom: 2),
+                      top: grouped
+                          ? 2
+                          : compact
+                              ? 3
+                              : 7,
+                      bottom: 2,
+                    ),
                     padding: content == null
                         ? EdgeInsets.symmetric(
-                            horizontal: 12, vertical: compact ? 6 : 8)
+                            horizontal: 12,
+                            vertical: compact ? 6 : 8,
+                          )
                         : presentation == LoomMessagePresentation.voice
                             ? const EdgeInsets.fromLTRB(10, 6, 6, 0)
                             : EdgeInsets.zero,
@@ -534,7 +541,10 @@ class LoomMessageBubble extends StatelessWidget {
                       color: round || sticker
                           ? Colors.transparent
                           : mine
-                              ? Color.alphaBlend(p.primary.withValues(alpha: .16), p.surfaceElevated)
+                              ? Color.alphaBlend(
+                                  p.primary.withValues(alpha: .16),
+                                  p.surfaceElevated,
+                                )
                               : p.surfaceElevated,
                       borderRadius: radius,
                       border: highlighted
@@ -660,10 +670,8 @@ class _LoomSwipeToReplyState extends State<LoomSwipeToReply> {
                 padding: const EdgeInsetsDirectional.only(start: 12),
                 child: Opacity(
                   opacity: (_offset / 52).clamp(0.0, 1.0),
-                  child: Icon(
-                    LoomIcons.reply_rounded,
-                    color: context.loom.primary,
-                  ),
+                  child: Icon(LoomIcons.reply_rounded,
+                      color: context.loom.primary),
                 ),
               ),
             AnimatedContainer(

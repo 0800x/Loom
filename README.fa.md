@@ -47,7 +47,13 @@ Flutter حداقل ۳٫۴۴ و Dart حداقل ۳٫۱۲ لازم‌اند. سا�
 باز کنید، با SSH وارد سرور شوید و این فرمان را بزنید:
 
 ```bash
-bash <(curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/0800x/Loom/main/install.sh)
+# Use an exact signed release tag and a publisher key verified independently.
+: "${LOOM_RELEASE_TAG:?set a signed release tag}"
+: "${LOOM_PUBLISHER_KEY:?set the verified minisign public key}" # gitleaks:allow -- public verification key placeholder
+curl --proto '=https' --tlsv1.2 -fsSLo install.sh "https://raw.githubusercontent.com/0800x/Loom/$LOOM_RELEASE_TAG/install.sh"
+curl --proto '=https' --tlsv1.2 -fsSLo install.sh.minisig "https://github.com/0800x/Loom/releases/download/$LOOM_RELEASE_TAG/install.sh.minisig"
+minisign -Vm install.sh -P "$LOOM_PUBLISHER_KEY"
+bash install.sh
 ```
 
 دامنه را وارد کنید و برای ثبت‌نام، فدراسیون، تماس صوتی، تصویری و گروهی انتخاب

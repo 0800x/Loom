@@ -60,10 +60,7 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(
-      find.text('Choose where your Loom identity lives'),
-      findsOneWidget,
-    );
+    expect(find.text('Choose where your Loom identity lives'), findsOneWidget);
     expect(find.text('Public directory is not configured'), findsOneWidget);
   });
 
@@ -128,10 +125,7 @@ void main() {
 
     await tester.pumpWidget(
       host(
-        LoomCallSessionScope(
-          controller: calls,
-          child: const MessengerShell(),
-        ),
+        LoomCallSessionScope(controller: calls, child: const MessengerShell()),
         routes: {
           '/settings/privacy': (_) => const Scaffold(
             body: Center(child: Text('Privacy settings route')),

@@ -14,11 +14,7 @@ enum LoomGlassQuality { high, reduced, disabled }
 
 /// Automatic quality follows raster performance; accessibility wins in surfaces.
 class LoomGlassScope extends StatefulWidget {
-  const LoomGlassScope({
-    required this.quality,
-    required this.child,
-    super.key,
-  });
+  const LoomGlassScope({required this.quality, required this.child, super.key});
   final LoomGlassQuality quality; // Compatibility with older app callers.
   final Widget child;
   static LoomGlassQuality qualityOf(BuildContext context) =>
@@ -87,11 +83,10 @@ class _GlassScopeState extends State<LoomGlassScope>
 
   @override
   Widget build(BuildContext context) => _AutomaticGlassQuality(
-    quality: widget.quality == LoomGlassQuality.high
-        ? _quality
-        : widget.quality,
-    child: widget.child,
-  );
+        quality:
+            widget.quality == LoomGlassQuality.high ? _quality : widget.quality,
+        child: widget.child,
+      );
 }
 
 class _AutomaticGlassQuality extends InheritedWidget {
@@ -138,8 +133,8 @@ class LoomGlassSurface extends StatelessWidget {
     final alpha = accessibility.highContrast
         ? .96
         : dark
-        ? recipe.darkAlpha
-        : recipe.lightAlpha;
+            ? recipe.darkAlpha
+            : recipe.lightAlpha;
     final effectiveAlpha = switch (quality) {
       LoomGlassQuality.high => alpha,
       LoomGlassQuality.reduced =>
@@ -152,17 +147,14 @@ class LoomGlassSurface extends StatelessWidget {
         recipe.blur * LoomGlassRecipes.reducedBlurFactor,
       LoomGlassQuality.disabled => 0.0,
     };
-    final surfaceColor = strength == LoomGlassStrength.strong
-        ? p.surfaceElevated
-        : p.surface;
+    final surfaceColor =
+        strength == LoomGlassStrength.strong ? p.surfaceElevated : p.surface;
     final shadowOpacity = switch (strength) {
       LoomGlassStrength.weak => 0.0,
       LoomGlassStrength.standard =>
         dark ? LoomOpacity.chromeShadowDark : LoomOpacity.chromeShadowLight,
       LoomGlassStrength.strong =>
-        dark
-            ? LoomOpacity.floatingShadowDark
-            : LoomOpacity.floatingShadowLight,
+        dark ? LoomOpacity.floatingShadowDark : LoomOpacity.floatingShadowLight,
     };
     final borderColor = accessibility.highContrast ? p.borderStrong : p.border;
     final content = Padding(padding: padding, child: child);
@@ -300,9 +292,7 @@ class LoomGlassSurface extends StatelessWidget {
           refraction: LiquidGlassRefraction(
             distortion: distortion,
             distortionWidth: distortionWidth,
-            magnification: strength == LoomGlassStrength.strong
-                ? 1.018
-                : 1.01,
+            magnification: strength == LoomGlassStrength.strong ? 1.018 : 1.01,
             chromaticAberration: dark ? .0015 : .002,
           ),
         ),
@@ -322,7 +312,8 @@ class LoomTopGlassFade extends StatelessWidget {
   Widget build(BuildContext context) {
     final access = LoomAccessibility.fromContext(context);
     final quality = access.reduceTransparency
-        ? LoomGlassQuality.disabled : LoomGlassScope.qualityOf(context);
+        ? LoomGlassQuality.disabled
+        : LoomGlassScope.qualityOf(context);
     final color = context.loom.background;
     final sigma = switch (quality) {
       LoomGlassQuality.high => 10.0,
@@ -334,8 +325,8 @@ class LoomTopGlassFade extends StatelessWidget {
         quality == LoomGlassQuality.disabled
             ? 1
             : access.highContrast
-            ? .96
-            : .58,
+                ? .96
+                : .58,
       ),
     );
     return IgnorePointer(
@@ -345,16 +336,19 @@ class LoomTopGlassFade extends StatelessWidget {
           child: ShaderMask(
             blendMode: BlendMode.dstIn,
             shaderCallback: (bounds) => const LinearGradient(
-              begin: Alignment.topCenter, end: Alignment.bottomCenter,
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
               colors: [Colors.white, Colors.white, Colors.transparent],
               stops: [0, .35, 1],
             ).createShader(bounds),
             child: ClipRect(
-              child: sigma == 0 ? tint : BackdropFilter(
-                blendMode: BlendMode.src,
-                filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-                child: tint,
-              ),
+              child: sigma == 0
+                  ? tint
+                  : BackdropFilter(
+                      blendMode: BlendMode.src,
+                      filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                      child: tint,
+                    ),
             ),
           ),
         ),
@@ -384,7 +378,5 @@ class LoomGlassAppBar extends AppBar {
     super.elevation = 0,
     super.scrolledUnderElevation = 0,
     super.flexibleSpace,
-  }) : super(
-    backgroundColor: backgroundColor ?? Colors.transparent,
-  );
+  }) : super(backgroundColor: backgroundColor ?? Colors.transparent);
 }

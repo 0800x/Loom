@@ -162,17 +162,16 @@ void main() {
         destinationNodeDomain: 'recipient.example',
         now: now,
       );
-      final prepared =
-          LoomDtnTransferExecutor(
-            packetStore: packets,
-            transferStore: packets,
-            clock: () => now,
-          ).prepareNext(
-            packetId: packetId,
-            opportunities: <LoomDtnOpportunity>[_destination(nodeId)],
-            transmissionId: transmissionId,
-            now: now,
-          );
+      final prepared = LoomDtnTransferExecutor(
+        packetStore: packets,
+        transferStore: packets,
+        clock: () => now,
+      ).prepareNext(
+        packetId: packetId,
+        opportunities: <LoomDtnOpportunity>[_destination(nodeId)],
+        transmissionId: transmissionId,
+        now: now,
+      );
       expect(prepared, isNotNull);
       routes.close();
       packets.close();
@@ -281,28 +280,28 @@ void main() {
 }
 
 LoomWellKnownNode _node(String nodeId, String domain) => LoomWellKnownNode(
-  protocol: 'loom-federation-v1',
-  endpoint: Uri.parse('https://$domain'),
-  nodeId: nodeId,
-  publicKey: 'public-key',
-  signature: 'signature',
-  fingerprint: 'fingerprint',
-);
+      protocol: 'loom-federation-v1',
+      endpoint: Uri.parse('https://$domain'),
+      nodeId: nodeId,
+      publicKey: 'public-key',
+      signature: 'signature',
+      fingerprint: 'fingerprint',
+    );
 
 LoomDtnOpportunity _destination(String nodeId) => LoomDtnOpportunity(
-  opportunityId: 'destination-node:$nodeId',
-  authenticated: true,
-  destinationNode: true,
-  directRecipient: false,
-  gatewayClaim: LoomGatewayClaimState.none,
-  supportedRelayScopes: const <LoomRoutingScopeV2>{},
-  canStoreCarry: false,
-  linkQualityPercent: 100,
-  congestionPercent: 0,
-  batteryConstrained: false,
-  recentSuccessfulTransfers: 0,
-  recentFailedTransfers: 0,
-);
+      opportunityId: 'destination-node:$nodeId',
+      authenticated: true,
+      destinationNode: true,
+      directRecipient: false,
+      gatewayClaim: LoomGatewayClaimState.none,
+      supportedRelayScopes: const <LoomRoutingScopeV2>{},
+      canStoreCarry: false,
+      linkQualityPercent: 100,
+      congestionPercent: 0,
+      batteryConstrained: false,
+      recentSuccessfulTransfers: 0,
+      recentFailedTransfers: 0,
+    );
 
 Uint8List _wire(String packetId, DateTime now, {required int copies}) =>
     LoomEnvelopeV2Codec.encodeOuter(

@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""Inventory locked dependencies and preserve available upstream license texts.
+Install deps first (npm ci, flutter pub get, cargo fetch, go mod download).
+Unknown declarations/missing texts remain explicit review items, never inferred.
+"""
+import argparse,hashlib,json,re,subprocess,tomllib,os,shutil
+from notice_sources import notice_files
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[1]
+DEST=ROOT/'third_party/licenses';DEST.mkdir(parents=True,exist_ok=True)
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--from-inventory", action="store_true", help="Re-render preserved inventory and verified fallback notices without installed dependency caches")
+args=parser.parse_args()
+entries={}
+if args.from_inventory:
+ for e in json.loads((ROOT/"third_party/dependency-inventory.json").read_text()):
+  entries[(e["ecosystem"],e["name"],e["version"])]=e
+def add(ecosystem,name,version,license,folder,source):
+ key=(ecosystem,name,version)
+ if key in entries:return
+ texts=[]
+ for p in notice_files(folder):
+  data=p.read_bytes();digest=hashlib.sha256(data).hexdigest();(DEST/(digest+'.txt')).write_bytes(data);texts.append({'file':'third_party/licenses/'+digest+'.txt','upstreamName':p.relative_to(folder).as_posix()})
+ entries[key]={'ecosystem':ecosystem,'name':name,'version':version,'declaredLicense':license or 'UNDECLARED','source':source,'texts':texts}
+if not args.from_inventory:
+ for lock in ROOT.rglob('package-lock.json'):
+  if any(part in ['node_modules','.dart_tool','build','target'] for part in lock.parts):continue
+  j=json.loads(lock.read_text())
+  for path,meta in j.get('packages',{}).items():
+   if not path or not meta.get('version'):continue
+   name=meta.get('name') or path.split('node_modules/')[-1]
+   add('npm',name,meta['version'],meta.get('license'),lock.parent/path,'https://www.npmjs.com/package/'+name+'/v/'+meta['version'])
+ cache=Path(os.environ.get('PUB_CACHE',str(Path.home()/'.pub-cache')))/'hosted/pub.dev'
+ for lock in ROOT.rglob('pubspec.lock'):
+  if any(part in ['.dart_tool','build','target'] for part in lock.parts):continue
+  for match in re.finditer(r'^  ([\w]+):\n(.*?)(?=^  [\w]+:|^sdks:|\Z)',lock.read_text(),re.M|re.S):
+   name,body=match.groups();v=re.search(r'^    version: ["\']?([^"\'\n]+)',body,re.M)
+   if not v or 'source: hosted' not in body:continue
+   version=v[1].strip();folder=cache/(name+'-'+version)
+   add('pub',name,version,None,folder,'https://pub.dev/packages/'+name+'/versions/'+version)
+ registry=Path(os.environ.get('CARGO_HOME',str(Path.home()/'.cargo')))/'registry/src'
+ for lock in ROOT.glob('native/*/Cargo.lock'):
+  for item in tomllib.loads(lock.read_text()).get('package',[]):
+   if not item.get('source','').startswith('registry+'):continue
+   name,version=item['name'],item['version'];dirs=list(registry.glob('*/'+name+'-'+version));folder=dirs[0] if dirs else None
+   manifest=tomllib.loads((folder/'Cargo.toml').read_text()).get('package',{}) if folder and (folder/'Cargo.toml').exists() else {}
+   add('cargo',name,version,manifest.get('license'),folder,'https://crates.io/crates/'+name+'/'+version)
+ go=shutil.which('go')
+ if go:
+  result=subprocess.run([str(go),'list','-m','-json','all'],cwd=ROOT/'tools/loom_node_manager',capture_output=True,text=True)
+  if result.returncode==0:
+   remaining=result.stdout;decoder=json.JSONDecoder()
+   while remaining.strip():
+    remaining=remaining.lstrip();item,end=decoder.raw_decode(remaining);remaining=remaining[end:]
+    if item.get('Main'):continue
+    add('go',item['Path'],item.get('Version','unknown'),None,Path(item['Dir']) if item.get('Dir') else None,'https://pkg.go.dev/'+item['Path']+'@'+item.get('Version',''))
+ # Vendored forks retain their own notices independently from package inventories.
+ add('asset','devicon','repository assets',None,ROOT/'services/loom_server/src/http/assets','https://github.com/devicons/devicon')
+ for name in ['loom_record_android','loom_audioplayers_android','loom_video_compress']:
+  add('vendored',name,'repository fork',None,ROOT/'packages'/name,'packages/'+name)
+fallback_path=ROOT/'third_party/upstream-license-sources.json'
+if fallback_path.exists():
+ fallback=json.loads(fallback_path.read_text())
+ for e in entries.values():
+  if not e['texts']:
+   for t in fallback.get(e['name']+'@'+e['version'],[]):
+    p=ROOT/t['file']
+    if not p.is_file() or hashlib.sha256(p.read_bytes()).hexdigest()!=p.stem:raise ValueError('Invalid notice digest: '+str(p))
+    e['texts'].append(t)
+if not args.from_inventory:add('vendored','hpke-rs-libcrux','0.7.0+loom-metadata','MPL-2.0',ROOT/'third_party/hpke-rs-libcrux','third_party/hpke-rs-libcrux/LOOM-PATCH.md')
+if not args.from_inventory:add('vendored','hax-lib-macros','0.3.7+loom-diagnostics','Apache-2.0',ROOT/'third_party/hax-lib-macros','third_party/hax-lib-macros/LOOM-PATCH.md')
+items=sorted(entries.values(),key=lambda e:(e['ecosystem'],e['name'],e['version']))
+(ROOT/'third_party/dependency-inventory.json').write_text(json.dumps(items,indent=2,ensure_ascii=False)+'\n')
+lines=['# Third-party notices','', 'Generated by `python3 scripts/generate-third-party-notices.py` from lockfiles and installed dependency metadata. Upstream license/copyright texts are preserved verbatim under `third_party/licenses/`. A missing declaration is not an assertion of an incompatible license. A missing text is an unresolved attribution review item.','', 'This inventory is not a legal compatibility certification. Native platform transitive binaries, codecs, fonts/assets and final release artifacts also require SBOM/attribution review. See [license compatibility](docs/license-compatibility.md).','', '| Ecosystem | Dependency | Version | Declared license | Upstream notices |','| --- | --- | --- | --- | --- |']
+for e in items:
+ refs='; '.join('['+t['upstreamName']+']('+t['file']+')' for t in e['texts']) or '**TEXT NOT AVAILABLE**'
+ lines.append('| '+e['ecosystem']+' | ['+e['name']+']('+e['source']+') | '+e['version']+' | '+e['declaredLicense'].replace('|','\\|')+' | '+refs+' |')
+missing=[e for e in items if not e['texts']]
+lines+=['','## Outstanding review','',str(len(items))+' locked/vendored entries; '+str(len(missing))+' entries lack locally available notice text. Resolve them and platform-binary attribution before a signed distribution. GPL-3.0-only is unchanged.']
+(ROOT/'THIRD_PARTY_NOTICES.md').write_text('\n'.join(lines)+'\n')
+print(json.dumps({'entries':len(items),'missingNoticeTexts':len(missing),'uniqueTexts':len(list(DEST.glob('*.txt')))}))

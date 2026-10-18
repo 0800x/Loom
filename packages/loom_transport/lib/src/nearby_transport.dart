@@ -62,11 +62,11 @@ class LoomNearbyAdvertisement {
   final DateTime expiresAt;
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'protocolVersion': protocolVersion,
-    'rendezvousId': rendezvousId,
-    'bearers': bearers.map((value) => value.name).toList(growable: false),
-    'expiresAt': expiresAt.toUtc().toIso8601String(),
-  };
+        'protocolVersion': protocolVersion,
+        'rendezvousId': rendezvousId,
+        'bearers': bearers.map((value) => value.name).toList(growable: false),
+        'expiresAt': expiresAt.toUtc().toIso8601String(),
+      };
 }
 
 class LoomNearbyCandidate {
@@ -123,8 +123,8 @@ class LoomNearbySecureConnection {
     required Future<List<int>> Function(List<int>) open,
     this.maxPlaintextBytes = 256 * 1024,
     this.maxProtectedBytes = 320 * 1024,
-  }) : _seal = seal,
-       _open = open;
+  })  : _seal = seal,
+        _open = open;
 
   final LoomNearbyLink link;
   final Future<List<int>> Function(List<int>) _seal;

@@ -132,23 +132,22 @@ void main() {
           trustedDevice: (member) async =>
               bundles.singleWhere((b) => b.deviceId == member.deviceId),
           sealHistory: seal,
-          crypto:
-              ({
-                required operation,
-                required state,
-                groupId,
-                required arguments,
-              }) async {
-                final result = await native.execute(
-                  deviceId: bundles[i].deviceId,
-                  sealingKey: List<int>.filled(32, i + 1),
-                  operation: operation,
-                  state: state,
-                  groupId: groupId,
-                  arguments: arguments,
-                );
-                return (state: result.state, result: result.result);
-              },
+          crypto: ({
+            required operation,
+            required state,
+            groupId,
+            required arguments,
+          }) async {
+            final result = await native.execute(
+              deviceId: bundles[i].deviceId,
+              sealingKey: List<int>.filled(32, i + 1),
+              operation: operation,
+              state: state,
+              groupId: groupId,
+              arguments: arguments,
+            );
+            return (state: result.state, result: result.result);
+          },
         );
       }
 
@@ -251,8 +250,8 @@ void main() {
       sessions[1] = session(1, stores[1]);
       await sessions[1].send(id, {'text': 'after restart'});
       await sessions[0].sync();
-      (clients[0] as LostAckClient).beforeCommit = () =>
-          sessions[1].send(id, {'text': 'during commit'});
+      (clients[0] as LostAckClient).beforeCommit =
+          () => sessions[1].send(id, {'text': 'during commit'});
       await sessions[0].update(
         groupId: id,
         title: 'Friends',
@@ -292,7 +291,8 @@ void main() {
       // Profiles use the real MLS/application and encrypted history path.
       final photo = LoomGroupProfile.fromJson({
         'v': 1,
-        'png': 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZbkAAAAASUVORK5CYII=',
+        'png':
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZbkAAAAASUVORK5CYII=',
       });
       (clients[0] as LostAckClient).loseNextReceipt = true;
       await expectLater(

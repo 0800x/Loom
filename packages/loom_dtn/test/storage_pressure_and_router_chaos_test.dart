@@ -8,50 +8,57 @@ import 'package:test/test.dart';
 void main() {
   final now = DateTime.utc(2026, 9, 6, 8);
 
-  test('storage pressure never deletes live packets and restricts replication',
-      () {
-    final store = _FakePacketStore();
-    const metrics = _FakeMetricsSource(
-      const LoomDtnStorageMetrics(
-        databaseBytes: 95,
-        walBytes: 0,
-        shmBytes: 0,
-      ),
-    );
-    final controller = LoomDtnStoragePressureController(
-      packetStore: store,
-      metricsSource: metrics,
-      maximumBytes: 8 * 1024 * 1024,
-    );
+  test(
+    'storage pressure never deletes live packets and restricts replication',
+    () {
+      final store = _FakePacketStore();
+      const metrics = _FakeMetricsSource(
+        const LoomDtnStorageMetrics(
+          databaseBytes: 95,
+          walBytes: 0,
+          shmBytes: 0,
+        ),
+      );
+      final controller = LoomDtnStoragePressureController(
+        packetStore: store,
+        metricsSource: metrics,
+        maximumBytes: 8 * 1024 * 1024,
+      );
 
-    // Classification thresholds are independently tested with a realistic
-    // configured budget rather than making the fake 95 bytes exceed policy.
-    expect(
-      controller.classify(const LoomDtnStorageMetrics(
-        databaseBytes: 7 * 1024 * 1024,
-        walBytes: 512 * 1024,
-        shmBytes: 0,
-      )),
-      LoomDtnStoragePressure.critical,
-    );
+      // Classification thresholds are independently tested with a realistic
+      // configured budget rather than making the fake 95 bytes exceed policy.
+      expect(
+        controller.classify(
+          const LoomDtnStorageMetrics(
+            databaseBytes: 7 * 1024 * 1024,
+            walBytes: 512 * 1024,
+            shmBytes: 0,
+          ),
+        ),
+        LoomDtnStoragePressure.critical,
+      );
 
-    final packet =
-        _packet(now, copies: 4, priority: LoomPriorityClassV2.normal);
-    final direct = _opportunity('direct', direct: true);
-    final relay = _opportunity('relay', canStoreCarry: true);
-    final verifiedGateway = _opportunity(
-      'gateway',
-      gateway: LoomGatewayClaimState.verifiedRecently,
-    );
-    final plan = controller.planNext(
-      packet: packet,
-      opportunities: <LoomDtnOpportunity>[relay, verifiedGateway, direct],
-      now: now,
-      pressure: LoomDtnStoragePressure.critical,
-    );
-    expect(plan?.reason, LoomDtnTransferReason.directRecipient);
-    expect(store.cancelCalls, 0);
-  });
+      final packet = _packet(
+        now,
+        copies: 4,
+        priority: LoomPriorityClassV2.normal,
+      );
+      final direct = _opportunity('direct', direct: true);
+      final relay = _opportunity('relay', canStoreCarry: true);
+      final verifiedGateway = _opportunity(
+        'gateway',
+        gateway: LoomGatewayClaimState.verifiedRecently,
+      );
+      final plan = controller.planNext(
+        packet: packet,
+        opportunities: <LoomDtnOpportunity>[relay, verifiedGateway, direct],
+        now: now,
+        pressure: LoomDtnStoragePressure.critical,
+      );
+      expect(plan?.reason, LoomDtnTransferReason.directRecipient);
+      expect(store.cancelCalls, 0);
+    },
+  );
 
   test('randomized Spray-and-Wait plans conserve bounded copy authority', () {
     final random = Random(0x43484154);
@@ -176,8 +183,10 @@ final class _FakePacketStore implements LoomPacketStore {
   @override
   int expireDue(DateTime now) => 0;
   @override
-  int pruneTerminal(DateTime now,
-          {Duration tombstoneRetention = const Duration(days: 30)}) =>
+  int pruneTerminal(
+    DateTime now, {
+    Duration tombstoneRetention = const Duration(days: 30),
+  }) =>
       0;
   @override
   LoomStoredDtnPacket cancelLocal(String packetId, DateTime cancelledAt) {

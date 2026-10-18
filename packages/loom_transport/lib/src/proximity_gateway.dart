@@ -20,9 +20,9 @@ const _nearbyLegacyAckKind = 'proximity.gateway.legacy-event-ack.v1';
 
 String _b64u(List<int> bytes) => base64UrlEncode(bytes).replaceAll('=', '');
 String _iso(DateTime value) => DateTime.fromMillisecondsSinceEpoch(
-  value.toUtc().millisecondsSinceEpoch,
-  isUtc: true,
-).toIso8601String();
+      value.toUtc().millisecondsSinceEpoch,
+      isUtc: true,
+    ).toIso8601String();
 
 Uint8List _nonce([int length = 24]) {
   final random = Random.secure();
@@ -42,10 +42,10 @@ enum LoomProximityGatewayBearer { ble, wifiDirect, wifiAware }
 
 extension LoomProximityGatewayBearerWire on LoomProximityGatewayBearer {
   String get wireName => switch (this) {
-    LoomProximityGatewayBearer.ble => 'ble',
-    LoomProximityGatewayBearer.wifiDirect => 'wifi-direct',
-    LoomProximityGatewayBearer.wifiAware => 'wifi-aware',
-  };
+        LoomProximityGatewayBearer.ble => 'ble',
+        LoomProximityGatewayBearer.wifiDirect => 'wifi-direct',
+        LoomProximityGatewayBearer.wifiAware => 'wifi-aware',
+      };
 }
 
 final class LoomProximityGatewayLease {
@@ -88,50 +88,50 @@ final class LoomProximityGatewayLease {
   final String signature;
 
   Uint8List canonicalBytes() => Uint8List.fromList(
-    utf8.encode(
-      jsonEncode(<Object?>[
-        _leaseDomain,
-        1,
-        leaseId,
-        sessionId,
-        recipientIdentityId,
-        recipientDeviceId,
-        recipientNodeId,
-        recipientNodeDomain,
-        gatewayDevicePublicKey,
-        gatewayFingerprint,
-        gatewayEphemeralPublicKey,
-        recipientEphemeralPublicKey,
-        bearer.wireName,
-        _iso(issuedAt),
-        _iso(expiresAt),
-        nonce,
-        maxPackets,
-        maxBytes,
-      ]),
-    ),
-  );
+        utf8.encode(
+          jsonEncode(<Object?>[
+            _leaseDomain,
+            1,
+            leaseId,
+            sessionId,
+            recipientIdentityId,
+            recipientDeviceId,
+            recipientNodeId,
+            recipientNodeDomain,
+            gatewayDevicePublicKey,
+            gatewayFingerprint,
+            gatewayEphemeralPublicKey,
+            recipientEphemeralPublicKey,
+            bearer.wireName,
+            _iso(issuedAt),
+            _iso(expiresAt),
+            nonce,
+            maxPackets,
+            maxBytes,
+          ]),
+        ),
+      );
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'version': 1,
-    'leaseId': leaseId,
-    'sessionId': sessionId,
-    'recipientIdentityId': recipientIdentityId,
-    'recipientDeviceId': recipientDeviceId,
-    'recipientNodeId': recipientNodeId,
-    'recipientNodeDomain': recipientNodeDomain,
-    'gatewayDevicePublicKey': gatewayDevicePublicKey,
-    'gatewayFingerprint': gatewayFingerprint,
-    'gatewayEphemeralPublicKey': gatewayEphemeralPublicKey,
-    'recipientEphemeralPublicKey': recipientEphemeralPublicKey,
-    'bearer': bearer.wireName,
-    'issuedAt': _iso(issuedAt),
-    'expiresAt': _iso(expiresAt),
-    'nonce': nonce,
-    'maxPackets': maxPackets,
-    'maxBytes': maxBytes,
-    'signature': signature,
-  };
+        'version': 1,
+        'leaseId': leaseId,
+        'sessionId': sessionId,
+        'recipientIdentityId': recipientIdentityId,
+        'recipientDeviceId': recipientDeviceId,
+        'recipientNodeId': recipientNodeId,
+        'recipientNodeDomain': recipientNodeDomain,
+        'gatewayDevicePublicKey': gatewayDevicePublicKey,
+        'gatewayFingerprint': gatewayFingerprint,
+        'gatewayEphemeralPublicKey': gatewayEphemeralPublicKey,
+        'recipientEphemeralPublicKey': recipientEphemeralPublicKey,
+        'bearer': bearer.wireName,
+        'issuedAt': _iso(issuedAt),
+        'expiresAt': _iso(expiresAt),
+        'nonce': nonce,
+        'maxPackets': maxPackets,
+        'maxBytes': maxBytes,
+        'signature': signature,
+      };
 
   factory LoomProximityGatewayLease.fromJson(Map<String, Object?> json) {
     String string(String key, {int max = 512}) {
@@ -333,13 +333,13 @@ final class LoomGatewayClaimPacket {
   }
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'packetId': packetId,
-    'mailboxToken': mailboxToken,
-    'envelopeBase64': envelopeBase64,
-    'expiresAt': _iso(expiresAt),
-    'priority': priority,
-    'acceptedAt': _iso(acceptedAt),
-  };
+        'packetId': packetId,
+        'mailboxToken': mailboxToken,
+        'envelopeBase64': envelopeBase64,
+        'expiresAt': _iso(expiresAt),
+        'priority': priority,
+        'acceptedAt': _iso(acceptedAt),
+      };
 }
 
 final class LoomLegacyGatewayDelivery {
@@ -402,24 +402,24 @@ final class LoomLegacyGatewayDelivery {
   }
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'deliveryId': deliveryId,
-    'conversation': <String, Object?>{
-      'id': conversation.id,
-      'kind': conversation.kind.name,
-      'title': conversation.title,
-      'peerAddress': conversation.peerAddress,
-      'updatedOrder': conversation.updatedOrder,
-      'unreadCount': conversation.unreadCount,
-      'isMuted': conversation.isMuted,
-      'isPinned': conversation.isPinned,
-    },
-    'event': <String, Object?>{
-      'eventId': event.eventId,
-      'kind': event.kind,
-      'order': event.order,
-      'payload': event.payload,
-    },
-  };
+        'deliveryId': deliveryId,
+        'conversation': <String, Object?>{
+          'id': conversation.id,
+          'kind': conversation.kind.name,
+          'title': conversation.title,
+          'peerAddress': conversation.peerAddress,
+          'updatedOrder': conversation.updatedOrder,
+          'unreadCount': conversation.unreadCount,
+          'isMuted': conversation.isMuted,
+          'isPinned': conversation.isPinned,
+        },
+        'event': <String, Object?>{
+          'eventId': event.eventId,
+          'kind': event.kind,
+          'order': event.order,
+          'payload': event.payload,
+        },
+      };
 }
 
 final class LoomProximityGatewayClaim {
@@ -430,9 +430,9 @@ final class LoomProximityGatewayClaim {
   final List<LoomGatewayClaimPacket> packets;
   final List<LoomLegacyGatewayDelivery> legacyDeliveries;
   List<String> get custodyIds => <String>[
-    ...packets.map((packet) => packet.packetId),
-    ...legacyDeliveries.map((delivery) => delivery.deliveryId),
-  ];
+        ...packets.map((packet) => packet.packetId),
+        ...legacyDeliveries.map((delivery) => delivery.deliveryId),
+      ];
 }
 
 final class LoomProximityGatewayTarget {
@@ -471,8 +471,7 @@ final class LoomProximityGatewayTarget {
     }
     if (endpoint.scheme != 'https') {
       final host = endpoint.host.toLowerCase();
-      final loopback =
-          host == 'localhost' ||
+      final loopback = host == 'localhost' ||
           (endpoint.scheme == 'http' &&
               (InternetAddress.tryParse(host)?.isLoopback ?? false));
       if (!loopback) {
@@ -489,7 +488,7 @@ final class LoomProximityGatewayClient {
     required this.gatewaySigner,
     LoomDirectHttpPoster? poster,
   }) : poster =
-           poster ?? LoomIoDirectHttpPoster(maxResponseBytes: 2 * 1024 * 1024);
+            poster ?? LoomIoDirectHttpPoster(maxResponseBytes: 2 * 1024 * 1024);
 
   final LoomProximityGatewayTarget target;
   final LoomDirectTransportSigner gatewaySigner;
@@ -549,30 +548,26 @@ final class LoomProximityGatewayClient {
       throw const FormatException('Gateway claim payload is incomplete');
     }
     return LoomProximityGatewayClaim(
-      packets: rawPackets
-          .map((value) {
-            if (value is! Map) {
-              throw const FormatException('Invalid gateway claim packet');
-            }
-            return LoomGatewayClaimPacket.fromJson(
-              value.map(
-                (key, value) => MapEntry(key.toString(), value as Object?),
-              ),
-            );
-          })
-          .toList(growable: false),
-      legacyDeliveries: rawLegacy
-          .map((value) {
-            if (value is! Map) {
-              throw const FormatException('Invalid legacy gateway delivery');
-            }
-            return LoomLegacyGatewayDelivery.fromJson(
-              value.map(
-                (key, value) => MapEntry(key.toString(), value as Object?),
-              ),
-            );
-          })
-          .toList(growable: false),
+      packets: rawPackets.map((value) {
+        if (value is! Map) {
+          throw const FormatException('Invalid gateway claim packet');
+        }
+        return LoomGatewayClaimPacket.fromJson(
+          value.map(
+            (key, value) => MapEntry(key.toString(), value as Object?),
+          ),
+        );
+      }).toList(growable: false),
+      legacyDeliveries: rawLegacy.map((value) {
+        if (value is! Map) {
+          throw const FormatException('Invalid legacy gateway delivery');
+        }
+        return LoomLegacyGatewayDelivery.fromJson(
+          value.map(
+            (key, value) => MapEntry(key.toString(), value as Object?),
+          ),
+        );
+      }).toList(growable: false),
     );
   }
 
@@ -660,12 +655,13 @@ final class LoomNearbyProximityGatewayExchange {
   Future<void> sendLease(
     LoomNearbySecureConnection connection,
     LoomProximityGatewayLease lease,
-  ) => connection.send(
-    codec.encode(<String, Object?>{
-      'kind': _nearbyLeaseKind,
-      'lease': lease.toJson(),
-    }),
-  );
+  ) =>
+      connection.send(
+        codec.encode(<String, Object?>{
+          'kind': _nearbyLeaseKind,
+          'lease': lease.toJson(),
+        }),
+      );
 
   Future<LoomProximityGatewayLease> receiveLease(
     LoomNearbySecureConnection connection, {

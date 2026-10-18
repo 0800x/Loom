@@ -39,13 +39,11 @@ final class LoomAndroidKeystoreStateProtector
   }) async {
     _requireAndroid();
     _validateInput(contextId, revision, plaintext);
-    final result = await _channel.invokeMethod<Object?>(
-      'wrap',
-      <String, Object?>{
-        'plaintext': Uint8List.fromList(plaintext),
-        'associatedData': _associatedData(contextId, revision),
-      },
-    );
+    final result = await _channel
+        .invokeMethod<Object?>('wrap', <String, Object?>{
+          'plaintext': Uint8List.fromList(plaintext),
+          'associatedData': _associatedData(contextId, revision),
+        });
     final protectedState = _bytes(result, 'wrapped state');
     if (protectedState.isEmpty || protectedState.length > _maxStateBytes + 64) {
       throw const FormatException('Android protected state exceeds bounds');
@@ -67,13 +65,11 @@ final class LoomAndroidKeystoreStateProtector
     if (protectedState.isEmpty || protectedState.length > _maxStateBytes + 64) {
       throw const FormatException('Android protected state exceeds bounds');
     }
-    final result = await _channel.invokeMethod<Object?>(
-      'unwrap',
-      <String, Object?>{
-        'protectedState': Uint8List.fromList(protectedState),
-        'associatedData': _associatedData(contextId, revision),
-      },
-    );
+    final result = await _channel
+        .invokeMethod<Object?>('unwrap', <String, Object?>{
+          'protectedState': Uint8List.fromList(protectedState),
+          'associatedData': _associatedData(contextId, revision),
+        });
     final plaintext = _bytes(result, 'unwrapped state');
     if (plaintext.isEmpty || plaintext.length > _maxStateBytes) {
       throw const FormatException('Android unwrapped state exceeds bounds');

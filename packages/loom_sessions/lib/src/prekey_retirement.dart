@@ -43,7 +43,8 @@ final class LoomPrekeyRetirementPolicy {
   bool mayForgetPrivateMaterial({
     required DateTime serverExpiresAt,
     required DateTime now,
-  }) => !now.toUtc().isBefore(earliestSafeRetirement(serverExpiresAt));
+  }) =>
+      !now.toUtc().isBefore(earliestSafeRetirement(serverExpiresAt));
 }
 
 /// Provider capability for exact private-prekey retirement.

@@ -20,13 +20,10 @@ Future<LoomRecoveryExportResult> saveLoomRecoveryFile(
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       if (!current()) return LoomRecoveryExportResult.cancelled;
       final saved =
-          await const MethodChannel(
-            'loom/recovery_export',
-          ).invokeMethod<bool>('save', {
-            'name': name,
-            'mime': mime,
-            'bytes': exportBytes,
-          }) ??
+          await const MethodChannel('loom/recovery_export').invokeMethod<bool>(
+            'save',
+            {'name': name, 'mime': mime, 'bytes': exportBytes},
+          ) ??
           false;
       return saved && current()
           ? LoomRecoveryExportResult.saved

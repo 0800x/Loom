@@ -56,49 +56,53 @@ class LoomGroupStore {
           as int? ??
       0;
   LoomMlsSealedState? get state {
-    final row = _db
-        .select('SELECT state_json FROM mls_device WHERE singleton=1')
-        .firstOrNull;
+    final row =
+        _db
+            .select('SELECT state_json FROM mls_device WHERE singleton=1')
+            .firstOrNull;
     return row == null
         ? null
         : LoomMlsSealedState.fromJson(
-            Map<String, Object?>.from(
-              jsonDecode(row['state_json'] as String) as Map,
-            ),
-          );
+          Map<String, Object?>.from(
+            jsonDecode(row['state_json'] as String) as Map,
+          ),
+        );
   }
 
-  List<LoomGroupOutbox> get outbox => _db
-      .select('SELECT * FROM mls_outbox ORDER BY rowid')
-      .map(
-        (row) => LoomGroupOutbox(
-          id: row['id'] as String,
-          groupId: row['group_id'] as String,
-          path: row['path'] as String,
-          body: Map<String, Object?>.from(
-            jsonDecode(row['body_json'] as String) as Map,
-          ),
-          checkpoint: row['checkpoint_json'] == null
-              ? null
-              : LoomMlsSealedState.fromJson(
-                  Map<String, Object?>.from(
-                    jsonDecode(row['checkpoint_json'] as String) as Map,
-                  ),
-                ),
-          localPayload: row['local_payload'] as String?,
-        ),
-      )
-      .toList();
-  List<LoomGroupState> get groups => _db
-      .select('SELECT state_json FROM mls_catalogue')
-      .map(
-        (r) => LoomGroupState.fromJson(
-          Map<String, Object?>.from(
-            jsonDecode(r['state_json'] as String) as Map,
-          ),
-        ),
-      )
-      .toList();
+  List<LoomGroupOutbox> get outbox =>
+      _db
+          .select('SELECT * FROM mls_outbox ORDER BY rowid')
+          .map(
+            (row) => LoomGroupOutbox(
+              id: row['id'] as String,
+              groupId: row['group_id'] as String,
+              path: row['path'] as String,
+              body: Map<String, Object?>.from(
+                jsonDecode(row['body_json'] as String) as Map,
+              ),
+              checkpoint:
+                  row['checkpoint_json'] == null
+                      ? null
+                      : LoomMlsSealedState.fromJson(
+                        Map<String, Object?>.from(
+                          jsonDecode(row['checkpoint_json'] as String) as Map,
+                        ),
+                      ),
+              localPayload: row['local_payload'] as String?,
+            ),
+          )
+          .toList();
+  List<LoomGroupState> get groups =>
+      _db
+          .select('SELECT state_json FROM mls_catalogue')
+          .map(
+            (r) => LoomGroupState.fromJson(
+              Map<String, Object?>.from(
+                jsonDecode(r['state_json'] as String) as Map,
+              ),
+            ),
+          )
+          .toList();
   int cursor(String id) =>
       _db.select('SELECT cursor FROM mls_catalogue WHERE id=?', [
             id,
@@ -115,16 +119,19 @@ class LoomGroupStore {
     'INSERT INTO mls_read VALUES(?,?) ON CONFLICT(group_id) DO UPDATE SET sequence=MAX(mls_read.sequence,excluded.sequence)',
     [id, sequence],
   );
-  List<({int sequence, String payload})> history(String id) => _db
-      .select(
-        'SELECT sequence,payload FROM mls_history WHERE group_id=? ORDER BY sequence',
-        [id],
-      )
-      .map(
-        (r) =>
-            (sequence: r['sequence'] as int, payload: r['payload'] as String),
-      )
-      .toList();
+  List<({int sequence, String payload})> history(String id) =>
+      _db
+          .select(
+            'SELECT sequence,payload FROM mls_history WHERE group_id=? ORDER BY sequence',
+            [id],
+          )
+          .map(
+            (r) => (
+              sequence: r['sequence'] as int,
+              payload: r['payload'] as String,
+            ),
+          )
+          .toList();
   void _transaction(void Function() action) {
     _db.execute('BEGIN IMMEDIATE');
     try {
@@ -216,15 +223,19 @@ class LoomGroupStore {
     ]);
     _db.execute('DELETE FROM mls_outbox WHERE id=?', [id]);
   });
-  List<({String id, String? payload})> failed(String groupId) => _db
-      .select('SELECT id,payload FROM mls_failed WHERE group_id=?', [groupId])
-      .map((r) => (id: r['id'] as String, payload: r['payload'] as String?))
-      .toList();
+  List<({String id, String? payload})> failed(String groupId) =>
+      _db
+          .select('SELECT id,payload FROM mls_failed WHERE group_id=?', [
+            groupId,
+          ])
+          .map((r) => (id: r['id'] as String, payload: r['payload'] as String?))
+          .toList();
   bool isOwnOperation(String groupId, int sequence, String? operationId) {
-    final row = _db.select(
-      'SELECT operation_id FROM mls_own WHERE group_id=? AND sequence=?',
-      [groupId, sequence],
-    ).firstOrNull;
+    final row =
+        _db.select(
+          'SELECT operation_id FROM mls_own WHERE group_id=? AND sequence=?',
+          [groupId, sequence],
+        ).firstOrNull;
     if (row == null) return false;
     if (operationId != null && row['operation_id'] != operationId)
       throw StateError('Own echo operation mismatch');
@@ -232,17 +243,18 @@ class LoomGroupStore {
   }
 
   LoomGroupState? ownCommitState(String groupId, int sequence) {
-    final row = _db.select(
-      'SELECT state_json FROM mls_own WHERE group_id=? AND sequence=?',
-      [groupId, sequence],
-    ).firstOrNull;
+    final row =
+        _db.select(
+          'SELECT state_json FROM mls_own WHERE group_id=? AND sequence=?',
+          [groupId, sequence],
+        ).firstOrNull;
     return row?['state_json'] == null
         ? null
         : LoomGroupState.fromJson(
-            Map<String, Object?>.from(
-              jsonDecode(row!['state_json'] as String) as Map,
-            ),
-          );
+          Map<String, Object?>.from(
+            jsonDecode(row!['state_json'] as String) as Map,
+          ),
+        );
   }
 
   void apply(

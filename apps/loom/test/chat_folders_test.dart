@@ -80,20 +80,14 @@ void main() {
     );
     expect(
       unreadPersonal.matches(
-        _conversation(
-          id: 'group',
-          kind: LoomConversationKind.group,
-          unread: 4,
-        ),
+        _conversation(id: 'group', kind: LoomConversationKind.group, unread: 4),
       ),
       isFalse,
     );
   });
 
   test('new folder setup starts with no category folders', () {
-    final controller = LoomChatFolderController(
-      identityIdProvider: () => null,
-    );
+    final controller = LoomChatFolderController(identityIdProvider: () => null);
     addTearDown(controller.dispose);
     expect(controller.folders.map((folder) => folder.id).toList(), <String>[
       loomAllChatsFolderId,
@@ -175,9 +169,7 @@ void main() {
     tester,
   ) async {
     _phone(tester);
-    final controller = LoomChatFolderController(
-      identityIdProvider: () => null,
-    );
+    final controller = LoomChatFolderController(identityIdProvider: () => null);
     addTearDown(controller.dispose);
     await tester.pumpWidget(
       _host(controller, const LoomChatFoldersSettingsScreen()),
@@ -221,9 +213,7 @@ void main() {
     tester,
   ) async {
     _phone(tester);
-    final controller = LoomChatFolderController(
-      identityIdProvider: () => null,
-    );
+    final controller = LoomChatFolderController(identityIdProvider: () => null);
     addTearDown(controller.dispose);
     await controller.addPreset(loomPersonalFolderId);
     await controller.addPreset(loomGroupsFolderId);

@@ -50,7 +50,7 @@ test('federated inbound delivery is idempotent and reconstructs normal sync stat
   const accounts = new SqliteStore(dir);
   const routing = FederationRoutingStore.sqliteStore(dir);
   try {
-    const bob = accounts.register({
+    const bob = await accounts.register({
       username: 'bob',
       displayName: 'Bob',
       password: 'correct horse battery staple',
@@ -135,7 +135,7 @@ test('remote outbox completion emits node-custody sync feedback to the sender ex
   const accounts = new SqliteStore(dir);
   const routing = FederationRoutingStore.sqliteStore(dir);
   try {
-    const alice = accounts.register({
+    const alice = await accounts.register({
       username: 'alice',
       displayName: 'Alice',
       password: 'correct horse battery staple',
@@ -181,7 +181,7 @@ test('terminal remote failure emits failed sync feedback and a later retry may r
   const accounts = new SqliteStore(dir);
   const routing = FederationRoutingStore.sqliteStore(dir);
   try {
-    const alice = accounts.register({
+    const alice = await accounts.register({
       username: 'alice',
       displayName: 'Alice',
       password: 'correct horse battery staple',
@@ -229,7 +229,7 @@ test('same-node delivery feedback is idempotent', async () => {
   const accounts = new SqliteStore(dir);
   const routing = FederationRoutingStore.sqliteStore(dir);
   try {
-    const alice = accounts.register({
+    const alice = await accounts.register({
       username: 'alice',
       displayName: 'Alice',
       password: 'correct horse battery staple',
@@ -267,9 +267,9 @@ test('federated recipient receipt binds original destination, account and client
   const dirA=mkdtempSync(join(tmpdir(),'loom-receipt-a-')), dirB=mkdtempSync(join(tmpdir(),'loom-receipt-b-'));
   const a=new SqliteStore(dirA), b=new SqliteStore(dirB);
   const ra=FederationRoutingStore.sqliteStore(dirA), rb=FederationRoutingStore.sqliteStore(dirB);
-  const register=(store:SqliteStore, username:string,domain:string)=>store.register({username,displayName:username,password:'correct horse battery staple',deviceName:'phone',identity:identityMaterial(),protocolVersion:'Loom-Identity-v1'},domain);
+  const register=async (store:SqliteStore, username:string,domain:string)=>await store.register({username,displayName:username,password:'correct horse battery staple',deviceName:'phone',identity:identityMaterial(),protocolVersion:'Loom-Identity-v1'},domain);
   try {
-    const alice=register(a,'alice','loom-a.test'),bob=register(b,'bob','loom-b.test'),eve=register(b,'eve','loom-b.test');
+    const alice=await register(a,'alice','loom-a.test'),bob=await register(b,'bob','loom-b.test'),eve=await register(b,'eve','loom-b.test');
     const conversationId=await ra.ensureRemoteConversation(alice.accountId,bob.address,'node:destination-test');
     const local=a.createMessage(alice.accountId,{conversationId,clientId:'receipt-client',senderAddress:alice.address,type:'TEXT',ciphertext:'opaque',protocolVersion:'Loom-Direct-v1'});
     const original=envelope({conversationId,messageId:String(local.messageId),clientId:'receipt-client'});
@@ -309,4 +309,24 @@ test('due delivery selection is fair across destinations before applying its lim
     const whileSlowBusy=await store.dueDeliveries(1,['node:slow']);
     assert.equal(whileSlowBusy[0].destinationNodeId,'node:fast');
   } finally {await store.close();rmSync(dir,{recursive:true,force:true});}
+});
+
+test('federation queue bounds peer and global admission while preserving exact retry',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'loom-queue-cap-'));
+ const accounts=new SqliteStore(dir),routing=FederationRoutingStore.sqliteStore(dir,{totalItems:2,peerItems:1,totalBytes:100000,peerBytes:100000});
+ try {
+  const first=envelope({conversationId:'c',messageId:'m',clientId:'a'});
+  const queued=await routing.enqueue(first,'https://loom-b.test');
+  assert.equal((await routing.enqueue(first,'https://loom-b.test')).deliveryId,queued.deliveryId);
+  await assert.rejects(routing.enqueue({...first,eventId:'other'},'https://loom-b.test'),/rate_limited/);
+  await routing.enqueue({...first,eventId:'second',destinationNodeId:'node:second'},'https://second.test');
+  await assert.rejects(routing.enqueue({...first,eventId:'third',destinationNodeId:'node:third'},'https://third.test'),/rate_limited/);
+ }finally{await routing.close();accounts.close();rmSync(dir,{recursive:true,force:true});}
+});
+
+test('federation queue rejects oversized payload before persistence',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'loom-queue-bytes-'));
+ const accounts=new SqliteStore(dir),routing=FederationRoutingStore.sqliteStore(dir,{totalItems:10,peerItems:10,totalBytes:10,peerBytes:10});
+ try {await assert.rejects(routing.enqueue(envelope({conversationId:'c',messageId:'m',clientId:'a'}),'https://loom-b.test'),/rate_limited/);assert.equal((await routing.dueDeliveries(10,[])).length,0);}
+ finally{await routing.close();accounts.close();rmSync(dir,{recursive:true,force:true});}
 });

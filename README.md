@@ -19,10 +19,8 @@ Encrypted messaging · Self-hosted nodes · Android Nearby
   <a href="https://github.com/0800x/Loom/stargazers"><img src="https://img.shields.io/github/stars/0800x/Loom?style=flat-square" alt="GitHub stars" /></a>
   <a href="https://github.com/0800x/Loom/network/members"><img src="https://img.shields.io/github/forks/0800x/Loom?style=flat-square" alt="GitHub forks" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPLv3--only-596579?style=flat-square" alt="GPL version 3 only" /></a>
-  <a href="https://hits.sh/github.com/0800x/Loom/"><img src="https://hits.sh/github.com/0800x/Loom.svg?style=flat-square&amp;label=README%20views&amp;color=596579" alt="README badge views" /></a>
 </p>
 
-Public activity badges become available when the repository is public.
 
 </details>
 
@@ -122,6 +120,11 @@ are not yet available for every platform; see the [release status](release/READM
 ## How messages travel
 
 **Compose → encrypt → save to the persistent outbox → deliver over a verified route.**
+
+Shipping direct messages use **Loom-Direct-v1**, per-device sealed boxes without
+a ratchet, forward secrecy or post-compromise security. The session provider v2
+is experimental and is not enabled for production sends. A different transport
+does not change those cryptographic limits.
 
 Messages are encrypted on the sending device. The outbox preserves queued work
 across restarts, and failed sends retain ciphertext for retry. Photos, files,
@@ -291,8 +294,20 @@ Point your domain directly to a Linux server, allow TCP **80/443**, connect over
 SSH and run:
 
 ```bash
-bash <(curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/0800x/Loom/main/install.sh)
+# Use an exact signed release tag and a publisher key verified independently.
+: "${LOOM_RELEASE_TAG:?set a signed release tag}"
+: "${LOOM_PUBLISHER_KEY:?set the verified minisign public key}" # gitleaks:allow -- public verification key placeholder
+curl --proto '=https' --tlsv1.2 -fsSLo install.sh "https://raw.githubusercontent.com/0800x/Loom/$LOOM_RELEASE_TAG/install.sh"
+curl --proto '=https' --tlsv1.2 -fsSLo install.sh.minisig "https://github.com/0800x/Loom/releases/download/$LOOM_RELEASE_TAG/install.sh.minisig"
+minisign -Vm install.sh -P "$LOOM_PUBLISHER_KEY"
+bash install.sh
 ```
+
+A signed public release and independently authenticated publisher key are not yet
+available (`release/version.json` has `published: false`). The commands above are
+the required verification workflow for such a release, not a currently usable
+one-command public installer. For now use a separately reviewed immutable source
+checkout for isolated testing. See [release verification](release/README.md).
 
 Choose **Official / Liara / Arvan** download sources, then **Public / Local HTTPS**.
 Type your hostname or IPv4 address; use **Up/Down and Enter** to select registration, federation, voice calls, video and
@@ -404,6 +419,12 @@ material. The evaluation v2 session provider is not enabled as a production
 cryptographic provider; see the [architecture notes](docs/architecture-v2.md).
 
 ## Support Loom
+
+The wallet/network table below follows
+`services/loom_server/src/config/project_support.json`. Operator node pages hide
+project funding by default; enable `LOOM_SHOW_PROJECT_SUPPORT=true` explicitly.
+`LOOM_PROJECT_SUPPORT_FILE` can select an operator-maintained copy of that schema.
+Project and operator support remain separate; no address value was changed.
 
 Help fund development, testing and device support.
 

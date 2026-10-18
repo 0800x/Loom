@@ -884,9 +884,8 @@ class LoomGroupsScope extends InheritedNotifier<LoomGroupsController> {
     required super.child,
     super.key,
   }) : super(notifier: controller);
-  static LoomGroupsController of(BuildContext context) => context
-      .dependOnInheritedWidgetOfExactType<LoomGroupsScope>()!
-      .notifier!;
+  static LoomGroupsController of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<LoomGroupsScope>()!.notifier!;
   static LoomGroupsController? maybeOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<LoomGroupsScope>()?.notifier;
 }

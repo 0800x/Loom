@@ -43,13 +43,10 @@ void main() {
     );
 
     expect(granted, isTrue);
-    expect(
-      attempted,
-      const <LoomNearbyBearer>[
-        LoomNearbyBearer.wifiAware,
-        LoomNearbyBearer.bluetoothLowEnergy,
-      ],
-    );
+    expect(attempted, const <LoomNearbyBearer>[
+      LoomNearbyBearer.wifiAware,
+      LoomNearbyBearer.bluetoothLowEnergy,
+    ]);
   });
 
   test('Nearby permission startup fails when no bearer is usable', () async {
@@ -65,56 +62,65 @@ void main() {
     expect(granted, isFalse);
   });
 
-  test('BLE radio enable consent continues automatically after permission', () async {
-    final steps = <String>[];
+  test(
+    'BLE radio enable consent continues automatically after permission',
+    () async {
+      final steps = <String>[];
 
-    final ready = await LoomAndroidBleReadinessPolicy.request(
-      requestPermissions: () async {
-        steps.add('permission');
-        return true;
-      },
-      ensureRadioReady: () async {
-        steps.add('radio');
-        return true;
-      },
-    );
+      final ready = await LoomAndroidBleReadinessPolicy.request(
+        requestPermissions: () async {
+          steps.add('permission');
+          return true;
+        },
+        ensureRadioReady: () async {
+          steps.add('radio');
+          return true;
+        },
+      );
 
-    expect(ready, isTrue);
-    expect(steps, const <String>['permission', 'radio']);
-  });
+      expect(ready, isTrue);
+      expect(steps, const <String>['permission', 'radio']);
+    },
+  );
 
-  test('BLE radio enable flow is not launched when permission is denied', () async {
-    var radioRequested = false;
+  test(
+    'BLE radio enable flow is not launched when permission is denied',
+    () async {
+      var radioRequested = false;
 
-    final ready = await LoomAndroidBleReadinessPolicy.request(
-      requestPermissions: () async => false,
-      ensureRadioReady: () async {
-        radioRequested = true;
-        return true;
-      },
-    );
+      final ready = await LoomAndroidBleReadinessPolicy.request(
+        requestPermissions: () async => false,
+        ensureRadioReady: () async {
+          radioRequested = true;
+          return true;
+        },
+      );
 
-    expect(ready, isFalse);
-    expect(radioRequested, isFalse);
-  });
+      expect(ready, isFalse);
+      expect(radioRequested, isFalse);
+    },
+  );
 
-  test('Wi-Fi settings flow continues automatically after permission', () async {
-    final steps = <String>[];
+  test(
+    'Wi-Fi settings flow continues automatically after permission',
+    () async {
+      final steps = <String>[];
 
-    final ready = await LoomAndroidWifiReadinessPolicy.request(
-      requestPermissions: () async {
-        steps.add('permission');
-        return true;
-      },
-      ensureRadioReady: () async {
-        steps.add('settings');
-        return true;
-      },
-    );
+      final ready = await LoomAndroidWifiReadinessPolicy.request(
+        requestPermissions: () async {
+          steps.add('permission');
+          return true;
+        },
+        ensureRadioReady: () async {
+          steps.add('settings');
+          return true;
+        },
+      );
 
-    expect(ready, isTrue);
-    expect(steps, const <String>['permission', 'settings']);
-  });
+      expect(ready, isTrue);
+      expect(steps, const <String>['permission', 'settings']);
+    },
+  );
 
   test('Wi-Fi settings flow is skipped when Nearby Wi-Fi is denied', () async {
     var settingsRequested = false;

@@ -14,6 +14,7 @@ void requireLoomTransport(Uri uri, {bool baseEndpoint = true}) {
       (baseEndpoint &&
           (uri.hasQuery || (uri.path.isNotEmpty && uri.path != '/')))) {
     throw const LoomProtocolException(
-        'Node endpoint requires HTTPS; HTTP is only allowed on development loopback');
+      'Node endpoint requires HTTPS; HTTP is only allowed on development loopback',
+    );
   }
 }

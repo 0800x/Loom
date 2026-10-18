@@ -4,8 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   final created = DateTime.utc(2026, 9, 27);
-  LoomCallSignal signal(String kind,
-          {String call = 'call', String peer = 'peer', int sequence = 1}) =>
+  LoomCallSignal signal(
+    String kind, {
+    String call = 'call',
+    String peer = 'peer',
+    int sequence = 1,
+  }) =>
       LoomCallSignal(
         callId: call,
         conversationId: 'conv',

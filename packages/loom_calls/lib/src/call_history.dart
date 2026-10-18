@@ -151,10 +151,7 @@ class LoomCallHistoryStore {
     return rows.isEmpty ? null : _fromRow(rows.first);
   }
 
-  List<LoomCallHistoryEntry> list({
-    bool missedOnly = false,
-    int limit = 300,
-  }) {
+  List<LoomCallHistoryEntry> list({bool missedOnly = false, int limit = 300}) {
     _requireOpen();
     if (limit < 1 || limit > 1000) throw ArgumentError.value(limit, 'limit');
     final rows = missedOnly

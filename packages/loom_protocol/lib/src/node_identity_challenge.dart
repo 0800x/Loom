@@ -1,4 +1,5 @@
 import 'transport_security.dart';
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -46,8 +47,9 @@ class LoomPinnedNodeVerifier {
       request.headers.contentType = ContentType.json;
       request.headers.set(HttpHeaders.acceptHeader, 'application/json');
       request.write(jsonEncode({'challenge': challenge}));
-      final response =
-          await request.close().timeout(const Duration(seconds: 10));
+      final response = await request.close().timeout(
+            const Duration(seconds: 10),
+          );
       final bytes = await _readLimited(response, 64 * 1024);
       if (response.statusCode != HttpStatus.ok) {
         throw LoomProtocolException(

@@ -1,4 +1,5 @@
 import 'transport_security.dart';
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -70,9 +71,9 @@ class LoomDeviceBoundSessionClient {
       throw const LoomProtocolException('Invalid access token lifetime');
     }
     final address = _requiredString(decoded, 'address');
-    if (!address
-        .toLowerCase()
-        .endsWith(':${baseUri.authority.toLowerCase()}')) {
+    if (!address.toLowerCase().endsWith(
+          ':${baseUri.authority.toLowerCase()}',
+        )) {
       throw const LoomProtocolException(
         'Node returned an unexpected identity address',
       );

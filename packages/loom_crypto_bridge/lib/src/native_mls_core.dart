@@ -80,9 +80,7 @@ class LoomNativeMlsCore {
     Map<String, Object?> request,
   ) {
     final library = DynamicLibrary.open(path);
-    final call = library.lookupFunction<_CallNative, _Call>(
-      'loom_mls_request',
-    );
+    final call = library.lookupFunction<_CallNative, _Call>('loom_mls_request');
     final release = library.lookupFunction<_ReleaseNative, _Release>(
       'loom_mls_release',
     );

@@ -52,8 +52,7 @@ class _ComposerKeyboardState extends State<LoomComposerKeyboard> {
       return KeyEventResult.ignored;
     }
     final keyboard = HardwareKeyboard.instance;
-    final desktop =
-        !kIsWeb &&
+    final desktop = !kIsWeb &&
         (defaultTargetPlatform == TargetPlatform.windows ||
             defaultTargetPlatform == TargetPlatform.linux ||
             defaultTargetPlatform == TargetPlatform.macOS);
@@ -99,19 +98,19 @@ class _ComposerKeyboardState extends State<LoomComposerKeyboard> {
 
   @override
   Widget build(BuildContext context) => Shortcuts.manager(
-    manager: _manager,
-    child: Actions(
-      actions: {
-        _ComposerEnterIntent: CallbackAction<_ComposerEnterIntent>(
-          onInvoke: (intent) {
-            _enter(intent);
-            return null;
+        manager: _manager,
+        child: Actions(
+          actions: {
+            _ComposerEnterIntent: CallbackAction<_ComposerEnterIntent>(
+              onInvoke: (intent) {
+                _enter(intent);
+                return null;
+              },
+            ),
           },
+          child: widget.child,
         ),
-      },
-      child: widget.child,
-    ),
-  );
+      );
 }
 
 class LoomGlassComposer extends StatefulWidget {
@@ -230,28 +229,27 @@ class _LoomGlassComposerState extends State<LoomGlassComposer> {
                     : const Duration(milliseconds: 200),
                 curve: Curves.easeOutQuart,
                 alignment: Alignment.bottomCenter,
-                child:
-                    widget.inputOverride ??
+                child: widget.inputOverride ??
                     LoomComposerKeyboard(
                       controller: _controller,
-                      enabled:
-                          widget.enabled &&
+                      enabled: widget.enabled &&
                           !widget.sending &&
                           widget.onSend != null,
                       onSend: _submit,
                       child: TextField(
                         contentInsertionConfiguration:
                             widget.onContentInserted == null
-                            ? null
-                            : ContentInsertionConfiguration(
-                                onContentInserted: widget.onContentInserted!,
-                                allowedMimeTypes: const [
-                                  'image/gif',
-                                  'image/png',
-                                  'image/jpeg',
-                                  'image/webp',
-                                ],
-                              ),
+                                ? null
+                                : ContentInsertionConfiguration(
+                                    onContentInserted:
+                                        widget.onContentInserted!,
+                                    allowedMimeTypes: const [
+                                      'image/gif',
+                                      'image/png',
+                                      'image/jpeg',
+                                      'image/webp',
+                                    ],
+                                  ),
                         controller: _controller,
                         focusNode: widget.focusNode,
                         enabled: widget.enabled,
@@ -292,8 +290,8 @@ class _LoomGlassComposerState extends State<LoomGlassComposer> {
                   onPressed: _canVoice
                       ? widget.onVoice
                       : _canSend
-                      ? _submit
-                      : null,
+                          ? _submit
+                          : null,
                   style: IconButton.styleFrom(
                     backgroundColor: p.primary,
                     foregroundColor: p.onPrimary,
@@ -327,9 +325,8 @@ class _LoomGlassComposerState extends State<LoomGlassComposer> {
                             key: ValueKey(_voiceMode ? 'voice' : 'send'),
                           ),
                   ),
-                  tooltip: _voiceMode
-                      ? widget.voiceTooltip
-                      : widget.sendTooltip,
+                  tooltip:
+                      _voiceMode ? widget.voiceTooltip : widget.sendTooltip,
                 ),
               ),
           ],

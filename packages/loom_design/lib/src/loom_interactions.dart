@@ -103,40 +103,38 @@ class LoomSendReveal extends StatelessWidget {
     final moving =
         animate && !LoomAccessibility.fromContext(context).reduceMotion;
     return TweenAnimationBuilder<double>(
-        key: ValueKey(moving),
-        tween: Tween(begin: moving ? 0 : 1, end: 1),
-        duration: moving ? const Duration(milliseconds: 330) : Duration.zero,
-        curve: Curves.easeOutCubic,
-        onEnd: onEnd,
-        child: child,
-        builder: (context, progress, child) => ClipRect(
-                child: Align(
-              alignment: Alignment.bottomCenter,
-              heightFactor: moving ? progress : 1,
-              child: Opacity(
-                opacity:
-                    ((outgoing ? .25 : 0) + progress * (outgoing ? .75 : 1))
-                        .clamp(
-                  0.0,
-                  1.0,
-                ),
-                child: Transform.translate(
-                  offset: Offset(
-                    (Directionality.of(context) == TextDirection.rtl ? -1 : 1) *
-                        (outgoing ? 14 : 0) *
-                        (1 - progress),
-                    (outgoing ? 38 : 8) * (1 - progress),
-                  ),
-                  child: Transform.scale(
-                    scale: outgoing ? .94 + .06 * progress : 1,
-                    alignment: AlignmentDirectional.bottomEnd.resolve(
-                      Directionality.of(context),
-                    ),
-                    child: child,
-                  ),
-                ),
+      key: ValueKey(moving),
+      tween: Tween(begin: moving ? 0 : 1, end: 1),
+      duration: moving ? const Duration(milliseconds: 330) : Duration.zero,
+      curve: Curves.easeOutCubic,
+      onEnd: onEnd,
+      child: child,
+      builder: (context, progress, child) => ClipRect(
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          heightFactor: moving ? progress : 1,
+          child: Opacity(
+            opacity: ((outgoing ? .25 : 0) + progress * (outgoing ? .75 : 1))
+                .clamp(0.0, 1.0),
+            child: Transform.translate(
+              offset: Offset(
+                (Directionality.of(context) == TextDirection.rtl ? -1 : 1) *
+                    (outgoing ? 14 : 0) *
+                    (1 - progress),
+                (outgoing ? 38 : 8) * (1 - progress),
               ),
-            )));
+              child: Transform.scale(
+                scale: outgoing ? .94 + .06 * progress : 1,
+                alignment: AlignmentDirectional.bottomEnd.resolve(
+                  Directionality.of(context),
+                ),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -322,19 +320,25 @@ class LoomComposerMorph extends StatelessWidget {
     final reduced = LoomAccessibility.fromContext(context).reduceMotion;
     return AnimatedSwitcher(
       duration: reduced ? Duration.zero : const Duration(milliseconds: 200),
-      reverseDuration: reduced ? Duration.zero : const Duration(milliseconds: 140),
+      reverseDuration:
+          reduced ? Duration.zero : const Duration(milliseconds: 140),
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
-      transitionBuilder: (child, animation) => reduced ? child : FadeTransition(
-        opacity: animation,
-        child: SlideTransition(
-          position: Tween<Offset>(begin: const Offset(0, .12), end: Offset.zero).animate(animation),
-          child: ScaleTransition(
-            scale: Tween<double>(begin: .86, end: 1).animate(animation),
-            child: child,
-          ),
-        ),
-      ),
+      transitionBuilder: (child, animation) => reduced
+          ? child
+          : FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, .12),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: .86, end: 1).animate(animation),
+                  child: child,
+                ),
+              ),
+            ),
       child: child,
     );
   }

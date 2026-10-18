@@ -1,6 +1,6 @@
 # Loom Architecture v2
 
-Status: **implementation architecture for the pre-alpha v2 migration**. This document is normative for boundaries/invariants in the current repository. It is not a security certification and does not by itself approve a production session protocol.
+Status: **implementation architecture for the experimental v2 migration**. This document is normative for boundaries/invariants in the current repository. It is not a security certification and does not by itself approve a production session protocol.
 
 For the **currently running product paths**, corrected delivery/receipt diagrams and deployment steps, see [English](../README.md#architecture) or [فارسی](../README.fa.md#architecture). The existing direct-message path and its DTN compatibility bridge are distinct from the target session-provider stack below.
 
@@ -517,4 +517,4 @@ The following must not be marked complete by merely adding source code:
 6. perform independent security review/audit of the exact composition;
 7. finish release signing/notarization/SBOM/reproducibility and native bearers for selected non-Android platforms.
 
-Until those gates close, Architecture v2 remains a strong pre-alpha foundation rather than an audited production security claim.
+Until those gates close, Architecture v2 remains a experimental foundation rather than an audited production security claim.

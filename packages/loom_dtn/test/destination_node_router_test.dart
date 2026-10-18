@@ -32,26 +32,28 @@ void main() {
     expect(plan.opportunityId, 'destination-node');
   });
 
-  test('single-copy wait phase may hand custody to verified destination node',
-      () {
-    final store = LoomSqlitePacketStore.openInMemory();
-    addTearDown(store.close);
-    final packet = _packet(store, now: now, copies: 1);
+  test(
+    'single-copy wait phase may hand custody to verified destination node',
+    () {
+      final store = LoomSqlitePacketStore.openInMemory();
+      addTearDown(store.close);
+      final packet = _packet(store, now: now, copies: 1);
 
-    final plan = router.planNext(
-      packet: packet,
-      now: now,
-      opportunities: <LoomDtnOpportunity>[
-        _opportunity(id: 'destination-node', destinationNode: true),
-      ],
-    );
+      final plan = router.planNext(
+        packet: packet,
+        now: now,
+        opportunities: <LoomDtnOpportunity>[
+          _opportunity(id: 'destination-node', destinationNode: true),
+        ],
+      );
 
-    expect(plan, isNotNull);
-    expect(plan!.reason, LoomDtnTransferReason.destinationNode);
-    expect(plan.copiesGranted, 1);
-    expect(plan.copiesRetainedAfterSuccess, 0);
-    expect(plan.requiresSingleCopyCustodyHandoff, isTrue);
-  });
+      expect(plan, isNotNull);
+      expect(plan!.reason, LoomDtnTransferReason.destinationNode);
+      expect(plan.copiesGranted, 1);
+      expect(plan.copiesRetainedAfterSuccess, 0);
+      expect(plan.requiresSingleCopyCustodyHandoff, isTrue);
+    },
+  );
 
   test('unauthenticated destination node is never a routing candidate', () {
     final store = LoomSqlitePacketStore.openInMemory();

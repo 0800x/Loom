@@ -181,9 +181,9 @@ class LoomAppLockBridge(private val activity: Activity) {
 
     fun dispose() { prompt?.cancel(); prompt = null; lock(); onLocked = null }
 
-    private fun secureWindow(secure: Boolean) {
-        if (secure) activity.window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        else activity.window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+    private fun secureWindow(@Suppress("UNUSED_PARAMETER") secure: Boolean) {
+        // Recovery/onboarding are sensitive even when optional App Lock is off.
+        activity.window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
     }
 
     private fun key(create: Boolean): SecretKey {

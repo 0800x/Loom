@@ -37,52 +37,58 @@ LoomMessageRecord _message(
 );
 
 void main() {
-  test('receipt outbox survives restart, deduplicates, and rolls back with inbox writes', () {
-    final directory = Directory.systemTemp.createTempSync(
-      'loom-receipt-outbox-',
-    );
-    addTearDown(() => directory.deleteSync(recursive: true));
-    final file = '${directory.path}/messages.sqlite3';
-    var store = LoomMessagingStore.openFile(file);
-    store.upsertConversation(_conversation);
-    store.transaction(() {
-      store.putMessage(
-        _message('local-id', 'client-receipt', 1, DateTime.now()),
+  test(
+    'receipt outbox survives restart, deduplicates, and rolls back with inbox writes',
+    () {
+      final directory = Directory.systemTemp.createTempSync(
+        'loom-receipt-outbox-',
       );
-      store.queueNearbyReceipt('client-receipt');
-      store.queueNearbyReceipt('client-receipt');
-    });
-    expect(
-      () => store.transaction(() {
-        store.queueNearbyReceipt('rolled-back');
-        throw StateError('simulated commit failure');
-      }),
-      throwsStateError,
-    );
-    store.close();
-    store = LoomMessagingStore.openFile(file);
-    try {
-      expect(store.pendingNearbyReceipts(), ['client-receipt']);
-      expect(store.messageByClientId('client-receipt')?.id, 'local-id');
+      addTearDown(() => directory.deleteSync(recursive: true));
+      final file = '${directory.path}/messages.sqlite3';
+      var store = LoomMessagingStore.openFile(file);
+      store.upsertConversation(_conversation);
+      store.transaction(() {
+        store.putMessage(
+          _message('local-id', 'client-receipt', 1, DateTime.now()),
+        );
+        store.queueNearbyReceipt('client-receipt');
+        store.queueNearbyReceipt('client-receipt');
+      });
       expect(
-        store.conversationById(_conversation.id)?.peerAddress,
-        _conversation.peerAddress,
+        () => store.transaction(() {
+          store.queueNearbyReceipt('rolled-back');
+          throw StateError('simulated commit failure');
+        }),
+        throwsStateError,
       );
-      store.updateDeliveryByClientId('client-receipt', LoomDeliveryState.read);
-      store.updateDeliveryByClientId(
-        'client-receipt',
-        LoomDeliveryState.delivered,
-      );
-      expect(
-        store.messageByClientId('client-receipt')?.deliveryState,
-        LoomDeliveryState.read,
-      );
-      store.completeNearbyReceipt('client-receipt');
-      expect(store.pendingNearbyReceipts(), isEmpty);
-    } finally {
       store.close();
-    }
-  });
+      store = LoomMessagingStore.openFile(file);
+      try {
+        expect(store.pendingNearbyReceipts(), ['client-receipt']);
+        expect(store.messageByClientId('client-receipt')?.id, 'local-id');
+        expect(
+          store.conversationById(_conversation.id)?.peerAddress,
+          _conversation.peerAddress,
+        );
+        store.updateDeliveryByClientId(
+          'client-receipt',
+          LoomDeliveryState.read,
+        );
+        store.updateDeliveryByClientId(
+          'client-receipt',
+          LoomDeliveryState.delivered,
+        );
+        expect(
+          store.messageByClientId('client-receipt')?.deliveryState,
+          LoomDeliveryState.read,
+        );
+        store.completeNearbyReceipt('client-receipt');
+        expect(store.pendingNearbyReceipts(), isEmpty);
+      } finally {
+        store.close();
+      }
+    },
+  );
 
   test(
     'observed incoming route survives restart and canonical ID reconciliation',
@@ -120,40 +126,43 @@ void main() {
     },
   );
 
-  test('an observed outgoing Nearby hop changes route without fabricating delivery', () {
-    final store = LoomMessagingStore.openInMemory();
-    addTearDown(store.close);
-    store.upsertConversation(_conversation);
-    final now = DateTime.utc(2026, 9, 22);
-    store.putMessage(
-      _message(
-        'local',
+  test(
+    'an observed outgoing Nearby hop changes route without fabricating delivery',
+    () {
+      final store = LoomMessagingStore.openInMemory();
+      addTearDown(store.close);
+      store.upsertConversation(_conversation);
+      final now = DateTime.utc(2026, 9, 22);
+      store.putMessage(
+        _message(
+          'local',
+          'path-client',
+          1,
+          now,
+          state: LoomDeliveryState.queued,
+          sender: '@alice:example.org',
+        ),
+      );
+      store.recordTransportPath(
         'path-client',
-        1,
-        now,
-        state: LoomDeliveryState.queued,
-        sender: '@alice:example.org',
-      ),
-    );
-    store.recordTransportPath(
-      'path-client',
-      LoomMessageTransportPath.nearby,
-      mergeRoutes: true,
-    );
-    expect(
-      store.listMessages(_conversation.id).single.deliveryState,
-      LoomDeliveryState.queued,
-    );
-    store.reconcileSentMessage(
-      clientId: 'path-client',
-      serverMessageId: 'server',
-      serverOrder: 7,
-      createdAt: now,
-    );
-    final message = store.listMessages(_conversation.id).single;
-    expect(message.transportPath, LoomMessageTransportPath.hybrid);
-    expect(message.deliveryState, LoomDeliveryState.sent);
-  });
+        LoomMessageTransportPath.nearby,
+        mergeRoutes: true,
+      );
+      expect(
+        store.listMessages(_conversation.id).single.deliveryState,
+        LoomDeliveryState.queued,
+      );
+      store.reconcileSentMessage(
+        clientId: 'path-client',
+        serverMessageId: 'server',
+        serverOrder: 7,
+        createdAt: now,
+      );
+      final message = store.listMessages(_conversation.id).single;
+      expect(message.transportPath, LoomMessageTransportPath.hybrid);
+      expect(message.deliveryState, LoomDeliveryState.sent);
+    },
+  );
 
   test('an interrupted inbox write leaves the event retryable', () {
     final store = LoomMessagingStore.openInMemory();

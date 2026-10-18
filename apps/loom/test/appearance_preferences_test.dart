@@ -10,9 +10,7 @@ void main() {
   late Directory directory;
   late LoomAppearancePreferencesStore store;
   setUp(() async {
-    directory = await Directory.systemTemp.createTemp(
-      'loom-appearance-test-',
-    );
+    directory = await Directory.systemTemp.createTemp('loom-appearance-test-');
     store = LoomAppearancePreferencesStore(directory: directory);
   });
   tearDown(() => directory.delete(recursive: true));

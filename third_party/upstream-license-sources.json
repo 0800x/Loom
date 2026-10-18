@@ -1,0 +1,675 @@
+{
+  "core-models@0.0.7": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "crabgrind@0.2.6": [
+    {
+      "file": "third_party/licenses/ac7ad2d98b077d386c467560708c2fad4bcc08022a8b0d5db28f5b6681a79743.txt",
+      "upstreamName": "LICENSE/MIT.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/MIT.LICENSE"
+    },
+    {
+      "file": "third_party/licenses/6a60deb2168cc9d1cfd94f6449b22f724648352ddf823d5db79dea1144db9231.txt",
+      "upstreamName": "LICENSE/cachegrind.h.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/cachegrind.h.LICENSE"
+    },
+    {
+      "file": "third_party/licenses/8f80203a2206337f12864020560ce8415735cc9bd80481d36637c70025800d02.txt",
+      "upstreamName": "LICENSE/callgrind.h.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/callgrind.h.LICENSE"
+    },
+    {
+      "file": "third_party/licenses/1a136ab533f5e6fb3b660656a09fbd3ad00ecd7cc48ee58b97061765f836e3d0.txt",
+      "upstreamName": "LICENSE/dhat.h.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/dhat.h.LICENSE"
+    },
+    {
+      "file": "third_party/licenses/143d3ffc9da16f300ca1bc53fafc3cbcbbe71f38f12e9c7dfc4bf10400f1a10f.txt",
+      "upstreamName": "LICENSE/drd.h.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/drd.h.LICENSE"
+    },
+    {
+      "file": "third_party/licenses/b78a7d46974cc262db8f79e54bf9d6f294fb7aa8ed2b12e12f876edcde943a1e.txt",
+      "upstreamName": "LICENSE/helgrind.h.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/helgrind.h.LICENSE"
+    },
+    {
+      "file": "third_party/licenses/6e7645bb4d530a7a754a602a45043fdf91d68fd5206fa9a1924c55ab5943a457.txt",
+      "upstreamName": "LICENSE/memcheck.h.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/memcheck.h.LICENSE"
+    },
+    {
+      "file": "third_party/licenses/1c133c302d38ebfda8a0c12b3ab6f011e3cb747d3de85a4c9c253a9e217de9c5.txt",
+      "upstreamName": "LICENSE/valgrind.h.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/valgrind.h.LICENSE"
+    }
+  ],
+  "hax-lib@0.3.7": [
+    {
+      "file": "third_party/licenses/9a50bad5a51e0ad726ea3a7f4b7b758e1b4d1784e6abefe1367f5bf01e972725.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/hacspec/hax/d8b5b3d3b666fee8943a351445d2b680105e8ea3/LICENSE"
+    }
+  ],
+  "hax-lib-macros@0.3.7": [
+    {
+      "file": "third_party/licenses/9a50bad5a51e0ad726ea3a7f4b7b758e1b4d1784e6abefe1367f5bf01e972725.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/hacspec/hax/d8b5b3d3b666fee8943a351445d2b680105e8ea3/LICENSE"
+    }
+  ],
+  "hax-lib-macros-types@0.3.7": [
+    {
+      "file": "third_party/licenses/9a50bad5a51e0ad726ea3a7f4b7b758e1b4d1784e6abefe1367f5bf01e972725.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/hacspec/hax/d8b5b3d3b666fee8943a351445d2b680105e8ea3/LICENSE"
+    }
+  ],
+  "hpke-rs@0.7.0": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/celabshq/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/celabshq/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "hpke-rs-crypto@0.7.0": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/celabshq/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/celabshq/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "hpke-rs-libcrux@0.7.0": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/celabshq/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/celabshq/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "hpke-rs-rust-crypto@0.7.0": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/celabshq/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/celabshq/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-aead@0.0.9": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-aes@0.0.9": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-chacha20poly1305@0.0.9": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-curve25519@0.0.8": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-ecdh@0.0.8": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-hacl-rs@0.0.5": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/451259bb704d4a9dab8cd31ac68a97e766fbd2bc/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/451259bb704d4a9dab8cd31ac68a97e766fbd2bc/LICENSE-MIT"
+    }
+  ],
+  "libcrux-hkdf@0.0.8": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-hmac@0.0.8": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-intrinsics@0.0.8": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-kem@0.0.9": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-macros@0.0.3": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/8ebe73237378c80b86a953ec8a77bdd3299918e7/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/8ebe73237378c80b86a953ec8a77bdd3299918e7/LICENSE-MIT"
+    }
+  ],
+  "libcrux-ml-kem@0.0.10": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-p256@0.0.8": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-platform@0.0.3": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/316fcd6c19c2e33bd0429e1319b6557d91038512/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/316fcd6c19c2e33bd0429e1319b6557d91038512/LICENSE-MIT"
+    }
+  ],
+  "libcrux-poly1305@0.0.6": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/451259bb704d4a9dab8cd31ac68a97e766fbd2bc/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/451259bb704d4a9dab8cd31ac68a97e766fbd2bc/LICENSE-MIT"
+    }
+  ],
+  "libcrux-secrets@0.0.6": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-sha2@0.0.8": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-sha3@0.0.10": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "libcrux-traits@0.0.8": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/c5fb80f37530ee9b2df9501ae5ff8cb4a973a4bd/LICENSE-MIT"
+    }
+  ],
+  "matrix-pickle@0.2.3": [
+    {
+      "file": "third_party/licenses/0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/matrix-org/matrix-pickle/3eb007eae1ca87e3a3683c99a58fd19289abae52/LICENSE"
+    }
+  ],
+  "matrix-pickle-derive@0.2.3": [
+    {
+      "file": "third_party/licenses/0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/matrix-org/matrix-pickle/3eb007eae1ca87e3a3683c99a58fd19289abae52/LICENSE"
+    }
+  ],
+  "openmls@0.9.0": [
+    {
+      "file": "third_party/licenses/43e5e3c4b5cca67f9ea912f7e1929702a848aa765d3b3e14f25d3838a5a5565d.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/openmls/openmls//3a3e35de3feeca8f6605143c464d5452ae584d43/LICENSE"
+    }
+  ],
+  "openmls_basic_credential@0.6.0": [
+    {
+      "file": "third_party/licenses/43e5e3c4b5cca67f9ea912f7e1929702a848aa765d3b3e14f25d3838a5a5565d.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/openmls/openmls/3a3e35de3feeca8f6605143c464d5452ae584d43/LICENSE"
+    }
+  ],
+  "openmls_memory_storage@0.6.0": [
+    {
+      "file": "third_party/licenses/43e5e3c4b5cca67f9ea912f7e1929702a848aa765d3b3e14f25d3838a5a5565d.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/openmls/openmls/3a3e35de3feeca8f6605143c464d5452ae584d43/LICENSE"
+    }
+  ],
+  "openmls_rust_crypto@0.6.0": [
+    {
+      "file": "third_party/licenses/43e5e3c4b5cca67f9ea912f7e1929702a848aa765d3b3e14f25d3838a5a5565d.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/openmls/openmls/3a3e35de3feeca8f6605143c464d5452ae584d43/LICENSE"
+    }
+  ],
+  "openmls_serialization_helpers@0.1.0": [
+    {
+      "file": "third_party/licenses/43e5e3c4b5cca67f9ea912f7e1929702a848aa765d3b3e14f25d3838a5a5565d.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/openmls/openmls/3a3e35de3feeca8f6605143c464d5452ae584d43/LICENSE"
+    }
+  ],
+  "openmls_traits@0.6.0": [
+    {
+      "file": "third_party/licenses/43e5e3c4b5cca67f9ea912f7e1929702a848aa765d3b3e14f25d3838a5a5565d.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/openmls/openmls/3a3e35de3feeca8f6605143c464d5452ae584d43/LICENSE"
+    }
+  ],
+  "r-efi@6.0.0": [
+    {
+      "file": "third_party/licenses/d027e91dbc9cdbb2f1190068e498bd6b61cff022b6a032b191021ba658d96111.txt",
+      "upstreamName": "AUTHORS",
+      "url": "https://raw.githubusercontent.com/r-efi/r-efi/7e1b0322d31d625f81a5656096330934f9cd835d/AUTHORS"
+    }
+  ],
+  "libcrux-curve25519@0.0.9": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE-MIT"
+    }
+  ],
+  "libcrux-ecdh@0.0.9": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE-MIT"
+    }
+  ],
+  "libcrux-hacl-rs@0.0.6": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE-MIT"
+    }
+  ],
+  "libcrux-intrinsics@0.0.9": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE-MIT"
+    }
+  ],
+  "libcrux-kem@0.0.10": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE-MIT"
+    }
+  ],
+  "libcrux-macros@0.0.4": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE-MIT"
+    }
+  ],
+  "libcrux-ml-kem@0.0.11": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE-MIT"
+    }
+  ],
+  "libcrux-p256@0.0.9": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE-MIT"
+    }
+  ],
+  "libcrux-platform@0.0.4": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE-MIT"
+    }
+  ],
+  "libcrux-secrets@0.0.7": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE-MIT"
+    }
+  ],
+  "libcrux-sha2@0.0.9": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE-MIT"
+    }
+  ],
+  "libcrux-sha3@0.0.11": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE-MIT"
+    }
+  ],
+  "libcrux-traits@0.0.9": [
+    {
+      "file": "third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE"
+    },
+    {
+      "file": "third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/cryspen/libcrux/42d68bd49b244b09bd02626c6ffa95e54dc64f91/LICENSE-MIT"
+    }
+  ],
+  "zerocopy-derive@0.8.63": [
+    {
+      "file": "third_party/licenses/1a2f5c12ddc934d58956aa5dbdd3255fe55fd957633ab7d0d39e4f0daa73f7df.txt",
+      "upstreamName": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/google/zerocopy/c55af491426ef53f35fb8c6e83f220fa07712e66/LICENSE-MIT"
+    },
+    {
+      "file": "third_party/licenses/9d185ac6703c4b0453974c0d85e9eee43e6941009296bb1f5eb0b54e2329e9f3.txt",
+      "upstreamName": "LICENSE-APACHE",
+      "url": "https://raw.githubusercontent.com/google/zerocopy/c55af491426ef53f35fb8c6e83f220fa07712e66/LICENSE-APACHE"
+    }
+  ],
+  "crabgrind@0.3.1": [
+    {
+      "file": "third_party/licenses/ac7ad2d98b077d386c467560708c2fad4bcc08022a8b0d5db28f5b6681a79743.txt",
+      "upstreamName": "LICENSE/MIT.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/MIT.LICENSE"
+    },
+    {
+      "file": "third_party/licenses/6a60deb2168cc9d1cfd94f6449b22f724648352ddf823d5db79dea1144db9231.txt",
+      "upstreamName": "LICENSE/cachegrind.h.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/cachegrind.h.LICENSE"
+    },
+    {
+      "file": "third_party/licenses/8f80203a2206337f12864020560ce8415735cc9bd80481d36637c70025800d02.txt",
+      "upstreamName": "LICENSE/callgrind.h.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/callgrind.h.LICENSE"
+    },
+    {
+      "file": "third_party/licenses/1a136ab533f5e6fb3b660656a09fbd3ad00ecd7cc48ee58b97061765f836e3d0.txt",
+      "upstreamName": "LICENSE/dhat.h.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/dhat.h.LICENSE"
+    },
+    {
+      "file": "third_party/licenses/143d3ffc9da16f300ca1bc53fafc3cbcbbe71f38f12e9c7dfc4bf10400f1a10f.txt",
+      "upstreamName": "LICENSE/drd.h.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/drd.h.LICENSE"
+    },
+    {
+      "file": "third_party/licenses/b78a7d46974cc262db8f79e54bf9d6f294fb7aa8ed2b12e12f876edcde943a1e.txt",
+      "upstreamName": "LICENSE/helgrind.h.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/helgrind.h.LICENSE"
+    },
+    {
+      "file": "third_party/licenses/6e7645bb4d530a7a754a602a45043fdf91d68fd5206fa9a1924c55ab5943a457.txt",
+      "upstreamName": "LICENSE/memcheck.h.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/memcheck.h.LICENSE"
+    },
+    {
+      "file": "third_party/licenses/1c133c302d38ebfda8a0c12b3ab6f011e3cb747d3de85a4c9c253a9e217de9c5.txt",
+      "upstreamName": "LICENSE/valgrind.h.LICENSE",
+      "url": "https://raw.githubusercontent.com/2dav/crabgrind/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/valgrind.h.LICENSE"
+    }
+  ],
+  "@bufbuild/protobuf@1.10.1": [
+    {
+      "file": "third_party/licenses/6da19f017fad6716cbc9c938972ebee29957c295b8a4d51060dfb03da51d8502.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/bufbuild/protobuf-es/e31c1b139cf1e7fea2fb914f650af3c28c42ec68/LICENSE"
+    }
+  ],
+  "@xterm/headless@6.0.0": [
+    {
+      "file": "third_party/licenses/b569f629d00f2626a8100df2a1798210535621e42164dfd426a6fe5aac7b0ccd.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/xtermjs/xterm.js/f447274f430fd22513f6adbf9862d19524471c04/LICENSE"
+    }
+  ],
+  "pg-types@2.2.0": [
+    {
+      "file": "third_party/licenses/ecda9bca71d3f0cee4e600d1dd2bef336213f39ef2e8fca6a1a1c1c8723f643a.txt",
+      "upstreamName": "README.md",
+      "url": "https://raw.githubusercontent.com/brianc/node-pg-types/d9d9dfb87eb50914043cbc178c301b7dd3b0c50d/README.md"
+    }
+  ],
+  "pgpass@1.0.5": [
+    {
+      "file": "third_party/licenses/62549909404b5a0dcb2b4b74c9a930baf8095dbcfa1543c4ffc79378acd22b57.txt",
+      "upstreamName": "README.md",
+      "url": "https://raw.githubusercontent.com/hoegaarden/pgpass/4230ed5e417ba6044ea7eb80b7c33db9ec301398/README.md"
+    }
+  ],
+  "@aws-sdk/credential-provider-http@3.972.76": [
+    {
+      "file": "third_party/licenses/edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/3e350b59848e2bffcfe4d34a628e7adc136a6a55/LICENSE"
+    }
+  ],
+  "@aws-sdk/credential-provider-login@3.972.81": [
+    {
+      "file": "third_party/licenses/edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/3e350b59848e2bffcfe4d34a628e7adc136a6a55/LICENSE"
+    }
+  ],
+  "@aws-sdk/nested-clients@3.997.48": [
+    {
+      "file": "third_party/licenses/edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d.txt",
+      "upstreamName": "LICENSE",
+      "url": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/3e350b59848e2bffcfe4d34a628e7adc136a6a55/LICENSE"
+    }
+  ]
+}

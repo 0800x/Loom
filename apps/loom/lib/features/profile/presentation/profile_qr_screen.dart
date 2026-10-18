@@ -43,8 +43,8 @@ class LoomProfileQrScreen extends StatelessWidget {
                     ),
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: context.loom.textSecondary,
-                        ),
+                      color: context.loom.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: LoomSpacing.lg),
                   if (address.isNotEmpty) ...[
@@ -122,8 +122,8 @@ class LoomProfileQrScreen extends StatelessWidget {
                     ),
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: context.loom.textMuted,
-                        ),
+                      color: context.loom.textMuted,
+                    ),
                   ),
                 ],
               ),
@@ -134,4 +134,3 @@ class LoomProfileQrScreen extends StatelessWidget {
     );
   }
 }
-

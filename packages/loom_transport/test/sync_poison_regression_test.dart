@@ -14,11 +14,11 @@ class _Api implements LoomMessagingApi {
 }
 
 Map<String, Object?> conversation(String id, String kind) => {
-  'id': id,
-  'kind': kind,
-  'updatedOrder': 1,
-  'unreadCount': 0,
-};
+      'id': id,
+      'kind': kind,
+      'updatedOrder': 1,
+      'unreadCount': 0,
+    };
 LoomSyncEvent event(String id, String kind, Map<String, Object?> payload) =>
     LoomSyncEvent(eventId: id, kind: kind, order: 1, payload: payload);
 void main() {

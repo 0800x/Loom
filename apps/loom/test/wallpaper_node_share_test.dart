@@ -38,28 +38,31 @@ class NodeRepository extends LoomNodeDirectoryRepository {
 }
 
 void main() {
-  test('QR pin is checked before selection and refreshed policy replaces stale limits', () async {
-    final repo = NodeRepository();
-    final controller = LoomNodeDirectoryController(repository: repo);
-    await controller.discoverAndSelectDomain(
-      'node.example',
-      expectedFingerprint: 'WRONG',
-    );
-    expect(controller.selectedNodeVerified, false);
-    expect(controller.selectedEndpoint, isNull);
-    expect(repo.liveCalls, 0);
-    await controller.discoverAndSelectDomain(
-      'node.example',
-      expectedFingerprint: 'ABCD',
-      expectedNodeId: 'node:A',
-    );
-    expect(controller.selectedNodeVerified, true);
-    expect(controller.selectedLiveInfo!.maxMediaBytes, 4 * 1024 * 1024);
-    repo.limit = 8 * 1024 * 1024;
-    await controller.refreshMediaPolicy();
-    expect(controller.selectedLiveInfo!.maxMediaBytes, 8 * 1024 * 1024);
-    controller.dispose();
-  });
+  test(
+    'QR pin is checked before selection and refreshed policy replaces stale limits',
+    () async {
+      final repo = NodeRepository();
+      final controller = LoomNodeDirectoryController(repository: repo);
+      await controller.discoverAndSelectDomain(
+        'node.example',
+        expectedFingerprint: 'WRONG',
+      );
+      expect(controller.selectedNodeVerified, false);
+      expect(controller.selectedEndpoint, isNull);
+      expect(repo.liveCalls, 0);
+      await controller.discoverAndSelectDomain(
+        'node.example',
+        expectedFingerprint: 'ABCD',
+        expectedNodeId: 'node:A',
+      );
+      expect(controller.selectedNodeVerified, true);
+      expect(controller.selectedLiveInfo!.maxMediaBytes, 4 * 1024 * 1024);
+      repo.limit = 8 * 1024 * 1024;
+      await controller.refreshMediaPolicy();
+      expect(controller.selectedLiveInfo!.maxMediaBytes, 8 * 1024 * 1024);
+      controller.dispose();
+    },
+  );
   TestWidgetsFlutterBinding.ensureInitialized();
   test('QR round-trip retains HTTPS endpoint, port and fingerprint', () {
     final link = LoomNodeShareLink(
@@ -82,47 +85,54 @@ void main() {
       expect(() => LoomNodeShareLink.parse(bad), throwsFormatException);
     }
   });
-  test('chat wallpaper persists as a hashed override and reset inherits global choice', () async {
-    final dir = await Directory.systemTemp.createTemp('wallpaper_test_');
-    try {
-      final key = (await LoomWallpaperStore.chatKey(
-        'identity:private-conversation',
-      ))!;
-      final store = LoomWallpaperStore(directory: () async => dir);
-      await store.set(null, const LoomWallpaper(style: 'sage', dim: .2));
-      await store.set(key, const LoomWallpaper(style: 'dusk', dim: .4));
-      final restored = LoomWallpaperStore(directory: () async => dir);
-      await restored.load();
-      expect(restored.selection(key).style, 'dusk');
-      expect(restored.selection(null).style, 'sage');
-      expect(
-        await File('${dir.path}/loom-wallpapers/preferences.json')
-            .readAsString(),
-        isNot(contains('private-conversation')),
-      );
-      await restored.set(key, null);
-      expect(restored.selection(key).style, 'sage');
-      expect(restored.hasOverride(key), false);
-      expect(
-        () => LoomWallpaper.fromJson({
-          'style': 'photo',
-          'image': '../secret.jpg',
-          'dim': .2,
-          'blur': false,
-        }),
-        throwsFormatException,
-      );
-      expect(
-        () =>
-            LoomWallpaper.fromJson({'style': 'plain', 'dim': 2, 'blur': false}),
-        throwsFormatException,
-      );
-      store.dispose();
-      restored.dispose();
-    } finally {
-      await dir.delete(recursive: true);
-    }
-  });
+  test(
+    'chat wallpaper persists as a hashed override and reset inherits global choice',
+    () async {
+      final dir = await Directory.systemTemp.createTemp('wallpaper_test_');
+      try {
+        final key = (await LoomWallpaperStore.chatKey(
+          'identity:private-conversation',
+        ))!;
+        final store = LoomWallpaperStore(directory: () async => dir);
+        await store.set(null, const LoomWallpaper(style: 'sage', dim: .2));
+        await store.set(key, const LoomWallpaper(style: 'dusk', dim: .4));
+        final restored = LoomWallpaperStore(directory: () async => dir);
+        await restored.load();
+        expect(restored.selection(key).style, 'dusk');
+        expect(restored.selection(null).style, 'sage');
+        expect(
+          await File(
+            '${dir.path}/loom-wallpapers/preferences.json',
+          ).readAsString(),
+          isNot(contains('private-conversation')),
+        );
+        await restored.set(key, null);
+        expect(restored.selection(key).style, 'sage');
+        expect(restored.hasOverride(key), false);
+        expect(
+          () => LoomWallpaper.fromJson({
+            'style': 'photo',
+            'image': '../secret.jpg',
+            'dim': .2,
+            'blur': false,
+          }),
+          throwsFormatException,
+        );
+        expect(
+          () => LoomWallpaper.fromJson({
+            'style': 'plain',
+            'dim': 2,
+            'blur': false,
+          }),
+          throwsFormatException,
+        );
+        store.dispose();
+        restored.dispose();
+      } finally {
+        await dir.delete(recursive: true);
+      }
+    },
+  );
   testWidgets('Appearance preview and theme controls fit a narrow phone', (
     tester,
   ) async {

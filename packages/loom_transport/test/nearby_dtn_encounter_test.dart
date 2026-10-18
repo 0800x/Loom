@@ -61,34 +61,33 @@ void main() {
             durablyAccept: ({
               required transmissionId,
               required exactOuterEnvelopeBytes,
-            }) => throw StateError('No sender intake'),
+            }) =>
+                throw StateError('No sender intake'),
           );
-          final receiver =
-              LoomNearbyDtnEncounterCoordinator(
-                  packetStore: b,
-                  transferExecutor: LoomDtnTransferExecutor(
-                    packetStore: b,
-                    transferStore: b,
-                    clock: () => now,
-                  ),
-                  bootstrap: LoomNearbyDtnPeerBootstrap(clock: () => now),
-                  clock: () => now,
-                  durablyAccept:
-                      ({
-                        required transmissionId,
-                        required exactOuterEnvelopeBytes,
-                      }) => throw StateError(
-                        'Probes must not create a relay replica',
-                      ),
-                )
-                ..recipientProbeAcceptor = (bytes) async {
-                  expect(
-                    LoomEnvelopeV2Codec.decodeOuter(bytes).packetId,
-                    packetId,
-                  );
-                  if (accepts) recipientIntakes++;
-                  return accepts;
-                };
+          final receiver = LoomNearbyDtnEncounterCoordinator(
+            packetStore: b,
+            transferExecutor: LoomDtnTransferExecutor(
+              packetStore: b,
+              transferStore: b,
+              clock: () => now,
+            ),
+            bootstrap: LoomNearbyDtnPeerBootstrap(clock: () => now),
+            clock: () => now,
+            durablyAccept: ({
+              required transmissionId,
+              required exactOuterEnvelopeBytes,
+            }) =>
+                throw StateError(
+              'Probes must not create a relay replica',
+            ),
+          )..recipientProbeAcceptor = (bytes) async {
+              expect(
+                LoomEnvelopeV2Codec.decodeOuter(bytes).packetId,
+                packetId,
+              );
+              if (accepts) recipientIntakes++;
+              return accepts;
+            };
           final pair = _DuplexNearbyPair();
           final receive = receiver.acceptOverLink(
             link: pair.right,
@@ -123,7 +122,9 @@ void main() {
     }
   }
 
-  test('one encrypted Nearby link exchanges both directions without bouncing a received replica', () async {
+  test(
+      'one encrypted Nearby link exchanges both directions without bouncing a received replica',
+      () async {
     final root = Directory.systemTemp.createTempSync('loom-duplex-');
     addTearDown(() => root.deleteSync(recursive: true));
     final aPath = '${root.path}/a.sqlite3', bPath = '${root.path}/b.sqlite3';
@@ -150,17 +151,18 @@ void main() {
     LoomNearbyDtnEncounterCoordinator coordinator(
       LoomSqlitePacketStore store,
       LoomSqliteReplicaIntakeStore intake,
-    ) => LoomNearbyDtnEncounterCoordinator(
-      packetStore: store,
-      transferExecutor: LoomDtnTransferExecutor(
-        packetStore: store,
-        transferStore: store,
-        clock: () => now,
-      ),
-      bootstrap: LoomNearbyDtnPeerBootstrap(clock: () => now),
-      clock: () => now,
-      durablyAccept:
-          ({required transmissionId, required exactOuterEnvelopeBytes}) {
+    ) =>
+        LoomNearbyDtnEncounterCoordinator(
+          packetStore: store,
+          transferExecutor: LoomDtnTransferExecutor(
+            packetStore: store,
+            transferStore: store,
+            clock: () => now,
+          ),
+          bootstrap: LoomNearbyDtnPeerBootstrap(clock: () => now),
+          clock: () => now,
+          durablyAccept: (
+              {required transmissionId, required exactOuterEnvelopeBytes}) {
             final result = intake.acceptReplica(
               exactOuterEnvelopeBytes: exactOuterEnvelopeBytes,
               now: now,
@@ -173,7 +175,7 @@ void main() {
                   result.disposition == LoomReplicaIntakeDisposition.duplicate,
             );
           },
-    );
+        );
     final offline = coordinator(a, aIntake), online = coordinator(b, bIntake);
     final forwardedBack = <String>[];
     online.onPacketForwarded = (packet) => forwardedBack.add(packet.packetId);
@@ -227,20 +229,22 @@ void main() {
       );
       LoomNearbyDtnEncounterCoordinator coordinator(
         LoomSqlitePacketStore store,
-      ) => LoomNearbyDtnEncounterCoordinator(
-        packetStore: store,
-        transferExecutor: LoomDtnTransferExecutor(
-          packetStore: store,
-          transferStore: store,
-          clock: () => now,
-        ),
-        bootstrap: LoomNearbyDtnPeerBootstrap(clock: () => now),
-        clock: () => now,
-        durablyAccept: ({
-          required transmissionId,
-          required exactOuterEnvelopeBytes,
-        }) => throw StateError('Recipient probe must not take relay custody'),
-      );
+      ) =>
+          LoomNearbyDtnEncounterCoordinator(
+            packetStore: store,
+            transferExecutor: LoomDtnTransferExecutor(
+              packetStore: store,
+              transferStore: store,
+              clock: () => now,
+            ),
+            bootstrap: LoomNearbyDtnPeerBootstrap(clock: () => now),
+            clock: () => now,
+            durablyAccept: ({
+              required transmissionId,
+              required exactOuterEnvelopeBytes,
+            }) =>
+                throw StateError('Recipient probe must not take relay custody'),
+          );
       final offline = coordinator(a), online = coordinator(b);
       var received = 0;
       offline.recipientProbeAcceptor = (bytes) async {
@@ -314,7 +318,8 @@ void main() {
         durablyAccept: ({
           required transmissionId,
           required exactOuterEnvelopeBytes,
-        }) => throw StateError('sender must not accept inbound packets'),
+        }) =>
+            throw StateError('sender must not accept inbound packets'),
         bootstrap: LoomNearbyDtnPeerBootstrap(clock: () => now),
         clock: () => now.add(const Duration(seconds: 2)),
       );
@@ -326,22 +331,21 @@ void main() {
           transferStore: b,
           clock: () => now.add(const Duration(seconds: 1)),
         ),
-        durablyAccept:
-            ({required transmissionId, required exactOuterEnvelopeBytes}) {
-              final result = bIntake.acceptReplica(
-                exactOuterEnvelopeBytes: exactOuterEnvelopeBytes,
-                now: now.add(const Duration(seconds: 1)),
-              );
-              durableCommitCompleted = true;
-              return LoomDtnHopAck(
-                transmissionId: transmissionId,
-                packetId: result.packetId,
-                acceptedAt: result.storedAt,
-                duplicate:
-                    result.disposition ==
-                    LoomReplicaIntakeDisposition.duplicate,
-              );
-            },
+        durablyAccept: (
+            {required transmissionId, required exactOuterEnvelopeBytes}) {
+          final result = bIntake.acceptReplica(
+            exactOuterEnvelopeBytes: exactOuterEnvelopeBytes,
+            now: now.add(const Duration(seconds: 1)),
+          );
+          durableCommitCompleted = true;
+          return LoomDtnHopAck(
+            transmissionId: transmissionId,
+            packetId: result.packetId,
+            acceptedAt: result.storedAt,
+            duplicate:
+                result.disposition == LoomReplicaIntakeDisposition.duplicate,
+          );
+        },
         bootstrap: LoomNearbyDtnPeerBootstrap(clock: () => now),
         clock: () => now.add(const Duration(seconds: 1)),
       );
@@ -410,30 +414,29 @@ void main() {
       now: now,
     );
 
-    final plan =
-        LoomDtnTransferExecutor(
-          packetStore: store,
-          transferStore: store,
-        ).prepareNext(
-          packetId: packetId,
-          opportunities: <LoomDtnOpportunity>[
-            LoomDtnOpportunity(
-              opportunityId: 'nearby:generic-peer',
-              authenticated: true,
-              directRecipient: false,
-              gatewayClaim: LoomGatewayClaimState.none,
-              supportedRelayScopes: const <LoomRoutingScopeV2>{},
-              canStoreCarry: true,
-              linkQualityPercent: 100,
-              congestionPercent: 0,
-              batteryConstrained: false,
-              recentSuccessfulTransfers: 10,
-              recentFailedTransfers: 0,
-            ),
-          ],
-          transmissionId: 'transmission-nearby-last-copy-0001',
-          now: now,
-        );
+    final plan = LoomDtnTransferExecutor(
+      packetStore: store,
+      transferStore: store,
+    ).prepareNext(
+      packetId: packetId,
+      opportunities: <LoomDtnOpportunity>[
+        LoomDtnOpportunity(
+          opportunityId: 'nearby:generic-peer',
+          authenticated: true,
+          directRecipient: false,
+          gatewayClaim: LoomGatewayClaimState.none,
+          supportedRelayScopes: const <LoomRoutingScopeV2>{},
+          canStoreCarry: true,
+          linkQualityPercent: 100,
+          congestionPercent: 0,
+          batteryConstrained: false,
+          recentSuccessfulTransfers: 10,
+          recentFailedTransfers: 0,
+        ),
+      ],
+      transmissionId: 'transmission-nearby-last-copy-0001',
+      now: now,
+    );
 
     expect(plan, isNull);
   });
@@ -469,13 +472,13 @@ final class _CryptoSigner implements LoomDirectTransportSigner {
 
   @override
   Future<Uint8List> ed25519PublicKey() async => Uint8List.fromList(
-    (await _keyPair.extractPublicKey() as SimplePublicKey).bytes,
-  );
+        (await _keyPair.extractPublicKey() as SimplePublicKey).bytes,
+      );
 
   @override
   Future<Uint8List> sign(Uint8List canonicalBytes) async => Uint8List.fromList(
-    (await _algorithm.sign(canonicalBytes, keyPair: _keyPair)).bytes,
-  );
+        (await _algorithm.sign(canonicalBytes, keyPair: _keyPair)).bytes,
+      );
 }
 
 final class _DuplexNearbyPair {

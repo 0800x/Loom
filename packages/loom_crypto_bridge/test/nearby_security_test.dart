@@ -162,7 +162,7 @@ Future<
     ({
       LoomDeviceKeyBundle bundle,
       SimpleKeyPair signingPair,
-      SimpleKeyPair agreementPair
+      SimpleKeyPair agreementPair,
     })> _device(String identityId, String deviceId) async {
   final ed = Ed25519();
   final x = X25519();

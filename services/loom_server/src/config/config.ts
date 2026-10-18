@@ -23,6 +23,7 @@ export interface LoomNodeConfig {
   maxAttachmentBytes: number;
   maxRequestBytes: number;
   publicResourceMetrics?: boolean;
+  showProjectSupport?: boolean;
   lanDiscoveryEnabled?: boolean;
   lanAdvertiseEndpoint?: string;
   databaseUrl?: string;
@@ -130,6 +131,7 @@ export function createDefaultConfig(): LoomNodeConfig {
       secretAccessKey: process.env.LOOM_S3_SECRET_ACCESS_KEY ?? '',
       forcePathStyle: process.env.LOOM_S3_FORCE_PATH_STYLE === 'true',
     } : undefined,
+    showProjectSupport: process.env.LOOM_SHOW_PROJECT_SUPPORT === 'true',
     groupCalls: groupCallEnvironment(),
     callsEnabled: process.env.LOOM_CALLS_ENABLED === 'true',
     voiceCallsEnabled: process.env.LOOM_VOICE_CALLS_ENABLED !== 'false',

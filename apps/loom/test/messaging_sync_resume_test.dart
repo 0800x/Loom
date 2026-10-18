@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('resuming the app immediately wakes messaging sync',
-      (tester) async {
+  testWidgets('resuming the app immediately wakes messaging sync', (
+    tester,
+  ) async {
     var calls = 0;
 
     await tester.pumpWidget(

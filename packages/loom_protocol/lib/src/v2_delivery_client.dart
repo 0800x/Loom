@@ -1,4 +1,5 @@
 import 'transport_security.dart';
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -118,7 +119,8 @@ final class LoomV2DeliveryClient {
     final expiry = expiresAt.toUtc();
     if (!expiry.isAfter(DateTime.now().toUtc())) {
       throw const LoomProtocolException(
-          'V2 mailbox expiry must be in the future');
+        'V2 mailbox expiry must be in the future',
+      );
     }
     final json = await _requestJson(
       'PUT',
@@ -132,7 +134,8 @@ final class LoomV2DeliveryClient {
     final returnedExpiry = json['expiresAt'];
     if (returnedToken != _b64u(mailboxToken) || returnedExpiry is! String) {
       throw const LoomProtocolException(
-          'Invalid V2 mailbox registration receipt');
+        'Invalid V2 mailbox registration receipt',
+      );
     }
     final parsed = DateTime.tryParse(returnedExpiry)?.toUtc();
     if (parsed == null) {
@@ -168,7 +171,9 @@ final class LoomV2DeliveryClient {
         throw const LoomProtocolException('Invalid V2 mailbox packet');
       }
       return LoomV2MailboxPacket.fromJson(
-        value.map((key, value) => MapEntry(key.toString(), value as Object?)),
+        value.map(
+          (key, value) => MapEntry(key.toString(), value as Object?),
+        ),
       );
     }).toList(growable: false);
   }

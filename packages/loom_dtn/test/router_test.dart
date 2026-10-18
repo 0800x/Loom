@@ -38,31 +38,29 @@ void main() {
     expect(plan.copiesRetainedAfterSuccess, 4);
   });
 
-  test('unauthenticated peers and gateway claims are never routing candidates',
-      () {
-    final store = LoomSqlitePacketStore.openInMemory();
-    addTearDown(store.close);
-    final packet = _packet(store, now: now, copies: 4);
+  test(
+    'unauthenticated peers and gateway claims are never routing candidates',
+    () {
+      final store = LoomSqlitePacketStore.openInMemory();
+      addTearDown(store.close);
+      final packet = _packet(store, now: now, copies: 4);
 
-    final plan = router.planNext(
-      packet: packet,
-      now: now,
-      opportunities: <LoomDtnOpportunity>[
-        _opportunity(
-          id: 'fake-gateway',
-          authenticated: false,
-          gateway: LoomGatewayClaimState.verifiedRecently,
-        ),
-        _opportunity(
-          id: 'fake-peer',
-          authenticated: false,
-          canCarry: true,
-        ),
-      ],
-    );
+      final plan = router.planNext(
+        packet: packet,
+        now: now,
+        opportunities: <LoomDtnOpportunity>[
+          _opportunity(
+            id: 'fake-gateway',
+            authenticated: false,
+            gateway: LoomGatewayClaimState.verifiedRecently,
+          ),
+          _opportunity(id: 'fake-peer', authenticated: false, canCarry: true),
+        ],
+      );
 
-    expect(plan, isNull);
-  });
+      expect(plan, isNull);
+    },
+  );
 
   test('verified gateway outranks claimed gateway and store-carry peer', () {
     final store = LoomSqlitePacketStore.openInMemory();
@@ -73,11 +71,7 @@ void main() {
       packet: packet,
       now: now,
       opportunities: <LoomDtnOpportunity>[
-        _opportunity(
-          id: 'carrier-peer',
-          canCarry: true,
-          link: 100,
-        ),
+        _opportunity(id: 'carrier-peer', canCarry: true, link: 100),
         _opportunity(
           id: 'claimed-gateway',
           gateway: LoomGatewayClaimState.claimed,
@@ -170,9 +164,7 @@ void main() {
         _opportunity(
           id: 'domestic-only',
           gateway: LoomGatewayClaimState.verifiedRecently,
-          scopes: const <LoomRoutingScopeV2>{
-            LoomRoutingScopeV2.domesticRelay,
-          },
+          scopes: const <LoomRoutingScopeV2>{LoomRoutingScopeV2.domesticRelay},
         ),
       ],
     );
@@ -180,23 +172,25 @@ void main() {
     expect(plan, isNull);
   });
 
-  test('equal scores use opaque opportunity id as deterministic tie-breaker',
-      () {
-    final store = LoomSqlitePacketStore.openInMemory();
-    addTearDown(store.close);
-    final packet = _packet(store, now: now, copies: 4);
+  test(
+    'equal scores use opaque opportunity id as deterministic tie-breaker',
+    () {
+      final store = LoomSqlitePacketStore.openInMemory();
+      addTearDown(store.close);
+      final packet = _packet(store, now: now, copies: 4);
 
-    final plan = router.planNext(
-      packet: packet,
-      now: now,
-      opportunities: <LoomDtnOpportunity>[
-        _opportunity(id: 'peer-z', canCarry: true),
-        _opportunity(id: 'peer-a', canCarry: true),
-      ],
-    );
+      final plan = router.planNext(
+        packet: packet,
+        now: now,
+        opportunities: <LoomDtnOpportunity>[
+          _opportunity(id: 'peer-z', canCarry: true),
+          _opportunity(id: 'peer-a', canCarry: true),
+        ],
+      );
 
-    expect(plan!.opportunityId, 'peer-a');
-  });
+      expect(plan!.opportunityId, 'peer-a');
+    },
+  );
 
   test('relay-accepted and expired packets are not replanned', () {
     final store = LoomSqlitePacketStore.openInMemory();

@@ -6,24 +6,22 @@ import '../application/chat_folder_controller.dart';
 String loomChatFolderDisplayName(
   BuildContext context,
   LoomChatFolderDefinition folder,
-) =>
-    switch (folder.id) {
-      loomAllChatsFolderId => tr(context, 'All', 'همه'),
-      loomUnreadFolderId => tr(context, 'Unread', 'خوانده‌نشده'),
-      loomPersonalFolderId => tr(context, 'Personal', 'شخصی'),
-      loomGroupsFolderId => tr(context, 'Groups', 'گروه‌ها'),
-      loomPinnedFolderId => tr(context, 'Pinned', 'سنجاق‌شده'),
-      loomMutedFolderId => tr(context, 'Muted', 'بی‌صدا'),
-      _ => folder.name,
-    };
+) => switch (folder.id) {
+  loomAllChatsFolderId => tr(context, 'All', 'همه'),
+  loomUnreadFolderId => tr(context, 'Unread', 'خوانده‌نشده'),
+  loomPersonalFolderId => tr(context, 'Personal', 'شخصی'),
+  loomGroupsFolderId => tr(context, 'Groups', 'گروه‌ها'),
+  loomPinnedFolderId => tr(context, 'Pinned', 'سنجاق‌شده'),
+  loomMutedFolderId => tr(context, 'Muted', 'بی‌صدا'),
+  _ => folder.name,
+};
 
 String loomChatFolderLongDisplayName(
   BuildContext context,
   LoomChatFolderDefinition folder,
-) =>
-    folder.id == loomAllChatsFolderId
-        ? tr(context, 'All Chats', 'همه گفتگوها')
-        : loomChatFolderDisplayName(context, folder);
+) => folder.id == loomAllChatsFolderId
+    ? tr(context, 'All Chats', 'همه گفتگوها')
+    : loomChatFolderDisplayName(context, folder);
 
 String loomChatFolderDescription(
   BuildContext context,
@@ -33,10 +31,18 @@ String loomChatFolderDescription(
     return tr(context, 'Every conversation', 'همه گفتگوها');
   }
   if (folder.id == loomUnreadFolderId) {
-    return tr(context, 'Chats with unread messages', 'گفتگوهای دارای پیام خوانده‌نشده');
+    return tr(
+      context,
+      'Chats with unread messages',
+      'گفتگوهای دارای پیام خوانده‌نشده',
+    );
   }
   if (folder.id == loomPersonalFolderId) {
-    return tr(context, 'Direct and Saved Messages', 'گفتگوهای مستقیم و پیام‌های ذخیره‌شده');
+    return tr(
+      context,
+      'Direct and Saved Messages',
+      'گفتگوهای مستقیم و پیام‌های ذخیره‌شده',
+    );
   }
   if (folder.id == loomGroupsFolderId) {
     return tr(context, 'Group conversations', 'گفتگوهای گروهی');

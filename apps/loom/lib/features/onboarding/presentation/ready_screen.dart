@@ -15,22 +15,20 @@ class ReadyScreen extends StatelessWidget {
     final identity = controller.committedIdentity;
     return LoomSetupScaffold(
       step: receipt == null ? null : 4,
-      title:
-          receipt == null
-              ? tr(context, 'One more step', 'یک قدم دیگر مانده')
-              : tr(context, 'You’re right at home.', 'به خانهٔ خودت خوش آمدی.'),
-      subtitle:
-          receipt == null
-              ? tr(
-                context,
-                'Finish setup to start chatting.',
-                'برای شروع گفتگو، راه‌اندازی را کامل کنید.',
-              )
-              : tr(
-                context,
-                'Share your address with a friend or find someone to start your first conversation.',
-                'نشانی‌تان را به یک دوست بدهید یا او را پیدا کنید و اولین گفتگو را شروع کنید.',
-              ),
+      title: receipt == null
+          ? tr(context, 'One more step', 'یک قدم دیگر مانده')
+          : tr(context, 'You’re right at home.', 'به خانهٔ خودت خوش آمدی.'),
+      subtitle: receipt == null
+          ? tr(
+              context,
+              'Finish setup to start chatting.',
+              'برای شروع گفتگو، راه‌اندازی را کامل کنید.',
+            )
+          : tr(
+              context,
+              'Share your address with a friend or find someone to start your first conversation.',
+              'نشانی‌تان را به یک دوست بدهید یا او را پیدا کنید و اولین گفتگو را شروع کنید.',
+            ),
       children: [
         if (receipt != null) ...[
           LoomReveal(
@@ -91,12 +89,11 @@ class ReadyScreen extends StatelessWidget {
           const SizedBox(height: 28),
           LoomPressable(
             child: FilledButton(
-              onPressed:
-                  () => Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/messenger',
-                    (_) => false,
-                  ),
+              onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/messenger',
+                (_) => false,
+              ),
               child: Text(tr(context, 'Start chatting', 'شروع گفتگو')),
             ),
           ),
@@ -124,12 +121,8 @@ class ReadyScreen extends StatelessWidget {
           ),
         ] else
           FilledButton(
-            onPressed:
-                () => Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/',
-                  (_) => false,
-                ),
+            onPressed: () =>
+                Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false),
             child: Text(tr(context, 'Return to start', 'بازگشت به شروع')),
           ),
       ],

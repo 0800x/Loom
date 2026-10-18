@@ -82,21 +82,21 @@ class LoomNearbyDirectEnvelope {
   final Map<String, Object?> metadata;
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'kind': loomNearbyDirectEnvelopeKind,
-    'deliveryId': deliveryId,
-    'conversationId': conversationId,
-    'clientId': clientId,
-    'senderAddress': senderAddress,
-    'senderIdentityId': senderIdentityId,
-    'senderDeviceId': senderDeviceId,
-    'recipientIdentityId': recipientIdentityId,
-    'messageType': messageType.name,
-    'ciphertext': ciphertext,
-    'protocolVersion': protocolVersion,
-    'createdAt': createdAt.toUtc().toIso8601String(),
-    if (replyToMessageId != null) 'replyToMessageId': replyToMessageId,
-    'metadata': metadata,
-  };
+        'kind': loomNearbyDirectEnvelopeKind,
+        'deliveryId': deliveryId,
+        'conversationId': conversationId,
+        'clientId': clientId,
+        'senderAddress': senderAddress,
+        'senderIdentityId': senderIdentityId,
+        'senderDeviceId': senderDeviceId,
+        'recipientIdentityId': recipientIdentityId,
+        'messageType': messageType.name,
+        'ciphertext': ciphertext,
+        'protocolVersion': protocolVersion,
+        'createdAt': createdAt.toUtc().toIso8601String(),
+        if (replyToMessageId != null) 'replyToMessageId': replyToMessageId,
+        'metadata': metadata,
+      };
 }
 
 class LoomNearbyDirectAck {
@@ -125,11 +125,11 @@ class LoomNearbyDirectAck {
   final bool accepted;
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'kind': loomNearbyDirectAckKind,
-    'deliveryId': deliveryId,
-    'clientId': clientId,
-    'accepted': accepted,
-  };
+        'kind': loomNearbyDirectAckKind,
+        'deliveryId': deliveryId,
+        'clientId': clientId,
+        'accepted': accepted,
+      };
 }
 
 /// Direct recipient delivery only. It is deliberately not a relay and it does
@@ -137,7 +137,7 @@ class LoomNearbyDirectAck {
 /// remains authoritative and reconciles by clientId.
 class LoomNearbyDirectDelivery {
   LoomNearbyDirectDelivery({required this.store, LoomNearbyPacketCodec? codec})
-    : codec = codec ?? const LoomNearbyPacketCodec();
+      : codec = codec ?? const LoomNearbyPacketCodec();
 
   final LoomMessagingStore store;
   final LoomNearbyPacketCodec codec;

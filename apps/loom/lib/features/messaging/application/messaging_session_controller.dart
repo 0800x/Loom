@@ -239,8 +239,7 @@ class LoomMessagingSessionController extends ChangeNotifier
   }
 
   String? errorMessage;
-  LoomConnectivityState connectivity =
-      LoomConnectivityState.nodeUnreachable;
+  LoomConnectivityState connectivity = LoomConnectivityState.nodeUnreachable;
 
   final Map<String, _PeerSecurityCache> _peerSecurityCache = {};
   final Map<String, String> _peerDisplayNames = {};
@@ -952,9 +951,7 @@ class LoomMessagingSessionController extends ChangeNotifier
       if (peer.devices.isEmpty) {
         throw StateError('Peer has no active DTN recipient devices');
       }
-      destinationNodeDomain = LoomAddress.parseCanonical(
-        peer.address,
-      ).homeNode;
+      destinationNodeDomain = LoomAddress.parseCanonical(peer.address).homeNode;
       recipientDevices = peer.devices;
     } else {
       throw StateError('DTN fallback is not enabled for this chat type');
@@ -1380,9 +1377,7 @@ class LoomMessagingSessionController extends ChangeNotifier
       );
       encryptedFile = File('${folder.path}/$nonce.enc');
       await encryptedFile.writeAsBytes(sealed.bytes, flush: true);
-      if (_disposed ||
-          LoomAppLock.instance.locked ||
-          epoch != _readableEpoch) {
+      if (_disposed || LoomAppLock.instance.locked || epoch != _readableEpoch) {
         return false;
       }
       final receipt = await api.uploadEncryptedAttachment(
@@ -1395,9 +1390,7 @@ class LoomMessagingSessionController extends ChangeNotifier
           'Update the Home Node to enable encrypted media downloads',
         );
       }
-      if (_disposed ||
-          LoomAppLock.instance.locked ||
-          epoch != _readableEpoch) {
+      if (_disposed || LoomAppLock.instance.locked || epoch != _readableEpoch) {
         return false;
       }
       final uri = endpoint.resolve(
@@ -1798,9 +1791,7 @@ class LoomMessagingSessionController extends ChangeNotifier
     return address == null ? null : _peerDisplayNames[address] ?? address;
   }
 
-  Future<LoomDeviceKeyBundle> trustedGroupDevice(
-    LoomGroupMember member,
-  ) async {
+  Future<LoomDeviceKeyBundle> trustedGroupDevice(LoomGroupMember member) async {
     if (member.identityId == onboarding.committedIdentity?.identityId) {
       if (member.accountId != onboarding.receipt?.accountId) {
         throw StateError('Own MLS account mismatch');
@@ -2038,9 +2029,7 @@ class LoomMessagingSessionController extends ChangeNotifier
     return _ownDevicesCache;
   }
 
-  void _onDefaultNetworkGenerationChanged(
-    LoomDefaultNetworkSnapshot snapshot,
-  ) {
+  void _onDefaultNetworkGenerationChanged(LoomDefaultNetworkSnapshot snapshot) {
     if (_disposed) {
       return;
     }
@@ -2280,8 +2269,7 @@ class LoomMessagingSessionController extends ChangeNotifier
         if (conversation.kind == LoomConversationKind.direct &&
             identity != null &&
             receipt != null &&
-            record.protocolVersion ==
-                LoomDirectMessageCodec.protocolVersion &&
+            record.protocolVersion == LoomDirectMessageCodec.protocolVersion &&
             _directCodec != null) {
           try {
             final header = _directCodec!.inspect(record.ciphertext);
@@ -2621,10 +2609,7 @@ class LoomMessagingSessionController extends ChangeNotifier
     );
   }
 
-  LoomDeviceKeyBundle? _knownSenderBundle(
-    String identityId,
-    String deviceId,
-  ) {
+  LoomDeviceKeyBundle? _knownSenderBundle(String identityId, String deviceId) {
     final known = _securityStore?.listDevices(identityId) ?? const [];
     return known
         .where(

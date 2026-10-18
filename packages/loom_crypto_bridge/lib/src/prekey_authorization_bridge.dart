@@ -29,7 +29,9 @@ final class LoomDevicePrekeyAuthorizationSigner
       );
     }
     if (!statement.authorizesBundle(providerBundle)) {
-      throw const FormatException('Prekey authorization bundle digest mismatch');
+      throw const FormatException(
+        'Prekey authorization bundle digest mismatch',
+      );
     }
     final signature = await deviceSecurityCore.signDevicePayload(
       identityId: identityId,

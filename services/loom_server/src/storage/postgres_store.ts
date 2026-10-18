@@ -1,5 +1,6 @@
+import { passwordHasher } from '../security/password_hash.ts';
 import { type ProfileUpdate, profileRevision } from '../profile/profile.ts';
-import { createHash, randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import type { RegistrationInput, SessionInfo } from './sqlite_store.ts';
 import { validateIdentityPublicMaterial } from '../identity/public_material.ts';
 
@@ -128,7 +129,7 @@ export class PostgresStore {
     if (input.password.length < 10 || input.password.length > 512) throw new Error('invalid_password');
     const identity = validateIdentityPublicMaterial(input.identity);
     const salt = randomBytes(16);
-    const passwordHash = scryptSync(input.password, salt, 32);
+    const passwordHash = await passwordHasher.hash(input.password, salt);
     const accountId = `acc_${randomUUID()}`;
     const deviceId = `dev_${randomUUID()}`;
     const now = new Date().toISOString();
@@ -139,7 +140,7 @@ export class PostgresStore {
       if (existingUsername.rowCount) throw new Error('username_taken');
       const existingIdentity = await client.query(`SELECT 1 FROM accounts WHERE identity_id=$1 LIMIT 1`, [identity.identityId]);
       if (existingIdentity.rowCount) throw new Error('identity_already_registered');
-      await client.query(`INSERT INTO accounts(id,username,display_name,identity_id,identity_public_key,identity_fingerprint,password_salt,password_hash,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [accountId, username, input.displayName.trim(), identity.identityId, identity.publicKey, identity.fingerprint, salt.toString('base64'), passwordHash.toString('base64'), now]);
+      await client.query(`INSERT INTO accounts(id,username,display_name,identity_id,identity_public_key,identity_fingerprint,password_salt,password_hash,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [accountId, username, input.displayName.trim(), identity.identityId, identity.publicKey, identity.fingerprint, salt.toString('base64'), passwordHash, now]);
       await client.query(`INSERT INTO devices(id,account_id,name,created_at) VALUES($1,$2,$3,$4)`, [deviceId, accountId, input.deviceName.trim().slice(0, 100) || 'Loom device', now]);
       await client.query('COMMIT');
     } catch (error: unknown) {
@@ -161,9 +162,13 @@ export class PostgresStore {
     const result = await this.pool.query(`SELECT id,username,identity_id,password_salt,password_hash FROM accounts WHERE lower(username)=lower($1)`, [username.trim()]);
     const row = result.rows[0];
     if (!row) throw new Error('invalid_credentials');
-    const expected = Buffer.from(String(row.password_hash), 'base64');
-    const actual = scryptSync(password, Buffer.from(String(row.password_salt), 'base64'), expected.length);
-    if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) throw new Error('invalid_credentials');
+    const oldHash=String(row.password_hash),salt=Buffer.from(String(row.password_salt),'base64');
+    const checked=await passwordHasher.verify(password,salt,oldHash);
+    if(!checked.valid)throw new Error('invalid_credentials');
+    if(checked.legacy){
+      const upgraded=await passwordHasher.hash(password,salt);
+      await this.pool.query('UPDATE accounts SET password_hash=$1 WHERE id=$2 AND password_hash=$3',[upgraded,String(row.id),oldHash]);
+    }
     const accountId = String(row.id);
     const deviceId = `dev_${randomUUID()}`;
     await this.pool.query(`INSERT INTO devices(id,account_id,name,created_at) VALUES($1,$2,$3,$4)`, [deviceId, accountId, deviceName.trim().slice(0, 100) || 'Loom device', new Date().toISOString()]);

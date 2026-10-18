@@ -1,3 +1,4 @@
+import { LoomRateLimiter } from '../security/rate_limiter.ts';
 import { createHash } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
 import type { LoomNodeConfig } from '../config/config.ts';
@@ -18,6 +19,7 @@ function permanentStatus(status:number){return[400,401,403,404,405,409,410,413,4
 function eventIdForMessage(messageId:unknown):string|undefined{const value=String(messageId??'');return /^msg_[0-9a-f-]{36}$/i.test(value)?`fevt_${value.slice(4)}`:undefined;}
 
 export class FederationService{
+  private readonly inboundLimits=new LoomRateLimiter();
   private readonly config:LoomNodeConfig;
   private readonly identity:LoomNodeIdentity;
   readonly nodes:FederationNodeRegistry;
@@ -239,6 +241,7 @@ export class FederationService{
       if(error instanceof Error&&error.message.includes('signature'))await this.routing.noteMetric('signature_failures');
       throw error;
     }
+    this.inboundLimits.consume('federation-peer',peer.nodeId,240);
     const result=await this.routing.applyInbound(envelope);
     await this.nodes.noteSuccess(peer.nodeId);
     return result;

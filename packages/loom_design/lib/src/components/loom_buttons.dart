@@ -45,8 +45,8 @@ class LoomGlassButton extends StatelessWidget {
                     label,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: primary ? p.onPrimary : p.textSecondary,
-                    ),
+                          color: primary ? p.onPrimary : p.textSecondary,
+                        ),
                   ),
                 ),
               ],

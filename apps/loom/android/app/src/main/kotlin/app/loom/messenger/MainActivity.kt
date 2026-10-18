@@ -50,6 +50,11 @@ class MainActivity : AudioServiceActivity() {
     private val ringback = CallRingback()
     private var ongoingCall = false
 
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+        super.onCreate(savedInstanceState)
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "loom/maps")

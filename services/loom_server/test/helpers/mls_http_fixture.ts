@@ -115,7 +115,7 @@ const store=new SqliteStore(dir),bundles=DeviceBundleStore.sqliteStore(dir);
 const fixtures=[];
 for(const name of ['alice','bob','carol']) {
   const identity=identityMaterial();
-  const receipt=store.register(registrationBody(name,identity) as unknown as RegistrationInput,'localhost');
+  const receipt=await store.register(registrationBody(name,identity) as unknown as RegistrationInput,'localhost');
   const device=deviceMaterial(identity,receipt.deviceId);
   await bundles.publish(receipt.accountId,identity.public.identityId,receipt.deviceId,device.bundle);
   fixtures.push({receipt,bundle:device.bundle,identityPublicKey:identity.public.publicKey,

@@ -161,7 +161,9 @@ class _LocationMapState extends State<_LocationMap> {
           ),
           children: [
             ColorFiltered(
-              colorFilter: _loomCartoBasemapKey.isEmpty && Theme.of(context).brightness == Brightness.dark
+              colorFilter:
+                  _loomCartoBasemapKey.isEmpty &&
+                      Theme.of(context).brightness == Brightness.dark
                   ? const ColorFilter.matrix([
                       -.17008,
                       -.57216,
@@ -239,7 +241,11 @@ class _LocationMapState extends State<_LocationMap> {
                   ),
                 ),
                 if (_loomCartoBasemapKey.isNotEmpty)
-                  TextSourceAttribution('CARTO', onTap: () => launchUrl(Uri.parse('https://carto.com/attributions'))),
+                  TextSourceAttribution(
+                    'CARTO',
+                    onTap: () =>
+                        launchUrl(Uri.parse('https://carto.com/attributions')),
+                  ),
               ],
             ),
           ],
@@ -741,9 +747,7 @@ class _RichMessageContentState extends State<_RichMessageContent> {
                 .toList() ??
             <double>[];
         return ConstrainedBox(
-          constraints: const BoxConstraints(
-            minHeight: LoomSizing.audioRowMin,
-          ),
+          constraints: const BoxConstraints(minHeight: LoomSizing.audioRowMin),
           child: Row(
             children: [
               action,

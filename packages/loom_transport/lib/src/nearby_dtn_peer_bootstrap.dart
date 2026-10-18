@@ -28,9 +28,9 @@ Uint8List _decodeB64u(String value, int expectedBytes, String label) {
 }
 
 String _iso(DateTime value) => DateTime.fromMillisecondsSinceEpoch(
-  value.toUtc().millisecondsSinceEpoch,
-  isUtc: true,
-).toIso8601String();
+      value.toUtc().millisecondsSinceEpoch,
+      isUtc: true,
+    ).toIso8601String();
 
 Uint8List _randomBytes(int length) {
   final random = Random.secure();
@@ -73,32 +73,32 @@ final class _PeerHello {
   final String signature;
 
   Uint8List canonicalBytes() => Uint8List.fromList(
-    utf8.encode(
-      jsonEncode(<Object?>[
-        _peerBootstrapDomain,
-        role,
-        sessionId,
-        devicePublicKey,
-        ephemeralPublicKey,
-        nonce,
-        _iso(issuedAt),
-        canStoreCarry,
-      ]),
-    ),
-  );
+        utf8.encode(
+          jsonEncode(<Object?>[
+            _peerBootstrapDomain,
+            role,
+            sessionId,
+            devicePublicKey,
+            ephemeralPublicKey,
+            nonce,
+            _iso(issuedAt),
+            canStoreCarry,
+          ]),
+        ),
+      );
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'kind': _peerBootstrapDomain,
-    'version': 1,
-    'role': role,
-    'sessionId': sessionId,
-    'devicePublicKey': devicePublicKey,
-    'ephemeralPublicKey': ephemeralPublicKey,
-    'nonce': nonce,
-    'issuedAt': _iso(issuedAt),
-    'canStoreCarry': canStoreCarry,
-    'signature': signature,
-  };
+        'kind': _peerBootstrapDomain,
+        'version': 1,
+        'role': role,
+        'sessionId': sessionId,
+        'devicePublicKey': devicePublicKey,
+        'ephemeralPublicKey': ephemeralPublicKey,
+        'nonce': nonce,
+        'issuedAt': _iso(issuedAt),
+        'canStoreCarry': canStoreCarry,
+        'signature': signature,
+      };
 
   factory _PeerHello.fromJson(Map<String, Object?> json) {
     String string(String key, {int max = 256}) {
@@ -349,7 +349,8 @@ final class LoomNearbyDtnPeerBootstrap {
     final fingerprint = _b64u(
       (await _sha256.hash(
         _decodeB64u(remote.devicePublicKey, 32, 'nearby DTN signing key'),
-      )).bytes,
+      ))
+          .bytes,
     );
     return LoomNearbyDtnPeerSession(
       connection: connection,
@@ -388,7 +389,7 @@ final class LoomNearbyDtnPeerBootstrap {
 
 final class _NearbyDtnPeerCipher {
   _NearbyDtnPeerCipher({required SecretKey key, required this.sessionId})
-    : _key = key;
+      : _key = key;
 
   final SecretKey _key;
   final String sessionId;

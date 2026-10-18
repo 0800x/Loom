@@ -1,9 +1,4 @@
-enum LoomContactSecurityState {
-  resolved,
-  verified,
-  changed,
-  unavailable,
-}
+enum LoomContactSecurityState { resolved, verified, changed, unavailable }
 
 class LoomContact {
   const LoomContact({

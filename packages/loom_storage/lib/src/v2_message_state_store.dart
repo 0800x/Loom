@@ -555,12 +555,13 @@ final class LoomV2MessageStateStore {
       messageId: row['message_id'] as String,
       packetId: row['packet_id'] as String,
       recipientDeviceId: row['recipient_device_id'] as String,
-      receiptObservedAt: DateTime.parse(row['receipt_observed_at'] as String)
-          .toUtc(),
+      receiptObservedAt:
+          DateTime.parse(row['receipt_observed_at'] as String).toUtc(),
       state: state,
-      appliedAt: row['applied_at'] == null
-          ? null
-          : DateTime.parse(row['applied_at'] as String).toUtc(),
+      appliedAt:
+          row['applied_at'] == null
+              ? null
+              : DateTime.parse(row['applied_at'] as String).toUtc(),
     );
   }
 

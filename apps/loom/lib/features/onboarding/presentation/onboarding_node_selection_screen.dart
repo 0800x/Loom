@@ -113,7 +113,7 @@ class _LoomOnboardingNodeSelectionScreenState
         content: Text(
           tr(
             context,
-            'Certificate removed. Restart Loom to apply.',
+            'Certificate trust removed. Existing pinned connections were closed.',
             'گواهی حذف شد. برای اعمال تغییر، Loom را دوباره باز کنید.',
           ),
         ),
@@ -123,6 +123,12 @@ class _LoomOnboardingNodeSelectionScreenState
 
   Future<void> _trustLocalCertificate() async {
     try {
+      final rawHost = manualDomain.text.trim();
+      final endpoint = Uri.parse(
+        rawHost.startsWith('https://') ? rawHost : 'https://$rawHost',
+      );
+      final trustOrigin = LoomLocalHttpsTrust.origin(endpoint);
+
       final file = await openFile(
         acceptedTypeGroups: [
           const XTypeGroup(
@@ -157,14 +163,14 @@ class _LoomOnboardingNodeSelectionScreenState
                   Text(
                     tr(
                       context,
-                      'Compare this SHA256 fingerprint with the server installer using a trusted channel. Import only the public certificate; never its private key.',
+                      'Enter the server host in the address field first. Compare this SHA256 fingerprint with the installer over a trusted channel. Trust applies only to that HTTPS host and port; CA certificates are rejected.',
                       'اثر انگشت SHA256 را از یک مسیر مطمئن با خروجی نصب سرور مقایسه کنید. فقط گواهی عمومی را وارد کنید؛ هرگز کلید خصوصی را منتقل نکنید.',
                     ),
                   ),
                   const SizedBox(height: 16),
                   Directionality(
                     textDirection: TextDirection.ltr,
-                    child: SelectableText(fingerprint),
+                    child: SelectableText('$trustOrigin\n$fingerprint'),
                   ),
                   CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
@@ -200,7 +206,11 @@ class _LoomOnboardingNodeSelectionScreenState
         ),
       );
       if (accepted != true) return;
-      await LoomLocalHttpsTrust.accept(bytes);
+      await LoomLocalHttpsTrust.accept(
+        bytes,
+        endpoint: endpoint,
+        confirmedFingerprint: fingerprint,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

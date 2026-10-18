@@ -489,9 +489,7 @@ final class LoomVodozemacPocSessionProvider
 
     if (transaction is! LoomSessionInventoryTransaction) return;
     final sessions = await (transaction as LoomSessionInventoryTransaction)
-        .listSessionsForRemoteDevice(
-      remoteDevice,
-    );
+        .listSessionsForRemoteDevice(remoteDevice);
     final now = DateTime.now().toUtc();
     for (final session in sessions) {
       if (session.protocolVersion != protocolVersion ||

@@ -1,4 +1,5 @@
-import { randomBytes, randomUUID, scryptSync } from 'node:crypto';
+import { passwordHasher } from '../security/password_hash.ts';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -164,7 +165,7 @@ export class RegistrationApprovalStore {
   async request(input: RegistrationInput): Promise<RegistrationRequestReceipt> {
     const normalized = validateInput(input);
     const salt = randomBytes(16);
-    const passwordHash = scryptSync(input.password, salt, 32);
+    const passwordHash = await passwordHasher.hash(input.password, salt);
     const id = `reg_${randomUUID()}`;
     const now = new Date().toISOString();
 
@@ -173,7 +174,7 @@ export class RegistrationApprovalStore {
       if (this.sqlite.prepare(`SELECT 1 FROM accounts WHERE identity_id=?`).get(normalized.identity.identityId)) throw new Error('identity_already_registered');
       if (this.sqlite.prepare(`SELECT 1 FROM registration_requests WHERE status='pending' AND (username=? OR identity_id=?)`).get(normalized.username, normalized.identity.identityId)) throw new Error('registration_request_exists');
       this.sqlite.prepare(`INSERT INTO registration_requests(id,username,display_name,identity_id,identity_public_key,identity_fingerprint,password_salt,password_hash,device_name,protocol_version,status,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`)
-        .run(id, normalized.username, normalized.displayName, normalized.identity.identityId, normalized.identity.publicKey, normalized.identity.fingerprint, salt.toString('base64'), passwordHash.toString('base64'), normalized.deviceName, input.protocolVersion, 'pending', now);
+        .run(id, normalized.username, normalized.displayName, normalized.identity.identityId, normalized.identity.publicKey, normalized.identity.fingerprint, salt.toString('base64'), passwordHash, normalized.deviceName, input.protocolVersion, 'pending', now);
       return { requestId: id, username: normalized.username, status: 'pending', createdAt: now };
     }
 
@@ -183,7 +184,7 @@ export class RegistrationApprovalStore {
     if (existingIdentity.rowCount) throw new Error('identity_already_registered');
     const pending = await this.pool!.query(`SELECT 1 FROM registration_requests WHERE status='pending' AND (lower(username)=lower($1) OR identity_id=$2) LIMIT 1`, [normalized.username, normalized.identity.identityId]);
     if (pending.rowCount) throw new Error('registration_request_exists');
-    await this.pool!.query(`INSERT INTO registration_requests(id,username,display_name,identity_id,identity_public_key,identity_fingerprint,password_salt,password_hash,device_name,protocol_version,status,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11)`, [id, normalized.username, normalized.displayName, normalized.identity.identityId, normalized.identity.publicKey, normalized.identity.fingerprint, salt.toString('base64'), passwordHash.toString('base64'), normalized.deviceName, input.protocolVersion, now]);
+    await this.pool!.query(`INSERT INTO registration_requests(id,username,display_name,identity_id,identity_public_key,identity_fingerprint,password_salt,password_hash,device_name,protocol_version,status,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11)`, [id, normalized.username, normalized.displayName, normalized.identity.identityId, normalized.identity.publicKey, normalized.identity.fingerprint, salt.toString('base64'), passwordHash, normalized.deviceName, input.protocolVersion, now]);
     return { requestId: id, username: normalized.username, status: 'pending', createdAt: now };
   }
 

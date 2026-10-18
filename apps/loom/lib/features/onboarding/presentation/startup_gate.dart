@@ -102,18 +102,18 @@ class _LoomStartupGateState extends State<LoomStartupGate> {
             // Bounded support codes only: no exception text, account or secrets.
             failureCode =
                 error is PlatformException &&
-                        const {
-                          'vault_locked',
-                          'vault_key_missing',
-                          'vault_key_invalidated',
-                          'vault_auth_required',
-                          'vault_integrity_failed',
-                          'vault_unavailable',
-                        }.contains(error.code)
-                    ? error.code
-                    : error is FormatException
-                    ? 'saved_account_invalid'
-                    : 'saved_account_unavailable';
+                    const {
+                      'vault_locked',
+                      'vault_key_missing',
+                      'vault_key_invalidated',
+                      'vault_auth_required',
+                      'vault_integrity_failed',
+                      'vault_unavailable',
+                    }.contains(error.code)
+                ? error.code
+                : error is FormatException
+                ? 'saved_account_invalid'
+                : 'saved_account_unavailable';
           });
         }
       }
@@ -141,23 +141,28 @@ class _LoomStartupGateState extends State<LoomStartupGate> {
                 children: [
                   const LoomBrandMark(size: 76, glow: false),
                   const SizedBox(height: 20),
-                  Text(tr(context, 'Loom', 'لوم'),
+                  Text(
+                    tr(context, 'Loom', 'لوم'),
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                   const SizedBox(height: 24),
                   if (loading) ...[
-                    if (!MediaQuery.disableAnimationsOf(context)) SizedBox(
-                      width: 160,
-                      child: Semantics(
-                        label: tr(context, 'Loading', 'در حال بارگذاری'),
-                        child: LinearProgressIndicator(
-                          minHeight: 3,
-                          borderRadius: BorderRadius.circular(8),
-                          color: context.loom.primary,
-                          backgroundColor: context.loom.surfaceMuted,
+                    if (!MediaQuery.disableAnimationsOf(context))
+                      SizedBox(
+                        width: 160,
+                        child: Semantics(
+                          label: tr(context, 'Loading', 'در حال بارگذاری'),
+                          child: LinearProgressIndicator(
+                            minHeight: 3,
+                            borderRadius: BorderRadius.circular(8),
+                            color: context.loom.primary,
+                            backgroundColor: context.loom.surfaceMuted,
+                          ),
                         ),
                       ),
-                    ),
                     const SizedBox(height: 16),
                     Text(
                       tr(
@@ -208,4 +213,3 @@ class _LoomStartupGateState extends State<LoomStartupGate> {
     );
   }
 }
-

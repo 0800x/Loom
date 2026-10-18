@@ -62,15 +62,15 @@ class LoomGroupClient {
     }
     Map<String, Object?> json;
     try {
-      json =
-          Map<String, Object?>.from(jsonDecode(utf8.decode(collected)) as Map);
+      json = Map<String, Object?>.from(
+        jsonDecode(utf8.decode(collected)) as Map,
+      );
     } catch (_) {
       if (response.statusCode < 200 || response.statusCode > 299) {
         throw LoomGroupProtocolException(
-            response.statusCode,
-            response.statusCode == 404
-                ? 'not_found'
-                : 'invalid_group_response');
+          response.statusCode,
+          response.statusCode == 404 ? 'not_found' : 'invalid_group_response',
+        );
       }
       throw const LoomProtocolException('Invalid group response');
     }

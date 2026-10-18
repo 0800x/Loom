@@ -464,8 +464,7 @@ class _LoomPeopleScreenState extends State<LoomPeopleScreen> {
                   identityId: person.identityId,
                   address: person.canonicalAddress,
                   changed:
-                      person.securityState ==
-                      LoomContactSecurityState.changed,
+                      person.securityState == LoomContactSecurityState.changed,
                   busy: _startingAddress == person.canonicalAddress,
                   onTap: person.canMessage
                       ? () => widget.selectForCall
@@ -496,8 +495,7 @@ class _LoomPeopleScreenState extends State<LoomPeopleScreen> {
                 if (!person.canMessage)
                   _Notice(
                     text:
-                        person.securityState ==
-                            LoomContactSecurityState.changed
+                        person.securityState == LoomContactSecurityState.changed
                         ? tr(
                             context,
                             'Identity changed. Verify this person in their profile before messaging.',

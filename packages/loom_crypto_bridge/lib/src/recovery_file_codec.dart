@@ -41,9 +41,7 @@ class LoomRecoveryFileCodec {
       language: Language.english,
     );
     if (mnemonic.entropy.length != 32) {
-      throw const FormatException(
-        'Loom Recovery v1 requires a 24-word phrase',
-      );
+      throw const FormatException('Loom Recovery v1 requires a 24-word phrase');
     }
     final salt = randomBytes(16);
     final key = await _kdf.deriveKeyFromPassword(

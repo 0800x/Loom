@@ -21,7 +21,9 @@ class LoomIncomingIceBuffer {
       final expires = signal.createdAt.add(const Duration(seconds: 45));
       if (!expires.isAfter(now)) return;
       _offers.putIfAbsent(
-          signal.callId, () => _OfferedIce(signal.senderIdentityId, expires));
+        signal.callId,
+        () => _OfferedIce(signal.senderIdentityId, expires),
+      );
       while (_offers.length > 4) {
         _offers.remove(_offers.keys.first);
       }

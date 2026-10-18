@@ -78,10 +78,7 @@ class LoomPresenceIndicator extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: p.connectivity,
-          border: Border.all(
-            color: p.surface,
-            width: LoomBorders.selectedRail,
-          ),
+          border: Border.all(color: p.surface, width: LoomBorders.selectedRail),
         ),
       ),
     );

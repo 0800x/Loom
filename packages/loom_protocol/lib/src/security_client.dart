@@ -1,4 +1,5 @@
 import 'transport_security.dart';
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -108,9 +109,7 @@ class LoomSecurityClient {
       );
     }
     if (devices.length > 256) {
-      throw const LoomProtocolException(
-        'Device list exceeds supported limit',
-      );
+      throw const LoomProtocolException('Device list exceeds supported limit');
     }
     return List<LoomDeviceKeyBundle>.unmodifiable(devices);
   }

@@ -1,4 +1,5 @@
 import 'app_lock.dart';
+
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -339,9 +340,8 @@ class LoomDeviceSecurityCoreV1 implements LoomDeviceSecurityCore {
       remoteAgreementPublicKey: remoteAgreementPublicKey,
       context: utf8.encode('Loom-Nearby-Rendezvous-v1\n$timeSlot'),
     );
-    return base64UrlEncode(
-      tag.take(18).toList(growable: false),
-    ).replaceAll('=', '');
+    return base64UrlEncode(tag.take(18).toList(growable: false))
+        .replaceAll('=', '');
   }
 
   @override

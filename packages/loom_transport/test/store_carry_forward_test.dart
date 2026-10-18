@@ -5,20 +5,20 @@ import 'package:test/test.dart';
 
 void main() {
   LoomRelayBundle bundle(DateTime now) => LoomRelayBundle(
-    bundleId: 'b-1',
-    recipientTag: 'recipient-tag-1234567890',
-    createdAt: now,
-    expiresAt: now.add(const Duration(hours: 6)),
-    hopCount: 0,
-    maxHops: 3,
-    sealedPayload: const LoomRelaySealedPayload(
-      version: 1,
-      ephemeralPublicKey: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
-      nonce: 'AAAAAAAAAAAAAAAA',
-      ciphertext: 'AQ==',
-      mac: 'AAAAAAAAAAAAAAAAAAAAAA==',
-    ),
-  );
+        bundleId: 'b-1',
+        recipientTag: 'recipient-tag-1234567890',
+        createdAt: now,
+        expiresAt: now.add(const Duration(hours: 6)),
+        hopCount: 0,
+        maxHops: 3,
+        sealedPayload: const LoomRelaySealedPayload(
+          version: 1,
+          ephemeralPublicKey: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+          nonce: 'AAAAAAAAAAAAAAAA',
+          ciphertext: 'AQ==',
+          mac: 'AAAAAAAAAAAAAAAAAAAAAA==',
+        ),
+      );
 
   test('relay policy is opt-in and bounded', () {
     final now = DateTime.utc(2026, 9, 1, 12);

@@ -161,8 +161,7 @@ class LoomAppearancePanel extends StatelessWidget {
                       : tr(context, 'Compact', 'فشرده'),
                 ),
                 selected:
-                    (appearance?.chatDensity ??
-                        LoomChatDensity.comfortable) ==
+                    (appearance?.chatDensity ?? LoomChatDensity.comfortable) ==
                     value,
                 onSelected: appearance?.onChatDensityChanged == null
                     ? null

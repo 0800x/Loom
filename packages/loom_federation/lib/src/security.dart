@@ -80,9 +80,7 @@ class LoomFederationVerifier {
       );
     }
     if (event.expiresAt.isBefore(clock)) {
-      throw const LoomFederationValidationException(
-        'Federation event expired',
-      );
+      throw const LoomFederationValidationException('Federation event expired');
     }
     if (event.createdAt.isAfter(clock.add(limits.maxClockSkew)) ||
         event.createdAt.isBefore(

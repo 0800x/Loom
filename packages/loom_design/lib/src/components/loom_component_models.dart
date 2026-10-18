@@ -8,12 +8,4 @@ enum LoomConnectivity {
   unavailable,
 }
 
-enum LoomDeliveryState {
-  none,
-  queued,
-  sending,
-  sent,
-  delivered,
-  read,
-  failed,
-}
+enum LoomDeliveryState { none, queued, sending, sent, delivered, read, failed }

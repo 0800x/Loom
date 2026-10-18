@@ -9,13 +9,14 @@ import 'package:loom_storage/loom_storage.dart';
 import 'package:cryptography/cryptography.dart';
 
 /// Adapter for the native core. No Dart MLS primitives or fallback encryption.
-typedef LoomGroupCryptoRunner =
-    Future<({LoomMlsSealedState state, Map<String, Object?> result})> Function({
-      required String operation,
-      required LoomMlsSealedState? state,
-      String? groupId,
-      required Map<String, Object?> arguments,
-    });
+typedef LoomGroupCryptoRunner
+    = Future<({LoomMlsSealedState state, Map<String, Object?> result})>
+        Function({
+  required String operation,
+  required LoomMlsSealedState? state,
+  String? groupId,
+  required Map<String, Object?> arguments,
+});
 typedef LoomGroupTrustedDeviceResolver = Future<LoomDeviceKeyBundle> Function(
   LoomGroupMember member,
 );
@@ -109,8 +110,7 @@ class LoomGroupSession {
 
   Future<void> _verifyRoster(LoomGroupState state) async {
     if (state.members.map((m) => m.deviceId).toSet().length !=
-        state.members.length)
-      throw StateError('Duplicate group device');
+        state.members.length) throw StateError('Duplicate group device');
     for (final member in state.members)
       await verifyLoomGroupMember(member, await trustedDevice(member));
     _guard();
@@ -145,16 +145,15 @@ class LoomGroupSession {
           type: KeyPairType.ed25519,
         ),
       ),
-    ))
-      throw StateError('Untrusted key package');
+    )) throw StateError('Untrusted key package');
   }
 
   Future<void> initialize() => _serialized(() async {
-    if (store.state == null) {
-      final version = store.version, created = await _run('new');
-      store.saveState(version, created.state);
-    }
-  });
+        if (store.state == null) {
+          final version = store.version, created = await _run('new');
+          store.saveState(version, created.state);
+        }
+      });
   Future<LoomGroupMember> ownMember({String role = 'owner'}) =>
       _serialized(() => _ownMember(role));
   Future<LoomGroupMember> _ownMember(String role) async {
@@ -186,10 +185,10 @@ class LoomGroupSession {
   }
 
   Future<void> publishCredential() => _serialized(() async {
-    final member = await _ownMember('member');
-    await client.publishCredential(member);
-    _guard();
-  });
+        final member = await _ownMember('member');
+        await client.publishCredential(member);
+        _guard();
+      });
 
   /// Keep single-use invitations available without resetting the native store.
   Future<void> ensureKeyPackages({int minimum = 5}) async {
@@ -205,41 +204,41 @@ class LoomGroupSession {
   }
 
   Future<void> publishKeyPackage() => _serialized(() async {
-    _idle();
-    final version = store.version, result = await _run('keyPackage');
-    final bytes = (result.result['bytes'] as List).cast<int>(), id = _id();
-    final expiresAt = DateTime.fromMillisecondsSinceEpoch(
-      DateTime.now().millisecondsSinceEpoch + 7 * 86400000,
-      isUtc: true,
-    ).toIso8601String();
-    final binding = await loomKeyPackageBinding(
-      identityId: identityId,
-      deviceId: deviceId,
-      id: id,
-      serialized: bytes,
-      expiresAt: expiresAt,
-    );
-    final signature = await client.deviceProof.signer(binding);
-    _guard();
-    store.stage(
-      version,
-      result.state,
-      LoomGroupOutbox(
-        id: id,
-        groupId: 'key-packages',
-        path: '/api/v1/groups/key-packages',
-        body: {
-          'id': id,
-          'serialized': base64Encode(bytes),
-          'expiresAt': expiresAt,
-          'signature': base64Encode(signature),
-        },
-        checkpoint: null,
-        localPayload: null,
-      ),
-    );
-    await _drain();
-  });
+        _idle();
+        final version = store.version, result = await _run('keyPackage');
+        final bytes = (result.result['bytes'] as List).cast<int>(), id = _id();
+        final expiresAt = DateTime.fromMillisecondsSinceEpoch(
+          DateTime.now().millisecondsSinceEpoch + 7 * 86400000,
+          isUtc: true,
+        ).toIso8601String();
+        final binding = await loomKeyPackageBinding(
+          identityId: identityId,
+          deviceId: deviceId,
+          id: id,
+          serialized: bytes,
+          expiresAt: expiresAt,
+        );
+        final signature = await client.deviceProof.signer(binding);
+        _guard();
+        store.stage(
+          version,
+          result.state,
+          LoomGroupOutbox(
+            id: id,
+            groupId: 'key-packages',
+            path: '/api/v1/groups/key-packages',
+            body: {
+              'id': id,
+              'serialized': base64Encode(bytes),
+              'expiresAt': expiresAt,
+              'signature': base64Encode(signature),
+            },
+            checkpoint: null,
+            localPayload: null,
+          ),
+        );
+        await _drain();
+      });
   Future<List<Object>> _packages(
     List<LoomGroupMember> added,
     Map<String, String> claims,
@@ -271,8 +270,7 @@ class LoomGroupSession {
                 m.deviceId == deviceId &&
                 m.accountId == accountId &&
                 m.role == 'owner',
-          ))
-        throw ArgumentError('The creator must be an owner');
+          )) throw ArgumentError('The creator must be an owner');
       final groupId = _id(),
           operationId = _id(),
           version = store.version,
@@ -355,14 +353,17 @@ class LoomGroupSession {
         added.isNotEmpty
             ? 'add'
             : removed.isNotEmpty
-            ? 'remove'
-            : 'rotate',
+                ? 'remove'
+                : 'rotate',
         groupId: groupId,
         arguments: added.isNotEmpty
             ? {'packages': packages}
             : removed.isNotEmpty
-            ? {'remove': removed.map((m) => utf8.encode(m.deviceId)).toList()}
-            : {},
+                ? {
+                    'remove':
+                        removed.map((m) => utf8.encode(m.deviceId)).toList()
+                  }
+                : {},
       );
       final welcome = result.result['welcome'] == null
           ? null
@@ -535,20 +536,18 @@ class LoomGroupSession {
       }
       final group = LoomGroupState.fromJson(receipt);
       await _verifyRoster(group);
-      final wanted =
-          (pending.body['members'] as List)
-              .map((m) => Map<String, Object?>.from(m as Map))
-              .toList()
-            ..sort(
-              (a, b) =>
-                  (a['deviceId'] as String).compareTo(b['deviceId'] as String),
-            );
+      final wanted = (pending.body['members'] as List)
+          .map((m) => Map<String, Object?>.from(m as Map))
+          .toList()
+        ..sort(
+          (a, b) =>
+              (a['deviceId'] as String).compareTo(b['deviceId'] as String),
+        );
       if (group.id != pending.groupId ||
           group.title != pending.body['title'] ||
           group.epoch != pending.body['epoch'] ||
           jsonEncode(group.members.map((m) => m.toJson()).toList()) !=
-              jsonEncode(wanted))
-        throw StateError('Group receipt mismatch');
+              jsonEncode(wanted)) throw StateError('Group receipt mismatch');
       final version = store.version,
           result = await _run(
             'acceptPending',
@@ -565,9 +564,9 @@ class LoomGroupSession {
   }
 
   Future<void> sync() => _serialized(() async {
-    await _drain();
-    for (final groupId in await client.list()) await _syncGroup(groupId);
-  });
+        await _drain();
+        for (final groupId in await client.list()) await _syncGroup(groupId);
+      });
   Future<void> _syncGroup(String groupId) async {
     var more = true;
     while (more) {
@@ -622,11 +621,10 @@ class LoomGroupSession {
       throw StateError('Group message epoch gap');
     final bytes = base64Decode(
       event[kind == 'welcome'
-              ? 'welcome'
-              : kind == 'commit'
+          ? 'welcome'
+          : kind == 'commit'
               ? 'commit'
-              : 'ciphertext']
-          as String,
+              : 'ciphertext'] as String,
     );
     final version = store.version,
         result = await _run(
@@ -644,8 +642,7 @@ class LoomGroupSession {
           !state.members.any(
             (m) =>
                 m.deviceId == sender && m.accountId == event['senderAccountId'],
-          ))
-        throw StateError('MLS sender mismatch');
+          )) throw StateError('MLS sender mismatch');
       final content = Map<String, Object?>.from(
         jsonDecode(utf8.decode((application['plaintext'] as List).cast<int>()))
             as Map,

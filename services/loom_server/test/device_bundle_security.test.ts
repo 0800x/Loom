@@ -80,7 +80,7 @@ test('device bundle requires both device and identity signatures and rejects sil
   const bundles = DeviceBundleStore.sqliteStore(dir);
   try {
     const identity = identityMaterial();
-    const registration = accounts.register({
+    const registration = await accounts.register({
       username: 'alice',
       displayName: 'Alice',
       password: 'correct horse battery staple',
@@ -124,7 +124,7 @@ test('device bundle cannot be published for another authenticated device', async
   const bundles = DeviceBundleStore.sqliteStore(dir);
   try {
     const identity = identityMaterial();
-    const first = accounts.register({
+    const first = await accounts.register({
       username: 'alice',
       displayName: 'Alice',
       password: 'correct horse battery staple',
@@ -132,7 +132,7 @@ test('device bundle cannot be published for another authenticated device', async
       identity: identity.public,
       protocolVersion: 'Loom-Identity-v1',
     }, 'loom-a.test');
-    const second = accounts.login('alice', 'correct horse battery staple', 'Second device');
+    const second = await accounts.login('alice', 'correct horse battery staple', 'Second device');
     assert.notEqual(first.deviceId, second.deviceId);
     const secondSession = accounts.authenticate(second.accessToken);
     assert.ok(secondSession);

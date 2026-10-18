@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {renderLandingPage} from '../src/http/landing_page.ts';
 import type {LoomNodeConfig} from '../src/config/config.ts';
-const config = {operatorName:'Test <Node>',publicDomain:'node.test',publicBaseUrl:'https://node.test',registrationPolicy:'approval',federationMode:'disabled',networkJurisdiction:'Test',maxAttachmentBytes:104857600} as LoomNodeConfig;
+const config = {showProjectSupport:true,operatorName:'Test <Node>',publicDomain:'node.test',publicBaseUrl:'https://node.test',registrationPolicy:'approval',federationMode:'disabled',networkJurisdiction:'Test',maxAttachmentBytes:104857600} as LoomNodeConfig;
 
 test('project support uses only the approved wallet and public checkout link', () => {
  const body = renderLandingPage(config);
@@ -30,4 +30,12 @@ test('operator support is separate and unsafe links are discarded', () => {
   assert.match(body,/Support Loom development/); assert.match(body,/Support this node/);
   assert.match(body,/https:\/\/operator.test\/support/); assert.doesNotMatch(body,/javascript:alert/);
  } finally { if(previous === undefined) delete process.env.LOOM_DONATION_LINKS; else process.env.LOOM_DONATION_LINKS=previous; }
+});
+
+test('project support is opt-in and the configured source preserves approved destinations',()=>{
+ const body=renderLandingPage({...config,showProjectSupport:false});
+ assert.doesNotMatch(body,/data-wallet-copy=|nowpayments\.io/);
+ const canonical=JSON.parse(readFileSync(new URL('../src/config/project_support.json',import.meta.url),'utf8'));
+ const readme=readFileSync(new URL('../../../README.md',import.meta.url),'utf8');
+ for(const wallet of canonical.wallets){assert.ok(readme.includes(wallet.address));assert.ok(renderLandingPage(config).includes(wallet.address));}
 });

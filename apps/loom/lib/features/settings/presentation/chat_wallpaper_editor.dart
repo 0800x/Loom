@@ -258,9 +258,7 @@ class _WallpaperEditorState extends State<LoomWallpaperEditor> {
                               dimension: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Icon(
-                              LoomIcons.add_photo_alternate_outlined,
-                            ),
+                          : const Icon(LoomIcons.add_photo_alternate_outlined),
                       label: Text(tr(context, 'Your photo', 'عکس شما')),
                     ),
                     if (draft.style != 'plain' && draft.style != 'pattern') ...[

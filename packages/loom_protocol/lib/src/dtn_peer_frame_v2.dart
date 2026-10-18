@@ -268,9 +268,7 @@ abstract final class LoomDtnPeerFrameV2Codec {
           }
           break;
         default:
-          throw FormatException(
-            'Unknown DTN hop-ack field ${tag.fieldNumber}',
-          );
+          throw FormatException('Unknown DTN hop-ack field ${tag.fieldNumber}');
       }
     }
 
@@ -335,9 +333,7 @@ final class _Writer {
 
   void varintField(int fieldNumber, int value) {
     if (value < 0) throw const FormatException('Negative protobuf varint');
-    _writeVarint(
-      (fieldNumber << 3) | LoomDtnPeerFrameV2Codec._wireVarint,
-    );
+    _writeVarint((fieldNumber << 3) | LoomDtnPeerFrameV2Codec._wireVarint);
     _writeVarint(value);
   }
 
@@ -423,9 +419,7 @@ final class _Reader {
     }
     final end = _offset + length;
     if (end < _offset || end > bytes.length) {
-      throw const FormatException(
-        'Truncated length-delimited protobuf field',
-      );
+      throw const FormatException('Truncated length-delimited protobuf field');
     }
     final value = Uint8List.fromList(bytes.sublist(_offset, end));
     _offset = end;

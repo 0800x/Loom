@@ -29,8 +29,8 @@ final class LoomPrekeyAuthorizationStatement {
     required this.notBefore,
     required this.expiresAt,
   }) : providerBundleSha256 = Uint8List.fromList(
-         sha256.convert(providerBundle).bytes,
-       ) {
+          sha256.convert(providerBundle).bytes,
+        ) {
     validate();
   }
 
@@ -167,8 +167,8 @@ final class LoomAuthorizedPrekeyBundle {
     required this.statement,
     required Uint8List providerBundle,
     required Uint8List deviceSignature,
-  }) : providerBundle = Uint8List.fromList(providerBundle),
-       deviceSignature = Uint8List.fromList(deviceSignature) {
+  })  : providerBundle = Uint8List.fromList(providerBundle),
+        deviceSignature = Uint8List.fromList(deviceSignature) {
     statement.validate();
     if (!statement.authorizesBundle(this.providerBundle)) {
       throw const FormatException(
@@ -259,15 +259,15 @@ final class LoomPrekeyAuthorizationVerifierV1 {
         'Prekey authorization is not currently valid',
       );
     }
-    final trusted = await deviceSignatureVerifier
-        .verifyAuthorizedDeviceSignature(
-          accountId: statement.accountId,
-          deviceId: statement.deviceId,
-          deviceKeyVersion: statement.deviceKeyVersion,
-          canonicalPayload: statement.canonicalBytes(),
-          signature: authorization.deviceSignature,
-          now: now.toUtc(),
-        );
+    final trusted =
+        await deviceSignatureVerifier.verifyAuthorizedDeviceSignature(
+      accountId: statement.accountId,
+      deviceId: statement.deviceId,
+      deviceKeyVersion: statement.deviceKeyVersion,
+      canonicalPayload: statement.canonicalBytes(),
+      signature: authorization.deviceSignature,
+      now: now.toUtc(),
+    );
     if (!trusted) {
       throw const FormatException(
         'Prekey device authorization verification failed',

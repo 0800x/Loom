@@ -45,8 +45,8 @@ final class LoomNearbyDtnEncounterCoordinator {
     this.durablyAcceptRouted,
     LoomNearbyDtnPeerBootstrap? bootstrap,
     DateTime Function()? clock,
-  }) : bootstrap = bootstrap ?? LoomNearbyDtnPeerBootstrap(),
-       _clock = clock ?? DateTime.now;
+  })  : bootstrap = bootstrap ?? LoomNearbyDtnPeerBootstrap(),
+        _clock = clock ?? DateTime.now;
 
   final LoomPacketStore packetStore;
   final LoomDtnTransferExecutor transferExecutor;
@@ -282,13 +282,13 @@ final class LoomNearbyDtnEncounterCoordinator {
   // Versioned control frames live inside the authenticated encrypted link.
   // A turn grants an opportunity to send, never recipient/custody authority.
   static List<int> _turnFrame(int budget) => [
-    0x43,
-    0x4e,
-    0x44,
-    0x58,
-    1,
-    budget,
-  ];
+        0x43,
+        0x4e,
+        0x44,
+        0x58,
+        1,
+        budget,
+      ];
   static bool _isTurnFrame(List<int> bytes) =>
       bytes.length == 6 &&
       bytes[0] == 0x43 &&
@@ -341,8 +341,7 @@ final class LoomNearbyDtnEncounterCoordinator {
             session.connection,
             bytes,
             recipientProbeAcceptor,
-          ))
-            accepted++;
+          )) accepted++;
         } else {
           if (!localCanStoreCarry)
             throw StateError('Relay custody is disabled');

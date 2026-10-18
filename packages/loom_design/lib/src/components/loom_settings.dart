@@ -85,9 +85,10 @@ class LoomSettingsRow extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(fontWeight: FontWeight.w500),
                       ),
                       if (subtitle != null) ...[
                         const SizedBox(height: LoomSpacing.xxs),
@@ -129,21 +130,37 @@ class LoomGlassSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => LoomGlassSurface(
-    strength: LoomGlassStrength.standard,
-    radius: LoomRadii.sheet,
-    padding: const EdgeInsets.all(LoomSpacing.md),
-    child: child,
-  );
+        strength: LoomGlassStrength.standard,
+        radius: LoomRadii.sheet,
+        padding: const EdgeInsets.all(LoomSpacing.md),
+        child: child,
+      );
 }
 
 Color _settingsIconColor(IconData icon, Color fallback) {
   // A restrained warm palette, rather than a single colour for every section.
-  if (icon == LoomIcons.logout_rounded) return const Color(0xFFBC4E5C);
-  if (icon == LoomIcons.person_outline_rounded || icon == LoomIcons.notifications_none_rounded) return const Color(0xFFCE6552);
-  if (icon == LoomIcons.lock_outline_rounded || icon == LoomIcons.devices_outlined) return const Color(0xFF9D7893);
-  if (icon == LoomIcons.storage_outlined || icon == LoomIcons.near_me_outlined) return const Color(0xFF668B79);
-  if (icon == LoomIcons.folder_outlined || icon == LoomIcons.language_rounded) return const Color(0xFFB18A51);
-  if (icon == LoomIcons.palette_outlined || icon == LoomIcons.info_outline_rounded) return const Color(0xFFAD806B);
+  if (icon == LoomIcons.logout_rounded) {
+    return const Color(0xFFBC4E5C);
+  }
+  if (icon == LoomIcons.person_outline_rounded ||
+      icon == LoomIcons.notifications_none_rounded) {
+    return const Color(0xFFCE6552);
+  }
+  if (icon == LoomIcons.lock_outline_rounded ||
+      icon == LoomIcons.devices_outlined) {
+    return const Color(0xFF9D7893);
+  }
+  if (icon == LoomIcons.storage_outlined ||
+      icon == LoomIcons.near_me_outlined) {
+    return const Color(0xFF668B79);
+  }
+  if (icon == LoomIcons.folder_outlined || icon == LoomIcons.language_rounded) {
+    return const Color(0xFFB18A51);
+  }
+  if (icon == LoomIcons.palette_outlined ||
+      icon == LoomIcons.info_outline_rounded) {
+    return const Color(0xFFAD806B);
+  }
   return fallback;
 }
 
@@ -159,9 +176,9 @@ class LoomSettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: context.loom.surface,
-    borderRadius: BorderRadius.circular(LoomRadii.surface),
-    clipBehavior: Clip.antiAlias,
-    child: Padding(padding: padding, child: child),
-  );
+        color: context.loom.surface,
+        borderRadius: BorderRadius.circular(LoomRadii.surface),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(padding: padding, child: child),
+      );
 }

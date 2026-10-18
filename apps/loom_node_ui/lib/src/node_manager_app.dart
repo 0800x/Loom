@@ -102,9 +102,7 @@ class _NodeManagerScreenState extends State<NodeManagerScreen> {
                         ),
                         if (_error != null)
                           Padding(
-                            padding: const EdgeInsets.only(
-                              top: LoomSpacing.sm,
-                            ),
+                            padding: const EdgeInsets.only(top: LoomSpacing.sm),
                             child: Text(
                               _error!,
                               style: TextStyle(color: colors.critical),

@@ -119,11 +119,12 @@ class LoomSecurityStore {
     final changed = oldFingerprint != bundle.fingerprint;
     // Revocation is sticky. A Node is not allowed to resurrect a device simply
     // by replaying the old, still-valid identity-signed bundle.
-    final nextTrust = oldTrust == LoomDeviceTrustState.revoked
-        ? LoomDeviceTrustState.revoked
-        : changed
-        ? LoomDeviceTrustState.changed
-        : oldTrust;
+    final nextTrust =
+        oldTrust == LoomDeviceTrustState.revoked
+            ? LoomDeviceTrustState.revoked
+            : changed
+            ? LoomDeviceTrustState.changed
+            : oldTrust;
     _db.execute(
       '''UPDATE known_devices SET
          bundle_json = ?, fingerprint = ?, trust_state = ?, last_seen_at = ?,
@@ -271,9 +272,10 @@ class LoomSecurityStore {
             ),
             firstSeenAt: DateTime.parse(row['first_seen_at'] as String).toUtc(),
             lastSeenAt: DateTime.parse(row['last_seen_at'] as String).toUtc(),
-            verifiedAt: row['verified_at'] == null
-                ? null
-                : DateTime.parse(row['verified_at'] as String).toUtc(),
+            verifiedAt:
+                row['verified_at'] == null
+                    ? null
+                    : DateTime.parse(row['verified_at'] as String).toUtc(),
           );
         })
         .toList(growable: false);

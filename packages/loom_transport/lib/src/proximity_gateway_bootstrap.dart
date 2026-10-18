@@ -28,9 +28,9 @@ Uint8List _decodeB64u(String value, int expectedBytes, String label) {
 }
 
 String _iso(DateTime value) => DateTime.fromMillisecondsSinceEpoch(
-  value.toUtc().millisecondsSinceEpoch,
-  isUtc: true,
-).toIso8601String();
+      value.toUtc().millisecondsSinceEpoch,
+      isUtc: true,
+    ).toIso8601String();
 
 Uint8List _randomBytes(int length) {
   final random = Random.secure();
@@ -57,27 +57,27 @@ final class _GatewayHello {
   final String signature;
 
   Uint8List canonicalBytes() => Uint8List.fromList(
-    utf8.encode(
-      jsonEncode(<Object?>[
-        _bootstrapDomain,
-        sessionId,
-        devicePublicKey,
-        ephemeralPublicKey,
-        nonce,
-        _iso(issuedAt),
-      ]),
-    ),
-  );
+        utf8.encode(
+          jsonEncode(<Object?>[
+            _bootstrapDomain,
+            sessionId,
+            devicePublicKey,
+            ephemeralPublicKey,
+            nonce,
+            _iso(issuedAt),
+          ]),
+        ),
+      );
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'kind': _gatewayHelloKind,
-    'sessionId': sessionId,
-    'devicePublicKey': devicePublicKey,
-    'ephemeralPublicKey': ephemeralPublicKey,
-    'nonce': nonce,
-    'issuedAt': _iso(issuedAt),
-    'signature': signature,
-  };
+        'kind': _gatewayHelloKind,
+        'sessionId': sessionId,
+        'devicePublicKey': devicePublicKey,
+        'ephemeralPublicKey': ephemeralPublicKey,
+        'nonce': nonce,
+        'issuedAt': _iso(issuedAt),
+        'signature': signature,
+      };
 
   factory _GatewayHello.fromJson(Map<String, Object?> json) {
     String string(String key, {int max = 256}) {
@@ -273,8 +273,8 @@ final class LoomProximityGatewayBootstrap {
 
     final recipientEphemeral = await _x25519.newKeyPair();
     try {
-      final recipientEphemeralPublic = await recipientEphemeral
-          .extractPublicKey();
+      final recipientEphemeralPublic =
+          await recipientEphemeral.extractPublicKey();
       final lease = await LoomProximityGatewayLease.create(
         recipientSigner: recipientSigner,
         sessionId: hello.sessionId,
@@ -375,7 +375,7 @@ final class LoomProximityGatewayBootstrap {
 
 final class _GatewayLinkCipher {
   _GatewayLinkCipher({required SecretKey key, required this.sessionId})
-    : _key = key;
+      : _key = key;
 
   final SecretKey _key;
   final String sessionId;

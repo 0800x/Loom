@@ -300,9 +300,7 @@ final class LoomV2MessagingRuntime {
         : supported.contains(LoomNearbyBearer.wifiDirect)
         ? LoomNearbyBearer.wifiDirect
         : LoomNearbyBearer.bluetoothLowEnergy;
-    if (!await nearbyRadios.requestPermissionsFor(<LoomNearbyBearer>{
-      bearer,
-    })) {
+    if (!await nearbyRadios.requestPermissionsFor(<LoomNearbyBearer>{bearer})) {
       return false;
     }
     await nearbyRadios.startForegroundMode(bearer);

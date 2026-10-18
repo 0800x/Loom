@@ -1,5 +1,9 @@
 # Loom protocol compatibility
 
+The Hax diagnostic backport in ADR 012 only changes extraction-time compiler
+error reporting. Normal runtime macro bodies, provider selection, MLS wire/state
+formats and key derivation are unchanged; no data migration is required.
+
 The first public alpha uses the Loom wire namespace. This is a deliberate breaking
 change from earlier internal builds. It changes authenticated bytes, not only
 screen labels.
@@ -50,3 +54,19 @@ Server and client tests cover matching namespace delivery and rejection of
 unsupported proofs, recovery formats and protected envelopes. Native MLS tests
 cover sealing, restore, tampering, replay, membership and call exporters. Hardware
 acceptance remains necessary for media, calls and Android radios.
+
+## Server password hash upgrade
+
+The security hardening release reads legacy scrypt hashes and upgrades them only
+on successful login. New account and approval hashes have explicit versioned
+parameters in the existing TEXT field. Older server binaries cannot read these
+new hashes. Avoid an in-place binary rollback; keep a coordinated pre-upgrade
+backup. Message, recovery, identity and session derivation formats are unchanged.
+See [the password migration ADR](adr/004-password-hash-migration.md).
+
+## Local certificate trust bindings
+
+Previously imported unscoped PEM roots are not automatically migrated. Import the
+public leaf again after entering its exact HTTPS host and port and confirming its
+fingerprint. CA certificates are rejected. Removing trust closes pinned clients;
+other hosts never receive that trust. See [the TLS ADR](adr/005-origin-scoped-local-tls.md).

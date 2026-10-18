@@ -12,8 +12,8 @@ class LoomGlassNavigation extends StatelessWidget {
     required this.onSelected,
     required this.destinations,
     super.key,
-  }) : assert(destinations.length > 0),
-       assert(selectedIndex >= 0 && selectedIndex < destinations.length);
+  })  : assert(destinations.length > 0),
+        assert(selectedIndex >= 0 && selectedIndex < destinations.length);
 
   final int selectedIndex;
   final ValueChanged<int> onSelected;
@@ -115,7 +115,9 @@ class LoomGlassNavigation extends StatelessWidget {
                                   item.label,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.labelSmall
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelSmall
                                       ?.copyWith(
                                         color: selected
                                             ? p.primary

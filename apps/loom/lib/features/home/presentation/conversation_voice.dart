@@ -45,8 +45,9 @@ class _VoiceMessageState extends State<_VoiceMessage> {
     _preparing = true;
     try {
       final temp = await getTemporaryDirectory();
-      final root = await Directory('${temp.path}/loom_media_view')
-          .create(recursive: true);
+      final root = await Directory(
+        '${temp.path}/loom_media_view',
+      ).create(recursive: true);
       final folder = await root.createTemp('voice_');
       _folder = folder;
       if (!mounted || LoomAppLock.instance.locked) {
@@ -106,9 +107,7 @@ class _VoiceMessageState extends State<_VoiceMessage> {
   Widget build(BuildContext context) => LoomAppLock.instance.locked
       ? const SizedBox.shrink()
       : ConstrainedBox(
-          constraints: const BoxConstraints(
-            minHeight: LoomSizing.audioRowMin,
-          ),
+          constraints: const BoxConstraints(minHeight: LoomSizing.audioRowMin),
           child: _file != null
               ? LoomAudioTile(
                   file: _file!,
@@ -225,8 +224,9 @@ class _RoundVideoMessageState extends State<_RoundVideoMessage>
   Future<void> _prepare() async {
     try {
       final temp = await getTemporaryDirectory();
-      final root = await Directory('${temp.path}/loom_media_view')
-          .create(recursive: true);
+      final root = await Directory(
+        '${temp.path}/loom_media_view',
+      ).create(recursive: true);
       final folder = await root.createTemp('round_');
       _folder = folder;
       if (!mounted || LoomAppLock.instance.locked) {

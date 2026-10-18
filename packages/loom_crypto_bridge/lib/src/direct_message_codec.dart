@@ -6,9 +6,7 @@ import 'package:cryptography/cryptography.dart';
 
 import 'relay_sealing.dart';
 
-typedef LoomDirectMessageSigner = Future<List<int>> Function(
-  List<int> payload,
-);
+typedef LoomDirectMessageSigner = Future<List<int>> Function(List<int> payload);
 
 typedef LoomDirectMessageOpener = Future<Uint8List> Function({
   required LoomRelaySealedPayload payload,
@@ -85,7 +83,8 @@ class LoomDirectMessageCodec {
     );
     if (clear.length > _maxPlaintextBytes) {
       throw ArgumentError(
-          'Direct message plaintext exceeds the supported limit');
+        'Direct message plaintext exceeds the supported limit',
+      );
     }
 
     final unique = <String, LoomDeviceKeyBundle>{};
@@ -97,7 +96,8 @@ class LoomDirectMessageCodec {
     }
     if (unique.isEmpty || unique.length > _maxDevices) {
       throw StateError(
-          'Direct message requires 1..$_maxDevices recipient devices');
+        'Direct message requires 1..$_maxDevices recipient devices',
+      );
     }
     final devices = unique.values.toList(growable: false)
       ..sort((a, b) {
@@ -151,7 +151,8 @@ class LoomDirectMessageCodec {
     });
     if (utf8.encode(envelope).length > _maxEnvelopeBytes) {
       throw StateError(
-          'Direct message envelope exceeds the Node message limit');
+        'Direct message envelope exceeds the Node message limit',
+      );
     }
     return envelope;
   }
@@ -189,7 +190,8 @@ class LoomDirectMessageCodec {
     if (parsed.senderIdentityId != senderDevice.identityId ||
         parsed.senderDeviceId != senderDevice.deviceId) {
       throw const FormatException(
-          'Direct message sender-device binding mismatch');
+        'Direct message sender-device binding mismatch',
+      );
     }
     final expectedBinding = _conversationBinding(
       parsed.senderIdentityId,
@@ -197,7 +199,8 @@ class LoomDirectMessageCodec {
     );
     if (parsed.conversationId != expectedBinding) {
       throw const FormatException(
-          'Direct message participant binding mismatch');
+        'Direct message participant binding mismatch',
+      );
     }
 
     final signingKey = base64Decode(senderDevice.signingPublicKey);
@@ -367,11 +370,15 @@ class LoomDirectMessageCodec {
     String senderIdentityId,
     Iterable<String> recipientIdentityIds,
   ) {
-    final identities =
-        <String>{senderIdentityId, ...recipientIdentityIds}.toList()..sort();
+    final identities = <String>{
+      senderIdentityId,
+      ...recipientIdentityIds,
+    }.toList()
+      ..sort();
     if (identities.length != 2 ||
-        identities
-            .any((identity) => identity.isEmpty || identity.length > 512)) {
+        identities.any(
+          (identity) => identity.isEmpty || identity.length > 512,
+        )) {
       throw const FormatException(
         'Direct message must bind exactly two long-term identities',
       );

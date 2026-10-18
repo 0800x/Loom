@@ -63,46 +63,49 @@ void main() {
     );
   });
 
-  test('same logical MessageId may map independently to multiple recipient devices', () {
-    final store = LoomV2MessageStateStore.openInMemory();
-    addTearDown(store.close);
-    final expiry = now.add(const Duration(days: 2));
+  test(
+    'same logical MessageId may map independently to multiple recipient devices',
+    () {
+      final store = LoomV2MessageStateStore.openInMemory();
+      addTearDown(store.close);
+      final expiry = now.add(const Duration(days: 2));
 
-    final phone = store.registerOutboundPacket(
-      messageId: 'message-multidevice-0001',
-      packetId: 'packet-multidevice-phone1',
-      recipientDeviceId: 'device-recipient-phone1',
-      createdAt: now,
-      expiresAt: expiry,
-    );
-    final laptop = store.registerOutboundPacket(
-      messageId: 'message-multidevice-0001',
-      packetId: 'packet-multidevice-laptop',
-      recipientDeviceId: 'device-recipient-laptop',
-      createdAt: now,
-      expiresAt: expiry,
-    );
+      final phone = store.registerOutboundPacket(
+        messageId: 'message-multidevice-0001',
+        packetId: 'packet-multidevice-phone1',
+        recipientDeviceId: 'device-recipient-phone1',
+        createdAt: now,
+        expiresAt: expiry,
+      );
+      final laptop = store.registerOutboundPacket(
+        messageId: 'message-multidevice-0001',
+        packetId: 'packet-multidevice-laptop',
+        recipientDeviceId: 'device-recipient-laptop',
+        createdAt: now,
+        expiresAt: expiry,
+      );
 
-    expect(phone.packetId, isNot(laptop.packetId));
-    expect(
-      store
-          .readOutboundPacket(
-            messageId: 'message-multidevice-0001',
-            recipientDeviceId: 'device-recipient-phone1',
-          )!
-          .packetId,
-      'packet-multidevice-phone1',
-    );
-    expect(
-      store
-          .readOutboundPacket(
-            messageId: 'message-multidevice-0001',
-            recipientDeviceId: 'device-recipient-laptop',
-          )!
-          .packetId,
-      'packet-multidevice-laptop',
-    );
-  });
+      expect(phone.packetId, isNot(laptop.packetId));
+      expect(
+        store
+            .readOutboundPacket(
+              messageId: 'message-multidevice-0001',
+              recipientDeviceId: 'device-recipient-phone1',
+            )!
+            .packetId,
+        'packet-multidevice-phone1',
+      );
+      expect(
+        store
+            .readOutboundPacket(
+              messageId: 'message-multidevice-0001',
+              recipientDeviceId: 'device-recipient-laptop',
+            )!
+            .packetId,
+        'packet-multidevice-laptop',
+      );
+    },
+  );
 
   test(
     'outbound logical/device mapping is immutable and PacketId is unique',
@@ -245,54 +248,57 @@ void main() {
     },
   );
 
-  test('prune removes expired seen/correlation state but preserves pending receipt mapping', () {
-    final store = LoomV2MessageStateStore.openInMemory();
-    addTearDown(store.close);
-    store.markMessageSeen(
-      messageId: 'message-prune-seen1',
-      senderAccountId: 'account-prune-0001',
-      senderDeviceId: 'device-prune-00001',
-      now: now,
-      retention: const Duration(days: 1),
-    );
-    store.registerOutboundPacket(
-      messageId: 'message-prune-out1',
-      packetId: 'packet-prune-out001',
-      recipientDeviceId: 'device-prune-rec01',
-      createdAt: now,
-      expiresAt: now.add(const Duration(days: 1)),
-    );
-    store.registerOutboundPacket(
-      messageId: 'message-prune-pend',
-      packetId: 'packet-prune-pend01',
-      recipientDeviceId: 'device-prune-rec02',
-      createdAt: now,
-      expiresAt: now.add(const Duration(days: 1)),
-    );
-    store.stageDeliveryReceipt(
-      messageId: 'message-prune-pend',
-      packetId: 'packet-prune-pend01',
-      recipientDeviceId: 'device-prune-rec02',
-      observedAt: now.add(const Duration(hours: 1)),
-    );
-
-    final deleted = store.prune(now.add(const Duration(days: 2)));
-    expect(deleted, 2);
-    expect(store.readSeenMessage('message-prune-seen1'), isNull);
-    expect(
-      store.readOutboundPacket(
+  test(
+    'prune removes expired seen/correlation state but preserves pending receipt mapping',
+    () {
+      final store = LoomV2MessageStateStore.openInMemory();
+      addTearDown(store.close);
+      store.markMessageSeen(
+        messageId: 'message-prune-seen1',
+        senderAccountId: 'account-prune-0001',
+        senderDeviceId: 'device-prune-00001',
+        now: now,
+        retention: const Duration(days: 1),
+      );
+      store.registerOutboundPacket(
         messageId: 'message-prune-out1',
+        packetId: 'packet-prune-out001',
         recipientDeviceId: 'device-prune-rec01',
-      ),
-      isNull,
-    );
-    expect(
-      store.readOutboundPacket(
+        createdAt: now,
+        expiresAt: now.add(const Duration(days: 1)),
+      );
+      store.registerOutboundPacket(
         messageId: 'message-prune-pend',
+        packetId: 'packet-prune-pend01',
         recipientDeviceId: 'device-prune-rec02',
-      ),
-      isNotNull,
-    );
-    expect(store.listPendingDeliveryReceipts(), hasLength(1));
-  });
+        createdAt: now,
+        expiresAt: now.add(const Duration(days: 1)),
+      );
+      store.stageDeliveryReceipt(
+        messageId: 'message-prune-pend',
+        packetId: 'packet-prune-pend01',
+        recipientDeviceId: 'device-prune-rec02',
+        observedAt: now.add(const Duration(hours: 1)),
+      );
+
+      final deleted = store.prune(now.add(const Duration(days: 2)));
+      expect(deleted, 2);
+      expect(store.readSeenMessage('message-prune-seen1'), isNull);
+      expect(
+        store.readOutboundPacket(
+          messageId: 'message-prune-out1',
+          recipientDeviceId: 'device-prune-rec01',
+        ),
+        isNull,
+      );
+      expect(
+        store.readOutboundPacket(
+          messageId: 'message-prune-pend',
+          recipientDeviceId: 'device-prune-rec02',
+        ),
+        isNotNull,
+      );
+      expect(store.listPendingDeliveryReceipts(), hasLength(1));
+    },
+  );
 }

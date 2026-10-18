@@ -34,11 +34,13 @@ void main() {
       isTrue,
     );
     expect(
-      connected.copyWith(
-        lifecycle: LoomCallLifecycle.ended,
-        endedAt: answered.add(const Duration(minutes: 1)),
-        endReason: LoomCallEndReason.remoteHangup,
-      ).active,
+      connected
+          .copyWith(
+            lifecycle: LoomCallLifecycle.ended,
+            endedAt: answered.add(const Duration(minutes: 1)),
+            endReason: LoomCallEndReason.remoteHangup,
+          )
+          .active,
       isFalse,
     );
   });

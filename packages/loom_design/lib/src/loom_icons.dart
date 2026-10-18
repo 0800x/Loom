@@ -198,11 +198,10 @@ class LoomRouteIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Icon(
-    LoomIcons.route_outlined,
-    size: size,
-    color:
-        color ??
-        IconTheme.of(context).color ??
-        Theme.of(context).colorScheme.onSurface,
-  );
+        LoomIcons.route_outlined,
+        size: size,
+        color: color ??
+            IconTheme.of(context).color ??
+            Theme.of(context).colorScheme.onSurface,
+      );
 }

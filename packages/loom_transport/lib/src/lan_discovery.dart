@@ -19,7 +19,7 @@ class LoomLanDiscoveryResult {
 
 class LoomLanDiscoveryClient {
   LoomLanDiscoveryClient({LoomLanAnnouncementVerifier? verifier})
-    : verifier = verifier ?? LoomLanAnnouncementVerifier();
+      : verifier = verifier ?? LoomLanAnnouncementVerifier();
 
   final LoomLanAnnouncementVerifier verifier;
 
@@ -60,9 +60,9 @@ class LoomLanDiscoveryClient {
             );
             results['${announcement.nodeId}|${announcement.endpoint}'] =
                 LoomLanDiscoveryResult(
-                  announcement: announcement,
-                  sourceAddress: packet.address,
-                );
+              announcement: announcement,
+              sourceAddress: packet.address,
+            );
           } catch (_) {
             // Discovery traffic is untrusted. Invalid packets are ignored.
           }

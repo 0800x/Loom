@@ -226,13 +226,13 @@ final class LoomDeviceDirectorySnapshotV2 {
     writer.uint32(accountKeyVersion);
     writer.int64(generatedAt.toUtc().millisecondsSinceEpoch);
 
-    final authorizationsSorted = authorizations.toList()
-      ..sort((a, b) {
-        final byId = a.deviceId.value.compareTo(b.deviceId.value);
-        return byId != 0
-            ? byId
-            : a.deviceKeyVersion.compareTo(b.deviceKeyVersion);
-      });
+    final authorizationsSorted =
+        authorizations.toList()..sort((a, b) {
+          final byId = a.deviceId.value.compareTo(b.deviceId.value);
+          return byId != 0
+              ? byId
+              : a.deviceKeyVersion.compareTo(b.deviceKeyVersion);
+        });
     writer.uint32(authorizationsSorted.length);
     for (final authorization in authorizationsSorted) {
       writer.bytes(
@@ -243,13 +243,13 @@ final class LoomDeviceDirectorySnapshotV2 {
       );
     }
 
-    final revocationsSorted = revocations.toList()
-      ..sort((a, b) {
-        final byId = a.deviceId.value.compareTo(b.deviceId.value);
-        return byId != 0
-            ? byId
-            : a.revocationSequence.compareTo(b.revocationSequence);
-      });
+    final revocationsSorted =
+        revocations.toList()..sort((a, b) {
+          final byId = a.deviceId.value.compareTo(b.deviceId.value);
+          return byId != 0
+              ? byId
+              : a.revocationSequence.compareTo(b.revocationSequence);
+        });
     writer.uint32(revocationsSorted.length);
     for (final revocation in revocationsSorted) {
       writer.bytes(
@@ -332,9 +332,10 @@ final class LoomDeviceDirectoryVerifierV2 {
 }
 
 Uint8List _signedObjectDigest(Uint8List canonicalBytes, Uint8List signature) {
-  final builder = BytesBuilder(copy: false)
-    ..add(canonicalBytes)
-    ..add(signature);
+  final builder =
+      BytesBuilder(copy: false)
+        ..add(canonicalBytes)
+        ..add(signature);
   return Uint8List.fromList(sha256.convert(builder.takeBytes()).bytes);
 }
 

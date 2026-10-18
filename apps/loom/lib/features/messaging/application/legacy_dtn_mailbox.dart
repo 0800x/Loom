@@ -92,10 +92,7 @@ final class LoomLegacyDtnMailboxCoordinator {
       // seven days past its slot end leaves a clean delivery margin while
       // remaining below the server's fourteen-day mailbox cap.
       final expiresAt = slotEnd.add(const Duration(days: 7));
-      await client.registerMailbox(
-        mailboxToken: token,
-        expiresAt: expiresAt,
-      );
+      await client.registerMailbox(mailboxToken: token, expiresAt: expiresAt);
     }
   }
 
@@ -134,26 +131,21 @@ final class LoomLegacyDtnMailboxCoordinator {
     return acceptedCount;
   }
 
-  Future<Uint8List> _tokenForSlot(
-    String agreementPublicKey,
-    int slot,
-  ) async {
+  Future<Uint8List> _tokenForSlot(String agreementPublicKey, int slot) async {
     final encoded = await _sealer.recipientTag(
       recipientAgreementPublicKey: agreementPublicKey,
       time: _timeForSlot(slot),
     );
-    return Uint8List.fromList(
-      base64Url.decode(base64Url.normalize(encoded)),
-    );
+    return Uint8List.fromList(base64Url.decode(base64Url.normalize(encoded)));
   }
 
   static int _slotNumber(DateTime time) =>
       time.toUtc().millisecondsSinceEpoch ~/ _slot.inMilliseconds;
 
   static DateTime _timeForSlot(int slot) => DateTime.fromMillisecondsSinceEpoch(
-        slot * _slot.inMilliseconds,
-        isUtc: true,
-      );
+    slot * _slot.inMilliseconds,
+    isUtc: true,
+  );
 
   void close() => client.close(force: true);
 }

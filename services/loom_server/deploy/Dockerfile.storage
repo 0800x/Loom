@@ -37,7 +37,7 @@ RUN --mount=type=cache,id=loom-minio-gomod,target=/go/pkg/mod,sharing=locked \
     -ldflags='-s -w -X github.com/minio/minio/cmd.Version=2026-02-12T20:18:48Z -X github.com/minio/minio/cmd.ReleaseTag=DEVELOPMENT.2026-02-12T20-18-48Z -X github.com/minio/minio/cmd.CommitID=7aac2a2c5b7c882e68c1ce017d8256be2feea27f -X github.com/minio/minio/cmd.ShortCommitID=7aac2a2c5b7c' \
     -o /out/minio .
 
-FROM ${LOOM_DOCKER_PREFIX}alpine:3.22
+FROM ${LOOM_DOCKER_PREFIX}alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8
 ARG LOOM_ALPINE_MIRROR=
 RUN if [ -n "$LOOM_ALPINE_MIRROR" ]; then \
       v=$(cut -d. -f1,2 /etc/alpine-release); \

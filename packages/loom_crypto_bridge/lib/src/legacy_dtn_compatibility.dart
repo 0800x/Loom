@@ -192,11 +192,7 @@ final class LoomLegacyDtnCompatibilityCodec {
       throw const FormatException('Invalid legacy DTN packet correlation');
     }
     final correlation = packetGeneration == 0
-        ? <Object?>[
-            _packetDomain,
-            clientId,
-            recipientDeviceId,
-          ]
+        ? <Object?>[_packetDomain, clientId, recipientDeviceId]
         : <Object?>[
             _packetGenerationDomain,
             packetGeneration,
@@ -212,27 +208,35 @@ final class LoomLegacyDtnCompatibilityCodec {
     required Uint8List mailboxToken,
     required String recipientDeviceId,
   }) =>
-      Uint8List.fromList(utf8.encode(jsonEncode(<Object?>[
-        _aadDomain,
-        packetId,
-        _b64u(mailboxToken),
-        recipientDeviceId,
-      ])));
+      Uint8List.fromList(
+        utf8.encode(
+          jsonEncode(<Object?>[
+            _aadDomain,
+            packetId,
+            _b64u(mailboxToken),
+            recipientDeviceId,
+          ]),
+        ),
+      );
 
   Uint8List encodeSealedPayload(LoomRelaySealedPayload payload) {
     if (payload.version != 1) {
       throw const FormatException('Unsupported relay sealed payload version');
     }
-    return Uint8List.fromList(utf8.encode(jsonEncode(<String, Object?>{
-      'kind': _compatKind,
-      'sealed': <String, Object?>{
-        'version': payload.version,
-        'ephemeralPublicKey': payload.ephemeralPublicKey,
-        'nonce': payload.nonce,
-        'ciphertext': payload.ciphertext,
-        'mac': payload.mac,
-      },
-    })));
+    return Uint8List.fromList(
+      utf8.encode(
+        jsonEncode(<String, Object?>{
+          'kind': _compatKind,
+          'sealed': <String, Object?>{
+            'version': payload.version,
+            'ephemeralPublicKey': payload.ephemeralPublicKey,
+            'nonce': payload.nonce,
+            'ciphertext': payload.ciphertext,
+            'mac': payload.mac,
+          },
+        }),
+      ),
+    );
   }
 
   LoomRelaySealedPayload decodeSealedPayload(List<int> bytes) {

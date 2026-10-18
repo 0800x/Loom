@@ -102,9 +102,7 @@ class LoomRegistryClient {
     }
     if (response.contentLength > maxBytes) {
       await response.drain<void>();
-      throw const LoomProtocolException(
-        'Registry response exceeds size limit',
-      );
+      throw const LoomProtocolException('Registry response exceeds size limit');
     }
     final bytes = <int>[];
     await for (final chunk in response) {

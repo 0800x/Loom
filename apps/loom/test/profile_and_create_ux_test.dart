@@ -177,13 +177,12 @@ void main() {
       await tester.scrollUntilVisible(
         find.text('عکس و آواتار'),
         200,
-        scrollable:
-            find
-                .descendant(
-                  of: find.byKey(const ValueKey('profile-scroll')),
-                  matching: find.byType(Scrollable),
-                )
-                .first,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const ValueKey('profile-scroll')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
       );
       await tester.pumpAndSettle();
       expect(find.textContaining('روی همین دستگاه'), findsOneWidget);

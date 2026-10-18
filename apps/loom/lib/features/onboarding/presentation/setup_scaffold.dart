@@ -52,9 +52,7 @@ class LoomSetupScaffold extends StatelessWidget {
                             Text(
                               subtitle,
                               style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: context.loom.textSecondary,
-                                  ),
+                                  ?.copyWith(color: context.loom.textSecondary),
                             ),
                             const SizedBox(height: 16),
                           ],
@@ -165,9 +163,7 @@ class LoomSetupHeader extends StatelessWidget {
                     Expanded(
                       child: AnimatedContainer(
                         duration:
-                            LoomAccessibility.fromContext(
-                              context,
-                            ).reduceMotion
+                            LoomAccessibility.fromContext(context).reduceMotion
                             ? Duration.zero
                             : LoomMotion.component,
                         height: 4,

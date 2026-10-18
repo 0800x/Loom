@@ -1,4 +1,5 @@
 import 'transport_security.dart';
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -74,27 +75,34 @@ class LoomUserSecurityClient {
     final returnedAddress = _requiredString(json, 'address', max: 512);
     if (returnedAddress.toLowerCase() != normalizedAddress.toLowerCase()) {
       throw const LoomProtocolException(
-          'Resolved user address changed unexpectedly');
+        'Resolved user address changed unexpectedly',
+      );
     }
     final displayName = _requiredString(json, 'displayName', max: 80);
     final identityRaw = json['identity'];
     final devicesRaw = json['devices'];
     if (identityRaw is! Map<String, Object?> || devicesRaw is! List) {
       throw const LoomProtocolException(
-          'Resolved user security payload is incomplete');
+        'Resolved user security payload is incomplete',
+      );
     }
     if (devicesRaw.length > 64) {
       throw const LoomProtocolException(
-          'Resolved user has too many active devices');
+        'Resolved user has too many active devices',
+      );
     }
     final identityId = _requiredString(identityRaw, 'identityId', max: 128);
     final publicKey = _requiredString(identityRaw, 'publicKey', max: 128);
-    final fingerprint =
-        _requiredString(identityRaw, 'fingerprint', max: 128).toUpperCase();
+    final fingerprint = _requiredString(
+      identityRaw,
+      'fingerprint',
+      max: 128,
+    ).toUpperCase();
     final publicKeyBytes = base64Decode(publicKey);
     if (publicKeyBytes.length != 32) {
       throw const LoomProtocolException(
-          'Resolved identity public key is invalid');
+        'Resolved identity public key is invalid',
+      );
     }
     final digest = await _sha256.hash(publicKeyBytes);
     final derivedIdentityId =
@@ -205,7 +213,8 @@ class LoomUserSecurityClient {
         responseBytes.addAll(chunk);
         if (responseBytes.length > 1024 * 1024) {
           throw const LoomProtocolException(
-              'User-security response exceeds size limit');
+            'User-security response exceeds size limit',
+          );
         }
       }
     }();

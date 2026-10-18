@@ -99,7 +99,9 @@ void main() {
     );
   });
 
-  test('inner sender not bound to authenticated session is rejected before seen state', () {
+  test(
+      'inner sender not bound to authenticated session is rejected before seen state',
+      () {
     final store = LoomV2MessageStateStore.openInMemory();
     addTearDown(store.close);
     final dedup = LoomV2InboundMessageDeduplicator(
@@ -206,17 +208,18 @@ LoomInnerEnvelopeV2 _inner({
   required String senderDeviceId,
   required String recipientAccountId,
   required String recipientDeviceId,
-}) => LoomInnerEnvelopeV2(
-  messageId: messageId,
-  conversationRef: 'conversation-logical-01',
-  senderAccountId: senderAccountId,
-  senderDeviceId: senderDeviceId,
-  recipientAccountId: recipientAccountId,
-  recipientDeviceId: recipientDeviceId,
-  contentKind: LoomInnerContentKindV2.text,
-  contentPayload: Uint8List.fromList(<int>[1, 2, 3]),
-  createdAt: DateTime.utc(2026, 9, 5, 12),
-);
+}) =>
+    LoomInnerEnvelopeV2(
+      messageId: messageId,
+      conversationRef: 'conversation-logical-01',
+      senderAccountId: senderAccountId,
+      senderDeviceId: senderDeviceId,
+      recipientAccountId: recipientAccountId,
+      recipientDeviceId: recipientDeviceId,
+      contentKind: LoomInnerContentKindV2.text,
+      contentPayload: Uint8List.fromList(<int>[1, 2, 3]),
+      createdAt: DateTime.utc(2026, 9, 5, 12),
+    );
 
 final class _TrustGate implements LoomInboundMessageTrustGate {
   const _TrustGate({required this.accountId, required this.deviceId});

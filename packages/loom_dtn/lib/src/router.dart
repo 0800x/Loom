@@ -2,11 +2,7 @@ import 'packet_store.dart';
 
 import 'package:loom_protocol/loom_protocol.dart';
 
-enum LoomGatewayClaimState {
-  none,
-  claimed,
-  verifiedRecently,
-}
+enum LoomGatewayClaimState { none, claimed, verifiedRecently }
 
 enum LoomDtnTransferReason {
   directRecipient,
@@ -163,8 +159,9 @@ final class LoomMessageRouter {
     candidates.sort((left, right) {
       final score = right.score.compareTo(left.score);
       if (score != 0) return score;
-      return left.opportunity.opportunityId
-          .compareTo(right.opportunity.opportunityId);
+      return left.opportunity.opportunityId.compareTo(
+        right.opportunity.opportunityId,
+      );
     });
 
     final best = candidates.first;

@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 /// Android default-network events are invalidation hints, never routing truth.
 final class LoomDefaultNetworkGenerationMonitor {
   LoomDefaultNetworkGenerationMonitor({EventChannel? channel})
-      : _channel = channel ?? const EventChannel('loom/default_network');
+    : _channel = channel ?? const EventChannel('loom/default_network');
 
   final EventChannel _channel;
   StreamSubscription<Object?>? _subscription;

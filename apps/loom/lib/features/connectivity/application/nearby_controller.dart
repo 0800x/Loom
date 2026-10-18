@@ -34,9 +34,9 @@ class LoomNearbyController {
   final Random _random;
 
   LoomNearbyPairAuthenticator get _pairAuth => LoomNearbyPairAuthenticator(
-        localDevice: localDevice,
-        deviceSecurity: deviceSecurity,
-      );
+    localDevice: localDevice,
+    deviceSecurity: deviceSecurity,
+  );
 
   Stream<LoomNearbyCandidate> discoverFor({
     required LoomDeviceKeyBundle remoteDevice,

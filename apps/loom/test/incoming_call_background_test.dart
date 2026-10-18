@@ -194,9 +194,7 @@ void main() {
     ) async {
       final nodes = LoomNodeDirectoryController();
       final onboarding = LoomOnboardingController(nodes: nodes);
-      final messaging = LoomMessagingSessionController(
-        onboarding: onboarding,
-      );
+      final messaging = LoomMessagingSessionController(onboarding: onboarding);
       final calls = _Calls(onboarding: onboarding, messaging: messaging);
       final observer = LoomCallRouteObserver();
       final native = <MethodCall>[];

@@ -111,20 +111,21 @@ class LoomContextMenu extends StatelessWidget {
 
 /// Shared quiet detail row for contacts, members and management actions.
 class LoomDetailTile extends StatelessWidget {
-  const LoomDetailTile(
-      {this.title,
-      this.subtitle,
-      this.leading,
-      this.trailing,
-      this.onTap,
-      this.onLongPress,
-      this.enabled = true,
-      this.contentPadding,
-      this.dense,
-      this.shape,
-      this.tileColor,
-      this.isThreeLine = false,
-      super.key});
+  const LoomDetailTile({
+    this.title,
+    this.subtitle,
+    this.leading,
+    this.trailing,
+    this.onTap,
+    this.onLongPress,
+    this.enabled = true,
+    this.contentPadding,
+    this.dense,
+    this.shape,
+    this.tileColor,
+    this.isThreeLine = false,
+    super.key,
+  });
   final Widget? title, subtitle, leading, trailing;
   final VoidCallback? onTap, onLongPress;
   final bool enabled, isThreeLine;
@@ -153,13 +154,16 @@ class LoomDetailTile extends StatelessWidget {
               isThreeLine: isThreeLine,
               contentPadding: contentPadding ??
                   const EdgeInsetsDirectional.symmetric(
-                      horizontal: 16, vertical: 4),
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
               iconColor: context.loom.primary,
               textColor: context.loom.textPrimary,
               tileColor: tileColor,
               shape: shape ??
                   RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(LoomRadii.surface)),
+                    borderRadius: BorderRadius.circular(LoomRadii.surface),
+                  ),
             ),
           ),
         ),

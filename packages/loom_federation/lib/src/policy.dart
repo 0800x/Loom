@@ -1,10 +1,4 @@
-enum LoomFederationMode {
-  disabled,
-  trustedNodesOnly,
-  open,
-  localOnly,
-  hybrid,
-}
+enum LoomFederationMode { disabled, trustedNodesOnly, open, localOnly, hybrid }
 
 class LoomFederationPeer {
   const LoomFederationPeer({

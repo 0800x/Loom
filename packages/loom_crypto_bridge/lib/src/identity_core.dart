@@ -1,4 +1,5 @@
 import 'app_lock.dart';
+
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -27,7 +28,7 @@ abstract interface class LoomIdentityCore implements LoomIdentitySigner {
 
 class LoomIdentityCoreV1 implements LoomIdentityCore {
   LoomIdentityCoreV1({FlutterSecureStorage? storage})
-    : _storage = LoomSecretStorage(storage);
+      : _storage = LoomSecretStorage(storage);
 
   static const _privateKeyKey = 'loom.identity.ed25519.private.v1';
   static const _publicKeyKey = 'loom.identity.ed25519.public.v1';
@@ -156,9 +157,7 @@ class LoomIdentityCoreV1 implements LoomIdentityCore {
     final entropy = base64Decode(encoded);
     try {
       if (entropy.length != 32) {
-        throw const FormatException(
-          'Stored Loom recovery entropy is invalid',
-        );
+        throw const FormatException('Stored Loom recovery entropy is invalid');
       }
       return Uint8List.fromList(entropy);
     } finally {
@@ -199,9 +198,7 @@ class LoomIdentityCoreV1 implements LoomIdentityCore {
 
   Future<_DerivedIdentity> _deriveIdentity(Uint8List recoveryEntropy) async {
     if (recoveryEntropy.length != 32) {
-      throw const FormatException(
-        'Loom Identity v1 entropy must be 32 bytes',
-      );
+      throw const FormatException('Loom Identity v1 entropy must be 32 bytes');
     }
     final keyPair = await _ed25519.newKeyPairFromSeed(recoveryEntropy);
     try {
@@ -288,14 +285,12 @@ class LoomIdentityCoreV1 implements LoomIdentityCore {
   }
 
   String _formatFingerprint(List<int> bytes) {
-    final hex =
-        bytes
-            .map((b) => b.toRadixString(16).padLeft(2, '0'))
-            .join()
-            .toUpperCase();
-    return [
-      for (var i = 0; i < hex.length; i += 4) hex.substring(i, i + 4),
-    ].join(' ');
+    final hex = bytes
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join()
+        .toUpperCase();
+    return [for (var i = 0; i < hex.length; i += 4) hex.substring(i, i + 4)]
+        .join(' ');
   }
 
   String _base64UrlNoPadding(List<int> bytes) =>

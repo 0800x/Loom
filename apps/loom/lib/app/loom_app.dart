@@ -1,3 +1,4 @@
+import 'dev_surface_policy.dart';
 import 'dart:async';
 
 import 'package:loom_crypto_bridge/loom_crypto_bridge.dart';
@@ -6,7 +7,6 @@ import '../features/security/presentation/app_lock_gate.dart';
 
 import 'package:loom_design/loom_design.dart';
 import 'package:loom_protocol/loom_protocol.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -351,8 +351,7 @@ class _LoomAppState extends State<LoomApp> {
       return;
     }
 
-    if (_hadCompleteSession &&
-        onboarding.status == LoomOnboardingStatus.idle) {
+    if (_hadCompleteSession && onboarding.status == LoomOnboardingStatus.idle) {
       _hadCompleteSession = false;
       unawaited(LoomPlaybackController.closeAll());
       unawaited(nearbyDtn.disable());
@@ -610,7 +609,7 @@ class _LoomAppState extends State<LoomApp> {
                               _settings(LoomSettingsSection.about),
                           '/settings/shared-media': (_) =>
                               _settings(LoomSettingsSection.sharedMedia),
-                          if (kDebugMode)
+                          if (loomDevelopmentSurfacesEnabled)
                             '/design-lab': (_) => DesignLabScreen(
                               themeMode: mode,
                               glassQuality: glassQuality,

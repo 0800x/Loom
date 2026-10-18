@@ -1,4 +1,5 @@
 import 'app_lock.dart';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 abstract interface class LoomCredentialVault {
@@ -19,7 +20,7 @@ abstract interface class LoomCredentialVault {
 
 class LoomSecureCredentialVault implements LoomCredentialVault {
   LoomSecureCredentialVault({FlutterSecureStorage? storage})
-    : _storage = LoomSecretStorage(storage);
+      : _storage = LoomSecretStorage(storage);
 
   final LoomSecretStorage _storage;
 
@@ -51,11 +52,13 @@ class LoomSecureCredentialVault implements LoomCredentialVault {
   Future<String?> readRefreshToken({
     required String homeNode,
     required String deviceId,
-  }) => _storage.read(key: _key(homeNode, deviceId));
+  }) =>
+      _storage.read(key: _key(homeNode, deviceId));
 
   @override
   Future<void> deleteRefreshToken({
     required String homeNode,
     required String deviceId,
-  }) => _storage.delete(key: _key(homeNode, deviceId));
+  }) =>
+      _storage.delete(key: _key(homeNode, deviceId));
 }

@@ -24,24 +24,27 @@ void main() {
     expect(v2Calls, 0);
   });
 
-  test('v2-required mode fails closed and never invokes legacy fallback', () async {
-    var legacyCalls = 0;
-    const dispatcher = LoomProductMessagingDispatcher(
-      policy: LoomProductMessagingPolicy(
-        mode: LoomProductMessagingMode.v2Required,
-      ),
-    );
+  test(
+    'v2-required mode fails closed and never invokes legacy fallback',
+    () async {
+      var legacyCalls = 0;
+      const dispatcher = LoomProductMessagingDispatcher(
+        policy: LoomProductMessagingPolicy(
+          mode: LoomProductMessagingMode.v2Required,
+        ),
+      );
 
-    await expectLater(
-      dispatcher.dispatch<String>(
-        legacy: () async {
-          legacyCalls++;
-          return 'legacy';
-        },
-        v2: (_) async => 'v2',
-      ),
-      throwsStateError,
-    );
-    expect(legacyCalls, 0);
-  });
+      await expectLater(
+        dispatcher.dispatch<String>(
+          legacy: () async {
+            legacyCalls++;
+            return 'legacy';
+          },
+          v2: (_) async => 'v2',
+        ),
+        throwsStateError,
+      );
+      expect(legacyCalls, 0);
+    },
+  );
 }

@@ -138,10 +138,11 @@ class LoomRelayStore {
 
   int totalBytes({required DateTime now}) {
     _requireOpen();
-    final row = _db.select(
-      'SELECT COALESCE(SUM(size_bytes), 0) AS total FROM relay_bundles WHERE expires_at > ?',
-      [now.toUtc().toIso8601String()],
-    ).first;
+    final row =
+        _db.select(
+          'SELECT COALESCE(SUM(size_bytes), 0) AS total FROM relay_bundles WHERE expires_at > ?',
+          [now.toUtc().toIso8601String()],
+        ).first;
     return row['total'] as int;
   }
 
@@ -165,8 +166,9 @@ class LoomRelayStore {
     expiresAt: DateTime.parse(row['expires_at'] as String).toUtc(),
     hopCount: row['hop_count'] as int,
     maxHops: row['max_hops'] as int,
-    payloadJson: (jsonDecode(row['payload_json'] as String) as Map)
-        .cast<String, Object?>(),
+    payloadJson:
+        (jsonDecode(row['payload_json'] as String) as Map)
+            .cast<String, Object?>(),
     sizeBytes: row['size_bytes'] as int,
   );
 

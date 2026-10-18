@@ -557,8 +557,7 @@ class _CompactLayoutState extends State<_CompactLayout>
                 PositionedDirectional(
                   start: LoomSpacing.sm,
                   end: LoomSpacing.sm,
-                  bottom:
-                      LoomSpacing.xs + MediaQuery.paddingOf(context).bottom,
+                  bottom: LoomSpacing.xs + MediaQuery.paddingOf(context).bottom,
                   child: _BottomNavigation(
                     selected: widget.selected,
                     onSelected: widget.onSelected,
@@ -713,10 +712,7 @@ class _BottomNavigation extends StatelessWidget {
       selectedIndex: selected,
       onSelected: onSelected,
       destinations: [
-        LoomNavigationDestination(
-          LoomIcons.chat_bubble_rounded,
-          strings.chats,
-        ),
+        LoomNavigationDestination(LoomIcons.chat_bubble_rounded, strings.chats),
         LoomNavigationDestination(
           LoomIcons.person_outline_rounded,
           strings.people,
@@ -1116,9 +1112,7 @@ class _ChatListState extends State<_ChatList> {
                                       builder: (anchor) => IconButton(
                                         tooltip: strings.search,
                                         onPressed: () {
-                                          _searchOrigin = LoomOrigin.of(
-                                            anchor,
-                                          );
+                                          _searchOrigin = LoomOrigin.of(anchor);
                                           setState(() => _searching = true);
                                         },
                                         icon: const Icon(
@@ -1475,8 +1469,7 @@ class _FolderConversationPage extends StatelessWidget {
                       name: _conversationTitle(context, conversation),
                       size: LoomSizing.avatar,
                       identityId:
-                          conversation.kind ==
-                              models.LoomConversationKind.self
+                          conversation.kind == models.LoomConversationKind.self
                           ? messaging?.onboarding.committedIdentity?.identityId
                           : messaging?.peerIdentityId(conversation.peerAddress),
                     ),
@@ -1526,11 +1519,7 @@ class _EmptyFolderState extends StatelessWidget {
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.fromLTRB(24, 72, 24, 92),
     children: [
-      Icon(
-        LoomIcons.folder_outlined,
-        size: 44,
-        color: context.loom.textMuted,
-      ),
+      Icon(LoomIcons.folder_outlined, size: 44, color: context.loom.textMuted),
       const SizedBox(height: LoomSpacing.sm),
       Text(
         tr(context, 'No chats in this folder', 'گفتگویی در این پوشه نیست'),
@@ -1598,9 +1587,9 @@ class _EmptyChats extends StatelessWidget {
               'یک هویت واقعی لوم پیدا کنید و گفتگوی رمزگذاری‌شده شروع کنید.',
             ),
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: context.loom.textSecondary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: context.loom.textSecondary),
           ),
           const SizedBox(height: LoomSpacing.md),
           FilledButton.icon(
@@ -1666,8 +1655,7 @@ class _LiveMessageBubble extends StatelessWidget {
           await Navigator.push<void>(
             context,
             MaterialPageRoute<void>(
-              builder: (_) =>
-                  LoomGroupJoinScreen(initialLink: uri.toString()),
+              builder: (_) => LoomGroupJoinScreen(initialLink: uri.toString()),
             ),
           );
           return;
@@ -1715,9 +1703,9 @@ class _LiveMessageBubble extends StatelessWidget {
                   message.record.metadata['groupSenderLabel'] as String,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: context.loom.primary,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(color: context.loom.primary),
                 ),
                 if (content != null) content!,
               ],

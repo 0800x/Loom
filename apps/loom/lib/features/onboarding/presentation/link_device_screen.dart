@@ -206,8 +206,9 @@ class _LinkDeviceScreenState extends State<LinkDeviceScreen> {
                           'Expires at ${_shortTime(created.expiresAt)}',
                           'انقضا در ${_shortTime(created.expiresAt)}',
                         ),
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(color: p.textSecondary),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: p.textSecondary),
                       ),
                       const SizedBox(height: LoomSpacing.sm),
                       Wrap(
@@ -252,8 +253,9 @@ class _LinkDeviceScreenState extends State<LinkDeviceScreen> {
           const SizedBox(height: LoomSpacing.sm),
           Text(
             _error!,
-            style: Theme.of(context).textTheme.bodySmall
-                ?.copyWith(color: p.critical),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: p.critical),
           ),
         ],
         const SizedBox(height: LoomSpacing.md),
@@ -269,8 +271,9 @@ class _LinkDeviceScreenState extends State<LinkDeviceScreen> {
                   'The QR never contains your password or recovery words in plaintext. Your old signing key is not copied to the new device.',
                   'این QR هرگز رمز عبور یا واژه‌های بازیابی را به‌صورت متن ساده ندارد. کلید امضای دستگاه قبلی هم به دستگاه جدید کپی نمی‌شود.',
                 ),
-                style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(color: p.textMuted),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: p.textMuted),
               ),
             ),
           ],
@@ -383,8 +386,9 @@ class _LinkDeviceScreenState extends State<LinkDeviceScreen> {
           const SizedBox(height: LoomSpacing.sm),
           Text(
             _error!,
-            style: Theme.of(context).textTheme.bodySmall
-                ?.copyWith(color: p.critical),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: p.critical),
           ),
         ],
         const SizedBox(height: LoomSpacing.md),

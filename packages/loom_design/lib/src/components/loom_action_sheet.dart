@@ -25,16 +25,21 @@ Future<T?> showLoomActionSheet<T>({
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(children: [
-                Expanded(
-                    child: Text(title,
-                        style: Theme.of(context).textTheme.titleMedium)),
-                IconButton(
-                  tooltip: MaterialLocalizations.of(context).closeButtonLabel,
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(LoomIcons.close_rounded),
-                ),
-              ]),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: MaterialLocalizations.of(context).closeButtonLabel,
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(LoomIcons.close_rounded),
+                  ),
+                ],
+              ),
               if (subtitle != null) ...[
                 Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(height: 16),

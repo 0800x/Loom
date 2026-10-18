@@ -160,8 +160,9 @@ class LoomNearbyModeScreen extends StatelessWidget {
                         'Safe to share: no message text, keys, tokens, SSID, IP address or account identifiers are included.',
                         'برای اشتراک امن است: متن پیام، کلید، توکن، SSID، IP یا شناسه حساب داخلش نیست.',
                       ),
-                      style: Theme.of(context).textTheme.bodySmall
-                          ?.copyWith(color: context.loom.textSecondary),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.loom.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: LoomSpacing.sm),
                     SelectableText(

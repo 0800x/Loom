@@ -80,34 +80,43 @@ void main() {
     expect(result.status, LoomDtnExecutionStatus.accepted);
     expect(result.packet.state, LoomDtnPacketState.gatewayAccepted);
     expect(
-        result.packet.gatewayAcceptedAt, now.add(const Duration(seconds: 2)));
+      result.packet.gatewayAcceptedAt,
+      now.add(const Duration(seconds: 2)),
+    );
     expect(result.packet.recipientConfirmedAt, isNull);
     expect(result.packet.isTerminal, isFalse);
     expect(
-        store.listEligible(now.add(const Duration(seconds: 3))), hasLength(1));
+      store.listEligible(now.add(const Duration(seconds: 3))),
+      hasLength(1),
+    );
     expect(result.packet.copiesRemaining, 2);
     expect(store.hasAcceptedTransfer(packetId, prepared.opportunityId), isTrue);
     final duplicate = executor.prepareNext(
-        packetId: packetId,
-        opportunities: [
-          LoomDtnOpportunity(
-              opportunityId: prepared.opportunityId,
-              authenticated: true,
-              destinationNode: true,
-              directRecipient: false,
-              gatewayClaim: LoomGatewayClaimState.none,
-              supportedRelayScopes: {},
-              canStoreCarry: false,
-              linkQualityPercent: 100,
-              congestionPercent: 0,
-              batteryConstrained: false,
-              recentSuccessfulTransfers: 1,
-              recentFailedTransfers: 0)
-        ],
-        transmissionId: 'transmission-destination-duplicate',
-        now: now.add(const Duration(seconds: 3)));
-    expect(duplicate, isNull,
-        reason: 'Reconnect cannot spend more copies on the same node');
+      packetId: packetId,
+      opportunities: [
+        LoomDtnOpportunity(
+          opportunityId: prepared.opportunityId,
+          authenticated: true,
+          destinationNode: true,
+          directRecipient: false,
+          gatewayClaim: LoomGatewayClaimState.none,
+          supportedRelayScopes: {},
+          canStoreCarry: false,
+          linkQualityPercent: 100,
+          congestionPercent: 0,
+          batteryConstrained: false,
+          recentSuccessfulTransfers: 1,
+          recentFailedTransfers: 0,
+        ),
+      ],
+      transmissionId: 'transmission-destination-duplicate',
+      now: now.add(const Duration(seconds: 3)),
+    );
+    expect(
+      duplicate,
+      isNull,
+      reason: 'Reconnect cannot spend more copies on the same node',
+    );
   });
 }
 
@@ -118,6 +127,7 @@ final class _AcceptedSender implements LoomDtnTransferSender {
 
   @override
   Future<LoomDtnSendResult> sendPrepared(
-          LoomStoredDtnTransfer transfer) async =>
+    LoomStoredDtnTransfer transfer,
+  ) async =>
       LoomDtnSendAccepted(ack);
 }

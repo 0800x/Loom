@@ -120,8 +120,7 @@ final class LoomNearbyDtnTransferReceiver {
   final FutureOr<LoomDtnHopAck> Function({
     required String transmissionId,
     required Uint8List exactOuterEnvelopeBytes,
-  })
-  durablyAccept;
+  }) durablyAccept;
 
   /// Optional route-aware durable boundary. New product runtimes use this to
   /// commit the destination Node sidecar with replica custody. Keeping the

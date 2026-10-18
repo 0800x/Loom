@@ -1,0 +1,16 @@
+title = "Loom precise reviewed false positives"
+[extend]
+useDefault = true
+[[allowlists]]
+description = "Cargo dependency-name literal, never credential material"
+condition = "AND"
+paths = ['''(^|/)Cargo\.lock$''']
+regexTarget = "line"
+regexes = ['''(?m)^[ \t]*"libcrux-secrets(?: 0\.0\.[0-9]+)?",?[ \t]*$''']
+
+[[allowlists]]
+description = "Literal release documentation sentence, no credential"
+condition = "AND"
+paths = ['''(^|/)release/README\.md$''']
+regexTarget = "line"
+regexes = ['''(?m)^assets, publisher key publication, SBOM/provenance signing or reproducibility$''']

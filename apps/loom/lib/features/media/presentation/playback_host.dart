@@ -1060,9 +1060,7 @@ class _PlaybackDetails extends StatelessWidget {
                             TextButton.icon(
                               onPressed: () =>
                                   _queue(context, p, playlists: true),
-                              icon: const Icon(
-                                LoomIcons.playlist_play_rounded,
-                              ),
+                              icon: const Icon(LoomIcons.playlist_play_rounded),
                               label: Text(
                                 tr(context, 'Playlists', 'پلی‌لیست‌ها'),
                               ),

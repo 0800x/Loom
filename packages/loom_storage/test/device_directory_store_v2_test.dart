@@ -54,13 +54,12 @@ void main() {
         isNotNull,
       );
 
-      final oldVerified =
-          await (const LoomDeviceDirectoryVerifierV2(
-            signatureVerifier: _AllowAllVerifier(),
-          )).verify(
-            _snapshot(account, device, revision: 1, keyVersion: 1, now: now),
-            now: now,
-          );
+      final oldVerified = await (const LoomDeviceDirectoryVerifierV2(
+        signatureVerifier: _AllowAllVerifier(),
+      )).verify(
+        _snapshot(account, device, revision: 1, keyVersion: 1, now: now),
+        now: now,
+      );
       expect(() => store.applyVerifiedSnapshot(oldVerified), throwsStateError);
     },
   );
@@ -190,19 +189,20 @@ LoomDeviceDirectorySnapshotV2 _snapshot(
     accountKeyVersion: 1,
     generatedAt: now,
     authorizations: <LoomDeviceAuthorizationV2>[authorization],
-    revocations: revokeThrough == null
-        ? const <LoomDeviceRevocationV2>[]
-        : <LoomDeviceRevocationV2>[
-            LoomDeviceRevocationV2(
-              accountId: account,
-              deviceId: device,
-              revokedThroughKeyVersion: revokeThrough,
-              revocationSequence: revision,
-              revokedAt: now,
-              reasonCode: 'revoked',
-              accountSignature: Uint8List.fromList(List<int>.filled(64, 4)),
-            ),
-          ],
+    revocations:
+        revokeThrough == null
+            ? const <LoomDeviceRevocationV2>[]
+            : <LoomDeviceRevocationV2>[
+              LoomDeviceRevocationV2(
+                accountId: account,
+                deviceId: device,
+                revokedThroughKeyVersion: revokeThrough,
+                revocationSequence: revision,
+                revokedAt: now,
+                reasonCode: 'revoked',
+                accountSignature: Uint8List.fromList(List<int>.filled(64, 4)),
+              ),
+            ],
     accountSignature: Uint8List.fromList(List<int>.filled(64, 5)),
   );
 }

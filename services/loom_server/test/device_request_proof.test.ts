@@ -121,7 +121,7 @@ test('device-bound request proof accepts a valid signed request and rejects repl
   const bundles = DeviceBundleStore.sqliteStore(dir);
   try {
     const identity = identityMaterial();
-    const registration = accounts.register({
+    const registration = await accounts.register({
       username: 'alice',
       displayName: 'Alice',
       password: 'correct horse battery staple',
@@ -165,7 +165,7 @@ test('device-bound proof rejects missing signatures, stale timestamps and wrong 
   const bundles = DeviceBundleStore.sqliteStore(dir);
   try {
     const identity = identityMaterial();
-    const registration = accounts.register({
+    const registration = await accounts.register({
       username: 'alice',
       displayName: 'Alice',
       password: 'correct horse battery staple',

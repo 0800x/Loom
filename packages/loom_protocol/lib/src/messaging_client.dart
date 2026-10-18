@@ -1,4 +1,5 @@
 import 'transport_security.dart';
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -90,16 +91,22 @@ class LoomMessagingClient implements LoomMessagingApi {
       _requestJson('PUT', '/api/v1/profile', body: profile);
 
   Future<Map<String, Object?>> fetchConversationPresence(
-          String conversationId) =>
-      _requestJson('GET',
-          '/api/v1/conversations/${Uri.encodeComponent(conversationId)}/presence');
+    String conversationId,
+  ) =>
+      _requestJson(
+        'GET',
+        '/api/v1/conversations/${Uri.encodeComponent(conversationId)}/presence',
+      );
 
   Future<void> acknowledgeReceived(List<String> clientIds) async {
     if (clientIds.isEmpty) {
       return;
     }
-    await _requestJson('POST', '/api/v1/messages/received',
-        body: {'clientIds': clientIds});
+    await _requestJson(
+      'POST',
+      '/api/v1/messages/received',
+      body: {'clientIds': clientIds},
+    );
   }
 
   Future<List<LoomConversation>> fetchConversations() async {
@@ -109,11 +116,14 @@ class LoomMessagingClient implements LoomMessagingApi {
       throw const LoomProtocolException('Invalid conversations payload');
     }
     return raw
-        .where((value) =>
-            value is! Map<String, Object?> ||
-            value['kind'] is! String ||
-            LoomConversationKind.values
-                .any((k) => k.name == (value['kind'] as String).toLowerCase()))
+        .where(
+      (value) =>
+          value is! Map<String, Object?> ||
+          value['kind'] is! String ||
+          LoomConversationKind.values.any(
+            (k) => k.name == (value['kind'] as String).toLowerCase(),
+          ),
+    )
         .map((value) {
       if (value is! Map<String, Object?>) {
         throw const LoomProtocolException('Invalid conversation');
@@ -262,10 +272,7 @@ class LoomMessagingClient implements LoomMessagingApi {
     );
     final request = await _http.postUrl(uri).timeout(connectTimeout);
     request.followRedirects = false;
-    request.headers.set(
-      HttpHeaders.authorizationHeader,
-      'Bearer $accessToken',
-    );
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
     for (final entry in proofHeaders.entries) {
       request.headers.set(entry.key, entry.value);
     }
@@ -381,10 +388,7 @@ class LoomMessagingClient implements LoomMessagingApi {
     );
     final request = await _http.openUrl(method, uri).timeout(connectTimeout);
     request.followRedirects = false;
-    request.headers.set(
-      HttpHeaders.authorizationHeader,
-      'Bearer $accessToken',
-    );
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
     for (final entry in proofHeaders.entries) {
       request.headers.set(entry.key, entry.value);
     }
@@ -425,11 +429,14 @@ class LoomMessagingClient implements LoomMessagingApi {
         await refreshRejectedToken!(accessToken)) {
       // Rebuild the device proof (nonce and credential hash) on retry. Keep the
       // same message clientId so an ambiguous POST remains idempotent.
-      return _requestAbsoluteJson(method, uri,
-          body: body,
-          acceptedStatusCodes: acceptedStatusCodes,
-          allowEmpty: allowEmpty,
-          retryAuthentication: false);
+      return _requestAbsoluteJson(
+        method,
+        uri,
+        body: body,
+        acceptedStatusCodes: acceptedStatusCodes,
+        allowEmpty: allowEmpty,
+        retryAuthentication: false,
+      );
     }
     if (!acceptedStatusCodes.contains(response.statusCode)) {
       String detail = 'HTTP ${response.statusCode} from ${uri.host}';
@@ -510,7 +517,7 @@ class LoomRealtimeConnection {
       path: '/realtime/v1',
       queryParameters: {
         'stream': 'messages',
-        if (cursor != null) 'cursor': cursor!
+        if (cursor != null) 'cursor': cursor!,
       },
       fragment: null,
     );

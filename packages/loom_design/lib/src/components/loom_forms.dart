@@ -38,12 +38,10 @@ class LoomSelectionRow extends StatelessWidget {
           child: CheckboxListTile(
             value: selected,
             onChanged: enabled ? (_) => onTap() : null,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: LoomSpacing.sm,
-            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: LoomSpacing.sm),
             secondary: ExcludeSemantics(
-              child:
-                  LoomAvatar(label: label, size: LoomSizing.compactAvatar),
+              child: LoomAvatar(label: label, size: LoomSizing.compactAvatar),
             ),
             title: Text(label, maxLines: 2, overflow: TextOverflow.ellipsis),
             subtitle: Column(

@@ -31,6 +31,7 @@ test('rate limits enforce bursts, independent scopes, refill and bounded state',
   limiter.consume('login', 'ip', 2, 0); limiter.consume('login', 'ip', 2, 0);
   assert.throws(() => limiter.consume('login', 'ip', 2, 0), RateLimitError);
   limiter.consume('account', 'alice', 1, 0);
+  limiter.consume('account', 'bob', 1, 0);
   assert.throws(() => limiter.consume('account', 'bob', 1, 0), RateLimitError);
   limiter.consume('account', 'bob', 1, 60001);
   const release = limiter.enter(); assert.throws(() => limiter.enter(), RateLimitError);

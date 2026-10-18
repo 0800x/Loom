@@ -57,11 +57,7 @@ void main() {
   test(
     'accent reaches message palette and Material controls in all themes',
     () {
-      for (final build in [
-        LoomTheme.light,
-        LoomTheme.dark,
-        LoomTheme.oled,
-      ]) {
+      for (final build in [LoomTheme.light, LoomTheme.dark, LoomTheme.oled]) {
         final theme = build(accent: const Color(0xFFE91E63));
         final palette = theme.extension<LoomPalette>()!;
         expect(palette.primary, theme.colorScheme.primary);

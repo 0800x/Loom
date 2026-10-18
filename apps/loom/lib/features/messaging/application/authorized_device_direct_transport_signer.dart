@@ -41,7 +41,9 @@ final class LoomAuthorizedDeviceDirectTransportSigner
     final bytes = base64Decode(bundle.signingPublicKey);
     if (bytes.length != 32) {
       bytes.fillRange(0, bytes.length, 0);
-      throw const FormatException('Authorized device Ed25519 public key is invalid');
+      throw const FormatException(
+        'Authorized device Ed25519 public key is invalid',
+      );
     }
     _cachedPublicKey = Uint8List.fromList(bytes);
     bytes.fillRange(0, bytes.length, 0);
@@ -59,7 +61,9 @@ final class LoomAuthorizedDeviceDirectTransportSigner
       payload: canonicalBytes,
     );
     if (signature.length != 64) {
-      throw const FormatException('Authorized device Ed25519 signature is invalid');
+      throw const FormatException(
+        'Authorized device Ed25519 signature is invalid',
+      );
     }
     return Uint8List.fromList(signature);
   }

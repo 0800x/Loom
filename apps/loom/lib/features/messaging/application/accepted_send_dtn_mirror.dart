@@ -173,8 +173,7 @@ final class LoomAcceptedSendDtnMirror {
           LoomTransportDiagnostics.event(
             'accepted_send_dtn_mirror',
             sendAttemptId: message.clientId,
-            networkGeneration:
-                LoomDefaultNetworkGeneration.current.generation,
+            networkGeneration: LoomDefaultNetworkGeneration.current.generation,
             resultCategory: 'directory_unavailable',
           );
           continue;
@@ -202,8 +201,7 @@ final class LoomAcceptedSendDtnMirror {
           LoomTransportDiagnostics.event(
             'accepted_send_dtn_mirror',
             sendAttemptId: message.clientId,
-            networkGeneration:
-                LoomDefaultNetworkGeneration.current.generation,
+            networkGeneration: LoomDefaultNetworkGeneration.current.generation,
             resultCategory: 'persisted',
           );
         } catch (error) {
@@ -213,8 +211,7 @@ final class LoomAcceptedSendDtnMirror {
           LoomTransportDiagnostics.event(
             'accepted_send_dtn_mirror',
             sendAttemptId: message.clientId,
-            networkGeneration:
-                LoomDefaultNetworkGeneration.current.generation,
+            networkGeneration: LoomDefaultNetworkGeneration.current.generation,
             exceptionType: error.runtimeType.toString(),
             resultCategory: 'failed',
           );
@@ -227,10 +224,7 @@ final class LoomAcceptedSendDtnMirror {
     lastResult = result;
     lastExceptionType = exceptionType;
     lastUpdatedAt = _clock().toUtc();
-    LoomAcceptedSendDtnDiagnostics.record(
-      result,
-      exceptionType: exceptionType,
-    );
+    LoomAcceptedSendDtnDiagnostics.record(result, exceptionType: exceptionType);
   }
 
   bool _isAcceptedOutgoing(LoomMessageRecord message, String ownAddress) {

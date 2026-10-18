@@ -38,9 +38,7 @@ class LoomNearbyHello {
     if (json['version'] != 1) {
       throw const FormatException('Unsupported nearby hello version');
     }
-    final role = LoomNearbyHandshakeRole.values.byName(
-      string('role', max: 32),
-    );
+    final role = LoomNearbyHandshakeRole.values.byName(string('role', max: 32));
     final createdAt = DateTime.tryParse(string('createdAt', max: 64))?.toUtc();
     if (createdAt == null) {
       throw const FormatException('Invalid nearby hello createdAt');

@@ -65,14 +65,14 @@ class LoomRelayBundle {
   static const int absoluteMaxHops = 8;
 
   List<int> associatedData() => utf8.encode(
-    <String>[
-      'Loom-Relay-Bundle-v1',
-      bundleId,
-      recipientTag,
-      createdAt.toUtc().toIso8601String(),
-      expiresAt.toUtc().toIso8601String(),
-    ].join('\n'),
-  );
+        <String>[
+          'Loom-Relay-Bundle-v1',
+          bundleId,
+          recipientTag,
+          createdAt.toUtc().toIso8601String(),
+          expiresAt.toUtc().toIso8601String(),
+        ].join('\n'),
+      );
 
   void validateFraming({required DateTime now}) {
     if (bundleId.isEmpty ||
@@ -115,16 +115,16 @@ class LoomRelayBundle {
   }
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'kind': loomRelayBundleKind,
-    'version': 1,
-    'bundleId': bundleId,
-    'recipientTag': recipientTag,
-    'createdAt': createdAt.toUtc().toIso8601String(),
-    'expiresAt': expiresAt.toUtc().toIso8601String(),
-    'hopCount': hopCount,
-    'maxHops': maxHops,
-    'sealedPayload': sealedPayload.toJson(),
-  };
+        'kind': loomRelayBundleKind,
+        'version': 1,
+        'bundleId': bundleId,
+        'recipientTag': recipientTag,
+        'createdAt': createdAt.toUtc().toIso8601String(),
+        'expiresAt': expiresAt.toUtc().toIso8601String(),
+        'hopCount': hopCount,
+        'maxHops': maxHops,
+        'sealedPayload': sealedPayload.toJson(),
+      };
 
   LoomStoredRelayBundle toStored() {
     final encoded = utf8.encode(jsonEncode(toJson()));
@@ -205,28 +205,22 @@ class LoomStoreCarryForwardService {
     required Set<String> recipientTags,
     required DateTime now,
   }) {
-    return store
-        .findByRecipientTags(recipientTags, now: now)
-        .map((item) {
-          final bundle = LoomRelayBundle.fromJson(item.payloadJson);
-          bundle.validateFraming(now: now);
-          return bundle;
-        })
-        .toList(growable: false);
+    return store.findByRecipientTags(recipientTags, now: now).map((item) {
+      final bundle = LoomRelayBundle.fromJson(item.payloadJson);
+      bundle.validateFraming(now: now);
+      return bundle;
+    }).toList(growable: false);
   }
 
   List<LoomRelayBundle> bundlesForEncounter({
     required DateTime now,
     int limit = 32,
   }) {
-    return store
-        .nextForForwarding(now: now, limit: limit)
-        .map((item) {
-          final bundle = LoomRelayBundle.fromJson(item.payloadJson);
-          bundle.validateFraming(now: now);
-          return bundle.forwarded();
-        })
-        .toList(growable: false);
+    return store.nextForForwarding(now: now, limit: limit).map((item) {
+      final bundle = LoomRelayBundle.fromJson(item.payloadJson);
+      bundle.validateFraming(now: now);
+      return bundle.forwarded();
+    }).toList(growable: false);
   }
 
   int maintenance(DateTime now) => store.pruneExpired(now);

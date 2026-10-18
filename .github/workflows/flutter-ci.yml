@@ -64,6 +64,10 @@ jobs:
       - name: Resolve dependencies
         working-directory: ${{ matrix.project }}
         run: flutter pub get
+      - name: Resolve design package before cross-package source analysis
+        if: matrix.project == 'apps/loom'
+        working-directory: packages/loom_design
+        run: flutter pub get
       - name: App Lock immutable-channel regression
         if: matrix.project == 'packages/loom_crypto_bridge'
         working-directory: packages/loom_crypto_bridge

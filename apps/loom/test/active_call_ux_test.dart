@@ -51,10 +51,7 @@ void main() {
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
         final engine = _Engine(
-          LoomCallSnapshot(
-            kind: kind,
-            lifecycle: LoomCallLifecycle.connected,
-          ),
+          LoomCallSnapshot(kind: kind, lifecycle: LoomCallLifecycle.connected),
         );
         addTearDown(engine.dispose);
         await tester.pumpWidget(

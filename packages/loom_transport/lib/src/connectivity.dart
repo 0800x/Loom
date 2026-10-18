@@ -112,24 +112,25 @@ final class LoomConnectivityCapabilities {
     LoomExecutionPolicy? executionPolicy,
     bool? storagePressure,
     bool? batterySaver,
-  }) => LoomConnectivityCapabilities(
-    observedAt: observedAt ?? this.observedAt,
-    internetReachable: internetReachable ?? this.internetReachable,
-    homeNodeReachable: homeNodeReachable ?? this.homeNodeReachable,
-    destinationNodeReachable:
-        destinationNodeReachable ?? this.destinationNodeReachable,
-    domesticRelayReachable:
-        domesticRelayReachable ?? this.domesticRelayReachable,
-    globalRelayReachable: globalRelayReachable ?? this.globalRelayReachable,
-    lanAvailable: lanAvailable ?? this.lanAvailable,
-    nearbyBearers: nearbyBearers ?? this.nearbyBearers,
-    authenticatedNearbyPeerCount:
-        authenticatedNearbyPeerCount ?? this.authenticatedNearbyPeerCount,
-    verifiedGatewayCount: verifiedGatewayCount ?? this.verifiedGatewayCount,
-    executionPolicy: executionPolicy ?? this.executionPolicy,
-    storagePressure: storagePressure ?? this.storagePressure,
-    batterySaver: batterySaver ?? this.batterySaver,
-  );
+  }) =>
+      LoomConnectivityCapabilities(
+        observedAt: observedAt ?? this.observedAt,
+        internetReachable: internetReachable ?? this.internetReachable,
+        homeNodeReachable: homeNodeReachable ?? this.homeNodeReachable,
+        destinationNodeReachable:
+            destinationNodeReachable ?? this.destinationNodeReachable,
+        domesticRelayReachable:
+            domesticRelayReachable ?? this.domesticRelayReachable,
+        globalRelayReachable: globalRelayReachable ?? this.globalRelayReachable,
+        lanAvailable: lanAvailable ?? this.lanAvailable,
+        nearbyBearers: nearbyBearers ?? this.nearbyBearers,
+        authenticatedNearbyPeerCount:
+            authenticatedNearbyPeerCount ?? this.authenticatedNearbyPeerCount,
+        verifiedGatewayCount: verifiedGatewayCount ?? this.verifiedGatewayCount,
+        executionPolicy: executionPolicy ?? this.executionPolicy,
+        storagePressure: storagePressure ?? this.storagePressure,
+        batterySaver: batterySaver ?? this.batterySaver,
+      );
 }
 
 class LoomRouteCandidate {

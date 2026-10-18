@@ -96,10 +96,7 @@ void main() {
       await tester.pumpAndSettle();
       final context = tester.element(find.text('Copy'));
       expect(LoomAccessibility.fromContext(context).reduceMotion, isTrue);
-      expect(
-        LoomAccessibility.fromContext(context).reduceTransparency,
-        isTrue,
-      );
+      expect(LoomAccessibility.fromContext(context).reduceTransparency, isTrue);
       expect(find.byType(BackdropFilter), findsNothing);
       expect(tester.takeException(), isNull);
     },

@@ -115,7 +115,9 @@ final class LoomProximityGatewaySessionRunner {
     );
     final dtnPath = '${support.path}/loom-dtn-v2.sqlite3';
     final packetStore = LoomSqlitePacketStore.openFile(dtnPath);
-    final replicaIntake = LoomSqliteReplicaIntakeStore.openExistingFile(dtnPath);
+    final replicaIntake = LoomSqliteReplicaIntakeStore.openExistingFile(
+      dtnPath,
+    );
     final sink = LoomProximityGatewayDeliverySink(store: messageStore);
     var delivered = 0;
     try {
@@ -162,9 +164,7 @@ final class LoomProximityGatewaySessionRunner {
     }
   }
 
-  LoomGatewayClaimPacket _advanceForNearbyHop(
-    LoomGatewayClaimPacket packet,
-  ) {
+  LoomGatewayClaimPacket _advanceForNearbyHop(LoomGatewayClaimPacket packet) {
     final exact = Uint8List.fromList(
       base64Url.decode(base64Url.normalize(packet.envelopeBase64)),
     );
@@ -226,11 +226,13 @@ final class LoomProximityGatewaySessionRunner {
         raw.map((key, value) => MapEntry(key.toString(), value as Object?)),
       );
       final accepted = sink.acceptLegacy(delivery);
-      await connection.send(exchange.codec.encode(<String, Object?>{
-        'kind': _nearbyLegacyAckKind,
-        'deliveryId': delivery.deliveryId,
-        'accepted': accepted,
-      }));
+      await connection.send(
+        exchange.codec.encode(<String, Object?>{
+          'kind': _nearbyLegacyAckKind,
+          'deliveryId': delivery.deliveryId,
+          'accepted': accepted,
+        }),
+      );
       return accepted;
     }
 
@@ -251,16 +253,19 @@ final class LoomProximityGatewaySessionRunner {
           exactOuterEnvelopeBytes: exact,
           now: DateTime.now().toUtc(),
         );
-        accepted = result.packetId == packet.packetId &&
+        accepted =
+            result.packetId == packet.packetId &&
             result.shouldAcknowledgeTransfer;
       } catch (_) {
         accepted = false;
       }
-      await connection.send(exchange.codec.encode(<String, Object?>{
-        'kind': _nearbyPacketAckKind,
-        'packetId': packet.packetId,
-        'accepted': accepted,
-      }));
+      await connection.send(
+        exchange.codec.encode(<String, Object?>{
+          'kind': _nearbyPacketAckKind,
+          'packetId': packet.packetId,
+          'accepted': accepted,
+        }),
+      );
       return accepted;
     }
 

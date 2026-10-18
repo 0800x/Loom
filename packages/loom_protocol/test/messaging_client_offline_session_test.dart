@@ -17,23 +17,26 @@ void main() {
         ),
       );
 
-  test('missing online session is surfaced as transport unavailability',
-      () async {
-    final client = clientWithTokenProvider(
-      () async => throw const LoomProtocolException('Access token unavailable'),
-    );
+  test(
+    'missing online session is surfaced as transport unavailability',
+    () async {
+      final client = clientWithTokenProvider(
+        () async =>
+            throw const LoomProtocolException('Access token unavailable'),
+      );
 
-    await expectLater(
-      client.sendOpaqueMessage(
-        conversationId: 'conversation-1',
-        clientId: 'client-1',
-        type: LoomMessageType.text,
-        ciphertext: 'opaque-ciphertext',
-        protocolVersion: 'test-v1',
-      ),
-      throwsA(isA<SocketException>()),
-    );
-  });
+      await expectLater(
+        client.sendOpaqueMessage(
+          conversationId: 'conversation-1',
+          clientId: 'client-1',
+          type: LoomMessageType.text,
+          ciphertext: 'opaque-ciphertext',
+          protocolVersion: 'test-v1',
+        ),
+        throwsA(isA<SocketException>()),
+      );
+    },
+  );
 
   test('unrelated local protocol failures are not reclassified', () async {
     final client = clientWithTokenProvider(

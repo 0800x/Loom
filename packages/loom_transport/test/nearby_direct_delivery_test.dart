@@ -4,7 +4,9 @@ import 'package:loom_transport/loom_transport.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('nearby direct delivery stores only opaque envelope and preserves reconciliation clientId', () async {
+  test(
+      'nearby direct delivery stores only opaque envelope and preserves reconciliation clientId',
+      () async {
     final store = LoomMessagingStore.openInMemory();
     addTearDown(store.close);
     store.upsertConversation(

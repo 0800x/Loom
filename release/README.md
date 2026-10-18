@@ -34,3 +34,42 @@ silently import, delete or replace another application's identity or data.
 Keep recovery exports; see [compatibility](../docs/compatibility.md).
 
 GPLv3-only. Third-party code and assets retain their licenses and attribution.
+
+## Signed release process — required, not yet operational
+
+`release/version.json` remains `published: false`. A source PR or an engineering
+artifact does not establish a signed public release. Before changing that flag:
+
+1. Review an exact immutable commit, run all relevant CI and physical acceptance,
+   and generate an SPDX/CycloneDX SBOM plus dependency/license inventory.
+2. Build on isolated pinned toolchains. Record source revision, workflow identity,
+   build inputs and artifact digests in SLSA-style provenance; independently
+   rebuild/compare where practical. State any nondeterministic differences.
+3. Generate SHA256SUMS covering every archive, installer, SBOM and provenance file.
+   Sign the manifest and bootstrap installer using a separately held minisign key
+   (or cosign with a documented OIDC issuer/identity policy). Never commit a secret
+   signing key. Android must retain its existing protected production keystore.
+4. Publish the verification public key and fingerprint through an independent,
+   authenticated channel. Document key custody, revocation/rotation and recovery.
+   A key shipped only beside the artifact does not authenticate that artifact.
+5. Attach exact files and signatures to a tag, verify them from a clean client,
+   and bind update metadata to that reviewed revision/digest and monotonic release
+   sequence. Test rejection of modified files, wrong key/identity and rollback.
+6. Only then mark the release published. Keep unsigned engineering outputs clearly
+   labeled; platform signing/notarization and source signatures are different gates.
+
+Example verification after the publisher has actually supplied signed assets:
+
+```bash
+# Set these from independently authenticated release information.
+: "${LOOM_RELEASE_TAG:?set an exact signed tag}"
+: "${LOOM_PUBLISHER_KEY:?set the verified minisign public key}" # gitleaks:allow -- public verification key placeholder
+curl --proto '=https' --tlsv1.2 -fLO "https://github.com/0800x/Loom/releases/download/$LOOM_RELEASE_TAG/SHA256SUMS"
+curl --proto '=https' --tlsv1.2 -fLO "https://github.com/0800x/Loom/releases/download/$LOOM_RELEASE_TAG/SHA256SUMS.minisig"
+minisign -Vm SHA256SUMS -P "$LOOM_PUBLISHER_KEY"
+sha256sum --check SHA256SUMS
+```
+
+The example describes the required distribution contract; it does not claim those
+assets, publisher key publication, SBOM/provenance signing or reproducibility
+already exist. Verify before executing any downloaded installer.

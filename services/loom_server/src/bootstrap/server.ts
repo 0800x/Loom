@@ -1,3 +1,4 @@
+import { LoomClientAddressPolicy } from '../security/client_address.ts';
 import { GroupCallService } from '../calls/group_call_service.ts';
 import { GroupCallGateway } from '../calls/group_call_gateway.ts';
 import { GroupStore, GroupError } from '../groups/group_store.ts';
@@ -130,6 +131,7 @@ function requireRegistrationIdentity(body: Record<string, unknown>): void {
 }
 
 export class LoomNodeServer {
+  private readonly clientAddresses = new LoomClientAddressPolicy(process.env.LOOM_TRUSTED_PROXY_CIDRS);
   private readonly limiter = new LoomRateLimiter();
   private publicSnapshot?: Promise<PublicNodeStatus>;
   private publicSnapshotAt = 0;
@@ -229,7 +231,7 @@ export class LoomNodeServer {
       if (req.method !== 'GET' && req.method !== 'HEAD') {
         res.once('finish', () => this.accountRealtime.notifyCommitted());
       }
-      void this.handle(req, res);
+      void this.admitHttp(req, res);
     });
     this.server.on('upgrade', (request, socket, head) => void this.handleUpgrade(request, socket, head));
     this.lanDiscovery = new LoomLanDiscoveryResponder(config, this.identity);
@@ -309,7 +311,7 @@ export class LoomNodeServer {
       return;
     }
     try {
-      this.limiter.consume("upgrade:ip", request.socket.remoteAddress ?? "unknown", 30);
+      this.limiter.consume("upgrade:ip", this.clientAddresses.address(request), 30);
       const session = await this.authenticated(request);
       if (!session) {
         socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
@@ -421,21 +423,36 @@ export class LoomNodeServer {
     return false;
   }
 
-  private async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
+  private async admitHttp(request: IncomingMessage, response: ServerResponse): Promise<void> {
     response.setHeader('referrer-policy', 'no-referrer');
     response.setHeader('permissions-policy', 'camera=(), microphone=(), geolocation=()');
-    const method = request.method ?? 'GET';
     let release: (() => void) | undefined;
     try {
       const url = new URL(request.url ?? '/', 'http://localhost');
       const [scope, quota] = endpointClass(url.pathname);
-      // Only the TCP peer is authoritative; forwarded headers are ignored.
-      const ip = request.socket.remoteAddress ?? 'unknown';
+      const ip = this.clientAddresses.address(request);
       this.limiter.consume('ip', ip, 1200);
       this.limiter.consume(scope, ip, quota);
       const credential = bearerToken(request);
       if (credential) this.limiter.consume(scope + ':token', credential, quota);
       release = this.limiter.enter();
+      await this.handle(request, response);
+    } catch (error) {
+      if (response.headersSent) { response.destroy(); return; }
+      if (error instanceof RateLimitError) {
+        response.setHeader('Retry-After', String(error.retryAfter));
+        json(response, 429, { error: 'rate_limited' });
+      } else {
+        // Do not leak raw request/header values from adapter failures.
+        json(response, 500, { error: 'internal_error' });
+      }
+    } finally { release?.(); }
+  }
+
+  private async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    const method = request.method ?? 'GET';
+    try {
+      const url = new URL(request.url ?? '/', 'http://localhost');
       if(url.pathname.startsWith('/conference/'))return await this.groupCallGateway.validate(request,response);
       if(url.pathname==='/api/v1/group-calls/webhook'){
         if(method!=='POST')return json(response,405,{error:'method_not_allowed'});
@@ -777,6 +794,7 @@ export class LoomNodeServer {
         const body = await readJson(request, this.config.maxRequestBytes);
         const verified = validateHandshake(body as unknown as FederationHandshake);
         if (!await this.federationHandshakeAllowed(request, verified)) return json(response, 403, { error: 'federation_peer_not_allowed' });
+        this.limiter.consume('federation-peer',verified.nodeId,240);
         const remembered = await this.federationPeers.rememberNonce(verified.nodeId, verified.nonce, new Date(Date.now() + 10 * 60_000));
         if (!remembered) return json(response, 409, { error: 'federation_replay_detected' });
         return json(response, 200, createHandshakeResponse(this.identity, verified.nodeId, this.config.publicDomain, this.config.publicBaseUrl, verified.nonce));
@@ -786,6 +804,7 @@ export class LoomNodeServer {
         const body = await readJson(request, this.config.maxRequestBytes);
         const verified = validateHandshake(body.handshake as FederationHandshake);
         if (!await this.federationHandshakeAllowed(request, verified)) return json(response, 403, { error: 'federation_peer_not_allowed' });
+        this.limiter.consume('federation-peer',verified.nodeId,240);
         const remembered = await this.federationPeers.rememberNonce(verified.nodeId, verified.nonce, new Date(Date.now() + 10 * 60_000));
         if (!remembered) return json(response, 409, { error: 'federation_replay_detected' });
         const address = parseLoomAddress(String(body.address ?? ''), this.config.publicDomain);
@@ -959,7 +978,7 @@ export class LoomNodeServer {
       const status = bad.includes(code) ? 400 : notFound.includes(code) ? 404 : unauthorized.includes(code) ? 401 : forbidden.includes(code) ? 403 : conflict.includes(code) ? 409 : unavailable.includes(code) ? 503 : 500;
       if (status === 500) console.error('[loom-node] request failed', error);
       return json(response, status, { error: status === 500 ? 'internal_error' : code });
-    } finally { release?.(); }
+    }
   }
 }
 

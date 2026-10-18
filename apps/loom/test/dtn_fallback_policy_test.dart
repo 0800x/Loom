@@ -11,10 +11,7 @@ void main() {
     for (final status in <int>[400, 401, 403, 404, 409, 422, 429]) {
       expect(
         LoomDtnFallbackPolicy.shouldFallback(
-          LoomHttpStatusException(
-            statusCode: status,
-            message: 'rejected',
-          ),
+          LoomHttpStatusException(statusCode: status, message: 'rejected'),
         ),
         isFalse,
         reason: 'HTTP $status must remain authoritative',
@@ -26,10 +23,7 @@ void main() {
     for (final status in <int>[408, 425, 500, 502, 503, 504]) {
       expect(
         LoomDtnFallbackPolicy.shouldFallback(
-          LoomHttpStatusException(
-            statusCode: status,
-            message: 'temporary',
-          ),
+          LoomHttpStatusException(statusCode: status, message: 'temporary'),
         ),
         isTrue,
         reason: 'HTTP $status is retryable transport/server failure',
@@ -45,15 +39,11 @@ void main() {
       isTrue,
     );
     expect(
-      LoomDtnFallbackPolicy.shouldFallback(
-        const SocketException('offline'),
-      ),
+      LoomDtnFallbackPolicy.shouldFallback(const SocketException('offline')),
       isTrue,
     );
     expect(
-      LoomDtnFallbackPolicy.shouldFallback(
-        TimeoutException('timeout'),
-      ),
+      LoomDtnFallbackPolicy.shouldFallback(TimeoutException('timeout')),
       isTrue,
     );
   });
