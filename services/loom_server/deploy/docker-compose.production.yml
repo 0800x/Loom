@@ -22,6 +22,7 @@ services:
     labels:
       org.loom.installation: /opt/loom-node
     image: loom-minio-source:7aac2a2c5b7c
+    pull_policy: build
     build:
       context: ..
       dockerfile: deploy/Dockerfile.storage
@@ -42,6 +43,7 @@ services:
       org.loom.installation: /opt/loom-node
     # Independent exporters must never publish to the same image tag.
     image: loom-node-init-source:${LOOM_BUILD_COMMIT:-engineering}
+    pull_policy: build
     build:
       context: ..
       dockerfile: deploy/Dockerfile
@@ -63,6 +65,7 @@ services:
 
   loom-node:
     image: loom-node-source:${LOOM_BUILD_COMMIT:-engineering}
+    pull_policy: build
     labels:
       org.loom.installation: /opt/loom-node
     build:
