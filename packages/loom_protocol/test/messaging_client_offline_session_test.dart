@@ -7,14 +7,15 @@ import 'package:test/test.dart';
 void main() {
   LoomMessagingClient clientWithTokenProvider(
     Future<String> Function() tokenProvider,
-  ) => LoomMessagingClient(
-    baseUri: Uri.parse('https://chat.example'),
-    accessTokenProvider: tokenProvider,
-    deviceProofProvider: LoomDeviceRequestProofProvider(
-      deviceId: 'dev_00000000-0000-0000-0000-000000000001',
-      signer: (_) async => List<int>.filled(64, 7),
-    ),
-  );
+  ) =>
+      LoomMessagingClient(
+        baseUri: Uri.parse('https://chat.example'),
+        accessTokenProvider: tokenProvider,
+        deviceProofProvider: LoomDeviceRequestProofProvider(
+          deviceId: 'dev_00000000-0000-0000-0000-000000000001',
+          signer: (_) async => List<int>.filled(64, 7),
+        ),
+      );
 
   test(
     'missing online session is surfaced as transport unavailability',

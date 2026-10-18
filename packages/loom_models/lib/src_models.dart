@@ -67,9 +67,8 @@ class LoomNodeDescriptor {
       publicKey: requiredString('publicKey'),
       fingerprint: requiredString('fingerprint'),
       capabilities: requiredStrings('capabilities'),
-      region: json['region'] is String
-          ? (json['region'] as String).trim()
-          : null,
+      region:
+          json['region'] is String ? (json['region'] as String).trim() : null,
       operatorName: json['operator'] is String
           ? (json['operator'] as String).trim()
           : null,
@@ -107,13 +106,11 @@ class LoomRegistryManifest {
     }
     if (nodes is! List)
       throw const FormatException('Registry nodes must be an array');
-    final parsed = nodes
-        .map((item) {
-          if (item is! Map<String, Object?>)
-            throw const FormatException('Invalid node entry');
-          return LoomNodeDescriptor.fromJson(item);
-        })
-        .toList(growable: false);
+    final parsed = nodes.map((item) {
+      if (item is! Map<String, Object?>)
+        throw const FormatException('Invalid node entry');
+      return LoomNodeDescriptor.fromJson(item);
+    }).toList(growable: false);
     final ids = <String>{};
     final domains = <String>{};
     for (final node in parsed) {
@@ -426,19 +423,20 @@ class LoomDeviceKeyBundle {
     required String agreementPublicKey,
     required DateTime createdAt,
     required List<String> capabilities,
-  }) => LoomDeviceKeyBundle(
-    bundleVersion: 1,
-    identityId: identityId,
-    deviceId: deviceId,
-    deviceName: deviceName,
-    signingPublicKey: signingPublicKey,
-    agreementPublicKey: agreementPublicKey,
-    createdAt: createdAt.toUtc(),
-    capabilities: List<String>.unmodifiable(capabilities),
-    fingerprint: '',
-    deviceSignature: '',
-    identitySignature: '',
-  );
+  }) =>
+      LoomDeviceKeyBundle(
+        bundleVersion: 1,
+        identityId: identityId,
+        deviceId: deviceId,
+        deviceName: deviceName,
+        signingPublicKey: signingPublicKey,
+        agreementPublicKey: agreementPublicKey,
+        createdAt: createdAt.toUtc(),
+        capabilities: List<String>.unmodifiable(capabilities),
+        fingerprint: '',
+        deviceSignature: '',
+        identitySignature: '',
+      );
 
   factory LoomDeviceKeyBundle.fromJson(Map<String, Object?> json) {
     String requireString(String key) {
@@ -491,46 +489,47 @@ class LoomDeviceKeyBundle {
     String? fingerprint,
     String? deviceSignature,
     String? identitySignature,
-  }) => LoomDeviceKeyBundle(
-    bundleVersion: bundleVersion,
-    identityId: identityId,
-    deviceId: deviceId,
-    deviceName: deviceName,
-    signingPublicKey: signingPublicKey,
-    agreementPublicKey: agreementPublicKey,
-    createdAt: createdAt,
-    capabilities: capabilities,
-    fingerprint: fingerprint ?? this.fingerprint,
-    deviceSignature: deviceSignature ?? this.deviceSignature,
-    identitySignature: identitySignature ?? this.identitySignature,
-  );
+  }) =>
+      LoomDeviceKeyBundle(
+        bundleVersion: bundleVersion,
+        identityId: identityId,
+        deviceId: deviceId,
+        deviceName: deviceName,
+        signingPublicKey: signingPublicKey,
+        agreementPublicKey: agreementPublicKey,
+        createdAt: createdAt,
+        capabilities: capabilities,
+        fingerprint: fingerprint ?? this.fingerprint,
+        deviceSignature: deviceSignature ?? this.deviceSignature,
+        identitySignature: identitySignature ?? this.identitySignature,
+      );
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'bundleVersion': bundleVersion,
-    'identityId': identityId,
-    'deviceId': deviceId,
-    'deviceName': deviceName,
-    'signingPublicKey': signingPublicKey,
-    'agreementPublicKey': agreementPublicKey,
-    'createdAt': createdAt.toUtc().toIso8601String(),
-    'capabilities': capabilities,
-    'fingerprint': fingerprint,
-    'deviceSignature': deviceSignature,
-    'identitySignature': identitySignature,
-  };
+        'bundleVersion': bundleVersion,
+        'identityId': identityId,
+        'deviceId': deviceId,
+        'deviceName': deviceName,
+        'signingPublicKey': signingPublicKey,
+        'agreementPublicKey': agreementPublicKey,
+        'createdAt': createdAt.toUtc().toIso8601String(),
+        'capabilities': capabilities,
+        'fingerprint': fingerprint,
+        'deviceSignature': deviceSignature,
+        'identitySignature': identitySignature,
+      };
 
   List<int> canonicalBindingBytes() => utf8.encode(
-    jsonEncode(<String, Object?>{
-      'bundleVersion': bundleVersion,
-      'identityId': identityId,
-      'deviceId': deviceId,
-      'deviceName': deviceName,
-      'signingPublicKey': signingPublicKey,
-      'agreementPublicKey': agreementPublicKey,
-      'createdAt': createdAt.toUtc().toIso8601String(),
-      'capabilities': List<String>.from(capabilities)..sort(),
-    }),
-  );
+        jsonEncode(<String, Object?>{
+          'bundleVersion': bundleVersion,
+          'identityId': identityId,
+          'deviceId': deviceId,
+          'deviceName': deviceName,
+          'signingPublicKey': signingPublicKey,
+          'agreementPublicKey': agreementPublicKey,
+          'createdAt': createdAt.toUtc().toIso8601String(),
+          'capabilities': List<String>.from(capabilities)..sort(),
+        }),
+      );
 }
 
 class LoomVerificationComparison {
@@ -673,10 +672,10 @@ class LoomIceServer {
   final String? credential;
 
   Map<String, Object?> toJson() => {
-    'urls': urls.length == 1 ? urls.first : urls,
-    if (username != null) 'username': username,
-    if (credential != null) 'credential': credential,
-  };
+        'urls': urls.length == 1 ? urls.first : urls,
+        if (username != null) 'username': username,
+        if (credential != null) 'credential': credential,
+      };
 }
 
 class LoomRtcConfiguration {
@@ -789,10 +788,10 @@ class LoomRelaySealedPayload {
   final String mac;
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'version': version,
-    'ephemeralPublicKey': ephemeralPublicKey,
-    'nonce': nonce,
-    'ciphertext': ciphertext,
-    'mac': mac,
-  };
+        'version': version,
+        'ephemeralPublicKey': ephemeralPublicKey,
+        'nonce': nonce,
+        'ciphertext': ciphertext,
+        'mac': mac,
+      };
 }

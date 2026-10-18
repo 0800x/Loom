@@ -45,8 +45,8 @@ class LoomUserSecurityClient {
     this.connectTimeout = const Duration(seconds: 8),
     this.responseHeaderTimeout = const Duration(seconds: 15),
     this.responseBodyTimeout = const Duration(seconds: 15),
-  }) : _http = httpClient ?? HttpClient(),
-       _bundleVerifier = bundleVerifier ?? LoomDeviceBundleVerifier() {
+  })  : _http = httpClient ?? HttpClient(),
+        _bundleVerifier = bundleVerifier ?? LoomDeviceBundleVerifier() {
     _http.connectionTimeout = connectTimeout;
   }
 

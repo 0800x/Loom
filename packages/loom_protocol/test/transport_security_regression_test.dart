@@ -40,7 +40,9 @@ void main() {
       );
     }
   });
-  test('login, challenge, bundles, messaging and link all refuse plaintext LAN before sending', () async {
+  test(
+      'login, challenge, bundles, messaging and link all refuse plaintext LAN before sending',
+      () async {
     final endpoint = Uri.parse('http://192.168.1.2:7483');
     final proof = LoomDeviceRequestProofProvider(
       deviceId: 'dev_11111111-1111-1111-1111-111111111111',

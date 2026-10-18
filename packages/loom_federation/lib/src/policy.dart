@@ -39,8 +39,8 @@ class LoomFederationPolicy {
     return switch (mode) {
       LoomFederationMode.disabled => false,
       LoomFederationMode.trustedNodesOnly => trustedNodeIds.contains(
-        peer.nodeId,
-      ),
+          peer.nodeId,
+        ),
       LoomFederationMode.open => true,
       LoomFederationMode.localOnly => peer.isLocal,
       LoomFederationMode.hybrid =>

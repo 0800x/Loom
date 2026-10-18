@@ -27,10 +27,10 @@ final class LoomDirectFirstUserSecurityResolver {
     LoomUserSecurityClient? legacyClient,
     LoomDeviceBundleVerifier? bundleVerifier,
     HttpClient? httpClient,
-  }) : _nodes = nodeClient ?? LoomNodeClient(),
-       _legacy = legacyClient ?? LoomUserSecurityClient(),
-       _bundleVerifier = bundleVerifier ?? LoomDeviceBundleVerifier(),
-       _http = httpClient ?? HttpClient();
+  })  : _nodes = nodeClient ?? LoomNodeClient(),
+        _legacy = legacyClient ?? LoomUserSecurityClient(),
+        _bundleVerifier = bundleVerifier ?? LoomDeviceBundleVerifier(),
+        _http = httpClient ?? HttpClient();
 
   final LoomNodeClient _nodes;
   final LoomUserSecurityClient _legacy;
@@ -100,9 +100,8 @@ final class LoomDirectFirstUserSecurityResolver {
   }) async {
     final node = await _nodes.discoverDomain(targetDomain);
     final uri = node.endpoint.resolve('/api/v2/users/resolve');
-    final request = await _http
-        .postUrl(uri)
-        .timeout(const Duration(seconds: 8));
+    final request =
+        await _http.postUrl(uri).timeout(const Duration(seconds: 8));
     request.followRedirects = false;
     request.headers.contentType = ContentType.json;
     request.headers.set(HttpHeaders.acceptHeader, 'application/json');
@@ -196,9 +195,8 @@ final class LoomDirectFirstUserSecurityResolver {
       credential: accessToken,
       bodyBytes: bodyBytes,
     );
-    final request = await _http
-        .postUrl(uri)
-        .timeout(const Duration(seconds: 8));
+    final request =
+        await _http.postUrl(uri).timeout(const Duration(seconds: 8));
     request.followRedirects = false;
     request.headers.contentType = ContentType.json;
     request.headers.set(HttpHeaders.acceptHeader, 'application/json');
@@ -472,10 +470,11 @@ final class LoomDirectFirstUserSecurityClient extends LoomUserSecurityClient {
     required String accessToken,
     required String address,
     required LoomDeviceRequestProofProvider deviceProofProvider,
-  }) => _resolver.resolve(
-    baseUri: baseUri,
-    accessToken: accessToken,
-    address: address,
-    deviceProofProvider: deviceProofProvider,
-  );
+  }) =>
+      _resolver.resolve(
+        baseUri: baseUri,
+        accessToken: accessToken,
+        address: address,
+        deviceProofProvider: deviceProofProvider,
+      );
 }

@@ -16,10 +16,10 @@ final class LoomDtnPacketTransferFrameV2 extends LoomDtnPeerFrameV2 {
     required this.transmissionId,
     required Uint8List outerEnvelopeBytes,
     String? destinationNodeDomain,
-  }) : outerEnvelopeBytes = Uint8List.fromList(outerEnvelopeBytes),
-       destinationNodeDomain = destinationNodeDomain == null
-           ? null
-           : LoomAddress.normalizeHomeNode(destinationNodeDomain);
+  })  : outerEnvelopeBytes = Uint8List.fromList(outerEnvelopeBytes),
+        destinationNodeDomain = destinationNodeDomain == null
+            ? null
+            : LoomAddress.normalizeHomeNode(destinationNodeDomain);
 
   final String transmissionId;
   final Uint8List outerEnvelopeBytes;
@@ -84,8 +84,8 @@ abstract final class LoomDtnPeerFrameV2Codec {
   static const int _wireVarint = 0;
   static const int _wireLengthDelimited = 2;
   static final int _minAckUnixMs = DateTime.utc(2020).millisecondsSinceEpoch;
-  static final int _maxAckUnixMsExclusive = DateTime.utc(2200)
-      .millisecondsSinceEpoch;
+  static final int _maxAckUnixMsExclusive =
+      DateTime.utc(2200).millisecondsSinceEpoch;
 
   static Uint8List encode(LoomDtnPeerFrameV2 frame) {
     final writer = _Writer();

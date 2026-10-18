@@ -143,7 +143,7 @@ final class LoomDeliveryReceiptV2 {
 /// username, stable device id, conversation id, or public key.
 final class LoomRoutingHintV2 {
   LoomRoutingHintV2({required this.scope, required Uint8List mailboxToken})
-    : mailboxToken = Uint8List.fromList(mailboxToken);
+      : mailboxToken = Uint8List.fromList(mailboxToken);
 
   final LoomRoutingScopeV2 scope;
   final Uint8List mailboxToken;

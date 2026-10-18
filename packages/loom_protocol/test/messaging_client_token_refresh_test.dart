@@ -22,7 +22,7 @@ void main() {
         requests++;
         final accepted =
             request.headers.value(HttpHeaders.authorizationHeader) ==
-            'Bearer renewed';
+                'Bearer renewed';
         request.response.statusCode = accepted ? 200 : 401;
         request.response.headers.contentType = ContentType.json;
         request.response.write(

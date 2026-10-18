@@ -18,33 +18,33 @@ class LoomGroupMember {
       mlsSignatureKey,
       mlsSignature;
   factory LoomGroupMember.fromJson(Map<String, Object?> j) => LoomGroupMember(
-    accountId: j['accountId'] as String,
-    deviceId: j['deviceId'] as String,
-    identityId: j['identityId'] as String,
-    role: j['role'] as String,
-    mlsSignatureKey: j['mlsSignatureKey'] as String,
-    mlsSignature: j['mlsSignature'] as String,
-  );
+        accountId: j['accountId'] as String,
+        deviceId: j['deviceId'] as String,
+        identityId: j['identityId'] as String,
+        role: j['role'] as String,
+        mlsSignatureKey: j['mlsSignatureKey'] as String,
+        mlsSignature: j['mlsSignature'] as String,
+      );
   Map<String, Object?> toJson() => {
-    'accountId': accountId,
-    'deviceId': deviceId,
-    'role': role,
-    'identityId': identityId,
-    'mlsSignatureKey': mlsSignatureKey,
-    'mlsSignature': mlsSignature,
-  };
+        'accountId': accountId,
+        'deviceId': deviceId,
+        'role': role,
+        'identityId': identityId,
+        'mlsSignatureKey': mlsSignatureKey,
+        'mlsSignature': mlsSignature,
+      };
   Map<String, Object?> get nativePin => {
-    'device_id': utf8.encode(deviceId),
-    'signature_key': base64Decode(mlsSignatureKey).toList(),
-  };
+        'device_id': utf8.encode(deviceId),
+        'signature_key': base64Decode(mlsSignatureKey).toList(),
+      };
   List<int> get binding => utf8.encode(
-    jsonEncode({
-      'protocol': 'Loom-MLSDevice-v1',
-      'identityId': identityId,
-      'deviceId': deviceId,
-      'mlsSignatureKey': mlsSignatureKey,
-    }),
-  );
+        jsonEncode({
+          'protocol': 'Loom-MLSDevice-v1',
+          'identityId': identityId,
+          'deviceId': deviceId,
+          'mlsSignatureKey': mlsSignatureKey,
+        }),
+      );
 }
 
 class LoomGroupState {
@@ -100,13 +100,13 @@ class LoomGroupState {
     return state;
   }
   Map<String, Object?> toJson() => {
-    'id': id,
-    'title': title,
-    'epoch': epoch,
-    'revision': revision,
-    'sequence': sequence,
-    'members': members.map((m) => m.toJson()).toList(),
-  };
+        'id': id,
+        'title': title,
+        'epoch': epoch,
+        'revision': revision,
+        'sequence': sequence,
+        'members': members.map((m) => m.toJson()).toList(),
+      };
   List<Map<String, Object?>> get nativePins =>
       members.map((m) => m.nativePin).toList();
 }

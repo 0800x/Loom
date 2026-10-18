@@ -69,8 +69,8 @@ class LoomCallClient implements LoomCallApi {
       final urls = urlsValue is String
           ? <String>[urlsValue]
           : urlsValue is List
-          ? urlsValue.whereType<String>().toList(growable: false)
-          : const <String>[];
+              ? urlsValue.whereType<String>().toList(growable: false)
+              : const <String>[];
       if (urls.isEmpty ||
           urls.length > 8 ||
           urls.any((url) => !_validIceUrl(url))) {
@@ -123,10 +123,10 @@ class LoomCallClient implements LoomCallApi {
       }
       try {
         final kind = _kind(value['kind']);
-        final createdAt = DateTime.parse(_required(value, 'createdAt', 80))
-            .toUtc();
-        final expiresAt = DateTime.parse(_required(value, 'expiresAt', 80))
-            .toUtc();
+        final createdAt =
+            DateTime.parse(_required(value, 'createdAt', 80)).toUtc();
+        final expiresAt =
+            DateTime.parse(_required(value, 'expiresAt', 80)).toUtc();
         if (expiresAt.isBefore(DateTime.now().toUtc())) {
           trace?.call('pending_rejected:expired');
           continue;
@@ -231,10 +231,10 @@ class LoomCallClient implements LoomCallApi {
   }
 
   LoomCallKind _kind(Object? value) => switch (value) {
-    'audio' => LoomCallKind.audio,
-    'video' => LoomCallKind.video,
-    _ => throw const FormatException('Invalid call kind'),
-  };
+        'audio' => LoomCallKind.audio,
+        'video' => LoomCallKind.video,
+        _ => throw const FormatException('Invalid call kind'),
+      };
 
   String _required(Map<String, Object?> json, String key, int max) {
     final value = json[key];
@@ -286,8 +286,8 @@ class LoomCallSignalingConnection {
   bool get connected => _socket?.readyState == WebSocket.open;
 
   Future<void> connect() => _connecting ??= _connectWithRecovery().whenComplete(
-    () => _connecting = null,
-  );
+        () => _connecting = null,
+      );
 
   Future<void> _connectWithRecovery() async {
     try {
@@ -499,15 +499,15 @@ class LoomCallSignalingConnection {
   }
 
   bool _supportedSignalKind(String kind) => const <String>{
-    'call.offer',
-    'call.ringing',
-    'call.answer',
-    'call.ice',
-    'call.media',
-    'call.reject',
-    'call.busy',
-    'call.end',
-  }.contains(kind);
+        'call.offer',
+        'call.ringing',
+        'call.answer',
+        'call.ice',
+        'call.media',
+        'call.reject',
+        'call.busy',
+        'call.end',
+      }.contains(kind);
 
   String? _safe(Object? value, int max) {
     if (value is! String ||

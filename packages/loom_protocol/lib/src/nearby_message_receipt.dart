@@ -18,24 +18,24 @@ class LoomNearbyMessageReceipt {
   final String clientId, sender, recipient, deviceId, digest, signature;
 
   List<int> canonicalBytes() => utf8.encode(
-    jsonEncode([
-      protocol,
-      clientId,
-      sender.toLowerCase(),
-      recipient.toLowerCase(),
-      deviceId,
-      digest,
-    ]),
-  );
+        jsonEncode([
+          protocol,
+          clientId,
+          sender.toLowerCase(),
+          recipient.toLowerCase(),
+          deviceId,
+          digest,
+        ]),
+      );
   String encode() => jsonEncode({
-    'version': 1,
-    'clientId': clientId,
-    'sender': sender,
-    'recipient': recipient,
-    'deviceId': deviceId,
-    'digest': digest,
-    'signature': signature,
-  });
+        'version': 1,
+        'clientId': clientId,
+        'sender': sender,
+        'recipient': recipient,
+        'deviceId': deviceId,
+        'digest': digest,
+        'signature': signature,
+      });
 
   static Future<String> ciphertextDigest(String ciphertext) async =>
       base64UrlEncode((await Sha256().hash(utf8.encode(ciphertext))).bytes);
@@ -107,8 +107,7 @@ class LoomNearbyMessageReceipt {
         deviceId != expectedDeviceId ||
         sender.toLowerCase() != expectedSender.toLowerCase() ||
         recipient.toLowerCase() != expectedRecipient.toLowerCase() ||
-        digest != await ciphertextDigest(ciphertext))
-      return false;
+        digest != await ciphertextDigest(ciphertext)) return false;
     try {
       final key = base64Decode(trustedSigningPublicKey),
           sig = base64Decode(signature);

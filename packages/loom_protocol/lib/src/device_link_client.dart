@@ -36,7 +36,7 @@ class LoomDeviceLinkRedemption {
 
 class LoomDeviceLinkClient {
   LoomDeviceLinkClient({HttpClient? httpClient})
-    : _http = httpClient ?? HttpClient();
+      : _http = httpClient ?? HttpClient();
 
   final HttpClient _http;
 
@@ -189,9 +189,8 @@ class LoomDeviceLinkClient {
     required List<int> bodyBytes,
     Map<String, String>? proofHeaders,
   }) async {
-    final request = await _http
-        .postUrl(uri)
-        .timeout(const Duration(seconds: 8));
+    final request =
+        await _http.postUrl(uri).timeout(const Duration(seconds: 8));
     request.followRedirects = false;
     request.headers.contentType = ContentType.json;
     request.headers.set(HttpHeaders.acceptHeader, 'application/json');

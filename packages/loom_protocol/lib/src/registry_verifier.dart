@@ -9,10 +9,10 @@ import 'node_client.dart';
 
 class LoomRegistryVerifier {
   LoomRegistryVerifier({required List<int> signingPublicKey})
-    : _publicKey = SimplePublicKey(
-        Uint8List.fromList(signingPublicKey),
-        type: KeyPairType.ed25519,
-      );
+      : _publicKey = SimplePublicKey(
+          Uint8List.fromList(signingPublicKey),
+          type: KeyPairType.ed25519,
+        );
 
   final SimplePublicKey _publicKey;
   final Ed25519 _algorithm = Ed25519();
@@ -50,18 +50,20 @@ class LoomVerifiedRegistryArtifact {
 
 class LoomRegistryClient {
   LoomRegistryClient({HttpClient? httpClient})
-    : _http = httpClient ?? HttpClient();
+      : _http = httpClient ?? HttpClient();
   final HttpClient _http;
 
   Future<LoomRegistryManifest> fetchAndVerify({
     required Uri manifestUri,
     required Uri signatureUri,
     required LoomRegistryVerifier verifier,
-  }) async => (await fetchAndVerifyArtifact(
-    manifestUri: manifestUri,
-    signatureUri: signatureUri,
-    verifier: verifier,
-  )).manifest;
+  }) async =>
+      (await fetchAndVerifyArtifact(
+        manifestUri: manifestUri,
+        signatureUri: signatureUri,
+        verifier: verifier,
+      ))
+          .manifest;
 
   Future<LoomVerifiedRegistryArtifact> fetchAndVerifyArtifact({
     required Uri manifestUri,

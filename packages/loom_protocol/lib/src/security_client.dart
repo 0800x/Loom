@@ -13,8 +13,8 @@ class LoomSecurityClient {
   LoomSecurityClient({
     HttpClient? httpClient,
     LoomDeviceBundleVerifier? bundleVerifier,
-  }) : _http = httpClient ?? HttpClient(),
-       _bundleVerifier = bundleVerifier ?? LoomDeviceBundleVerifier();
+  })  : _http = httpClient ?? HttpClient(),
+        _bundleVerifier = bundleVerifier ?? LoomDeviceBundleVerifier();
 
   final HttpClient _http;
   final LoomDeviceBundleVerifier _bundleVerifier;
@@ -133,9 +133,8 @@ class LoomSecurityClient {
       uri: uri,
       credential: accessToken,
     );
-    final request = await _http
-        .postUrl(uri)
-        .timeout(const Duration(seconds: 8));
+    final request =
+        await _http.postUrl(uri).timeout(const Duration(seconds: 8));
     request.followRedirects = false;
     request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
     request.headers.set(HttpHeaders.acceptHeader, 'application/json');

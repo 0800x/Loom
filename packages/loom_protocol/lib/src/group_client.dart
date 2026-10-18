@@ -45,9 +45,8 @@ class LoomGroupClient {
       credential: token,
       bodyBytes: bytes,
     );
-    final request = await _http
-        .openUrl(method, uri)
-        .timeout(const Duration(seconds: 8));
+    final request =
+        await _http.openUrl(method, uri).timeout(const Duration(seconds: 8));
     request.followRedirects = false;
     request.headers.contentType = ContentType.json;
     request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
@@ -86,9 +85,9 @@ class LoomGroupClient {
 
   String _group(String id) => '/api/v1/groups/${Uri.encodeComponent(id)}';
   Future<Map<String, Object?>> memberProfile(String deviceId) => request(
-    'GET',
-    '/api/v1/groups/devices/${Uri.encodeComponent(deviceId)}/profile',
-  );
+        'GET',
+        '/api/v1/groups/devices/${Uri.encodeComponent(deviceId)}/profile',
+      );
   Future<Map<String, Object?>> createInvite(String id, String mode) =>
       request('POST', '${_group(id)}/invites', {'mode': mode});
   Future<void> revokeInvites(String id) async {
@@ -98,10 +97,10 @@ class LoomGroupClient {
   Future<Map<String, Object?>> previewInvite(String token) =>
       request('GET', '/api/v1/groups/invites/${Uri.encodeComponent(token)}');
   Future<Map<String, Object?>> requestJoin(String token) => request(
-    'POST',
-    '/api/v1/groups/invites/${Uri.encodeComponent(token)}/join',
-    {},
-  );
+        'POST',
+        '/api/v1/groups/invites/${Uri.encodeComponent(token)}/join',
+        {},
+      );
   Future<List<Map<String, Object?>>> joinRequests(String id) async =>
       ((await request('GET', '${_group(id)}/join-requests'))['requests']
               as List)
@@ -157,10 +156,10 @@ class LoomGroupClient {
   Future<Map<String, Object?>> inbox(String id, int after) =>
       request('GET', '${_group(id)}/inbox?after=$after');
   Future<Map<String, Object?>> claim(String deviceId) => request(
-    'POST',
-    '/api/v1/groups/key-packages/${Uri.encodeComponent(deviceId)}/claim',
-    {},
-  );
+        'POST',
+        '/api/v1/groups/key-packages/${Uri.encodeComponent(deviceId)}/claim',
+        {},
+      );
   Future<void> publish(Map<String, Object?> package) async {
     await request('POST', '/api/v1/groups/key-packages', package);
   }
@@ -203,9 +202,8 @@ Future<List<int>> loomKeyPackageBinding({
       'identityId': identityId,
       'deviceId': deviceId,
       'id': id,
-      'sha256': hash.bytes
-          .map((b) => b.toRadixString(16).padLeft(2, '0'))
-          .join(),
+      'sha256':
+          hash.bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
       'expiresAt': expiresAt,
     }),
   );

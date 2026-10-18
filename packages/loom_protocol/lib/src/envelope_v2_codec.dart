@@ -470,41 +470,41 @@ abstract final class LoomEnvelopeV2Codec {
       };
 
   static int _encodeReceiptPolicy(LoomReceiptPolicyV2 value) => switch (value) {
-    LoomReceiptPolicyV2.none => 1,
-    LoomReceiptPolicyV2.delivered => 2,
-    LoomReceiptPolicyV2.deliveredAndRead => 3,
-  };
+        LoomReceiptPolicyV2.none => 1,
+        LoomReceiptPolicyV2.delivered => 2,
+        LoomReceiptPolicyV2.deliveredAndRead => 3,
+      };
 
   static LoomReceiptPolicyV2 _decodeReceiptPolicy(int value) => switch (value) {
-    1 => LoomReceiptPolicyV2.none,
-    2 => LoomReceiptPolicyV2.delivered,
-    3 => LoomReceiptPolicyV2.deliveredAndRead,
-    _ => throw FormatException('Unknown receipt policy $value'),
-  };
+        1 => LoomReceiptPolicyV2.none,
+        2 => LoomReceiptPolicyV2.delivered,
+        3 => LoomReceiptPolicyV2.deliveredAndRead,
+        _ => throw FormatException('Unknown receipt policy $value'),
+      };
 
   static int _encodeRoutingScope(LoomRoutingScopeV2 value) => switch (value) {
-    LoomRoutingScopeV2.localDevice => 1,
-    LoomRoutingScopeV2.domesticRelay => 2,
-    LoomRoutingScopeV2.globalRelay => 3,
-  };
+        LoomRoutingScopeV2.localDevice => 1,
+        LoomRoutingScopeV2.domesticRelay => 2,
+        LoomRoutingScopeV2.globalRelay => 3,
+      };
 
   static LoomRoutingScopeV2 _decodeRoutingScope(int value) => switch (value) {
-    1 => LoomRoutingScopeV2.localDevice,
-    2 => LoomRoutingScopeV2.domesticRelay,
-    3 => LoomRoutingScopeV2.globalRelay,
-    _ => throw FormatException('Unknown routing scope $value'),
-  };
+        1 => LoomRoutingScopeV2.localDevice,
+        2 => LoomRoutingScopeV2.domesticRelay,
+        3 => LoomRoutingScopeV2.globalRelay,
+        _ => throw FormatException('Unknown routing scope $value'),
+      };
 
   static int _encodePriority(LoomPriorityClassV2 value) => switch (value) {
-    LoomPriorityClassV2.normal => 1,
-    LoomPriorityClassV2.urgent => 2,
-  };
+        LoomPriorityClassV2.normal => 1,
+        LoomPriorityClassV2.urgent => 2,
+      };
 
   static LoomPriorityClassV2 _decodePriority(int value) => switch (value) {
-    1 => LoomPriorityClassV2.normal,
-    2 => LoomPriorityClassV2.urgent,
-    _ => throw FormatException('Unknown priority class $value'),
-  };
+        1 => LoomPriorityClassV2.normal,
+        2 => LoomPriorityClassV2.urgent,
+        _ => throw FormatException('Unknown priority class $value'),
+      };
 
   static int _encodeDeliveryStatus(LoomDeliveryReceiptStatusV2 value) =>
       switch (value) {

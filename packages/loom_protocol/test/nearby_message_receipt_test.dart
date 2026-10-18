@@ -5,7 +5,9 @@ import 'package:cryptography/cryptography.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('recipient signature binds ciphertext, message, parties and device; relay cannot forge it', () async {
+  test(
+      'recipient signature binds ciphertext, message, parties and device; relay cannot forge it',
+      () async {
     final ed = Ed25519();
     final recipient = await ed.newKeyPair();
     final relay = await ed.newKeyPair();
@@ -26,14 +28,15 @@ void main() {
       String peer = '@bob:two.example',
       String device = 'bob-phone',
       String body = 'exact encrypted message',
-    }) => value.verify(
-      expectedClientId: id,
-      expectedSender: sender,
-      expectedRecipient: peer,
-      expectedDeviceId: device,
-      ciphertext: body,
-      trustedSigningPublicKey: trusted,
-    );
+    }) =>
+        value.verify(
+          expectedClientId: id,
+          expectedSender: sender,
+          expectedRecipient: peer,
+          expectedDeviceId: device,
+          ciphertext: body,
+          trustedSigningPublicKey: trusted,
+        );
     expect(await verify(decoded), isTrue);
     expect(
       await verify(decoded),

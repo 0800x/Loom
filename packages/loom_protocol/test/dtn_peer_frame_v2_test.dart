@@ -174,32 +174,33 @@ Uint8List _outerWire(String packetId) {
 }
 
 List<int> _transferSubmessage(String transmissionId, Uint8List outer) => <int>[
-  ..._lengthField(1, _utf8(transmissionId)),
-  ..._lengthField(2, outer),
-];
+      ..._lengthField(1, _utf8(transmissionId)),
+      ..._lengthField(2, outer),
+    ];
 
 List<int> _ackSubmessage({
   required String transmissionId,
   required String packetId,
   required int acceptedAtMs,
   required bool duplicate,
-}) => <int>[
-  ..._lengthField(1, _utf8(transmissionId)),
-  ..._lengthField(2, _utf8(packetId)),
-  ..._varintField(3, acceptedAtMs),
-  ..._varintField(4, duplicate ? 1 : 0),
-];
+}) =>
+    <int>[
+      ..._lengthField(1, _utf8(transmissionId)),
+      ..._lengthField(2, _utf8(packetId)),
+      ..._varintField(3, acceptedAtMs),
+      ..._varintField(4, duplicate ? 1 : 0),
+    ];
 
 List<int> _lengthField(int fieldNumber, List<int> bytes) => <int>[
-  ..._varint((fieldNumber << 3) | 2),
-  ..._varint(bytes.length),
-  ...bytes,
-];
+      ..._varint((fieldNumber << 3) | 2),
+      ..._varint(bytes.length),
+      ...bytes,
+    ];
 
 List<int> _varintField(int fieldNumber, int value) => <int>[
-  ..._varint(fieldNumber << 3),
-  ..._varint(value),
-];
+      ..._varint(fieldNumber << 3),
+      ..._varint(value),
+    ];
 
 List<int> _varint(int value) {
   final result = <int>[];

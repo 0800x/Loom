@@ -59,20 +59,20 @@ class LoomLanAnnouncement {
   }
 
   String canonicalPayload() => [
-    'loom-lan-announcement-v1',
-    nodeId,
-    domain,
-    endpoint.toString(),
-    publicKey,
-    fingerprint,
-    timestamp.toIso8601String(),
-    nonce,
-  ].join('\n');
+        'loom-lan-announcement-v1',
+        nodeId,
+        domain,
+        endpoint.toString(),
+        publicKey,
+        fingerprint,
+        timestamp.toIso8601String(),
+        nonce,
+      ].join('\n');
 }
 
 class LoomLanAnnouncementVerifier {
   LoomLanAnnouncementVerifier({DateTime Function()? now})
-    : _now = now ?? (() => DateTime.now().toUtc());
+      : _now = now ?? (() => DateTime.now().toUtc());
 
   final DateTime Function() _now;
   final Ed25519 _ed25519 = Ed25519();

@@ -10,7 +10,7 @@ import 'node_client.dart';
 
 class LoomDeviceBoundSessionClient {
   LoomDeviceBoundSessionClient({HttpClient? httpClient})
-    : _http = httpClient ?? HttpClient();
+      : _http = httpClient ?? HttpClient();
 
   final HttpClient _http;
 
@@ -33,9 +33,8 @@ class LoomDeviceBoundSessionClient {
       credential: refreshToken,
       bodyBytes: bodyBytes,
     );
-    final request = await _http
-        .postUrl(uri)
-        .timeout(const Duration(seconds: 8));
+    final request =
+        await _http.postUrl(uri).timeout(const Duration(seconds: 8));
     request.headers.contentType = ContentType.json;
     request.headers.set(HttpHeaders.acceptHeader, 'application/json');
     request.followRedirects = false;
@@ -73,8 +72,8 @@ class LoomDeviceBoundSessionClient {
     }
     final address = _requiredString(decoded, 'address');
     if (!address.toLowerCase().endsWith(
-      ':${baseUri.authority.toLowerCase()}',
-    )) {
+          ':${baseUri.authority.toLowerCase()}',
+        )) {
       throw const LoomProtocolException(
         'Node returned an unexpected identity address',
       );

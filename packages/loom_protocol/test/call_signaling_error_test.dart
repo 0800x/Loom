@@ -6,7 +6,9 @@ import 'package:loom_protocol/loom_protocol.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('WebSocket call.error preserves its call identity and rejects unscoped errors', () async {
+  test(
+      'WebSocket call.error preserves its call identity and rejects unscoped errors',
+      () async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     final peer = Completer<WebSocket>();
     server.listen((request) async {
