@@ -8,7 +8,7 @@ import 'widget_smoke_test.dart' show host, usePhoneViewport;
 void main() {
   for (final locale in [const Locale('en'), const Locale('fa')]) {
     testWidgets(
-      'conversation grows from its row and preserves draft: $locale',
+      'conversation grows from its avatar and preserves draft: $locale',
       (tester) async {
         usePhoneViewport(tester);
         await tester.pumpWidget(
@@ -16,7 +16,10 @@ void main() {
         );
         await tester.pumpAndSettle();
         final row = find.byType(LoomChatRow).first;
-        final origin = tester.getRect(row);
+        final origin = tester.getRect(
+          find.descendant(of: row, matching: find.byType(LoomAvatar)).first,
+        );
+        expect(origin.width, lessThan(tester.getRect(row).width));
         await tester.tap(row);
         await tester.pump();
         final transform = tester.widget<LoomContainerTransform>(
