@@ -1,3 +1,4 @@
+import { LoomClientAddressPolicy } from '../security/client_address.ts';
 import { GroupCallService } from '../calls/group_call_service.ts';
 import { GroupCallGateway } from '../calls/group_call_gateway.ts';
 import { GroupStore, GroupError } from '../groups/group_store.ts';
@@ -130,6 +131,7 @@ function requireRegistrationIdentity(body: Record<string, unknown>): void {
 }
 
 export class LoomNodeServer {
+  private readonly clientAddresses = new LoomClientAddressPolicy(process.env.LOOM_TRUSTED_PROXY_CIDRS);
   private readonly limiter = new LoomRateLimiter();
   private publicSnapshot?: Promise<PublicNodeStatus>;
   private publicSnapshotAt = 0;
@@ -309,7 +311,7 @@ export class LoomNodeServer {
       return;
     }
     try {
-      this.limiter.consume("upgrade:ip", request.socket.remoteAddress ?? "unknown", 30);
+      this.limiter.consume("upgrade:ip", this.clientAddresses.address(request), 30);
       const session = await this.authenticated(request);
       if (!session) {
         socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
@@ -428,8 +430,7 @@ export class LoomNodeServer {
     try {
       const url = new URL(request.url ?? '/', 'http://localhost');
       const [scope, quota] = endpointClass(url.pathname);
-      // Only the TCP peer is authoritative; forwarded headers are ignored.
-      const ip = request.socket.remoteAddress ?? 'unknown';
+      const ip = this.clientAddresses.address(request);
       this.limiter.consume('ip', ip, 1200);
       this.limiter.consume(scope, ip, quota);
       const credential = bearerToken(request);
