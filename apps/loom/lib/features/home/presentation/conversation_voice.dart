@@ -343,8 +343,8 @@ class _RoundVideoMessageState extends State<_RoundVideoMessage>
       aspectRatio: widget.round
           ? 1
           : _ready && player != null && player.value.aspectRatio > 0
-              ? player.value.aspectRatio
-              : widget.aspectRatio,
+          ? player.value.aspectRatio
+          : widget.aspectRatio,
       child: Material(
         color: Colors.black,
         child: InkWell(

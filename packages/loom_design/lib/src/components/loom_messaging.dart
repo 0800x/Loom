@@ -67,7 +67,8 @@ class LoomChatRow extends StatelessWidget {
           enabled: onTap != null || onTapWithOrigin != null,
           child: InkWell(
             onTap: onTapWithOrigin != null
-                ? () => onTapWithOrigin!(LoomOrigin.of(avatarKey.currentContext))
+                ? () =>
+                    onTapWithOrigin!(LoomOrigin.of(avatarKey.currentContext))
                 : onTap,
             borderRadius: radius,
             child: AnimatedContainer(
@@ -93,7 +94,8 @@ class LoomChatRow extends StatelessWidget {
                 children: [
                   KeyedSubtree(
                     key: avatarKey,
-                    child: avatar ?? LoomAvatar(label: name, presence: presence),
+                    child:
+                        avatar ?? LoomAvatar(label: name, presence: presence),
                   ),
                   const SizedBox(width: LoomSpacing.sm),
                   Expanded(

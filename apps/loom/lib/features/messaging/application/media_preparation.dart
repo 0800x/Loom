@@ -52,8 +52,14 @@ class LoomMediaPreparation {
   /// Portrait media keeps its orientation inside a chat, not only fullscreen.
   static double displayAspectRatio(Map<String, Object?> media) {
     final width = media['width'], height = media['height'];
-    if (width is! num || height is! num || !width.isFinite ||
-        !height.isFinite || width <= 0 || height <= 0) return 1.3;
+    if (width is! num ||
+        height is! num ||
+        !width.isFinite ||
+        !height.isFinite ||
+        width <= 0 ||
+        height <= 0) {
+      return 1.3;
+    }
     final ratio = width / height;
     return ratio.clamp(.25, 4.0).toDouble();
   }

@@ -1344,10 +1344,7 @@ class _FolderConversationPage extends StatelessWidget {
               delivery: item.delivery,
               selected: false,
               onTapWithOrigin: (origin) {
-                onConversationOrigin?.call(
-                  'preview',
-                  origin,
-                );
+                onConversationOrigin?.call('preview', origin);
                 onConversationSelected('preview');
               },
             ),
@@ -1495,10 +1492,7 @@ class _FolderConversationPage extends StatelessWidget {
                       LoomBreakpoints.expanded &&
                   selectedConversationId == conversation.id,
               onTapWithOrigin: (origin) {
-                onConversationOrigin?.call(
-                  conversation.id,
-                  origin,
-                );
+                onConversationOrigin?.call(conversation.id, origin);
                 onConversationSelected(conversation.id);
               },
             ),

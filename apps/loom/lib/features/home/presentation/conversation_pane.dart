@@ -370,7 +370,10 @@ class _ConversationPaneState extends State<_ConversationPane>
   Future<void> _insertKeyboardMedia(KeyboardInsertedContent content) async {
     final target = widget.conversation;
     final session = widget.messaging;
-    if (target == null || session == null || _uploading || LoomAppLock.instance.locked) {
+    if (target == null ||
+        session == null ||
+        _uploading ||
+        LoomAppLock.instance.locked) {
       return;
     }
     var data = content.data;
@@ -2054,16 +2057,31 @@ class _ConversationPaneState extends State<_ConversationPane>
                         Padding(
                           padding: const EdgeInsets.fromLTRB(48, 8, 12, 4),
                           child: ListTile(
-                            leading: const SizedBox.square(dimension: 24,
-                                child: CircularProgressIndicator(strokeWidth: 2)),
-                            title: Text(tr(context, 'Sending media…', 'در حال ارسال مدیا…')),
-                            subtitle: Text(tr(context, 'You can keep typing', 'می‌توانید به نوشتن ادامه دهید')),
+                            leading: const SizedBox.square(
+                              dimension: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            title: Text(
+                              tr(
+                                context,
+                                'Sending media…',
+                                'در حال ارسال مدیا…',
+                              ),
+                            ),
+                            subtitle: Text(
+                              tr(
+                                context,
+                                'You can keep typing',
+                                'می‌توانید به نوشتن ادامه دهید',
+                              ),
+                            ),
                           ),
                         ),
-                      if (widget.drafts.galleries[conversation?.id] case final gallery?)
-                        AnimatedBuilder(
-                          animation: gallery.batch,
-                          builder: (context, _) {
+                      if (widget.drafts.galleries[conversation?.id]
+                          case final gallery?)
+                        _MediaBatchProgress(
+                          batch: gallery.batch,
+                          builder: (context) {
                             final batch = gallery.batch;
                             if (batch.pending.isEmpty && !batch.sending) {
                               return const SizedBox.shrink();
@@ -2071,22 +2089,47 @@ class _ConversationPaneState extends State<_ConversationPane>
                             return Align(
                               alignment: AlignmentDirectional.centerEnd,
                               child: Padding(
-                                padding: const EdgeInsets.fromLTRB(48, 8, 12, 4),
+                                padding: const EdgeInsets.fromLTRB(
+                                  48,
+                                  8,
+                                  12,
+                                  4,
+                                ),
                                 child: Material(
                                   color: context.loom.surfaceElevated,
                                   borderRadius: BorderRadius.circular(20),
                                   child: ListTile(
                                     dense: true,
                                     leading: batch.sending
-                                        ? const SizedBox.square(dimension: 24,
-                                            child: CircularProgressIndicator(strokeWidth: 2))
+                                        ? const SizedBox.square(
+                                            dimension: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
                                         : const Icon(LoomIcons.refresh_rounded),
-                                    title: Text(batch.sending
-                                        ? tr(context, 'Sending media…', 'در حال ارسال مدیا…')
-                                        : tr(context, 'Media kept for retry', 'مدیا برای تلاش دوباره حفظ شد')),
-                                    subtitle: Text(batch.sending
-                                        ? '${batch.completed} / ${batch.total}'
-                                        : tr(context, 'Tap to review and retry', 'برای بررسی و تلاش دوباره بزنید')),
+                                    title: Text(
+                                      batch.sending
+                                          ? tr(
+                                              context,
+                                              'Sending media…',
+                                              'در حال ارسال مدیا…',
+                                            )
+                                          : tr(
+                                              context,
+                                              'Media kept for retry',
+                                              'مدیا برای تلاش دوباره حفظ شد',
+                                            ),
+                                    ),
+                                    subtitle: Text(
+                                      batch.sending
+                                          ? '${batch.completed} / ${batch.total}'
+                                          : tr(
+                                              context,
+                                              'Tap to review and retry',
+                                              'برای بررسی و تلاش دوباره بزنید',
+                                            ),
+                                    ),
                                     onTap: batch.sending ? null : _attach,
                                   ),
                                 ),
@@ -2110,12 +2153,15 @@ class _ConversationPaneState extends State<_ConversationPane>
                             focusNode: composerFocus,
                             enabled: canCompose,
                             sending: sending,
-                            onContentInserted: !preview && canCompose && !_uploading
+                            onContentInserted:
+                                !preview && canCompose && !_uploading
                                 ? (content) =>
                                       unawaited(_insertKeyboardMedia(content))
                                 : null,
                             onSend: preview ? null : _send,
-                            onAttach: canCompose && !_uploading ? _attach : null,
+                            onAttach: canCompose && !_uploading
+                                ? _attach
+                                : null,
                             onAttachmentOrigin: (rect) =>
                                 _attachmentOrigin = rect,
                             onVideoSend: (file, duration) async {

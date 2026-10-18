@@ -20,6 +20,7 @@ class _GalleryDraft {
   void _locked() {
     if (LoomAppLock.instance.locked) batch.stop();
   }
+
   final batch = MediaBatchController<_GalleryItem>();
   final TextEditingController caption;
   LoomVisibleMessage? reply;
@@ -239,16 +240,20 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
     final draft = widget.draft;
     final caption = draft.caption.text;
     final send = widget.send;
-    draft.upload = batch.send(
-      (item, withCaption) => send(item, withCaption ? caption : ''),
-      authorized: widget.authorized,
-    ).then((_) {
-      if (!draft.disposed && draft.batch.pending.isEmpty && draft.batch.error == null) {
-        draft.caption.clear();
-        draft.reply = null;
-        draft.replyCaptured = false;
-      }
-    });
+    draft.upload = batch
+        .send(
+          (item, withCaption) => send(item, withCaption ? caption : ''),
+          authorized: widget.authorized,
+        )
+        .then((_) {
+          if (!draft.disposed &&
+              draft.batch.pending.isEmpty &&
+              draft.batch.error == null) {
+            draft.caption.clear();
+            draft.reply = null;
+            draft.replyCaptured = false;
+          }
+        });
     _handedOff = true;
     unawaited(draft.upload!);
     if (mounted) Navigator.pop(context, 'queued');
@@ -840,4 +845,39 @@ class _GalleryThumbState extends State<_GalleryThumb> {
       ),
     ),
   );
+}
+
+/// Bridge the platform-independent batch notifier into the chat widget tree.
+class _MediaBatchProgress extends StatefulWidget {
+  const _MediaBatchProgress({required this.batch, required this.builder});
+  final MediaBatchController<_GalleryItem> batch;
+  final WidgetBuilder builder;
+  @override
+  State<_MediaBatchProgress> createState() => _MediaBatchProgressState();
+}
+
+class _MediaBatchProgressState extends State<_MediaBatchProgress> {
+  void _changed() {
+    if (mounted) setState(() {});
+  }
+  @override
+  void initState() {
+    super.initState();
+    widget.batch.addListener(_changed);
+  }
+  @override
+  void didUpdateWidget(covariant _MediaBatchProgress oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.batch != widget.batch) {
+      oldWidget.batch.removeListener(_changed);
+      widget.batch.addListener(_changed);
+    }
+  }
+  @override
+  void dispose() {
+    widget.batch.removeListener(_changed);
+    super.dispose();
+  }
+  @override
+  Widget build(BuildContext context) => widget.builder(context);
 }

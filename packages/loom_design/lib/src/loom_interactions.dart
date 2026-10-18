@@ -323,27 +323,27 @@ class LoomComposerMorph extends StatelessWidget {
       curve: Curves.easeInOutCubicEmphasized,
       alignment: Alignment.bottomCenter,
       child: AnimatedSwitcher(
-      duration: reduced ? Duration.zero : const Duration(milliseconds: 200),
-      reverseDuration:
-          reduced ? Duration.zero : const Duration(milliseconds: 140),
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
-      transitionBuilder: (child, animation) => reduced
-          ? child
-          : FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, .12),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: ScaleTransition(
-                  scale: Tween<double>(begin: .86, end: 1).animate(animation),
-                  child: child,
+        duration: reduced ? Duration.zero : const Duration(milliseconds: 200),
+        reverseDuration:
+            reduced ? Duration.zero : const Duration(milliseconds: 140),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) => reduced
+            ? child
+            : FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, .12),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: ScaleTransition(
+                    scale: Tween<double>(begin: .86, end: 1).animate(animation),
+                    child: child,
+                  ),
                 ),
               ),
-            ),
-      child: child,
+        child: child,
       ),
     );
   }
