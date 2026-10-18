@@ -10,6 +10,7 @@ import { renderLandingPage, nodeStatusScript } from '../src/http/landing_page.ts
 
 function config(dir: string): LoomNodeConfig {
   return {
+    showProjectSupport: true,
     schemaVersion: 1,
     mode: 'easy',
     listenHost: '127.0.0.1',

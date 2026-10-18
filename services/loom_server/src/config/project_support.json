@@ -1,0 +1,7 @@
+{
+  "checkout": "https://nowpayments.io/donation/loom",
+  "wallets": [
+    {"network": "BNB Smart Chain (BEP-20)", "address": "0x5D303A4DF69C5058c70E0ECf3280BDA600824685"},
+    {"network": "Ethereum (ERC-20)", "address": "0x5D303A4DF69C5058c70E0ECf3280BDA600824685"}
+  ]
+}
