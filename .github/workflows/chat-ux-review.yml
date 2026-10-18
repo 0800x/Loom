@@ -29,3 +29,12 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
       - run: flutter analyze --fatal-infos && flutter test
         working-directory: apps/loom
+      - name: Capture deterministic chat layouts
+        run: flutter test test/conversation_redesign_test.dart
+        working-directory: apps/loom
+        env:
+          LOOM_CAPTURE_WIDGETS: '1'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chat-ux-layouts
+          path: docs/ux-evidence/*.png
