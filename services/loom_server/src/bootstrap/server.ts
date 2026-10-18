@@ -229,7 +229,7 @@ export class LoomNodeServer {
       if (req.method !== 'GET' && req.method !== 'HEAD') {
         res.once('finish', () => this.accountRealtime.notifyCommitted());
       }
-      void this.handle(req, res);
+      void this.admitHttp(req, res);
     });
     this.server.on('upgrade', (request, socket, head) => void this.handleUpgrade(request, socket, head));
     this.lanDiscovery = new LoomLanDiscoveryResponder(config, this.identity);
@@ -421,10 +421,9 @@ export class LoomNodeServer {
     return false;
   }
 
-  private async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
+  private async admitHttp(request: IncomingMessage, response: ServerResponse): Promise<void> {
     response.setHeader('referrer-policy', 'no-referrer');
     response.setHeader('permissions-policy', 'camera=(), microphone=(), geolocation=()');
-    const method = request.method ?? 'GET';
     let release: (() => void) | undefined;
     try {
       const url = new URL(request.url ?? '/', 'http://localhost');
@@ -436,6 +435,23 @@ export class LoomNodeServer {
       const credential = bearerToken(request);
       if (credential) this.limiter.consume(scope + ':token', credential, quota);
       release = this.limiter.enter();
+      await this.handle(request, response);
+    } catch (error) {
+      if (response.headersSent) { response.destroy(); return; }
+      if (error instanceof RateLimitError) {
+        response.setHeader('Retry-After', String(error.retryAfter));
+        json(response, 429, { error: 'rate_limited' });
+      } else {
+        // Do not leak raw request/header values from adapter failures.
+        json(response, 500, { error: 'internal_error' });
+      }
+    } finally { release?.(); }
+  }
+
+  private async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    const method = request.method ?? 'GET';
+    try {
+      const url = new URL(request.url ?? '/', 'http://localhost');
       if(url.pathname.startsWith('/conference/'))return await this.groupCallGateway.validate(request,response);
       if(url.pathname==='/api/v1/group-calls/webhook'){
         if(method!=='POST')return json(response,405,{error:'method_not_allowed'});
@@ -959,7 +975,7 @@ export class LoomNodeServer {
       const status = bad.includes(code) ? 400 : notFound.includes(code) ? 404 : unauthorized.includes(code) ? 401 : forbidden.includes(code) ? 403 : conflict.includes(code) ? 409 : unavailable.includes(code) ? 503 : 500;
       if (status === 500) console.error('[loom-node] request failed', error);
       return json(response, status, { error: status === 500 ? 'internal_error' : code });
-    } finally { release?.(); }
+    }
   }
 }
 
