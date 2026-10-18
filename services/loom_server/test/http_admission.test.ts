@@ -39,3 +39,20 @@ test('HTTP admission precedes every delivery adapter and releases slots', async 
     await server.close(); rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('authenticated v2 adapters preserve account quota errors as HTTP 429', async () => {
+  const { RateLimitError } = await import('../src/security/rate_limiter.ts');
+  const dir = mkdtempSync(join(tmpdir(), 'loom-account-admission-'));
+  const config = { ...createDefaultConfig(), listenHost: '127.0.0.1', listenPort: 0, dataDirectory: dir, attachmentsDirectory: join(dir, 'attachments') };
+  const server = new LoomNodeServer(config);
+  (server as unknown as { authenticated: () => Promise<never> }).authenticated = async () => { throw new RateLimitError(7); };
+  await attachV2DeliveryService(server, config);
+  try {
+    const address = await server.listen();
+    for (const [method, path] of [['PUT', '/api/v2/mailboxes'], ['POST', '/api/v2/users/cache-verified']]) {
+      const response = await fetch(`http://127.0.0.1:${address.port}${path}`, { method });
+      assert.equal(response.status, 429, path); assert.equal(response.headers.get('retry-after'), '7');
+      assert.deepEqual(await response.json(), { error: 'rate_limited' });
+    }
+  } finally { await server.close(); rmSync(dir, { recursive: true, force: true }); }
+});

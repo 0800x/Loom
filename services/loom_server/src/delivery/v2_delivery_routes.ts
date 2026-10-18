@@ -1,3 +1,4 @@
+import { RateLimitError } from '../security/rate_limiter.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { SessionInfo } from '../storage/sqlite_store.ts';
 import type { DeviceBundleStore } from '../security/device_bundle_store.ts';
@@ -457,6 +458,7 @@ export class V2DeliveryRoutes {
       json(response, 404, { error: 'not_found' });
       return true;
     } catch (error: unknown) {
+      if (error instanceof RateLimitError) throw error;
       const code = error instanceof Error ? error.message : 'internal_error';
       const status = statusForV2Error(code);
       if (status === 500) {

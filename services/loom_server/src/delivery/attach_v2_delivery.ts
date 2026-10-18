@@ -1,3 +1,4 @@
+import { RateLimitError } from '../security/rate_limiter.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { LoomNodeConfig } from '../config/config.ts';
 import type { LoomNodeServer } from '../bootstrap/server.ts';
@@ -255,6 +256,7 @@ export async function attachV2DeliveryService(
           signFederationUserProfile(target.identity, { ...profile, devices }),
         );
       } catch (error) {
+        if (error instanceof RateLimitError) throw error;
         const code = error instanceof Error ? error.message : 'internal_error';
         const badRequest =
           code === 'body_too_large' ||
@@ -315,6 +317,7 @@ export async function attachV2DeliveryService(
           nodeId: peer.nodeId,
         });
       } catch (error) {
+        if (error instanceof RateLimitError) throw error;
         const code = error instanceof Error ? error.message : 'internal_error';
         const clientError =
           code.startsWith('invalid_') ||
