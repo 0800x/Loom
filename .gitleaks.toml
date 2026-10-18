@@ -1,0 +1,9 @@
+title = "Loom precise reviewed false positives"
+[extend]
+useDefault = true
+[[allowlists]]
+description = "Cargo dependency-name literal, never credential material"
+condition = "AND"
+paths = ['''(^|/)Cargo\.lock$''']
+regexTarget = "line"
+regexes = ['''^\s*"libcrux-secrets",?\s*$''']

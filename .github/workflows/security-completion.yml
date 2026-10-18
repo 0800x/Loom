@@ -1,0 +1,69 @@
+name: Security dependency and release gates
+on:
+  pull_request:
+  push:
+    branches: [main, 'fix/server-hardening-*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  npm-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+      - run: npm ci --ignore-scripts && npm audit
+        working-directory: services/loom_server
+  rust-audit:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: [native/loom_mls, native/loom_vodozemac_poc]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo install cargo-audit --version 0.22.2 --locked
+      - run: cargo audit
+        working-directory: ${{ matrix.crate }}
+  osv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.2'
+      - run: go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.7.0
+      - run: osv-scanner scan source --recursive .
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.2'
+      - run: go install github.com/zricethezav/gitleaks/v8@v8.30.1
+      - run: gitleaks git --redact
+  flutter-fatal-infos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.0'
+      - run: flutter pub get && flutter analyze --fatal-infos
+        working-directory: apps/loom
+  release-surfaces:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: '3.13.0'
+      - run: dart -Ddart.vm.product=true scripts/check-release-routes.dart
+      - run: python3 scripts/sync-release-metadata.py --check
+      - run: python3 scripts/validate-security-config.py

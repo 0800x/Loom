@@ -1,0 +1,7 @@
+# Exact historical false positives reviewed in the completion audit.
+# Cargo dependency name literal and synthetic media-probe test credentials only.
+# No rule or file is excluded; future findings at other commits still fail.
+34f669794e5ca74c75d5bfc0259c1e2c932bb72c:native/loom_mls/Cargo.lock:generic-api-key:975
+34f669794e5ca74c75d5bfc0259c1e2c932bb72c:tools/loom_node_manager/media_probe.test.mjs:generic-api-key:13
+64de59fab2368dc6c0dfd223fe0deebc50542f54:native/loom_mls/Cargo.lock:generic-api-key:975
+64de59fab2368dc6c0dfd223fe0deebc50542f54:tools/loom_node_manager/media_probe.test.mjs:generic-api-key:13
