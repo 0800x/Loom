@@ -67,3 +67,4 @@ jobs:
       - run: dart -Ddart.vm.product=true scripts/check-release-routes.dart
       - run: python3 scripts/sync-release-metadata.py --check
       - run: python3 scripts/validate-security-config.py
+      - run: python3 scripts/check-third-party-notices.py
