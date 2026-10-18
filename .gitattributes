@@ -9,3 +9,6 @@
 *.webp binary
 *.ico binary
 *.ansi binary
+
+# Preserve upstream notice bytes; filenames are SHA-256 of exact content.
+/third_party/licenses/*.txt -text
