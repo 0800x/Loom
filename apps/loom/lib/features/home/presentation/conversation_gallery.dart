@@ -860,11 +860,13 @@ class _MediaBatchProgressState extends State<_MediaBatchProgress> {
   void _changed() {
     if (mounted) setState(() {});
   }
+
   @override
   void initState() {
     super.initState();
     widget.batch.addListener(_changed);
   }
+
   @override
   void didUpdateWidget(covariant _MediaBatchProgress oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -873,11 +875,13 @@ class _MediaBatchProgressState extends State<_MediaBatchProgress> {
       widget.batch.addListener(_changed);
     }
   }
+
   @override
   void dispose() {
     widget.batch.removeListener(_changed);
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) => widget.builder(context);
 }

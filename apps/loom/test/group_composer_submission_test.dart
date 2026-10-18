@@ -12,10 +12,16 @@ import 'widget_smoke_test.dart' show host;
 class _GroupMessaging extends LoomMessagingSessionController {
   _GroupMessaging({required super.onboarding}) {
     status = LoomMessagingSessionStatus.ready;
-    conversations = const [models.LoomConversation(
-      id: 'group', kind: models.LoomConversationKind.group, updatedOrder: 1,
-      unreadCount: 0, isMuted: false, isPinned: false,
-    )];
+    conversations = const [
+      models.LoomConversation(
+        id: 'group',
+        kind: models.LoomConversationKind.group,
+        updatedOrder: 1,
+        unreadCount: 0,
+        isMuted: false,
+        isPinned: false,
+      ),
+    ];
   }
   final sent = Completer<bool>();
   @override
@@ -23,21 +29,39 @@ class _GroupMessaging extends LoomMessagingSessionController {
   @override
   bool canSendToGroup(String id) => id == 'group';
   @override
-  Future<bool> sendText(String conversationId, String plaintext, {
-    String? replyToMessageId, LoomVisibleMessage? reply, LoomMessageContent? content,
+  Future<bool> sendText(
+    String conversationId,
+    String plaintext, {
+    String? replyToMessageId,
+    LoomVisibleMessage? reply,
+    LoomMessageContent? content,
   }) => sent.future;
 }
 
 void main() {
   for (final scenario in ['selection', 'new text', 'failed']) {
-    testWidgets('group composer retains the correct draft after $scenario', (tester) async {
+    testWidgets('group composer retains the correct draft after $scenario', (
+      tester,
+    ) async {
       final nodes = LoomNodeDirectoryController();
       final onboarding = LoomOnboardingController(nodes: nodes)
-        ..receipt = const models.LoomRegistrationReceipt(accountId: 'test',
-          deviceId: 'test', address: '@test:home.example', homeNode: 'home.example');
+        ..receipt = const models.LoomRegistrationReceipt(
+          accountId: 'test',
+          deviceId: 'test',
+          address: '@test:home.example',
+          homeNode: 'home.example',
+        );
       final messaging = _GroupMessaging(onboarding: onboarding);
-      await tester.pumpWidget(host(LoomMessagingSessionScope(controller: messaging,
-        child: const LoomConversationSurface(conversationId: 'group'))));
+      await tester.pumpWidget(
+        host(
+          Scaffold(
+            body: LoomMessagingSessionScope(
+              controller: messaging,
+              child: const LoomConversationSurface(conversationId: 'group'),
+            ),
+          ),
+        ),
+      );
       await tester.pump(const Duration(milliseconds: 350));
       final field = find.byType(TextField).first;
       await tester.enterText(field, 'hello group');
@@ -52,7 +76,14 @@ void main() {
       }
       messaging.sent.complete(scenario != 'failed');
       await tester.pump(const Duration(milliseconds: 350));
-      expect(controller.text, scenario == 'selection' ? '' : scenario == 'new text' ? 'next message' : 'hello group');
+      expect(
+        controller.text,
+        scenario == 'selection'
+            ? ''
+            : scenario == 'new text'
+            ? 'next message'
+            : 'hello group',
+      );
       await tester.pumpWidget(const SizedBox.shrink());
       messaging.dispose();
       onboarding.dispose();
