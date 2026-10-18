@@ -18,3 +18,8 @@ serde_json = "1"
 zeroize = "1"
 chacha20poly1305 = "0.10"
 rand = "0.8"
+
+# Upstream adapter source is unchanged; only its exact optional KEM dependency
+# pin is advanced to the upstream RustSec-fixed release. See vendored provenance.
+[patch.crates-io]
+hpke-rs-libcrux = { path = "../../third_party/hpke-rs-libcrux" }
