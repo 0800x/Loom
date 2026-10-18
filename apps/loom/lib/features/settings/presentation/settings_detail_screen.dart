@@ -1,3 +1,4 @@
+import '../../../app/release_metadata.dart';
 import 'package:loom_design/loom_design.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -49,8 +50,7 @@ class LoomSettingsDetailScreen extends StatefulWidget {
       _LoomSettingsDetailScreenState();
 }
 
-class _LoomSettingsDetailScreenState
-    extends State<LoomSettingsDetailScreen> {
+class _LoomSettingsDetailScreenState extends State<LoomSettingsDetailScreen> {
   late LoomThemeMode themeMode;
   late LoomGlassQuality glassQuality;
   late Locale locale;
@@ -224,8 +224,8 @@ class _LoomSettingsDetailScreenState
     ),
     LoomSettingsSection.about => tr(
       context,
-      'Loom is a privacy-focused, resilient communication project currently in pre-alpha development.',
-      'لوم یک پروژه ارتباطی مقاوم و حریم‌خصوصی‌محور است که اکنون در مرحله پیش‌آلفا قرار دارد.',
+      'Loom is a privacy-focused, resilient communication project currently in $loomReleaseChannel development.',
+      'لوم یک پروژه ارتباطی مقاوم و حریم‌خصوصی‌محور است که اکنون در مرحله آلفا قرار دارد.',
     ),
     LoomSettingsSection.sharedMedia => tr(
       context,
@@ -574,7 +574,7 @@ class _LoomSettingsDetailScreenState
     const SizedBox(height: LoomSpacing.md),
     _ValueRow(
       label: tr(context, 'Status', 'وضعیت'),
-      value: tr(context, 'Pre-alpha', 'پیش‌آلفا'),
+      value: tr(context, loomReleaseChannel, 'آلفا'),
     ),
     const SizedBox(height: LoomSpacing.md),
     _Notice(
