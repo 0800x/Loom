@@ -15,8 +15,9 @@ line-ending difference is excluded from every commit.
 
 **Verdict: BLOCKED for merge approval / signed distribution.** The OSV gate reports
 RUSTSEC-2026-0173 (unmaintained proc-macro-error2 2.0.1, no fixed version returned).
-No advisory is suppressed. Ten dependency notice texts remain unavailable, and
-final hosted checks must be green. The implementation is suitable for further
+No advisory is suppressed. All 562 inventory entries now have preserved notice
+texts; final binary/platform attribution still needs review. Final hosted checks
+must be green. The implementation is suitable for further
 alpha testing, not a security certification or beta recommendation.
 
 ## Findings and disposition
@@ -38,7 +39,7 @@ boundary, not that every external deployment/platform has been validated.
 | V10 | VERIFIED, fixed in source | High | apps/loom/android/app/src/main/kotlin/app/loom/messenger/MainActivity.kt:54; LoomAppLockBridge.kt:184 | FLAG_SECURE is set before Flutter startup and retained independently of App Lock. Recovery UI has no word-to-clipboard action; public call notifications are generic. No claim of physical Android screenshot/Doze testing. |
 | V11 | VERIFIED, unchanged format | High residual | packages/loom_crypto_bridge/lib/src/recovery_file_codec.dart:8; apps/loom/lib/features/onboarding/presentation/recovery_screen.dart:91 | Encrypted codec uses Argon2id 19456 KiB, two iterations, p=1, AES-256-GCM, random salt and password minimum 12. Shipping onboarding file/PDF/QR exports instead use plaintext words with explicit warning. Password/chats and device-local MLS/session ratchet state are not restored by identity recovery. No recovery-format change authorized here. |
 | V12 | VERIFIED partial gap, fixed for production images | High | services/loom_server/deploy/Dockerfile:1; deploy/docker-compose.production.yml:6; scripts/validate-security-config.py:17 | Newly pinned previously mutable Node/Alpine/Postgres/Caddy tags to registry-verified digests; existing pins untouched. Local source images require build rather than mutable-tag pull. npm integrity, Go sums and signed package verification retained. Reachability of every censorship-region mirror is UNCONFIRMED. |
-| V13 | UNCONFIRMED comprehensive compliance | Medium | THIRD_PARTY_NOTICES.md:1; docs/license-compatibility.md:1 | Generated 562-entry inventory and preserved upstream texts with byte-digest validation. Ten notice texts and final binary/platform attribution need review. Namespace change does not establish new authorship; no blanket provenance/license clearance. |
+| V13 | UNCONFIRMED comprehensive compliance | Medium | THIRD_PARTY_NOTICES.md:1; docs/license-compatibility.md:1 | Generated 562-entry inventory and preserved upstream texts with byte-digest validation. All notice texts are preserved; final binary/platform attribution needs review. Namespace change does not establish new authorship; no blanket provenance/license clearance. |
 | V14 | VERIFIED bounded paths; exhaustive adversarial coverage UNCONFIRMED | Medium | packages/loom_dtn/lib/src/replica_intake_store.dart:131; packages/loom_transport/lib/src/nearby_legacy_message_gateway.dart:379; apps/loom/lib/features/messaging/application/product_messaging_policy.dart:32 | Existing expiry/seven-day custody/hop limits, storage-pressure handling and bounded gateway concurrency retained. v2Required dispatch forbids legacy fallback. Legacy compatibility still exists deliberately; real radio/hostile-carrier stress is not claimed. |
 | S1 | VERIFIED, implemented | High | services/loom_server/src/security/password_hash.ts:3 | Async scrypt N=131072,r=8,p=1; two concurrent jobs/eight queued; strict descriptors, canonical hash encoding, legacy N=16384 verification and successful-login CAS rehash in SQLite/Postgres. ADR 004 records compatibility. |
 | S2 | VERIFIED, implemented | High | services/loom_server/src/security/rate_limiter.ts:10; src/bootstrap/server.ts:234 | Earlier S2 commits retained; per-IP/class/account/device keys and trusted-proxy policy, saturation/debt and v2 429 regressions tested. Distributed/persistent quota coordination is not implemented. |
@@ -52,7 +53,7 @@ boundary, not that every external deployment/platform has been validated.
 | K5 | VERIFIED, implemented | Low | release/version.json:4; scripts/sync-release-metadata.py:1 | Generated app/server labels derive alpha from release metadata; published remains false. Drift check added. |
 | O1 | VERIFIED, docs changed | High | README.md:290; release/README.md:1 | Moving-main installer execution replaced with signed-tag verification contract. No invented signing key/hash or claim that signed assets already exist. |
 | O2 | VERIFIED, implemented | Medium | SECURITY.md:1; CONTRIBUTING.md:1; .github/CODEOWNERS:1; docs/threat-model.md:1 | Disclosure targets/support scope, ownership, contribution requirements and six-adversary threat model with Home Node metadata visibility. Maintainer must monitor the published channel. |
-| O3 | VERIFIED partial implementation | Medium | THIRD_PARTY_NOTICES.md:1; scripts/check-third-party-notices.py:1 | Inventory, verbatim notices, upstream immutable-source references and license/App Store compatibility note added. Ten unresolved notice texts remain a signed-distribution blocker. |
+| O3 | VERIFIED partial implementation | Medium | THIRD_PARTY_NOTICES.md:1; scripts/check-third-party-notices.py:1 | Inventory, verbatim notices, upstream immutable-source references and license/App Store compatibility note added. All ten missing texts recovered; final binary/platform attribution remains a signed-distribution gate. |
 | O4 | VERIFIED, implemented | Low | README.md:1; README.fa.md:1 | Removed hits counter/stale public-badge sentence; documented shipping sealed-box v1, disabled production v2 and published:false. |
 | O5 | VERIFIED, implemented | Medium | services/loom_server/src/config/project_support.json:1; src/http/landing_page.ts:1 | Wallet values preserved in one default source; operator display opt-in, optional validated override. README/page networks aligned; default node page does not advertise project wallets. |
 | O6 | VERIFIED, implemented; gate blocked | Medium | .github/workflows/security-completion.yml:1; .gitleaks.toml:1 | Added npm/Rust/OSV/secret/fatal-info/release-route/notice-integrity gates without removing existing jobs. Only exact reviewed synthetic/literal false positives are exempted. OSV maintenance advisory remains failing. |
@@ -131,15 +132,15 @@ checks apply. No false green result is claimed for external release gates.
 | N5 | VERIFIED, open | Low maintenance / OSV unknown | native/loom_mls/Cargo.lock:1 | RUSTSEC-2026-0173 has no reported fixed version; inactive optional dependency chain, cargo tree had no active path. Do not silently suppress or rewrite crypto to force green. |
 | N6 | VERIFIED, fixed | Low | .github/workflows/flutter-ci.yml:1; scripts/test-node-production.py:87 | Per-project formatter context, cross-package design resolution and exact pinned-image fixture expectations corrected after hosted evidence. Final rerun pending. |
 | N7 | VERIFIED residual | High if artifact stolen | apps/loom/lib/features/onboarding/presentation/recovery_screen.dart:91 | Shipping recovery file/QR/PDF is plaintext, despite separate encrypted codec existing. UI explicitly warns. No claim all exports use Argon2id; changing this product/format boundary needs its own decision and ADR. |
-| N8 | VERIFIED, open | Medium distribution | THIRD_PARTY_NOTICES.md:1 | Ten locked dependencies lack verified notice text; names/versions are explicit in inventory. Final platform binary attribution remains unverified. |
+| N8 | VERIFIED, fixed for inventory | Medium distribution | THIRD_PARTY_NOTICES.md:1 | All 562 entries now have preserved notice text and immutable references for recovered sources. CI rejects missing texts; final platform binary attribution remains unverified. |
 
 ## DECISIONS NEEDED
 
 1. Choose an upstream-supported resolution for the unmaintained optional dependency
    chain, or document a separately reviewed maintenance-risk policy. This run does
    not suppress the OSV gate or invent a cryptographic replacement.
-2. Resolve the ten missing dependency notices and review binary/platform/license
-   obligations, including Apple distribution, before signing a release.
+2. Review final binary/platform/license obligations, including Apple distribution,
+   before signing a release; the ten inventory notice gaps are resolved.
 3. Establish publisher signing identity/key distribution, monitored private
    disclosure, independent security review and real-device/platform test ownership.
 4. Decide separately whether plaintext paper/file recovery remains the intended
@@ -199,3 +200,32 @@ lints in loom_design/lib/src/components/loom_settings.dart. Added braces without
 changing branches/colors. Hosted analyzer failure is the before evidence; final
 hosted analyzer/formatter rerun is required for the after result. No new behavior
 test possible: this correction is syntax/style only. OSV remains blocked as above.
+
+## Notice closure follow-up
+
+Baseline repeated before this follow-up: `npm ci && npm test` PASS, 167/167.
+No runtime, wire, crypto or lockfile changes were made. The notice collector now
+handles LICENSE directories, *.LICENSE files and explicit license sections in
+README/AUTHORS. Two regression tests cover the previously missed directory and
+embedded-text cases, unrelated dependency directories and symlink exclusion.
+The previous root-file-only collector misses the fixture's directory and README
+notices; the new collector finds them. CI also rejects empty notice entries and
+checks deterministic re-rendering without installed dependency caches.
+
+`python3 scripts/test_notice_sources.py`, generator `--from-inventory`, notice
+digest verification, security config/repository guards and release metadata
+checks passed. Re-rendering preserves all 562 entries with zero missing texts.
+See third_party/NOTICE-PROVENANCE.md for immutable upstream source evidence.
+
+NOT EXECUTED: local Flutter analysis/tests – local SDK setup was previously
+blocked by automatic approval review; existing successful hosted UX validation
+(55 design and 461 app tests, 25 skips) belongs to head 2d8a5fdd, not a new run.
+NOT EXECUTED: cargo test/audit/deny – Rust toolchain absent after runtime reset.
+NOT EXECUTED: go test ./... – Go toolchain absent after runtime reset.
+NOT EXECUTED: physical Android/iOS media, keyboard and background-upload tests –
+no connected physical device. These checks are not claimed complete.
+
+Official crate metadata still lists hax-lib/macros 0.3.7 as the newest compatible
+0.3 release; 0.4.2 is a separate semver line. core-models 0.0.7 is latest. Blindly
+substituting a cryptographic/proof dependency or ignoring RUSTSEC-2026-0173 is not
+a verified fix. N5 remains open and the existing OSV gate remains blocking.
