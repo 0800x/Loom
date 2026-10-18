@@ -189,3 +189,13 @@ a9097da1821a9a31fc34cd7dc38df5588e6ee631 fix(licenses): O3 preserve original not
 7524ae62ca0c80c0216fac6cdd2b10b4fdc71131 fix(ci): CHECKS resolve cross-package analysis and assert immutable mirrors
 df1e62370d0169d646b8dc323125334fe5691ec6 fix(ci): FORMAT resolve every validation project before formatting
 ```
+
+## Hosted follow-up after the completion report
+
+At implementation head df1e623, production/TURN integration, secret scanning,
+standalone Dart matrices, native MLS and architecture-v2 contracts passed. The
+remaining Flutter failures both came from the same five fatal-info curly-brace
+lints in loom_design/lib/src/components/loom_settings.dart. Added braces without
+changing branches/colors. Hosted analyzer failure is the before evidence; final
+hosted analyzer/formatter rerun is required for the after result. No new behavior
+test possible: this correction is syntax/style only. OSV remains blocked as above.
