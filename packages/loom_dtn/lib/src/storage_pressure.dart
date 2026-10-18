@@ -37,10 +37,10 @@ final class LoomSqliteDtnStorageMetricsSource
 
   @override
   LoomDtnStorageMetrics readMetrics() => LoomDtnStorageMetrics(
-    databaseBytes: _length(databasePath),
-    walBytes: _length('$databasePath-wal'),
-    shmBytes: _length('$databasePath-shm'),
-  );
+        databaseBytes: _length(databasePath),
+        walBytes: _length('$databasePath-wal'),
+        shmBytes: _length('$databasePath-shm'),
+      );
 
   static int _length(String path) {
     final file = File(path);

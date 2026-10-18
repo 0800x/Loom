@@ -7,8 +7,8 @@ void main() {
   final entropy = List<int>.generate(32, (index) => index);
 
   LoomSelfMessageCodec codec() => LoomSelfMessageCodec(
-    recoveryEntropyProvider: () async => List<int>.from(entropy),
-  );
+        recoveryEntropyProvider: () async => List<int>.from(entropy),
+      );
 
   test(
     'Saved Message round-trips with identity and conversation binding',

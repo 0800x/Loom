@@ -32,10 +32,10 @@ class LoomNativeMlsCore {
   static String get defaultLibraryPath => Platform.isWindows
       ? 'loom_mls.dll'
       : Platform.isMacOS
-      ? '${File(Platform.resolvedExecutable).parent.parent.path}/Frameworks/libloom_mls.dylib'
-      : Platform.isIOS
-      ? 'libloom_mls.dylib'
-      : 'libloom_mls.so';
+          ? '${File(Platform.resolvedExecutable).parent.parent.path}/Frameworks/libloom_mls.dylib'
+          : Platform.isIOS
+              ? 'libloom_mls.dylib'
+              : 'libloom_mls.so';
   Future<LoomMlsOperation> execute({
     required String deviceId,
     required List<int> sealingKey,

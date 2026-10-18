@@ -169,25 +169,25 @@ class LoomCallHistoryStore {
   }
 
   LoomCallHistoryEntry _fromRow(Row row) => LoomCallHistoryEntry(
-    callId: row['call_id'] as String,
-    conversationId: row['conversation_id'] as String,
-    peerIdentityId: row['peer_identity_id'] as String,
-    peerAddress: row['peer_address'] as String,
-    peerDisplayName: row['peer_display_name'] as String,
-    kind: LoomCallKind.values.byName(row['kind'] as String),
-    direction: LoomCallDirection.values.byName(row['direction'] as String),
-    outcome: LoomCallHistoryOutcome.values.byName(row['outcome'] as String),
-    startedAt: DateTime.parse(row['started_at'] as String).toUtc(),
-    answeredAt: row['answered_at'] == null
-        ? null
-        : DateTime.parse(row['answered_at'] as String).toUtc(),
-    endedAt: row['ended_at'] == null
-        ? null
-        : DateTime.parse(row['ended_at'] as String).toUtc(),
-    endReason: row['end_reason'] == null
-        ? null
-        : LoomCallEndReason.values.byName(row['end_reason'] as String),
-  );
+        callId: row['call_id'] as String,
+        conversationId: row['conversation_id'] as String,
+        peerIdentityId: row['peer_identity_id'] as String,
+        peerAddress: row['peer_address'] as String,
+        peerDisplayName: row['peer_display_name'] as String,
+        kind: LoomCallKind.values.byName(row['kind'] as String),
+        direction: LoomCallDirection.values.byName(row['direction'] as String),
+        outcome: LoomCallHistoryOutcome.values.byName(row['outcome'] as String),
+        startedAt: DateTime.parse(row['started_at'] as String).toUtc(),
+        answeredAt: row['answered_at'] == null
+            ? null
+            : DateTime.parse(row['answered_at'] as String).toUtc(),
+        endedAt: row['ended_at'] == null
+            ? null
+            : DateTime.parse(row['ended_at'] as String).toUtc(),
+        endReason: row['end_reason'] == null
+            ? null
+            : LoomCallEndReason.values.byName(row['end_reason'] as String),
+      );
 
   void close() {
     if (_closed) return;

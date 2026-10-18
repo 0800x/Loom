@@ -109,5 +109,6 @@ final class _Resolver implements LoomAuthorizedDeviceSigningKeyResolver {
     required String deviceId,
     required int deviceKeyVersion,
     required DateTime now,
-  }) async => key;
+  }) async =>
+      key;
 }

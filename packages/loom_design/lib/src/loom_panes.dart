@@ -6,8 +6,8 @@ class LoomPaneRange {
     required this.min,
     required this.preferred,
     required this.max,
-  }) : assert(min <= preferred),
-       assert(preferred <= max);
+  })  : assert(min <= preferred),
+        assert(preferred <= max);
 
   final double min;
   final double preferred;
@@ -32,12 +32,12 @@ abstract final class LoomPaneSpecs {
 /// policy here prevents future resize logic from leaking into feature widgets.
 class LoomPaneController extends ChangeNotifier {
   LoomPaneController({double? conversationListWidth, double? detailsWidth})
-    : _conversationListWidth = LoomPaneSpecs.conversationList.clamp(
-        conversationListWidth ?? LoomPaneSpecs.conversationList.preferred,
-      ),
-      _detailsWidth = LoomPaneSpecs.details.clamp(
-        detailsWidth ?? LoomPaneSpecs.details.preferred,
-      );
+      : _conversationListWidth = LoomPaneSpecs.conversationList.clamp(
+          conversationListWidth ?? LoomPaneSpecs.conversationList.preferred,
+        ),
+        _detailsWidth = LoomPaneSpecs.details.clamp(
+          detailsWidth ?? LoomPaneSpecs.details.preferred,
+        );
 
   double _conversationListWidth;
   double _detailsWidth;

@@ -83,11 +83,10 @@ class _GlassScopeState extends State<LoomGlassScope>
 
   @override
   Widget build(BuildContext context) => _AutomaticGlassQuality(
-    quality: widget.quality == LoomGlassQuality.high
-        ? _quality
-        : widget.quality,
-    child: widget.child,
-  );
+        quality:
+            widget.quality == LoomGlassQuality.high ? _quality : widget.quality,
+        child: widget.child,
+      );
 }
 
 class _AutomaticGlassQuality extends InheritedWidget {
@@ -134,8 +133,8 @@ class LoomGlassSurface extends StatelessWidget {
     final alpha = accessibility.highContrast
         ? .96
         : dark
-        ? recipe.darkAlpha
-        : recipe.lightAlpha;
+            ? recipe.darkAlpha
+            : recipe.lightAlpha;
     final effectiveAlpha = switch (quality) {
       LoomGlassQuality.high => alpha,
       LoomGlassQuality.reduced =>
@@ -148,9 +147,8 @@ class LoomGlassSurface extends StatelessWidget {
         recipe.blur * LoomGlassRecipes.reducedBlurFactor,
       LoomGlassQuality.disabled => 0.0,
     };
-    final surfaceColor = strength == LoomGlassStrength.strong
-        ? p.surfaceElevated
-        : p.surface;
+    final surfaceColor =
+        strength == LoomGlassStrength.strong ? p.surfaceElevated : p.surface;
     final shadowOpacity = switch (strength) {
       LoomGlassStrength.weak => 0.0,
       LoomGlassStrength.standard =>
@@ -327,8 +325,8 @@ class LoomTopGlassFade extends StatelessWidget {
         quality == LoomGlassQuality.disabled
             ? 1
             : access.highContrast
-            ? .96
-            : .58,
+                ? .96
+                : .58,
       ),
     );
     return IgnorePointer(

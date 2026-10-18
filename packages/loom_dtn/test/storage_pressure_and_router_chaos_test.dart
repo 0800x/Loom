@@ -120,30 +120,31 @@ LoomStoredDtnPacket _packet(
   DateTime now, {
   required int copies,
   required LoomPriorityClassV2 priority,
-}) => LoomStoredDtnPacket(
-  packetId: 'packet-chaos-0001',
-  origin: LoomDtnPacketOrigin.localOutbound,
-  operationId: 'operation-chaos-0001',
-  messageId: 'message-chaos-0001',
-  wireBytes: Uint8List.fromList(const <int>[1, 2, 3]),
-  routingScope: LoomRoutingScopeV2.globalRelay,
-  mailboxToken: Uint8List.fromList(List<int>.filled(16, 7)),
-  expiresAt: now.add(const Duration(days: 1)),
-  priority: priority,
-  initialHopLimit: 6,
-  hopsUsed: 0,
-  initialCopiesRemaining: copies,
-  copiesRemaining: copies,
-  storedAt: now,
-  state: LoomDtnPacketState.queued,
-  attemptCount: 0,
-  nextAttemptAt: now,
-  lastErrorCode: null,
-  gatewayAcceptedAt: null,
-  relayAcceptedAt: null,
-  recipientConfirmedAt: null,
-  terminalAt: null,
-);
+}) =>
+    LoomStoredDtnPacket(
+      packetId: 'packet-chaos-0001',
+      origin: LoomDtnPacketOrigin.localOutbound,
+      operationId: 'operation-chaos-0001',
+      messageId: 'message-chaos-0001',
+      wireBytes: Uint8List.fromList(const <int>[1, 2, 3]),
+      routingScope: LoomRoutingScopeV2.globalRelay,
+      mailboxToken: Uint8List.fromList(List<int>.filled(16, 7)),
+      expiresAt: now.add(const Duration(days: 1)),
+      priority: priority,
+      initialHopLimit: 6,
+      hopsUsed: 0,
+      initialCopiesRemaining: copies,
+      copiesRemaining: copies,
+      storedAt: now,
+      state: LoomDtnPacketState.queued,
+      attemptCount: 0,
+      nextAttemptAt: now,
+      lastErrorCode: null,
+      gatewayAcceptedAt: null,
+      relayAcceptedAt: null,
+      recipientConfirmedAt: null,
+      terminalAt: null,
+    );
 
 LoomDtnOpportunity _opportunity(
   String id, {
@@ -152,21 +153,22 @@ LoomDtnOpportunity _opportunity(
   LoomGatewayClaimState gateway = LoomGatewayClaimState.none,
   int quality = 80,
   int congestion = 10,
-}) => LoomDtnOpportunity(
-  opportunityId: id,
-  authenticated: true,
-  directRecipient: direct,
-  gatewayClaim: gateway,
-  supportedRelayScopes: gateway == LoomGatewayClaimState.none
-      ? const <LoomRoutingScopeV2>{}
-      : const <LoomRoutingScopeV2>{LoomRoutingScopeV2.globalRelay},
-  canStoreCarry: canStoreCarry,
-  linkQualityPercent: quality,
-  congestionPercent: congestion,
-  batteryConstrained: false,
-  recentSuccessfulTransfers: 0,
-  recentFailedTransfers: 0,
-);
+}) =>
+    LoomDtnOpportunity(
+      opportunityId: id,
+      authenticated: true,
+      directRecipient: direct,
+      gatewayClaim: gateway,
+      supportedRelayScopes: gateway == LoomGatewayClaimState.none
+          ? const <LoomRoutingScopeV2>{}
+          : const <LoomRoutingScopeV2>{LoomRoutingScopeV2.globalRelay},
+      canStoreCarry: canStoreCarry,
+      linkQualityPercent: quality,
+      congestionPercent: congestion,
+      batteryConstrained: false,
+      recentSuccessfulTransfers: 0,
+      recentFailedTransfers: 0,
+    );
 
 final class _FakeMetricsSource implements LoomDtnStorageMetricsSource {
   const _FakeMetricsSource(this.value);
@@ -184,7 +186,8 @@ final class _FakePacketStore implements LoomPacketStore {
   int pruneTerminal(
     DateTime now, {
     Duration tombstoneRetention = const Duration(days: 30),
-  }) => 0;
+  }) =>
+      0;
   @override
   LoomStoredDtnPacket cancelLocal(String packetId, DateTime cancelledAt) {
     cancelCalls++;

@@ -28,7 +28,7 @@ abstract interface class LoomIdentityCore implements LoomIdentitySigner {
 
 class LoomIdentityCoreV1 implements LoomIdentityCore {
   LoomIdentityCoreV1({FlutterSecureStorage? storage})
-    : _storage = LoomSecretStorage(storage);
+      : _storage = LoomSecretStorage(storage);
 
   static const _privateKeyKey = 'loom.identity.ed25519.private.v1';
   static const _publicKeyKey = 'loom.identity.ed25519.public.v1';

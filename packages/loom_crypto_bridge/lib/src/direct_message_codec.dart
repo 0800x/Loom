@@ -43,9 +43,9 @@ class LoomDirectMessageCodec {
     required LoomDirectMessageSigner signer,
     required LoomDirectMessageOpener opener,
     LoomRelaySealer? sealer,
-  }) : _signer = signer,
-       _opener = opener,
-       _sealer = sealer ?? LoomRelaySealer();
+  })  : _signer = signer,
+        _opener = opener,
+        _sealer = sealer ?? LoomRelaySealer();
 
   static const String protocolVersion = 'Loom-Direct-v1';
   static const int _maxDevices = 128;
@@ -354,16 +354,17 @@ class LoomDirectMessageCodec {
     required String conversationId,
     required String? replyToMessageId,
     required List<_DirectRecipientBox> boxes,
-  }) => <String, Object?>{
-    'v': 1,
-    'protocol': protocolVersion,
-    'senderAddress': senderAddress,
-    'senderIdentityId': senderIdentityId,
-    'senderDeviceId': senderDeviceId,
-    'conversationId': conversationId,
-    if (replyToMessageId != null) 'replyToMessageId': replyToMessageId,
-    'boxes': boxes.map((box) => box.toJson()).toList(growable: false),
-  };
+  }) =>
+      <String, Object?>{
+        'v': 1,
+        'protocol': protocolVersion,
+        'senderAddress': senderAddress,
+        'senderIdentityId': senderIdentityId,
+        'senderDeviceId': senderDeviceId,
+        'conversationId': conversationId,
+        if (replyToMessageId != null) 'replyToMessageId': replyToMessageId,
+        'boxes': boxes.map((box) => box.toJson()).toList(growable: false),
+      };
 
   String _conversationBinding(
     String senderIdentityId,
@@ -372,7 +373,8 @@ class LoomDirectMessageCodec {
     final identities = <String>{
       senderIdentityId,
       ...recipientIdentityIds,
-    }.toList()..sort();
+    }.toList()
+      ..sort();
     if (identities.length != 2 ||
         identities.any(
           (identity) => identity.isEmpty || identity.length > 512,
@@ -391,9 +393,10 @@ class LoomDirectMessageCodec {
     required String senderDeviceId,
     required String recipientIdentityId,
     required String recipientDeviceId,
-  }) => utf8.encode(
-    'Loom-Direct-Box-v1\n$conversationId\n$senderAddress\n$senderIdentityId\n$senderDeviceId\n$recipientIdentityId\n$recipientDeviceId',
-  );
+  }) =>
+      utf8.encode(
+        'Loom-Direct-Box-v1\n$conversationId\n$senderAddress\n$senderIdentityId\n$senderDeviceId\n$recipientIdentityId\n$recipientDeviceId',
+      );
 }
 
 class _ParsedDirectEnvelope {
@@ -428,8 +431,8 @@ class _DirectRecipientBox {
   final LoomRelaySealedPayload sealed;
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'identityId': identityId,
-    'deviceId': deviceId,
-    'sealed': sealed.toJson(),
-  };
+        'identityId': identityId,
+        'deviceId': deviceId,
+        'sealed': sealed.toJson(),
+      };
 }

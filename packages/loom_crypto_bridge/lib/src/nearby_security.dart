@@ -79,44 +79,44 @@ class LoomNearbyHello {
   final String signature;
 
   LoomNearbyHello copyWithSignature(String value) => LoomNearbyHello(
-    version: version,
-    sessionId: sessionId,
-    role: role,
-    identityId: identityId,
-    deviceId: deviceId,
-    deviceFingerprint: deviceFingerprint,
-    ephemeralPublicKey: ephemeralPublicKey,
-    nonce: nonce,
-    createdAt: createdAt,
-    signature: value,
-  );
+        version: version,
+        sessionId: sessionId,
+        role: role,
+        identityId: identityId,
+        deviceId: deviceId,
+        deviceFingerprint: deviceFingerprint,
+        ephemeralPublicKey: ephemeralPublicKey,
+        nonce: nonce,
+        createdAt: createdAt,
+        signature: value,
+      );
 
   List<int> canonicalBytes() => utf8.encode(
-    <String>[
-      'Loom-Nearby-Hello-v1',
-      sessionId,
-      role.name,
-      identityId,
-      deviceId,
-      deviceFingerprint,
-      ephemeralPublicKey,
-      nonce,
-      createdAt.toUtc().toIso8601String(),
-    ].join('\n'),
-  );
+        <String>[
+          'Loom-Nearby-Hello-v1',
+          sessionId,
+          role.name,
+          identityId,
+          deviceId,
+          deviceFingerprint,
+          ephemeralPublicKey,
+          nonce,
+          createdAt.toUtc().toIso8601String(),
+        ].join('\n'),
+      );
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'version': version,
-    'sessionId': sessionId,
-    'role': role.name,
-    'identityId': identityId,
-    'deviceId': deviceId,
-    'deviceFingerprint': deviceFingerprint,
-    'ephemeralPublicKey': ephemeralPublicKey,
-    'nonce': nonce,
-    'createdAt': createdAt.toUtc().toIso8601String(),
-    'signature': signature,
-  };
+        'version': version,
+        'sessionId': sessionId,
+        'role': role.name,
+        'identityId': identityId,
+        'deviceId': deviceId,
+        'deviceFingerprint': deviceFingerprint,
+        'ephemeralPublicKey': ephemeralPublicKey,
+        'nonce': nonce,
+        'createdAt': createdAt.toUtc().toIso8601String(),
+        'signature': signature,
+      };
 }
 
 enum LoomNearbyHandshakeRole { initiator, responder }
@@ -177,25 +177,25 @@ class LoomNearbyPreAuth {
   final String tag;
 
   List<int> canonicalContext() => utf8.encode(
-    <String>[
-      'Loom-Nearby-PreAuth-v1',
-      sessionId,
-      rendezvousId,
-      role.name,
-      nonce,
-      peerNonce ?? '',
-    ].join('\n'),
-  );
+        <String>[
+          'Loom-Nearby-PreAuth-v1',
+          sessionId,
+          rendezvousId,
+          role.name,
+          nonce,
+          peerNonce ?? '',
+        ].join('\n'),
+      );
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'version': version,
-    'sessionId': sessionId,
-    'rendezvousId': rendezvousId,
-    'role': role.name,
-    'nonce': nonce,
-    if (peerNonce != null) 'peerNonce': peerNonce,
-    'tag': tag,
-  };
+        'version': version,
+        'sessionId': sessionId,
+        'rendezvousId': rendezvousId,
+        'role': role.name,
+        'nonce': nonce,
+        if (peerNonce != null) 'peerNonce': peerNonce,
+        'tag': tag,
+      };
 }
 
 class LoomNearbyPairAuthenticator {
@@ -235,12 +235,13 @@ class LoomNearbyPairAuthenticator {
   Future<String> currentRendezvousId({
     required LoomDeviceKeyBundle remoteDevice,
     DateTime? now,
-  }) => deviceSecurity.deriveNearbyRendezvousId(
-    identityId: localDevice.identityId,
-    deviceId: localDevice.deviceId,
-    remoteAgreementPublicKey: remoteDevice.agreementPublicKey,
-    timeSlot: timeSlot(now ?? DateTime.now()),
-  );
+  }) =>
+      deviceSecurity.deriveNearbyRendezvousId(
+        identityId: localDevice.identityId,
+        deviceId: localDevice.deviceId,
+        remoteAgreementPublicKey: remoteDevice.agreementPublicKey,
+        timeSlot: timeSlot(now ?? DateTime.now()),
+      );
 
   Future<LoomNearbyPreAuth> create({
     required LoomDeviceKeyBundle remoteDevice,

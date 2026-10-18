@@ -9,24 +9,27 @@ void main() {
     String call = 'call',
     String peer = 'peer',
     int sequence = 1,
-  }) => LoomCallSignal(
-    callId: call,
-    conversationId: 'conv',
-    senderIdentityId: peer,
-    targetIdentityId: 'self',
-    kind: kind,
-    sequence: sequence,
-    createdAt: created,
-    mediaKind: LoomCallKind.audio,
-    sdp: kind == 'call.offer' ? 'v=0\r\n' : null,
-    candidate: kind == 'call.ice'
-        ? 'candidate:$sequence 1 UDP 1 192.0.2.1 5000 typ host'
-        : null,
-    sdpMid: '0',
-    sdpMLineIndex: 0,
-  );
+  }) =>
+      LoomCallSignal(
+        callId: call,
+        conversationId: 'conv',
+        senderIdentityId: peer,
+        targetIdentityId: 'self',
+        kind: kind,
+        sequence: sequence,
+        createdAt: created,
+        mediaKind: LoomCallKind.audio,
+        sdp: kind == 'call.offer' ? 'v=0\r\n' : null,
+        candidate: kind == 'call.ice'
+            ? 'candidate:$sequence 1 UDP 1 192.0.2.1 5000 typ host'
+            : null,
+        sdpMid: '0',
+        sdpMLineIndex: 0,
+      );
 
-  test('candidates gathered while ringing survive until answer and are consumed once', () {
+  test(
+      'candidates gathered while ringing survive until answer and are consumed once',
+      () {
     final buffer = LoomIncomingIceBuffer('self', now: () => created);
     buffer.observe(signal('call.ice')); // no verified offer yet
     buffer.observe(signal('call.offer'));

@@ -14,11 +14,11 @@ class NodeStatus {
   final Map<String, Object?> stats;
 
   factory NodeStatus.fromJson(Map<String, Object?> json) => NodeStatus(
-    mode: json['mode'] as String? ?? 'unknown',
-    uptimeSeconds: (json['uptimeSeconds'] as num?)?.toInt() ?? 0,
-    node: (json['node'] as Map?)?.cast<String, Object?>() ?? const {},
-    stats: (json['stats'] as Map?)?.cast<String, Object?>() ?? const {},
-  );
+        mode: json['mode'] as String? ?? 'unknown',
+        uptimeSeconds: (json['uptimeSeconds'] as num?)?.toInt() ?? 0,
+        node: (json['node'] as Map?)?.cast<String, Object?>() ?? const {},
+        stats: (json['stats'] as Map?)?.cast<String, Object?>() ?? const {},
+      );
 }
 
 class NodeApiException implements Exception {

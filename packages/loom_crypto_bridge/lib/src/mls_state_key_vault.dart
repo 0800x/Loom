@@ -9,7 +9,7 @@ import 'app_lock.dart';
 /// wrapping keys for the same device's native state database.
 class LoomMlsStateKeyVault {
   LoomMlsStateKeyVault({LoomSecretStorage? storage})
-    : _storage = storage ?? LoomSecretStorage();
+      : _storage = storage ?? LoomSecretStorage();
   final LoomSecretStorage _storage;
   static Future<void> _tail = Future.value();
   Future<List<int>> open({

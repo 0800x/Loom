@@ -91,7 +91,9 @@ class _NativeVault {
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('protected identity, session and refresh token survive lock and new readers', () async {
+  test(
+      'protected identity, session and refresh token survive lock and new readers',
+      () async {
     const original = {
       'loom.identity.id.v1': 'chn:existing-account',
       'loom.session.metadata.v1':

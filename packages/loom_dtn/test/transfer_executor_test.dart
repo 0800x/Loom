@@ -330,32 +330,32 @@ void _putPacket(
 }
 
 LoomDtnOpportunity _carrier(String id) => LoomDtnOpportunity(
-  opportunityId: id,
-  authenticated: true,
-  directRecipient: false,
-  gatewayClaim: LoomGatewayClaimState.none,
-  supportedRelayScopes: const <LoomRoutingScopeV2>{},
-  canStoreCarry: true,
-  linkQualityPercent: 80,
-  congestionPercent: 5,
-  batteryConstrained: false,
-  recentSuccessfulTransfers: 0,
-  recentFailedTransfers: 0,
-);
+      opportunityId: id,
+      authenticated: true,
+      directRecipient: false,
+      gatewayClaim: LoomGatewayClaimState.none,
+      supportedRelayScopes: const <LoomRoutingScopeV2>{},
+      canStoreCarry: true,
+      linkQualityPercent: 80,
+      congestionPercent: 5,
+      batteryConstrained: false,
+      recentSuccessfulTransfers: 0,
+      recentFailedTransfers: 0,
+    );
 
 LoomDtnOpportunity _directRecipient(String id) => LoomDtnOpportunity(
-  opportunityId: id,
-  authenticated: true,
-  directRecipient: true,
-  gatewayClaim: LoomGatewayClaimState.none,
-  supportedRelayScopes: const <LoomRoutingScopeV2>{},
-  canStoreCarry: false,
-  linkQualityPercent: 80,
-  congestionPercent: 5,
-  batteryConstrained: false,
-  recentSuccessfulTransfers: 0,
-  recentFailedTransfers: 0,
-);
+      opportunityId: id,
+      authenticated: true,
+      directRecipient: true,
+      gatewayClaim: LoomGatewayClaimState.none,
+      supportedRelayScopes: const <LoomRoutingScopeV2>{},
+      canStoreCarry: false,
+      linkQualityPercent: 80,
+      congestionPercent: 5,
+      batteryConstrained: false,
+      recentSuccessfulTransfers: 0,
+      recentFailedTransfers: 0,
+    );
 
 final class _AcceptedSender implements LoomDtnTransferSender {
   _AcceptedSender(this.ack);
@@ -379,7 +379,8 @@ final class _FailedSender implements LoomDtnTransferSender {
   @override
   Future<LoomDtnSendResult> sendPrepared(
     LoomStoredDtnTransfer transfer,
-  ) async => result;
+  ) async =>
+      result;
 }
 
 final class _ThrowingSender implements LoomDtnTransferSender {

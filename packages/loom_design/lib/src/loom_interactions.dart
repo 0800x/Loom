@@ -26,23 +26,22 @@ class _LoomPressableState extends State<LoomPressable> {
 
   @override
   Widget build(BuildContext context) => Listener(
-    onPointerDown: widget.enabled ? (_) => _press(true) : null,
-    onPointerUp: (_) => _press(false),
-    onPointerCancel: (_) => _press(false),
-    child: AnimatedScale(
-      scale:
-          widget.enabled &&
-              _pressed &&
-              !LoomAccessibility.fromContext(context).reduceMotion
-          ? .97
-          : 1,
-      duration: LoomAccessibility.fromContext(context).reduceMotion
-          ? Duration.zero
-          : const Duration(milliseconds: 90),
-      curve: LoomMotion.standard,
-      child: widget.child,
-    ),
-  );
+        onPointerDown: widget.enabled ? (_) => _press(true) : null,
+        onPointerUp: (_) => _press(false),
+        onPointerCancel: (_) => _press(false),
+        child: AnimatedScale(
+          scale: widget.enabled &&
+                  _pressed &&
+                  !LoomAccessibility.fromContext(context).reduceMotion
+              ? .97
+              : 1,
+          duration: LoomAccessibility.fromContext(context).reduceMotion
+              ? Duration.zero
+              : const Duration(milliseconds: 90),
+          curve: LoomMotion.standard,
+          child: widget.child,
+        ),
+      );
 }
 
 /// A one-time entry transition. Rebuilding an existing keyed item does not
@@ -165,8 +164,7 @@ class _LoomConnectionPulseState extends State<LoomConnectionPulse>
   );
 
   void _sync() {
-    final animate =
-        widget.active &&
+    final animate = widget.active &&
         TickerMode.valuesOf(context).enabled &&
         !LoomAccessibility.fromContext(context).reduceMotion;
     if (animate && !_pulse.isAnimating) {
@@ -293,9 +291,9 @@ class LoomDirectionalIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Transform.flip(
-    flipX: Directionality.of(context) == TextDirection.rtl,
-    child: Icon(icon, size: size, color: color),
-  );
+        flipX: Directionality.of(context) == TextDirection.rtl,
+        child: Icon(icon, size: size, color: color),
+      );
 }
 
 class LoomBusyIndicator extends StatelessWidget {
@@ -305,11 +303,11 @@ class LoomBusyIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox.square(
-    dimension: size,
-    child: LoomAccessibility.fromContext(context).reduceMotion
-        ? Icon(LoomIcons.schedule_rounded, size: size, color: color)
-        : CircularProgressIndicator(strokeWidth: 2, color: color),
-  );
+        dimension: size,
+        child: LoomAccessibility.fromContext(context).reduceMotion
+            ? Icon(LoomIcons.schedule_rounded, size: size, color: color)
+            : CircularProgressIndicator(strokeWidth: 2, color: color),
+      );
 }
 
 /// Small, shared transition for composer and preview action icons.
@@ -322,9 +320,8 @@ class LoomComposerMorph extends StatelessWidget {
     final reduced = LoomAccessibility.fromContext(context).reduceMotion;
     return AnimatedSwitcher(
       duration: reduced ? Duration.zero : const Duration(milliseconds: 200),
-      reverseDuration: reduced
-          ? Duration.zero
-          : const Duration(milliseconds: 140),
+      reverseDuration:
+          reduced ? Duration.zero : const Duration(milliseconds: 140),
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       transitionBuilder: (child, animation) => reduced

@@ -5,7 +5,9 @@ import 'package:loom_protocol/loom_protocol.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('destination-node custody retains Nearby forwarding without claiming delivery', () async {
+  test(
+      'destination-node custody retains Nearby forwarding without claiming delivery',
+      () async {
     final now = DateTime.utc(2026, 9, 10, 13);
     final store = LoomSqlitePacketStore.openInMemory();
     addTearDown(store.close);
@@ -126,5 +128,6 @@ final class _AcceptedSender implements LoomDtnTransferSender {
   @override
   Future<LoomDtnSendResult> sendPrepared(
     LoomStoredDtnTransfer transfer,
-  ) async => LoomDtnSendAccepted(ack);
+  ) async =>
+      LoomDtnSendAccepted(ack);
 }

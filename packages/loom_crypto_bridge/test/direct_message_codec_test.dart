@@ -10,19 +10,20 @@ Future<LoomDeviceKeyBundle> bundle({
   required String deviceId,
   required SimplePublicKey signingPublicKey,
   required SimplePublicKey agreementPublicKey,
-}) async => LoomDeviceKeyBundle(
-  bundleVersion: 1,
-  identityId: identityId,
-  deviceId: deviceId,
-  deviceName: deviceId,
-  signingPublicKey: base64Encode(signingPublicKey.bytes),
-  agreementPublicKey: base64Encode(agreementPublicKey.bytes),
-  createdAt: DateTime.utc(2026, 9, 4),
-  capabilities: const <String>['signing-ed25519', 'agreement-x25519'],
-  fingerprint: 'TEST',
-  deviceSignature: base64Encode(List<int>.filled(64, 1)),
-  identitySignature: base64Encode(List<int>.filled(64, 2)),
-);
+}) async =>
+    LoomDeviceKeyBundle(
+      bundleVersion: 1,
+      identityId: identityId,
+      deviceId: deviceId,
+      deviceName: deviceId,
+      signingPublicKey: base64Encode(signingPublicKey.bytes),
+      agreementPublicKey: base64Encode(agreementPublicKey.bytes),
+      createdAt: DateTime.utc(2026, 9, 4),
+      capabilities: const <String>['signing-ed25519', 'agreement-x25519'],
+      fingerprint: 'TEST',
+      deviceSignature: base64Encode(List<int>.filled(64, 1)),
+      identitySignature: base64Encode(List<int>.filled(64, 2)),
+    );
 
 void main() {
   test('direct E2EE survives different Node-local conversation IDs', () async {
@@ -33,8 +34,8 @@ void main() {
     final senderAgreement = await x.newKeyPair();
     final senderAgreementPublic = await senderAgreement.extractPublicKey();
     final recipientAgreement = await x.newKeyPair();
-    final recipientAgreementPublic = await recipientAgreement
-        .extractPublicKey();
+    final recipientAgreementPublic =
+        await recipientAgreement.extractPublicKey();
     final recipientSigning = await ed.newKeyPair();
     final recipientSigningPublic = await recipientSigning.extractPublicKey();
 

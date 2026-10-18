@@ -53,8 +53,7 @@ void main() {
     ]) {
       final background = theme.colorScheme.primary.computeLuminance();
       final foreground = theme.colorScheme.onPrimary.computeLuminance();
-      final ratio =
-          (math.max(background, foreground) + .05) /
+      final ratio = (math.max(background, foreground) + .05) /
           (math.min(background, foreground) + .05);
       expect(ratio, greaterThanOrEqualTo(4.5));
     }

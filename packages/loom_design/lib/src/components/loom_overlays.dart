@@ -18,34 +18,34 @@ class LoomGlassDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Dialog(
-    elevation: 0,
-    backgroundColor: Colors.transparent,
-    insetPadding: const EdgeInsets.all(LoomSpacing.lg),
-    child: LoomGlassSurface(
-      strength: LoomGlassStrength.strong,
-      radius: LoomRadii.sheet,
-      padding: const EdgeInsets.all(LoomSpacing.md),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: LoomSizing.dialogMax),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: LoomSpacing.sm),
-            Flexible(child: SingleChildScrollView(child: child)),
-            if (actions.isNotEmpty) ...[
-              const SizedBox(height: LoomSpacing.md),
-              Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: Wrap(spacing: LoomSpacing.xs, children: actions),
-              ),
-            ],
-          ],
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(LoomSpacing.lg),
+        child: LoomGlassSurface(
+          strength: LoomGlassStrength.strong,
+          radius: LoomRadii.sheet,
+          padding: const EdgeInsets.all(LoomSpacing.md),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: LoomSizing.dialogMax),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: LoomSpacing.sm),
+                Flexible(child: SingleChildScrollView(child: child)),
+                if (actions.isNotEmpty) ...[
+                  const SizedBox(height: LoomSpacing.md),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: Wrap(spacing: LoomSpacing.xs, children: actions),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 }
 
 @immutable
@@ -135,39 +135,37 @@ class LoomDetailTile extends StatelessWidget {
   final EdgeInsetsGeometry? contentPadding;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: LoomGlassSurface(
-      strength: LoomGlassStrength.weak,
-      radius: LoomRadii.surface,
-      padding: EdgeInsets.zero,
-      child: Material(
-        type: MaterialType.transparency,
-        child: ListTile(
-          title: title,
-          subtitle: subtitle,
-          leading: leading,
-          trailing: trailing,
-          onTap: onTap,
-          onLongPress: onLongPress,
-          enabled: enabled,
-          dense: dense,
-          isThreeLine: isThreeLine,
-          contentPadding:
-              contentPadding ??
-              const EdgeInsetsDirectional.symmetric(
-                horizontal: 16,
-                vertical: 4,
-              ),
-          iconColor: context.loom.primary,
-          textColor: context.loom.textPrimary,
-          tileColor: tileColor,
-          shape:
-              shape ??
-              RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(LoomRadii.surface),
-              ),
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: LoomGlassSurface(
+          strength: LoomGlassStrength.weak,
+          radius: LoomRadii.surface,
+          padding: EdgeInsets.zero,
+          child: Material(
+            type: MaterialType.transparency,
+            child: ListTile(
+              title: title,
+              subtitle: subtitle,
+              leading: leading,
+              trailing: trailing,
+              onTap: onTap,
+              onLongPress: onLongPress,
+              enabled: enabled,
+              dense: dense,
+              isThreeLine: isThreeLine,
+              contentPadding: contentPadding ??
+                  const EdgeInsetsDirectional.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
+              iconColor: context.loom.primary,
+              textColor: context.loom.textPrimary,
+              tileColor: tileColor,
+              shape: shape ??
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(LoomRadii.surface),
+                  ),
+            ),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 }

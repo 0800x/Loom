@@ -62,8 +62,7 @@ class LoomProfileHero extends StatelessWidget {
                 ),
               ],
             ),
-            child:
-                avatar ??
+            child: avatar ??
                 LoomAvatar(
                   label: name,
                   size: LoomSizing.profileAvatar,
@@ -76,7 +75,9 @@ class LoomProfileHero extends StatelessWidget {
           const SizedBox(height: LoomSpacing.xxs),
           Text(
             presence,
-            style: Theme.of(context).textTheme.bodySmall
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
                 ?.copyWith(color: p.connectivity),
           ),
           if (address != null) ...[

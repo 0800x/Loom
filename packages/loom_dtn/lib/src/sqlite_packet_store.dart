@@ -176,9 +176,8 @@ final class LoomSqlitePacketStore
       'copies_remaining',
       'current_copies_remaining',
     };
-    final presentPacketColumns = packetColumns
-        .map((row) => row['name'] as String)
-        .toSet();
+    final presentPacketColumns =
+        packetColumns.map((row) => row['name'] as String).toSet();
     if (!presentPacketColumns.containsAll(requiredPacketColumns)) {
       throw StateError('Loom DTN packet database schema is incomplete');
     }
@@ -193,9 +192,8 @@ final class LoomSqlitePacketStore
       'copies_retained',
       'state',
     };
-    final presentTransferColumns = transferColumns
-        .map((row) => row['name'] as String)
-        .toSet();
+    final presentTransferColumns =
+        transferColumns.map((row) => row['name'] as String).toSet();
     if (!presentTransferColumns.containsAll(requiredTransferColumns)) {
       throw StateError('Loom DTN transfer database schema is incomplete');
     }
@@ -230,8 +228,8 @@ final class LoomSqlitePacketStore
       throw const FormatException('Cannot store an already-expired DTN packet');
     }
     if (outer.expiresAtBucket.toUtc().isAfter(
-      current.add(const Duration(days: 7)),
-    )) {
+          current.add(const Duration(days: 7)),
+        )) {
       throw const FormatException('DTN packet exceeds seven-day custody limit');
     }
     if (outer.forwardingState.hopsUsed != 0) {
@@ -754,7 +752,7 @@ final class LoomSqlitePacketStore
 
       final isGateway =
           transfer.reason == LoomDtnTransferReason.verifiedGateway ||
-          transfer.reason == LoomDtnTransferReason.claimedGateway;
+              transfer.reason == LoomDtnTransferReason.claimedGateway;
       if (transfer.reason != LoomDtnTransferReason.directRecipient) {
         _db.execute(
           '''
@@ -1073,8 +1071,8 @@ final class LoomSqlitePacketStore
     final forwarded = LoomEnvelopeV2Codec.decodeOuter(transfer.wireBytes);
     final expectedCopies =
         transfer.reason == LoomDtnTransferReason.directRecipient
-        ? 1
-        : transfer.copiesGranted;
+            ? 1
+            : transfer.copiesGranted;
 
     if (forwarded.packetId != source.packetId ||
         forwarded.routingHint.scope != source.routingHint.scope ||
@@ -1194,7 +1192,7 @@ final class LoomSqlitePacketStore
     if (plan.copiesBefore == 1) {
       final trustedSingleCopyCustodian =
           plan.reason == LoomDtnTransferReason.destinationNode ||
-          plan.reason == LoomDtnTransferReason.verifiedGateway;
+              plan.reason == LoomDtnTransferReason.verifiedGateway;
       if (!trustedSingleCopyCustodian ||
           plan.copiesGranted != 1 ||
           plan.copiesRetainedAfterSuccess != 0 ||

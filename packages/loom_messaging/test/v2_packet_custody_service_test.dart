@@ -66,7 +66,9 @@ void main() {
     },
   );
 
-  test('a PacketId cannot silently acquire different routing metadata after custody', () {
+  test(
+      'a PacketId cannot silently acquire different routing metadata after custody',
+      () {
     final packetStore = LoomSqlitePacketStore.openInMemory();
     addTearDown(packetStore.close);
     final service = LoomV2PacketCustodyService(packetStore: packetStore);

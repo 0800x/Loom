@@ -28,9 +28,9 @@ class LoomConnectivityPill extends StatelessWidget {
       LoomConnectivity.queued => (LoomIcons.schedule_rounded, p.warning),
       LoomConnectivity.syncing => (LoomIcons.sync_rounded, p.info),
       LoomConnectivity.unavailable => (
-        LoomIcons.error_outline_rounded,
-        p.critical,
-      ),
+          LoomIcons.error_outline_rounded,
+          p.critical,
+        ),
     };
     final labelColor = switch (state) {
       LoomConnectivity.queued => p.warning,
@@ -70,7 +70,9 @@ class LoomConnectivityPill extends StatelessWidget {
               const SizedBox(width: LoomSpacing.xxs),
               Text(
                 label,
-                style: Theme.of(context).textTheme.labelSmall
+                style: Theme.of(context)
+                    .textTheme
+                    .labelSmall
                     ?.copyWith(color: labelColor, fontWeight: FontWeight.w600),
               ),
             ],

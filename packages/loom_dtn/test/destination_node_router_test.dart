@@ -113,19 +113,20 @@ LoomDtnOpportunity _opportunity({
   LoomGatewayClaimState gateway = LoomGatewayClaimState.none,
   bool canCarry = false,
   int link = 60,
-}) => LoomDtnOpportunity(
-  opportunityId: id,
-  authenticated: authenticated,
-  destinationNode: destinationNode,
-  directRecipient: false,
-  gatewayClaim: gateway,
-  supportedRelayScopes: gateway == LoomGatewayClaimState.none
-      ? const <LoomRoutingScopeV2>{}
-      : const <LoomRoutingScopeV2>{LoomRoutingScopeV2.globalRelay},
-  canStoreCarry: canCarry,
-  linkQualityPercent: link,
-  congestionPercent: 10,
-  batteryConstrained: false,
-  recentSuccessfulTransfers: 0,
-  recentFailedTransfers: 0,
-);
+}) =>
+    LoomDtnOpportunity(
+      opportunityId: id,
+      authenticated: authenticated,
+      destinationNode: destinationNode,
+      directRecipient: false,
+      gatewayClaim: gateway,
+      supportedRelayScopes: gateway == LoomGatewayClaimState.none
+          ? const <LoomRoutingScopeV2>{}
+          : const <LoomRoutingScopeV2>{LoomRoutingScopeV2.globalRelay},
+      canStoreCarry: canCarry,
+      linkQualityPercent: link,
+      congestionPercent: 10,
+      batteryConstrained: false,
+      recentSuccessfulTransfers: 0,
+      recentFailedTransfers: 0,
+    );

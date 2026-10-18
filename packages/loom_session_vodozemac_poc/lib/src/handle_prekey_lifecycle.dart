@@ -25,7 +25,7 @@ final class LoomVodozemacHandlePrekeyLifecycle {
     this.previousFallbackRetention = const Duration(days: 14),
     LoomPrekeyRetirementPolicy? retirementPolicy,
   }) : retirementPolicy =
-           retirementPolicy ?? const LoomPrekeyRetirementPolicy() {
+            retirementPolicy ?? const LoomPrekeyRetirementPolicy() {
     if (targetOneTimeKeys < 1 || targetOneTimeKeys > 50) {
       throw ArgumentError.value(targetOneTimeKeys, 'targetOneTimeKeys');
     }
@@ -122,8 +122,7 @@ final class LoomVodozemacHandlePrekeyLifecycle {
       );
     }
 
-    final rotateFallback =
-        state.currentFallbackExpiresAt == null ||
+    final rotateFallback = state.currentFallbackExpiresAt == null ||
         !state.currentFallbackExpiresAt!.isAfter(
           timestamp.add(fallbackRotationLead),
         );
@@ -367,13 +366,13 @@ final class _HandlePublicationState {
   });
 
   factory _HandlePublicationState.empty() => const _HandlePublicationState(
-    pending: null,
-    lastAcknowledgedBatchId: null,
-    currentFallbackId: null,
-    currentFallbackExpiresAt: null,
-    previousFallbackRetainUntil: null,
-    latestOneTimeKeySafeRetirementAfter: null,
-  );
+        pending: null,
+        lastAcknowledgedBatchId: null,
+        currentFallbackId: null,
+        currentFallbackExpiresAt: null,
+        previousFallbackRetainUntil: null,
+        latestOneTimeKeySafeRetirementAfter: null,
+      );
 
   final LoomVodozemacPocPrekeyPublicationBatch? pending;
   final String? lastAcknowledgedBatchId;
@@ -383,38 +382,37 @@ final class _HandlePublicationState {
   final DateTime? latestOneTimeKeySafeRetirementAfter;
 
   Uint8List encode() => Uint8List.fromList(
-    utf8.encode(
-      jsonEncode(<String, Object?>{
-        'schema': LoomVodozemacHandlePrekeyLifecycle.stateSchema,
-        'pending': pending == null
-            ? null
-            : <String, Object?>{
-                'batchId': pending!.batchId,
-                'createdAt': pending!.createdAt.toUtc().toIso8601String(),
-                'items': pending!.items
-                    .map(
-                      (item) => <String, Object?>{
-                        'prekeyId': item.prekeyId,
-                        'keyKind': item.keyKind.wireName,
-                        'bundleBase64': _base64UrlNoPadding(item.bundle),
-                        'expiresAt': item.expiresAt.toUtc().toIso8601String(),
-                      },
-                    )
-                    .toList(growable: false),
-              },
-        'lastAcknowledgedBatchId': lastAcknowledgedBatchId,
-        'currentFallbackId': currentFallbackId,
-        'currentFallbackExpiresAt': currentFallbackExpiresAt
-            ?.toUtc()
-            .toIso8601String(),
-        'previousFallbackRetainUntil': previousFallbackRetainUntil
-            ?.toUtc()
-            .toIso8601String(),
-        'latestOneTimeKeySafeRetirementAfter':
-            latestOneTimeKeySafeRetirementAfter?.toUtc().toIso8601String(),
-      }),
-    ),
-  );
+        utf8.encode(
+          jsonEncode(<String, Object?>{
+            'schema': LoomVodozemacHandlePrekeyLifecycle.stateSchema,
+            'pending': pending == null
+                ? null
+                : <String, Object?>{
+                    'batchId': pending!.batchId,
+                    'createdAt': pending!.createdAt.toUtc().toIso8601String(),
+                    'items': pending!.items
+                        .map(
+                          (item) => <String, Object?>{
+                            'prekeyId': item.prekeyId,
+                            'keyKind': item.keyKind.wireName,
+                            'bundleBase64': _base64UrlNoPadding(item.bundle),
+                            'expiresAt':
+                                item.expiresAt.toUtc().toIso8601String(),
+                          },
+                        )
+                        .toList(growable: false),
+                  },
+            'lastAcknowledgedBatchId': lastAcknowledgedBatchId,
+            'currentFallbackId': currentFallbackId,
+            'currentFallbackExpiresAt':
+                currentFallbackExpiresAt?.toUtc().toIso8601String(),
+            'previousFallbackRetainUntil':
+                previousFallbackRetainUntil?.toUtc().toIso8601String(),
+            'latestOneTimeKeySafeRetirementAfter':
+                latestOneTimeKeySafeRetirementAfter?.toUtc().toIso8601String(),
+          }),
+        ),
+      );
 
   static _HandlePublicationState decode(Uint8List bytes) {
     if (bytes.isEmpty || bytes.length > 256 * 1024) {
@@ -485,20 +483,21 @@ final class _HandlePublicationState {
     DateTime? previousFallbackRetainUntil,
     bool clearPreviousFallbackRetainUntil = false,
     DateTime? latestOneTimeKeySafeRetirementAfter,
-  }) => _HandlePublicationState(
-    pending: clearPending ? null : pending ?? this.pending,
-    lastAcknowledgedBatchId:
-        lastAcknowledgedBatchId ?? this.lastAcknowledgedBatchId,
-    currentFallbackId: currentFallbackId ?? this.currentFallbackId,
-    currentFallbackExpiresAt:
-        currentFallbackExpiresAt ?? this.currentFallbackExpiresAt,
-    previousFallbackRetainUntil: clearPreviousFallbackRetainUntil
-        ? null
-        : previousFallbackRetainUntil ?? this.previousFallbackRetainUntil,
-    latestOneTimeKeySafeRetirementAfter:
-        latestOneTimeKeySafeRetirementAfter ??
-        this.latestOneTimeKeySafeRetirementAfter,
-  );
+  }) =>
+      _HandlePublicationState(
+        pending: clearPending ? null : pending ?? this.pending,
+        lastAcknowledgedBatchId:
+            lastAcknowledgedBatchId ?? this.lastAcknowledgedBatchId,
+        currentFallbackId: currentFallbackId ?? this.currentFallbackId,
+        currentFallbackExpiresAt:
+            currentFallbackExpiresAt ?? this.currentFallbackExpiresAt,
+        previousFallbackRetainUntil: clearPreviousFallbackRetainUntil
+            ? null
+            : previousFallbackRetainUntil ?? this.previousFallbackRetainUntil,
+        latestOneTimeKeySafeRetirementAfter:
+            latestOneTimeKeySafeRetirementAfter ??
+                this.latestOneTimeKeySafeRetirementAfter,
+      );
 
   static String? _nullableString(Object? value) {
     if (value == null) return null;

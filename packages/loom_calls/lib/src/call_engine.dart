@@ -52,13 +52,14 @@ class LoomCallSnapshot {
   final Object? error;
 
   bool get active => switch (lifecycle) {
-    LoomCallLifecycle.preparing ||
-    LoomCallLifecycle.ringing ||
-    LoomCallLifecycle.connecting ||
-    LoomCallLifecycle.connected ||
-    LoomCallLifecycle.reconnecting => true,
-    _ => false,
-  };
+        LoomCallLifecycle.preparing ||
+        LoomCallLifecycle.ringing ||
+        LoomCallLifecycle.connecting ||
+        LoomCallLifecycle.connected ||
+        LoomCallLifecycle.reconnecting =>
+          true,
+        _ => false,
+      };
 
   Duration get duration {
     final answered = answeredAt;
@@ -87,27 +88,28 @@ class LoomCallSnapshot {
     int? reconnectAttempts,
     Object? error,
     bool clearError = false,
-  }) => LoomCallSnapshot(
-    lifecycle: lifecycle ?? this.lifecycle,
-    kind: kind ?? this.kind,
-    direction: direction ?? this.direction,
-    callId: callId ?? this.callId,
-    conversationId: conversationId ?? this.conversationId,
-    peerIdentityId: peerIdentityId ?? this.peerIdentityId,
-    muted: muted ?? this.muted,
-    cameraEnabled: cameraEnabled ?? this.cameraEnabled,
-    speakerEnabled: speakerEnabled ?? this.speakerEnabled,
-    remoteRinging: remoteRinging ?? this.remoteRinging,
-    remoteVideoAvailable: remoteVideoAvailable ?? this.remoteVideoAvailable,
-    remoteCameraEnabled: remoteCameraEnabled ?? this.remoteCameraEnabled,
-    quality: quality ?? this.quality,
-    startedAt: startedAt ?? this.startedAt,
-    answeredAt: answeredAt ?? this.answeredAt,
-    endedAt: endedAt ?? this.endedAt,
-    endReason: endReason ?? this.endReason,
-    reconnectAttempts: reconnectAttempts ?? this.reconnectAttempts,
-    error: clearError ? null : error ?? this.error,
-  );
+  }) =>
+      LoomCallSnapshot(
+        lifecycle: lifecycle ?? this.lifecycle,
+        kind: kind ?? this.kind,
+        direction: direction ?? this.direction,
+        callId: callId ?? this.callId,
+        conversationId: conversationId ?? this.conversationId,
+        peerIdentityId: peerIdentityId ?? this.peerIdentityId,
+        muted: muted ?? this.muted,
+        cameraEnabled: cameraEnabled ?? this.cameraEnabled,
+        speakerEnabled: speakerEnabled ?? this.speakerEnabled,
+        remoteRinging: remoteRinging ?? this.remoteRinging,
+        remoteVideoAvailable: remoteVideoAvailable ?? this.remoteVideoAvailable,
+        remoteCameraEnabled: remoteCameraEnabled ?? this.remoteCameraEnabled,
+        quality: quality ?? this.quality,
+        startedAt: startedAt ?? this.startedAt,
+        answeredAt: answeredAt ?? this.answeredAt,
+        endedAt: endedAt ?? this.endedAt,
+        endReason: endReason ?? this.endReason,
+        reconnectAttempts: reconnectAttempts ?? this.reconnectAttempts,
+        error: clearError ? null : error ?? this.error,
+      );
 }
 
 class LoomCallEngine extends ChangeNotifier {
@@ -529,11 +531,13 @@ class LoomCallEngine extends ChangeNotifier {
     if (signal.kind == 'call.busy' ||
         signal.kind == 'call.reject' ||
         signal.kind == 'call.end') {
-      await _finish(switch (signal.kind) {
-        'call.busy' => LoomCallEndReason.busy,
-        'call.reject' => LoomCallEndReason.rejected,
-        _ => _remoteEndReason(signal.reason),
-      }, signal: false);
+      await _finish(
+          switch (signal.kind) {
+            'call.busy' => LoomCallEndReason.busy,
+            'call.reject' => LoomCallEndReason.rejected,
+            _ => _remoteEndReason(signal.reason),
+          },
+          signal: false);
       return;
     }
     final peer = _peer;
@@ -705,10 +709,10 @@ class LoomCallEngine extends ChangeNotifier {
         final quality = jitter > 0.08 || lossDelta > 30 || roundTripTime > 1.0
             ? LoomCallQuality.poor
             : jitter > 0.04 || lossDelta > 10 || roundTripTime > .55
-            ? LoomCallQuality.constrained
-            : jitter > 0.02 || lossDelta > 2 || roundTripTime > .3
-            ? LoomCallQuality.good
-            : LoomCallQuality.excellent;
+                ? LoomCallQuality.constrained
+                : jitter > 0.02 || lossDelta > 2 || roundTripTime > .3
+                    ? LoomCallQuality.good
+                    : LoomCallQuality.excellent;
         _set(_state.copyWith(quality: quality));
       } catch (_) {
         // Stats failure must not terminate a call.
@@ -767,11 +771,12 @@ class LoomCallEngine extends ChangeNotifier {
     LoomCallEndReason reason, {
     required bool signal,
     bool preserveFailure = false,
-  }) => _finishing ??= _finishOnce(
-    reason,
-    signal: signal,
-    preserveFailure: preserveFailure,
-  ).whenComplete(() => _finishing = null);
+  }) =>
+      _finishing ??= _finishOnce(
+        reason,
+        signal: signal,
+        preserveFailure: preserveFailure,
+      ).whenComplete(() => _finishing = null);
 
   Future<void> _finishOnce(
     LoomCallEndReason reason, {

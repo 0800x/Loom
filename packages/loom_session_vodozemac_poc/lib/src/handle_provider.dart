@@ -663,7 +663,10 @@ final class LoomVodozemacHandleSessionProvider
     final prefix = utf8.encode(
       '${ciphertext.protocolVersion}\u0000${ciphertext.sessionLocator}\u0000',
     );
-    return 'vodozemac-handle:${sha256.convert(<int>[...prefix, ...ciphertext.bytes])}';
+    return 'vodozemac-handle:${sha256.convert(<int>[
+          ...prefix,
+          ...ciphertext.bytes
+        ])}';
   }
 
   static void _validateSessionId(String value) {

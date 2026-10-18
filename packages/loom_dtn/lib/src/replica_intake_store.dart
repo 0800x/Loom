@@ -165,8 +165,8 @@ final class LoomSqliteReplicaIntakeStore {
       if (existingRows.isNotEmpty) {
         final existing = existingRows.first;
         _verifySameImmutablePacket(existing, outer);
-        final storedAt = DateTime.parse(existing['stored_at'] as String)
-            .toUtc();
+        final storedAt =
+            DateTime.parse(existing['stored_at'] as String).toUtc();
         final currentCopies = existing['current_copies_remaining'] as int;
         _db.execute('COMMIT');
         began = false;

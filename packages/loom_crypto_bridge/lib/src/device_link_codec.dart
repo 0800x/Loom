@@ -40,9 +40,9 @@ class LoomDeviceLinkQrData {
 
 class LoomDeviceLinkCodec {
   LoomDeviceLinkCodec({Random? random, AesGcm? cipher, Hkdf? kdf})
-    : _random = random ?? Random.secure(),
-      _cipher = cipher ?? AesGcm.with256bits(),
-      _kdf = kdf ?? Hkdf(hmac: Hmac.sha256(), outputLength: 32);
+      : _random = random ?? Random.secure(),
+        _cipher = cipher ?? AesGcm.with256bits(),
+        _kdf = kdf ?? Hkdf(hmac: Hmac.sha256(), outputLength: 32);
 
   static const String protocolVersion = 'loom-device-link-v2';
   static const String _qrPrefix = 'loom-device-link:';
@@ -329,8 +329,8 @@ class LoomDeviceLinkCodec {
   }
 
   Uint8List _randomBytes(int length) => Uint8List.fromList(
-    List<int>.generate(length, (_) => _random.nextInt(256)),
-  );
+        List<int>.generate(length, (_) => _random.nextInt(256)),
+      );
 
   String _base64UrlNoPadding(List<int> bytes) =>
       base64UrlEncode(bytes).replaceAll('=', '');

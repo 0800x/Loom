@@ -54,8 +54,8 @@ final class LoomStoredDtnPacket {
     required this.relayAcceptedAt,
     required this.recipientConfirmedAt,
     required this.terminalAt,
-  }) : _wireBytes = Uint8List.fromList(wireBytes),
-       _mailboxToken = Uint8List.fromList(mailboxToken);
+  })  : _wireBytes = Uint8List.fromList(wireBytes),
+        _mailboxToken = Uint8List.fromList(mailboxToken);
 
   final String packetId;
   final LoomDtnPacketOrigin origin;
@@ -96,11 +96,12 @@ final class LoomStoredDtnPacket {
   Uint8List get mailboxToken => Uint8List.fromList(_mailboxToken);
 
   bool get isTerminal => switch (state) {
-    LoomDtnPacketState.recipientConfirmed ||
-    LoomDtnPacketState.expired ||
-    LoomDtnPacketState.cancelledLocal => true,
-    _ => false,
-  };
+        LoomDtnPacketState.recipientConfirmed ||
+        LoomDtnPacketState.expired ||
+        LoomDtnPacketState.cancelledLocal =>
+          true,
+        _ => false,
+      };
 
   /// Whether the local router may still schedule a transmission attempt.
   ///

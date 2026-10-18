@@ -65,25 +65,26 @@ class LoomPalette extends ThemeExtension<LoomPalette> {
     Color? info,
     Color? onPrimary,
     Color? shadow,
-  }) => LoomPalette(
-    background: background ?? this.background,
-    surface: surface ?? this.surface,
-    surfaceMuted: surfaceMuted ?? this.surfaceMuted,
-    surfaceElevated: surfaceElevated ?? this.surfaceElevated,
-    textPrimary: textPrimary ?? this.textPrimary,
-    textSecondary: textSecondary ?? this.textSecondary,
-    textMuted: textMuted ?? this.textMuted,
-    border: border ?? this.border,
-    borderStrong: borderStrong ?? this.borderStrong,
-    primary: primary ?? this.primary,
-    secondary: secondary ?? this.secondary,
-    connectivity: connectivity ?? this.connectivity,
-    warning: warning ?? this.warning,
-    critical: critical ?? this.critical,
-    info: info ?? this.info,
-    onPrimary: onPrimary ?? this.onPrimary,
-    shadow: shadow ?? this.shadow,
-  );
+  }) =>
+      LoomPalette(
+        background: background ?? this.background,
+        surface: surface ?? this.surface,
+        surfaceMuted: surfaceMuted ?? this.surfaceMuted,
+        surfaceElevated: surfaceElevated ?? this.surfaceElevated,
+        textPrimary: textPrimary ?? this.textPrimary,
+        textSecondary: textSecondary ?? this.textSecondary,
+        textMuted: textMuted ?? this.textMuted,
+        border: border ?? this.border,
+        borderStrong: borderStrong ?? this.borderStrong,
+        primary: primary ?? this.primary,
+        secondary: secondary ?? this.secondary,
+        connectivity: connectivity ?? this.connectivity,
+        warning: warning ?? this.warning,
+        critical: critical ?? this.critical,
+        info: info ?? this.info,
+        onPrimary: onPrimary ?? this.onPrimary,
+        shadow: shadow ?? this.shadow,
+      );
 
   @override
   LoomPalette lerp(covariant LoomPalette? other, double t) {
@@ -175,20 +176,20 @@ abstract final class LoomTheme {
   );
 
   static ThemeData light({String? fontFamily, Color? accent}) => _build(
-    _accent(_light, Brightness.light, accent),
-    Brightness.light,
-    fontFamily: fontFamily,
-  );
+        _accent(_light, Brightness.light, accent),
+        Brightness.light,
+        fontFamily: fontFamily,
+      );
   static ThemeData dark({String? fontFamily, Color? accent}) => _build(
-    _accent(_dark, Brightness.dark, accent),
-    Brightness.dark,
-    fontFamily: fontFamily,
-  );
+        _accent(_dark, Brightness.dark, accent),
+        Brightness.dark,
+        fontFamily: fontFamily,
+      );
   static ThemeData oled({String? fontFamily, Color? accent}) => _build(
-    _accent(_oled, Brightness.dark, accent),
-    Brightness.dark,
-    fontFamily: fontFamily,
-  );
+        _accent(_oled, Brightness.dark, accent),
+        Brightness.dark,
+        fontFamily: fontFamily,
+      );
 
   static LoomPalette _accent(
     LoomPalette palette,
@@ -220,17 +221,16 @@ abstract final class LoomTheme {
       brightness: brightness,
       fontFamily: fontFamily,
       scaffoldBackgroundColor: p.background,
-      colorScheme:
-          ColorScheme.fromSeed(
-            seedColor: p.primary,
-            brightness: brightness,
-          ).copyWith(
-            primary: p.primary,
-            onPrimary: p.onPrimary,
-            secondary: p.secondary,
-            surface: p.surface,
-            error: p.critical,
-          ),
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: p.primary,
+        brightness: brightness,
+      ).copyWith(
+        primary: p.primary,
+        onPrimary: p.onPrimary,
+        secondary: p.secondary,
+        surface: p.surface,
+        error: p.critical,
+      ),
     );
     return base.copyWith(
       extensions: <ThemeExtension<dynamic>>[p],
@@ -350,17 +350,16 @@ abstract final class LoomTheme {
         size: LoomIconSize.standard,
       ),
       appBarTheme: AppBarTheme(
-        systemOverlayStyle:
-            (base.brightness == Brightness.dark
-                    ? SystemUiOverlayStyle.light
-                    : SystemUiOverlayStyle.dark)
-                .copyWith(
-                  statusBarColor: Colors.transparent,
-                  systemNavigationBarColor: Colors.transparent,
-                  systemNavigationBarDividerColor: Colors.transparent,
-                  systemStatusBarContrastEnforced: false,
-                  systemNavigationBarContrastEnforced: false,
-                ),
+        systemOverlayStyle: (base.brightness == Brightness.dark
+                ? SystemUiOverlayStyle.light
+                : SystemUiOverlayStyle.dark)
+            .copyWith(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarDividerColor: Colors.transparent,
+          systemStatusBarContrastEnforced: false,
+          systemNavigationBarContrastEnforced: false,
+        ),
         backgroundColor: p.surface,
         foregroundColor: p.textPrimary,
         surfaceTintColor: Colors.transparent,

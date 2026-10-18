@@ -73,7 +73,7 @@ abstract interface class LoomDeviceSecurityCore {
 
 class LoomDeviceSecurityCoreV1 implements LoomDeviceSecurityCore {
   LoomDeviceSecurityCoreV1({FlutterSecureStorage? storage})
-    : _storage = LoomSecretStorage(storage);
+      : _storage = LoomSecretStorage(storage);
 
   static const int _maxHistoricalDevices = 32;
 
@@ -299,8 +299,7 @@ class LoomDeviceSecurityCoreV1 implements LoomDeviceSecurityCore {
     if (associatedData.isEmpty || associatedData.length > 16 * 1024) {
       throw ArgumentError.value(associatedData.length, 'associatedData.length');
     }
-    final encoded =
-        await _storage.read(
+    final encoded = await _storage.read(
           key: _key(identityId, deviceId, 'agreement-secret'),
         ) ??
         await _storage.read(key: _historySecretKey(identityId, deviceId));

@@ -9,12 +9,12 @@ import 'engine.dart';
 
 final class LoomVodozemacPocFfiEngine implements LoomVodozemacPocEngine {
   LoomVodozemacPocFfiEngine._(DynamicLibrary library)
-    : _call = library.lookupFunction<_NativeCall, _DartCall>(
-        'loom_vodozemac_poc_call',
-      ),
-      _free = library.lookupFunction<_NativeFree, _DartFree>(
-        'loom_vodozemac_poc_free',
-      );
+      : _call = library.lookupFunction<_NativeCall, _DartCall>(
+          'loom_vodozemac_poc_call',
+        ),
+        _free = library.lookupFunction<_NativeFree, _DartFree>(
+          'loom_vodozemac_poc_free',
+        );
 
   static const environmentVariable = 'LOOM_VODOZEMAC_POC_LIB';
   static const _maxRequestBytes = 4 * 1024 * 1024;

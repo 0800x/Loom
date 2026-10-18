@@ -39,8 +39,8 @@ class LoomResponsive extends StatelessWidget {
       LoomWindowClass.medium => (medium ?? compact)(context),
       LoomWindowClass.expanded => (expanded ?? medium ?? compact)(context),
       LoomWindowClass.ultraWide => (ultraWide ?? expanded ?? medium ?? compact)(
-        context,
-      ),
+          context,
+        ),
     };
   }
 }

@@ -68,13 +68,17 @@ class LoomNodeCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           name,
-                          style: Theme.of(context).textTheme.bodyMedium
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
                       Text(
                         latency,
-                        style: Theme.of(context).textTheme.labelSmall
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelSmall
                             ?.copyWith(color: p.connectivity),
                       ),
                     ],
@@ -119,17 +123,17 @@ class _CompactPill extends StatelessWidget {
   final Color color;
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(
-      horizontal: LoomSpacing.xs,
-      vertical: LoomSpacing.xxs,
-    ),
-    decoration: BoxDecoration(
-      color: color.withAlphaFraction(LoomOpacity.selectedSubtle),
-      borderRadius: BorderRadius.circular(LoomRadii.pill),
-    ),
-    child: Text(
-      label,
-      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color),
-    ),
-  );
+        padding: const EdgeInsets.symmetric(
+          horizontal: LoomSpacing.xs,
+          vertical: LoomSpacing.xxs,
+        ),
+        decoration: BoxDecoration(
+          color: color.withAlphaFraction(LoomOpacity.selectedSubtle),
+          borderRadius: BorderRadius.circular(LoomRadii.pill),
+        ),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color),
+        ),
+      );
 }

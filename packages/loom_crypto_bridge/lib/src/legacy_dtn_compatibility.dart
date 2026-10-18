@@ -37,17 +37,17 @@ final class LoomLegacyDtnMessageCapsule {
   final Map<String, Object?> metadata;
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'version': 1,
-    'conversationId': conversationId,
-    'clientId': clientId,
-    'senderAddress': senderAddress,
-    'type': type.name,
-    'ciphertext': ciphertext,
-    'protocolVersion': protocolVersion,
-    'createdAt': createdAt.toUtc().toIso8601String(),
-    if (replyToMessageId != null) 'replyToMessageId': replyToMessageId,
-    'metadata': metadata,
-  };
+        'version': 1,
+        'conversationId': conversationId,
+        'clientId': clientId,
+        'senderAddress': senderAddress,
+        'type': type.name,
+        'ciphertext': ciphertext,
+        'protocolVersion': protocolVersion,
+        'createdAt': createdAt.toUtc().toIso8601String(),
+        if (replyToMessageId != null) 'replyToMessageId': replyToMessageId,
+        'metadata': metadata,
+      };
 
   factory LoomLegacyDtnMessageCapsule.fromJson(Map<String, Object?> json) {
     String text(String key, {int max = 1024 * 1024}) {
@@ -111,8 +111,8 @@ final class LoomLegacyDtnSealedDraft {
     required this.packetId,
     required Uint8List mailboxToken,
     required Uint8List encryptedPayload,
-  }) : mailboxToken = Uint8List.fromList(mailboxToken),
-       encryptedPayload = Uint8List.fromList(encryptedPayload);
+  })  : mailboxToken = Uint8List.fromList(mailboxToken),
+        encryptedPayload = Uint8List.fromList(encryptedPayload);
 
   final String packetId;
   final Uint8List mailboxToken;
@@ -127,7 +127,7 @@ final class LoomLegacyDtnSealedDraft {
 /// coarse expiry/priority and this sealed payload.
 final class LoomLegacyDtnCompatibilityCodec {
   LoomLegacyDtnCompatibilityCodec({LoomRelaySealer? sealer})
-    : _sealer = sealer ?? LoomRelaySealer();
+      : _sealer = sealer ?? LoomRelaySealer();
 
   final LoomRelaySealer _sealer;
 
@@ -207,16 +207,17 @@ final class LoomLegacyDtnCompatibilityCodec {
     required String packetId,
     required Uint8List mailboxToken,
     required String recipientDeviceId,
-  }) => Uint8List.fromList(
-    utf8.encode(
-      jsonEncode(<Object?>[
-        _aadDomain,
-        packetId,
-        _b64u(mailboxToken),
-        recipientDeviceId,
-      ]),
-    ),
-  );
+  }) =>
+      Uint8List.fromList(
+        utf8.encode(
+          jsonEncode(<Object?>[
+            _aadDomain,
+            packetId,
+            _b64u(mailboxToken),
+            recipientDeviceId,
+          ]),
+        ),
+      );
 
   Uint8List encodeSealedPayload(LoomRelaySealedPayload payload) {
     if (payload.version != 1) {

@@ -91,7 +91,8 @@ void main() {
     expect(stored.copiesRemaining, 2);
   });
 
-  test('duplicate forwarding revision is ACKable and never inflates copies', () {
+  test('duplicate forwarding revision is ACKable and never inflates copies',
+      () {
     final directory = Directory.systemTemp.createTempSync(
       'loom-dtn-duplicate-',
     );

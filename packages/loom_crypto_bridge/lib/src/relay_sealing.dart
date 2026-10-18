@@ -11,9 +11,9 @@ import 'package:cryptography/helpers.dart' show randomBytes;
 /// [ciphertext]. A fresh ephemeral X25519 key is used for every sealed bundle.
 class LoomRelaySealer {
   LoomRelaySealer({X25519? keyAgreement, AesGcm? cipher, Hkdf? kdf})
-    : _keyAgreement = keyAgreement ?? X25519(),
-      _cipher = cipher ?? AesGcm.with256bits(),
-      _kdf = kdf ?? Hkdf(hmac: Hmac.sha256(), outputLength: 32);
+      : _keyAgreement = keyAgreement ?? X25519(),
+        _cipher = cipher ?? AesGcm.with256bits(),
+        _kdf = kdf ?? Hkdf(hmac: Hmac.sha256(), outputLength: 32);
 
   final X25519 _keyAgreement;
   final AesGcm _cipher;
@@ -85,8 +85,7 @@ class LoomRelaySealer {
         'Recipient X25519 public key must be 32 bytes',
       );
     }
-    final epoch =
-        time.toUtc().millisecondsSinceEpoch ~/
+    final epoch = time.toUtc().millisecondsSinceEpoch ~/
         const Duration(hours: 6).inMilliseconds;
     final digest = await Sha256().hash(<int>[
       ...utf8.encode('Loom-Relay-RecipientTag-v1'),

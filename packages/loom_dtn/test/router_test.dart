@@ -255,23 +255,23 @@ LoomDtnOpportunity _opportunity({
   bool batteryConstrained = false,
   int successes = 0,
   int failures = 0,
-}) => LoomDtnOpportunity(
-  opportunityId: id,
-  authenticated: authenticated,
-  directRecipient: direct,
-  gatewayClaim: gateway,
-  supportedRelayScopes:
-      scopes ??
-      (gateway == LoomGatewayClaimState.none
-          ? const <LoomRoutingScopeV2>{}
-          : const <LoomRoutingScopeV2>{
-              LoomRoutingScopeV2.domesticRelay,
-              LoomRoutingScopeV2.globalRelay,
-            }),
-  canStoreCarry: canCarry,
-  linkQualityPercent: link,
-  congestionPercent: congestion,
-  batteryConstrained: batteryConstrained,
-  recentSuccessfulTransfers: successes,
-  recentFailedTransfers: failures,
-);
+}) =>
+    LoomDtnOpportunity(
+      opportunityId: id,
+      authenticated: authenticated,
+      directRecipient: direct,
+      gatewayClaim: gateway,
+      supportedRelayScopes: scopes ??
+          (gateway == LoomGatewayClaimState.none
+              ? const <LoomRoutingScopeV2>{}
+              : const <LoomRoutingScopeV2>{
+                  LoomRoutingScopeV2.domesticRelay,
+                  LoomRoutingScopeV2.globalRelay,
+                }),
+      canStoreCarry: canCarry,
+      linkQualityPercent: link,
+      congestionPercent: congestion,
+      batteryConstrained: batteryConstrained,
+      recentSuccessfulTransfers: successes,
+      recentFailedTransfers: failures,
+    );

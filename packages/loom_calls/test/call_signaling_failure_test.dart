@@ -32,12 +32,14 @@ class _Signaling implements LoomCallSignalingConnection {
 }
 
 LoomRtcConfiguration _configuration() => LoomRtcConfiguration(
-  iceServers: const [],
-  expiresAt: DateTime.now().toUtc().add(const Duration(minutes: 5)),
-);
+      iceServers: const [],
+      expiresAt: DateTime.now().toUtc().add(const Duration(minutes: 5)),
+    );
 
 void main() {
-  test('a server rejection survives a late RTC config and never starts native media', () async {
+  test(
+      'a server rejection survives a late RTC config and never starts native media',
+      () async {
     final api = _Api();
     final signaling = _Signaling();
     final engine = LoomCallEngine(

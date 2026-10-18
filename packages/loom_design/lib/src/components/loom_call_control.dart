@@ -22,35 +22,35 @@ class LoomCallControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Semantics(
-        toggled: destructive ? null : active,
-        child: IconButton.filledTonal(
-          tooltip: tooltip,
-          onPressed: onPressed,
-          style: IconButton.styleFrom(
-            minimumSize: const Size.square(LoomSizing.minTouch),
-            foregroundColor: destructive
-                ? Theme.of(context).colorScheme.onError
-                : active
-                ? context.loom.onPrimary
-                : context.loom.textPrimary,
-            backgroundColor: destructive
-                ? Theme.of(context).colorScheme.error
-                : active
-                ? context.loom.primary
-                : context.loom.surfaceMuted,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Semantics(
+            toggled: destructive ? null : active,
+            child: IconButton.filledTonal(
+              tooltip: tooltip,
+              onPressed: onPressed,
+              style: IconButton.styleFrom(
+                minimumSize: const Size.square(LoomSizing.minTouch),
+                foregroundColor: destructive
+                    ? Theme.of(context).colorScheme.onError
+                    : active
+                        ? context.loom.onPrimary
+                        : context.loom.textPrimary,
+                backgroundColor: destructive
+                    ? Theme.of(context).colorScheme.error
+                    : active
+                        ? context.loom.primary
+                        : context.loom.surfaceMuted,
+              ),
+              icon: Icon(icon),
+            ),
           ),
-          icon: Icon(icon),
-        ),
-      ),
-      const SizedBox(height: LoomSpacing.xxs),
-      Text(
-        label,
-        textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.labelSmall,
-      ),
-    ],
-  );
+          const SizedBox(height: LoomSpacing.xxs),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+        ],
+      );
 }

@@ -15,8 +15,8 @@ void main() {
       final identityPublic = await identityPair.extractPublicKey();
       final devicePublic = await devicePair.extractPublicKey();
       final agreementPublic = await X25519().newKeyPair().then(
-        (pair) => pair.extractPublicKey(),
-      );
+            (pair) => pair.extractPublicKey(),
+          );
       final identity = LoomIdentityPublic(
         identityId: 'chn:test-identity',
         publicKey: base64Encode(identityPublic.bytes),

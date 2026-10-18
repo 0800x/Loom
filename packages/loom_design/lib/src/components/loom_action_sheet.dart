@@ -12,43 +12,44 @@ Future<T?> showLoomActionSheet<T>({
   String? subtitle,
   Rect? origin,
   required WidgetBuilder builder,
-}) => showLoomSurface<T>(
-  context: context,
-  origin: origin,
-  identity: ('action-sheet', title),
-  builder: (context) => SafeArea(
-    top: false,
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
+}) =>
+    showLoomSurface<T>(
+      context: context,
+      origin: origin,
+      identity: ('action-sheet', title),
+      builder: (context) => SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: MaterialLocalizations.of(context).closeButtonLabel,
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(LoomIcons.close_rounded),
+                  ),
+                ],
               ),
-              IconButton(
-                tooltip: MaterialLocalizations.of(context).closeButtonLabel,
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(LoomIcons.close_rounded),
-              ),
+              if (subtitle != null) ...[
+                Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 16),
+              ],
+              builder(context),
             ],
           ),
-          if (subtitle != null) ...[
-            Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 16),
-          ],
-          builder(context),
-        ],
+        ),
       ),
-    ),
-  ),
-);
+    );
 
 class LoomActionTile extends StatelessWidget {
   const LoomActionTile({
@@ -98,9 +99,9 @@ class LoomActionTile extends StatelessWidget {
                   Text(
                     label,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: onTap == null ? p.textMuted : p.textPrimary,
-                    ),
+                          fontWeight: FontWeight.w700,
+                          color: onTap == null ? p.textMuted : p.textPrimary,
+                        ),
                   ),
                   if (subtitle != null) ...[
                     const SizedBox(height: 4),
@@ -125,22 +126,21 @@ class LoomActionGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) {
-      final columns = constraints.maxWidth >= 500 && children.length > 2
-          ? 4
-          : 2;
-      final width = (constraints.maxWidth - 12 * (columns - 1)) / columns;
-      return Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        children: [
-          for (var i = 0; i < children.length; i++)
-            SizedBox(
-              width: width,
-              child: LoomReveal(order: i, child: children[i]),
-            ),
-        ],
+        builder: (context, constraints) {
+          final columns =
+              constraints.maxWidth >= 500 && children.length > 2 ? 4 : 2;
+          final width = (constraints.maxWidth - 12 * (columns - 1)) / columns;
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              for (var i = 0; i < children.length; i++)
+                SizedBox(
+                  width: width,
+                  child: LoomReveal(order: i, child: children[i]),
+                ),
+            ],
+          );
+        },
       );
-    },
-  );
 }

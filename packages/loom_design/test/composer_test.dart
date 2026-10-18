@@ -29,8 +29,8 @@ void main() {
       ),
     );
     IconButton sendButton() => tester.widget<IconButton>(
-      find.widgetWithIcon(IconButton, LoomIcons.arrow_upward_rounded),
-    );
+          find.widgetWithIcon(IconButton, LoomIcons.arrow_upward_rounded),
+        );
     expect(sendButton().onPressed, isNull);
     expect(find.byTooltip('Attach'), findsNothing);
     expect(find.byTooltip('Voice'), findsNothing);

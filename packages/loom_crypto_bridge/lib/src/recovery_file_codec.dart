@@ -18,11 +18,11 @@ class LoomRecoveryFileCodec {
   final int parallelism;
 
   Argon2id get _kdf => Argon2id(
-    memory: memoryKiB,
-    iterations: iterations,
-    parallelism: parallelism,
-    hashLength: 32,
-  );
+        memory: memoryKiB,
+        iterations: iterations,
+        parallelism: parallelism,
+        hashLength: 32,
+      );
   final AesGcm _cipher = AesGcm.with256bits();
 
   Future<Uint8List> encryptWords({

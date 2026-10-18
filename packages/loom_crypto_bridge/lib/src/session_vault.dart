@@ -19,42 +19,42 @@ class LoomStoredSession {
   final LoomRegistrationReceipt receipt;
 
   String encode() => jsonEncode({
-    'schemaVersion': 1,
-    'endpoint': endpoint.toString(),
-    'node': {
-      'nodeId': node.nodeId,
-      'name': node.name,
-      'domain': node.domain,
-      'operatorCountry': node.operatorCountry,
-      'networkLocation': node.networkLocation,
-      'registration': node.registration,
-      'federation': node.federation,
-      'protocols': node.protocols,
-      'publicKey': node.publicKey,
-      'fingerprint': node.fingerprint,
-      'capabilities': node.capabilities,
-      'region': node.region,
-      'operatorName': node.operatorName,
-      'lastVerified': node.lastVerified?.toIso8601String(),
-    },
-    'liveInfo': {
-      'nodeId': liveInfo.nodeId,
-      'serverVersion': liveInfo.serverVersion,
-      'protocolVersion': liveInfo.protocolVersion,
-      'registration': liveInfo.registration,
-      'federationMode': liveInfo.federationMode,
-      'capabilities': liveInfo.capabilities,
-      'capacityUsed': liveInfo.capacityUsed,
-      'capacityLimit': liveInfo.capacityLimit,
-      'maxMediaBytes': liveInfo.maxMediaBytes,
-    },
-    'receipt': {
-      'accountId': receipt.accountId,
-      'deviceId': receipt.deviceId,
-      'address': receipt.address,
-      'homeNode': receipt.homeNode,
-    },
-  });
+        'schemaVersion': 1,
+        'endpoint': endpoint.toString(),
+        'node': {
+          'nodeId': node.nodeId,
+          'name': node.name,
+          'domain': node.domain,
+          'operatorCountry': node.operatorCountry,
+          'networkLocation': node.networkLocation,
+          'registration': node.registration,
+          'federation': node.federation,
+          'protocols': node.protocols,
+          'publicKey': node.publicKey,
+          'fingerprint': node.fingerprint,
+          'capabilities': node.capabilities,
+          'region': node.region,
+          'operatorName': node.operatorName,
+          'lastVerified': node.lastVerified?.toIso8601String(),
+        },
+        'liveInfo': {
+          'nodeId': liveInfo.nodeId,
+          'serverVersion': liveInfo.serverVersion,
+          'protocolVersion': liveInfo.protocolVersion,
+          'registration': liveInfo.registration,
+          'federationMode': liveInfo.federationMode,
+          'capabilities': liveInfo.capabilities,
+          'capacityUsed': liveInfo.capacityUsed,
+          'capacityLimit': liveInfo.capacityLimit,
+          'maxMediaBytes': liveInfo.maxMediaBytes,
+        },
+        'receipt': {
+          'accountId': receipt.accountId,
+          'deviceId': receipt.deviceId,
+          'address': receipt.address,
+          'homeNode': receipt.homeNode,
+        },
+      });
 
   factory LoomStoredSession.decode(String value) {
     final decoded = jsonDecode(value);
@@ -144,7 +144,7 @@ abstract interface class LoomSessionVault {
 
 class LoomSecureSessionVault implements LoomSessionVault {
   LoomSecureSessionVault({FlutterSecureStorage? storage})
-    : _storage = LoomSecretStorage(storage);
+      : _storage = LoomSecretStorage(storage);
 
   static const _key = 'loom.session.metadata.v1';
   final LoomSecretStorage _storage;

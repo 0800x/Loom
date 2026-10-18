@@ -44,7 +44,9 @@ void main() {
     },
   );
 
-  test('encrypted device-link package opens with the independent QR encryption secret', () async {
+  test(
+      'encrypted device-link package opens with the independent QR encryption secret',
+      () async {
     final codec = LoomDeviceLinkCodec();
     final linkId = codec.createLinkId();
     final token = codec.createToken();

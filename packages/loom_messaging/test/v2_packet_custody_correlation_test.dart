@@ -134,12 +134,12 @@ LoomStoredCryptoOutboxRecord _stored(DateTime now) {
 }
 
 LoomV2PacketAssemblyPlan _plan() => LoomV2PacketAssemblyPlan(
-  routingHint: LoomRoutingHintV2(
-    scope: LoomRoutingScopeV2.globalRelay,
-    mailboxToken: Uint8List.fromList(List<int>.filled(32, 71)),
-  ),
-  expiresAtBucket: DateTime.utc(2026, 9, 6, 12),
-  priority: LoomPriorityClassV2.normal,
-  initialHopLimit: 4,
-  copiesRemaining: 4,
-);
+      routingHint: LoomRoutingHintV2(
+        scope: LoomRoutingScopeV2.globalRelay,
+        mailboxToken: Uint8List.fromList(List<int>.filled(32, 71)),
+      ),
+      expiresAtBucket: DateTime.utc(2026, 9, 6, 12),
+      priority: LoomPriorityClassV2.normal,
+      initialHopLimit: 4,
+      copiesRemaining: 4,
+    );
