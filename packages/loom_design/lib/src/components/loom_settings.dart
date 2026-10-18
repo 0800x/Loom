@@ -150,7 +150,8 @@ Color _settingsIconColor(IconData icon, Color fallback) {
       icon == LoomIcons.devices_outlined) {
     return const Color(0xFF9D7893);
   }
-  if (icon == LoomIcons.storage_outlined || icon == LoomIcons.near_me_outlined) {
+  if (icon == LoomIcons.storage_outlined ||
+      icon == LoomIcons.near_me_outlined) {
     return const Color(0xFF668B79);
   }
   if (icon == LoomIcons.folder_outlined || icon == LoomIcons.language_rounded) {
