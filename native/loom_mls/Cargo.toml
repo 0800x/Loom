@@ -23,3 +23,5 @@ rand = "0.8"
 # pin is advanced to the upstream RustSec-fixed release. See vendored provenance.
 [patch.crates-io]
 hpke-rs-libcrux = { path = "../../third_party/hpke-rs-libcrux" }
+# Upstream compiler-diagnostic backport; runtime/crypto source unchanged (ADR 012).
+hax-lib-macros = { path = "../../third_party/hax-lib-macros" }

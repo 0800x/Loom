@@ -78,7 +78,6 @@ This inventory is not a legal compatibility certification. Native platform trans
 | cargo | [hashbrown](https://crates.io/crates/hashbrown/0.17.1) | 0.17.1 | MIT OR Apache-2.0 | [LICENSE-APACHE](third_party/licenses/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt); [LICENSE-MIT](third_party/licenses/ff8f68cb076caf8cefe7a6430d4ac086ce6af2ca8ce2c4e5a2004d4552ef52a2.txt) |
 | cargo | [hax-lib](https://crates.io/crates/hax-lib/0.3.7) | 0.3.7 | Apache-2.0 | [LICENSE](third_party/licenses/9a50bad5a51e0ad726ea3a7f4b7b758e1b4d1784e6abefe1367f5bf01e972725.txt) |
 | cargo | [hax-lib](https://crates.io/crates/hax-lib/0.4.2) | 0.4.2 | Apache-2.0 | [LICENSE](third_party/licenses/9a50bad5a51e0ad726ea3a7f4b7b758e1b4d1784e6abefe1367f5bf01e972725.txt) |
-| cargo | [hax-lib-macros](https://crates.io/crates/hax-lib-macros/0.3.7) | 0.3.7 | Apache-2.0 | [LICENSE](third_party/licenses/9a50bad5a51e0ad726ea3a7f4b7b758e1b4d1784e6abefe1367f5bf01e972725.txt) |
 | cargo | [hax-lib-macros](https://crates.io/crates/hax-lib-macros/0.4.2) | 0.4.2 | Apache-2.0 | [LICENSE](third_party/licenses/9a50bad5a51e0ad726ea3a7f4b7b758e1b4d1784e6abefe1367f5bf01e972725.txt) |
 | cargo | [hax-lib-macros-types](https://crates.io/crates/hax-lib-macros-types/0.3.7) | 0.3.7 | Apache-2.0 | [LICENSE](third_party/licenses/9a50bad5a51e0ad726ea3a7f4b7b758e1b4d1784e6abefe1367f5bf01e972725.txt) |
 | cargo | [hax-lib-macros-types](https://crates.io/crates/hax-lib-macros-types/0.4.2) | 0.4.2 | Apache-2.0 | [LICENSE](third_party/licenses/9a50bad5a51e0ad726ea3a7f4b7b758e1b4d1784e6abefe1367f5bf01e972725.txt) |
@@ -165,8 +164,6 @@ This inventory is not a legal compatibility certification. Native platform trans
 | cargo | [prettyplease](https://crates.io/crates/prettyplease/0.2.37) | 0.2.37 | MIT OR Apache-2.0 | [LICENSE-APACHE](third_party/licenses/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt); [LICENSE-MIT](third_party/licenses/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt) |
 | cargo | [primeorder](https://crates.io/crates/primeorder/0.13.6) | 0.13.6 | Apache-2.0 OR MIT | [LICENSE-APACHE](third_party/licenses/a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5.txt); [LICENSE-MIT](third_party/licenses/233b95ccbf90dc67e32f3e8995c489f6312d9191ebd141a931c3b684f1e3be6d.txt) |
 | cargo | [proc-macro-crate](https://crates.io/crates/proc-macro-crate/3.5.0) | 3.5.0 | MIT OR Apache-2.0 | [LICENSE-APACHE](third_party/licenses/8ada45cd9f843acf64e4722ae262c622a2b3b3007c7310ef36ac1061a30f6adb.txt); [LICENSE-MIT](third_party/licenses/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt) |
-| cargo | [proc-macro-error-attr2](https://crates.io/crates/proc-macro-error-attr2/2.0.0) | 2.0.0 | MIT OR Apache-2.0 | [LICENSE-APACHE](third_party/licenses/6fd0f3522047150ca7c1939f02bc4a15662a4741a89bc03ae784eefa18caa299.txt); [LICENSE-MIT](third_party/licenses/544b3aed1fd723d0cadea567affdcfe0431e43e18d997a718f9d67256b814fde.txt) |
-| cargo | [proc-macro-error2](https://crates.io/crates/proc-macro-error2/2.0.1) | 2.0.1 | MIT OR Apache-2.0 | [LICENSE-APACHE](third_party/licenses/4665f973ccb9393807a7fb1264add6b3513d19abc6b357e4cb52c6fe59cc6a3b.txt); [LICENSE-MIT](third_party/licenses/544b3aed1fd723d0cadea567affdcfe0431e43e18d997a718f9d67256b814fde.txt) |
 | cargo | [proc-macro2](https://crates.io/crates/proc-macro2/1.0.107) | 1.0.107 | MIT OR Apache-2.0 | [LICENSE-APACHE](third_party/licenses/62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a.txt); [LICENSE-MIT](third_party/licenses/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt) |
 | cargo | [prost](https://crates.io/crates/prost/0.14.4) | 0.14.4 | Apache-2.0 | [LICENSE](third_party/licenses/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt) |
 | cargo | [prost-derive](https://crates.io/crates/prost-derive/0.14.4) | 0.14.4 | Apache-2.0 | [LICENSE](third_party/licenses/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt) |
@@ -564,6 +561,7 @@ This inventory is not a legal compatibility certification. Native platform trans
 | pub | [xdg_directories](https://pub.dev/packages/xdg_directories/versions/1.1.0) | 1.1.0 | UNDECLARED | [LICENSE](third_party/licenses/89519eca6f7b9529b35bdddd623a58c3af06a88c458dbd6531ddb4675acf75a9.txt) |
 | pub | [xml](https://pub.dev/packages/xml/versions/6.6.1) | 6.6.1 | UNDECLARED | [LICENSE](third_party/licenses/1f18a2e5a5c57381d93efa92df86477eb1205689b345417c90fcfdc09fa4fa1f.txt) |
 | pub | [yaml](https://pub.dev/packages/yaml/versions/3.1.4) | 3.1.4 | UNDECLARED | [LICENSE](third_party/licenses/d47b93335401b052d79a2f5a3710e4cf7b5aed782faedf84d40fbdd6eb934ec7.txt) |
+| vendored | [hax-lib-macros](third_party/hax-lib-macros/LOOM-PATCH.md) | 0.3.7+loom-diagnostics | Apache-2.0 | [LICENSE](third_party/licenses/9a50bad5a51e0ad726ea3a7f4b7b758e1b4d1784e6abefe1367f5bf01e972725.txt) |
 | vendored | [hpke-rs-libcrux](third_party/hpke-rs-libcrux/LOOM-PATCH.md) | 0.7.0+loom-metadata | MPL-2.0 | [LICENSE](third_party/licenses/c517c468fc7f8d83319dd8b3743923f6891e0dfbaf7c57a874758c8f39b98564.txt); [LICENSE-MIT](third_party/licenses/e40d41f94826514279cc7648088180e19621f7acd281dd394a0534d535da51fd.txt) |
 | vendored | [loom_audioplayers_android](packages/loom_audioplayers_android) | repository fork | UNDECLARED | [LICENSE](third_party/licenses/d6c0bdbc83e6bb5f02eed5caf25e6edf174cb56d0ecd6fe19a2cd05b62bbda41.txt) |
 | vendored | [loom_record_android](packages/loom_record_android) | repository fork | UNDECLARED | [LICENSE](third_party/licenses/b0cbe4a6717dc8286d44792bd905fdc49f179b80af8d1543e4194e61766803a3.txt) |
@@ -571,4 +569,4 @@ This inventory is not a legal compatibility certification. Native platform trans
 
 ## Outstanding review
 
-562 locked/vendored entries; 0 entries lack locally available notice text. Resolve them and platform-binary attribution before a signed distribution. GPL-3.0-only is unchanged.
+560 locked/vendored entries; 0 entries lack locally available notice text. Resolve them and platform-binary attribution before a signed distribution. GPL-3.0-only is unchanged.

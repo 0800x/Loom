@@ -1261,20 +1261,6 @@
   {
     "ecosystem": "cargo",
     "name": "hax-lib-macros",
-    "version": "0.3.7",
-    "declaredLicense": "Apache-2.0",
-    "source": "https://crates.io/crates/hax-lib-macros/0.3.7",
-    "texts": [
-      {
-        "file": "third_party/licenses/9a50bad5a51e0ad726ea3a7f4b7b758e1b4d1784e6abefe1367f5bf01e972725.txt",
-        "upstreamName": "LICENSE",
-        "url": "https://raw.githubusercontent.com/hacspec/hax/d8b5b3d3b666fee8943a351445d2b680105e8ea3/LICENSE"
-      }
-    ]
-  },
-  {
-    "ecosystem": "cargo",
-    "name": "hax-lib-macros",
     "version": "0.4.2",
     "declaredLicense": "Apache-2.0",
     "source": "https://crates.io/crates/hax-lib-macros/0.4.2",
@@ -2757,40 +2743,6 @@
       },
       {
         "file": "third_party/licenses/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt",
-        "upstreamName": "LICENSE-MIT"
-      }
-    ]
-  },
-  {
-    "ecosystem": "cargo",
-    "name": "proc-macro-error-attr2",
-    "version": "2.0.0",
-    "declaredLicense": "MIT OR Apache-2.0",
-    "source": "https://crates.io/crates/proc-macro-error-attr2/2.0.0",
-    "texts": [
-      {
-        "file": "third_party/licenses/6fd0f3522047150ca7c1939f02bc4a15662a4741a89bc03ae784eefa18caa299.txt",
-        "upstreamName": "LICENSE-APACHE"
-      },
-      {
-        "file": "third_party/licenses/544b3aed1fd723d0cadea567affdcfe0431e43e18d997a718f9d67256b814fde.txt",
-        "upstreamName": "LICENSE-MIT"
-      }
-    ]
-  },
-  {
-    "ecosystem": "cargo",
-    "name": "proc-macro-error2",
-    "version": "2.0.1",
-    "declaredLicense": "MIT OR Apache-2.0",
-    "source": "https://crates.io/crates/proc-macro-error2/2.0.1",
-    "texts": [
-      {
-        "file": "third_party/licenses/4665f973ccb9393807a7fb1264add6b3513d19abc6b357e4cb52c6fe59cc6a3b.txt",
-        "upstreamName": "LICENSE-APACHE"
-      },
-      {
-        "file": "third_party/licenses/544b3aed1fd723d0cadea567affdcfe0431e43e18d997a718f9d67256b814fde.txt",
         "upstreamName": "LICENSE-MIT"
       }
     ]
@@ -8276,6 +8228,19 @@
     "texts": [
       {
         "file": "third_party/licenses/d47b93335401b052d79a2f5a3710e4cf7b5aed782faedf84d40fbdd6eb934ec7.txt",
+        "upstreamName": "LICENSE"
+      }
+    ]
+  },
+  {
+    "ecosystem": "vendored",
+    "name": "hax-lib-macros",
+    "version": "0.3.7+loom-diagnostics",
+    "declaredLicense": "Apache-2.0",
+    "source": "third_party/hax-lib-macros/LOOM-PATCH.md",
+    "texts": [
+      {
+        "file": "third_party/licenses/9a50bad5a51e0ad726ea3a7f4b7b758e1b4d1784e6abefe1367f5bf01e972725.txt",
         "upstreamName": "LICENSE"
       }
     ]
