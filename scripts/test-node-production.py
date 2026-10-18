@@ -84,8 +84,9 @@ copy_bundle
             if not image: raise RuntimeError('Build service lacks an explicit image target: '+name)
             if image in exporters: raise RuntimeError('Concurrent build exporters share an image tag: '+exporters[image]+' and '+name)
             exporters[image]=name
-        if services['postgres']['image'] != prefix+'postgres:17-alpine': raise RuntimeError('PostgreSQL mirror missing')
+        if services['postgres']['image'] != prefix+'postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24': raise RuntimeError('PostgreSQL mirror missing')
         for service in ('minio', 'minio-init', 'loom-node'):
+            if services[service].get('pull_policy') != 'build': raise RuntimeError('Local source image may be pulled: '+service)
             if services[service]['build']['args']['LOOM_DOCKER_PREFIX'] != prefix: raise RuntimeError('Build-base mirror missing')
         if services['minio']['build']['args']['LOOM_GO_PROXY'] != 'https://package-mirror.liara.ir/repository/go/': raise RuntimeError('Go mirror missing')
         if services['loom-node']['build']['args']['LOOM_NPM_REGISTRY'] != 'https://package-mirror.liara.ir/repository/npm/': raise RuntimeError('npm mirror missing')
