@@ -23,3 +23,4 @@ export 'src/proximity_gateway_round_runner.dart';
 export 'src/nearby_recipient_probe.dart' show LoomNearbyRecipientProbeAcceptor;
 
 export 'src/group_session.dart';
+export 'src/local_certificate_policy.dart';

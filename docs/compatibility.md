@@ -59,3 +59,10 @@ parameters in the existing TEXT field. Older server binaries cannot read these
 new hashes. Avoid an in-place binary rollback; keep a coordinated pre-upgrade
 backup. Message, recovery, identity and session derivation formats are unchanged.
 See [the password migration ADR](adr/004-password-hash-migration.md).
+
+## Local certificate trust bindings
+
+Previously imported unscoped PEM roots are not automatically migrated. Import the
+public leaf again after entering its exact HTTPS host and port and confirming its
+fingerprint. CA certificates are rejected. Removing trust closes pinned clients;
+other hosts never receive that trust. See [the TLS ADR](adr/005-origin-scoped-local-tls.md).
