@@ -1,5 +1,7 @@
 # Phase 2 server admission hardening — 2026-10-18
 
+Historical Phase 2 snapshot. See [completion follow-up](COMPLETION-2026-10-18.md) for subsequent implementations, executed checks and current blockers.
+
 Base: `24943028fd4fb95982db583194d4821bda8dedf3`.
 Branch: `fix/server-hardening-2026-10-18`.
 Only Phase 2 and its required setup/report were executed. No protocol, crypto,
