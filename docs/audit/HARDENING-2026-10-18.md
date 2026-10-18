@@ -8,14 +8,19 @@ The Windows build-bundle.ps1 CRLF/LF checkout difference is excluded from commit
 
 ## Commits
 
+GitHub commit IDs below correspond to the validated local commits. Each uploaded
+Git tree was checked against the local tree ID before creating its remote commit.
+Only commit actor/timestamp metadata differs. The following report update is
+committed separately; source code is unchanged.
+
 ```text
-a4dd20bda1d5d83781c465a435c230cdbd1d9d0e fix(server): S2 admit delivery adapters before dispatch
-ee1d768210e3e4a08ec3161285086a1fcb5b81b9 fix(server): S2 bound token buckets without active quota eviction
-822c46947afd65339ea19afffbcabf81aaded9f6 fix(server): S2 scope forwarded client IPs to explicit proxy CIDRs
-eedcf49c1b60938e85527dba081f87dce81e811e fix(server): S2 preserve account quota responses in v2 adapters
-481e48b53837ab1ad513336d53300560eb95c182 fix(docs): S5 describe implemented device request proof boundaries
-6dc419f9fae019f36238f4b56923e7461b588000 fix(docs): SETUP record discovered build and validation commands
-42f5b18ffa03512c0d064d1c9bb3610834dbd351 fix(server): S2 recover idle overflow shard capacity after debt clears
+eb356ef8070da95c187aeb724013088351064041 fix(server): S2 admit delivery adapters before dispatch
+46922e7535e2cf65966f5edbd2dc36cf174ff7e4 fix(server): S2 bound token buckets without active quota eviction
+e4cacb36c7509e080bd2b191af5ff404e6dd65ce fix(server): S2 scope forwarded client IPs to explicit proxy CIDRs
+d984e353081d6ce404a443a0846a1943bb3651d6 fix(server): S2 preserve account quota responses in v2 adapters
+27460d09efab3c268b89030350a627e59cf999b3 fix(docs): S5 describe implemented device request proof boundaries
+7d0cfd62b753105643e807cc200e01ca778d7b5b fix(docs): SETUP record discovered build and validation commands
+c96b35868b49cac05158a77624dfcfab5a395594 fix(server): S2 recover idle overflow shard capacity after debt clears
 ```
 
 This report is committed separately after those implementation commits.
