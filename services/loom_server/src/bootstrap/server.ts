@@ -794,6 +794,7 @@ export class LoomNodeServer {
         const body = await readJson(request, this.config.maxRequestBytes);
         const verified = validateHandshake(body as unknown as FederationHandshake);
         if (!await this.federationHandshakeAllowed(request, verified)) return json(response, 403, { error: 'federation_peer_not_allowed' });
+        this.limiter.consume('federation-peer',verified.nodeId,240);
         const remembered = await this.federationPeers.rememberNonce(verified.nodeId, verified.nonce, new Date(Date.now() + 10 * 60_000));
         if (!remembered) return json(response, 409, { error: 'federation_replay_detected' });
         return json(response, 200, createHandshakeResponse(this.identity, verified.nodeId, this.config.publicDomain, this.config.publicBaseUrl, verified.nonce));
@@ -803,6 +804,7 @@ export class LoomNodeServer {
         const body = await readJson(request, this.config.maxRequestBytes);
         const verified = validateHandshake(body.handshake as FederationHandshake);
         if (!await this.federationHandshakeAllowed(request, verified)) return json(response, 403, { error: 'federation_peer_not_allowed' });
+        this.limiter.consume('federation-peer',verified.nodeId,240);
         const remembered = await this.federationPeers.rememberNonce(verified.nodeId, verified.nonce, new Date(Date.now() + 10 * 60_000));
         if (!remembered) return json(response, 409, { error: 'federation_replay_detected' });
         const address = parseLoomAddress(String(body.address ?? ''), this.config.publicDomain);

@@ -1,3 +1,4 @@
+import { queueLimits, requireQueueCapacity, type FederationQueueLimits } from './queue_limits.ts';
 import type { PublicAvatar } from '../profile/profile.ts';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
@@ -70,19 +71,21 @@ function deliveryFromRow(r: Record<string, unknown>): OutboxDelivery {
 
 export class FederationRoutingStore {
   private readonly sqlite?: DatabaseSync;
+  private readonly queueBudget: FederationQueueLimits;
   private readonly pool?: PgPool;
 
-  private constructor(sqlite?: DatabaseSync, pool?: PgPool) {
+  private constructor(sqlite?: DatabaseSync, pool?: PgPool, budget=queueLimits()) {
+    this.queueBudget=budget;
     this.sqlite = sqlite;
     this.pool = pool;
   }
 
-  static sqliteStore(dataDirectory: string) {
+  static sqliteStore(dataDirectory: string, budget=queueLimits()) {
     const path = resolve(dataDirectory, 'loom.sqlite3');
     mkdirSync(dirname(path), { recursive: true });
     const db = new DatabaseSync(path);
     db.exec('PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;');
-    const s = new FederationRoutingStore(db);
+    const s = new FederationRoutingStore(db,undefined,budget);
     s.migrateSqlite();
     return s;
   }
@@ -221,10 +224,41 @@ export class FederationRoutingStore {
     const now = new Date().toISOString();
     const deliveryId = `fdlv_${randomUUID()}`;
     const payload = JSON.stringify(envelope);
+    const bytes=Buffer.byteLength(payload,'utf8');
     if (this.sqlite) {
+      const db=this.sqlite;db.exec('BEGIN IMMEDIATE');
+      try {
+        const existing=db.prepare('SELECT 1 FROM federation_outbox WHERE event_id=? AND destination_node_id=?').get(envelope.eventId,envelope.destinationNodeId);
+        if(!existing){
+          const stats=db.prepare(`SELECT COUNT(*) total_items,COALESCE(SUM(length(CAST(payload_json AS BLOB))),0) total_bytes,
+            COALESCE(SUM(CASE WHEN destination_node_id=? THEN 1 ELSE 0 END),0) peer_items,
+            COALESCE(SUM(CASE WHEN destination_node_id=? THEN length(CAST(payload_json AS BLOB)) ELSE 0 END),0) peer_bytes
+            FROM federation_outbox WHERE status IN ('pending','retrying','failed')`).get(envelope.destinationNodeId,envelope.destinationNodeId) as Record<string,unknown>;
+          requireQueueCapacity(stats,bytes,this.queueBudget);
       this.sqlite.prepare(`INSERT OR IGNORE INTO federation_outbox(delivery_id,event_id,destination_node_id,destination_domain,destination_endpoint,payload_json,source_message_id,status,attempts,next_attempt_at,created_at) VALUES(?,?,?,?,?,?,?,'pending',0,?,?)`).run(deliveryId, envelope.eventId, envelope.destinationNodeId, envelope.destinationDomain, destinationEndpoint, payload, sourceMessageId ?? null, now, now);
+        }
+        db.exec('COMMIT');
+      }catch(error){db.exec('ROLLBACK');throw error;}
     } else {
-      await this.pool!.query(`INSERT INTO federation_outbox(delivery_id,event_id,destination_node_id,destination_domain,destination_endpoint,payload_json,source_message_id,status,attempts,next_attempt_at,created_at) VALUES($1,$2,$3,$4,$5,$6::jsonb,$7,'pending',0,$8,$8) ON CONFLICT(event_id,destination_node_id) DO NOTHING`, [deliveryId, envelope.eventId, envelope.destinationNodeId, envelope.destinationDomain, destinationEndpoint, payload, sourceMessageId ?? null, now]);
+      const client=await this.pool!.connect();
+      try {
+        await client.query('BEGIN');
+        // All admissions, including admissions from other Node processes, use
+        // the same transaction-scoped lock. Never check outside the lock.
+        await client.query('SELECT pg_advisory_xact_lock(7483001)');
+        const existing=await client.query('SELECT 1 FROM federation_outbox WHERE event_id=$1 AND destination_node_id=$2',[envelope.eventId,envelope.destinationNodeId]);
+        if(!existing.rowCount){
+          const stats=(await client.query(`SELECT COUNT(*) total_items,COALESCE(SUM(octet_length(payload_json::text)),0) total_bytes,
+            COUNT(*) FILTER (WHERE destination_node_id=$1) peer_items,
+            COALESCE(SUM(octet_length(payload_json::text)) FILTER (WHERE destination_node_id=$1),0) peer_bytes
+            FROM federation_outbox WHERE status IN ('pending','retrying','failed')`,[envelope.destinationNodeId])).rows[0];
+          // jsonb serialization can add whitespace; use a conservative upper
+          // bound for this JSON value rather than undercount its persisted size.
+          requireQueueCapacity(stats,bytes*2,this.queueBudget);
+      await client.query(`INSERT INTO federation_outbox(delivery_id,event_id,destination_node_id,destination_domain,destination_endpoint,payload_json,source_message_id,status,attempts,next_attempt_at,created_at) VALUES($1,$2,$3,$4,$5,$6::jsonb,$7,'pending',0,$8,$8) ON CONFLICT(event_id,destination_node_id) DO NOTHING`, [deliveryId, envelope.eventId, envelope.destinationNodeId, envelope.destinationDomain, destinationEndpoint, payload, sourceMessageId ?? null, now]);
+        }
+        await client.query('COMMIT');
+      }catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
     }
     const d = await this.getDeliveryByEvent(envelope.eventId, envelope.destinationNodeId);
     if (!d) throw new Error('federation_enqueue_failed');

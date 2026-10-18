@@ -310,3 +310,23 @@ test('due delivery selection is fair across destinations before applying its lim
     assert.equal(whileSlowBusy[0].destinationNodeId,'node:fast');
   } finally {await store.close();rmSync(dir,{recursive:true,force:true});}
 });
+
+test('federation queue bounds peer and global admission while preserving exact retry',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'loom-queue-cap-'));
+ const accounts=new SqliteStore(dir),routing=FederationRoutingStore.sqliteStore(dir,{totalItems:2,peerItems:1,totalBytes:100000,peerBytes:100000});
+ try {
+  const first=envelope({conversationId:'c',messageId:'m',clientId:'a'});
+  const queued=await routing.enqueue(first,'https://loom-b.test');
+  assert.equal((await routing.enqueue(first,'https://loom-b.test')).deliveryId,queued.deliveryId);
+  await assert.rejects(routing.enqueue({...first,eventId:'other'},'https://loom-b.test'),/rate_limited/);
+  await routing.enqueue({...first,eventId:'second',destinationNodeId:'node:second'},'https://second.test');
+  await assert.rejects(routing.enqueue({...first,eventId:'third',destinationNodeId:'node:third'},'https://third.test'),/rate_limited/);
+ }finally{await routing.close();accounts.close();rmSync(dir,{recursive:true,force:true});}
+});
+
+test('federation queue rejects oversized payload before persistence',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'loom-queue-bytes-'));
+ const accounts=new SqliteStore(dir),routing=FederationRoutingStore.sqliteStore(dir,{totalItems:10,peerItems:10,totalBytes:10,peerBytes:10});
+ try {await assert.rejects(routing.enqueue(envelope({conversationId:'c',messageId:'m',clientId:'a'}),'https://loom-b.test'),/rate_limited/);assert.equal((await routing.dueDeliveries(10,[])).length,0);}
+ finally{await routing.close();accounts.close();rmSync(dir,{recursive:true,force:true});}
+});

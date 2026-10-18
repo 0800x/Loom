@@ -1,3 +1,5 @@
+import { RateLimitError } from '../security/rate_limiter.ts';
+import { BoundedMap } from '../security/bounded_map.ts';
 import type { LoomNodeConfig } from '../config/config.ts';
 import type { SessionInfo } from '../storage/sqlite_store.ts';
 import { GroupStore } from '../groups/group_store.ts';
@@ -7,8 +9,9 @@ export type GroupCallAdmission={groupId:string;callId:string;participantId:strin
 export class GroupCallService {
   readonly enabled:boolean;readonly media?:GroupCallMedia;
   private config:LoomNodeConfig;private groups:GroupStore;private clock:()=>number;
-  private queues=new Map<string,Promise<void>>();private applied=new Map<string,string>();
+  private queues=new Map<string,Promise<void>>();private applied=new BoundedMap<string,string>(10000);
   private eventIds=new Map<string,number>();private timer?:NodeJS.Timeout;private stopped=false;private ticking=false;
+  private pendingControls=0;private perGroupControls=new Map<string,number>();
   onRevoke?:(room:string,participant?:string)=>void;
   constructor(config:LoomNodeConfig,groups:GroupStore,options:{media?:GroupCallMedia;clock?:()=>number;timers?:boolean}={}){
     this.config=config;this.groups=groups;this.clock=options.clock??Date.now;
@@ -19,9 +22,16 @@ export class GroupCallService {
   stop(){this.stopped=true;if(this.timer)clearInterval(this.timer);}
   async close(){this.stop();await Promise.all([...this.queues.values()]);}
   private serial<T>(id:string,action:()=>Promise<T>):Promise<T>{
-    const result=(this.queues.get(id)??Promise.resolve()).then(action),done=result.then(()=>{},()=>{});
+    const perGroup=this.perGroupControls.get(id)??0;
+    if(this.pendingControls>=512||perGroup>=32)return Promise.reject(new RateLimitError(1));
+    this.pendingControls++;this.perGroupControls.set(id,perGroup+1);
+    const result=(this.queues.get(id)??Promise.resolve()).then(action).finally(()=>{
+      this.pendingControls--;const remaining=(this.perGroupControls.get(id)??1)-1;
+      if(remaining===0)this.perGroupControls.delete(id);else this.perGroupControls.set(id,remaining);
+    }),done=result.then(()=>{},()=>{});
     this.queues.set(id,done);void done.then(()=>{if(this.queues.get(id)===done)this.queues.delete(id);});return result;
   }
+
   private authority(id:string,session?:SessionInfo):Promise<GroupCallAuthority>{return this.groups.withGroupCall(id,session,a=>{refreshCallAuthority(a,this.clock());return a;});}
   private available(){if(!this.media||this.stopped)callError(503,'group_calls_not_configured');}
   async view(session:SessionInfo,id:string){

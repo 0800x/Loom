@@ -67,3 +67,26 @@ arbitrary client-supplied header contents defeats this boundary. Invalid or
 oversized chains fall back to the socket peer. Invalid CIDR configuration,
 including catch-all `/0` networks, fails startup. No `Forwarded` or `X-Real-IP`
 header is trusted. WebSocket realtime upgrade admission uses the same policy.
+
+## Resource ceilings
+
+Password hashing uses two async computations and at most eight queued requests
+per Node process. The underlying scrypt allocation is about 128 MiB per active
+new-format hash. Configure container memory with that overhead in mind.
+
+Call recovery/dedup maps have hard ceilings (4096 pending offers, 100000 recently
+seen signals); group controls allow 512 pending actions globally and 32 per group.
+The applied-media cache holds at most 10000 entries. Full capacity rejects new
+work rather than evicting live replay/authorization history. Existing expiry and
+close removal remain. These are overload ceilings, not delivery guarantees.
+
+Federation admission serializes quota checks and insertion (SQLite transaction;
+Postgres transaction-scoped advisory lock shared across processes). Defaults:
+8192 non-delivered queue entries/256 MiB globally, 1024 entries/64 MiB per peer.
+Override positive integer values using LOOM_FEDERATION_QUEUE_ITEMS,
+LOOM_FEDERATION_QUEUE_BYTES, LOOM_FEDERATION_PEER_QUEUE_ITEMS and
+LOOM_FEDERATION_PEER_QUEUE_BYTES. Exact retries remain idempotent at capacity.
+Full queues reject new admission for retry; existing data is not deleted.
+Delivered history is excluded from these active/failed queue limits and still
+requires operator storage monitoring/backup/retention planning. A malicious peer
+cannot bypass the authenticated per-peer inbound event quota by changing IP.
