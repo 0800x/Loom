@@ -68,3 +68,7 @@ jobs:
       - run: python3 scripts/sync-release-metadata.py --check
       - run: python3 scripts/validate-security-config.py
       - run: python3 scripts/check-third-party-notices.py
+      - run: python3 scripts/test_notice_sources.py
+      - run: |
+          python3 scripts/generate-third-party-notices.py --from-inventory
+          git diff --exit-code -- THIRD_PARTY_NOTICES.md third_party/dependency-inventory.json
