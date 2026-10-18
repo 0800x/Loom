@@ -16,20 +16,18 @@ void main() {
             LoomGlassScope(
               quality: LoomGlassQuality.disabled,
               child: Builder(
-                builder:
-                    (context) => Center(
-                      child: TextButton(
-                        onPressed:
-                            () => showCallFailure(
-                              context,
-                              const LoomCallSignalingException(
-                                'call-1',
-                                'call_conversation_not_found',
-                              ),
-                            ),
-                        child: const Text('Start'),
+                builder: (context) => Center(
+                  child: TextButton(
+                    onPressed: () => showCallFailure(
+                      context,
+                      const LoomCallSignalingException(
+                        'call-1',
+                        'call_conversation_not_found',
                       ),
                     ),
+                    child: const Text('Start'),
+                  ),
+                ),
               ),
             ),
             locale: locale,

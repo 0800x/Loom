@@ -23,7 +23,8 @@ final class LoomSqlitePacketStore
     // Repair retained packets paused by the old destination-node ACK policy.
     // Never recreate spent copy tokens or reopen recipient-confirmed packets.
     _db.execute(
-        "UPDATE dtn_packets SET state = 'gatewayAccepted', gateway_accepted_at = COALESCE(gateway_accepted_at, relay_accepted_at) WHERE state = 'relayAccepted' AND current_copies_remaining > 0 AND recipient_confirmed_at IS NULL AND EXISTS (SELECT 1 FROM dtn_transfers t WHERE t.packet_id = dtn_packets.packet_id AND t.reason = 'destinationNode' AND t.state = 'accepted')");
+      "UPDATE dtn_packets SET state = 'gatewayAccepted', gateway_accepted_at = COALESCE(gateway_accepted_at, relay_accepted_at) WHERE state = 'relayAccepted' AND current_copies_remaining > 0 AND recipient_confirmed_at IS NULL AND EXISTS (SELECT 1 FROM dtn_transfers t WHERE t.packet_id = dtn_packets.packet_id AND t.reason = 'destinationNode' AND t.state = 'accepted')",
+    );
   }
 
   final Database _db;
@@ -175,8 +176,9 @@ final class LoomSqlitePacketStore
       'copies_remaining',
       'current_copies_remaining',
     };
-    final presentPacketColumns =
-        packetColumns.map((row) => row['name'] as String).toSet();
+    final presentPacketColumns = packetColumns
+        .map((row) => row['name'] as String)
+        .toSet();
     if (!presentPacketColumns.containsAll(requiredPacketColumns)) {
       throw StateError('Loom DTN packet database schema is incomplete');
     }
@@ -191,8 +193,9 @@ final class LoomSqlitePacketStore
       'copies_retained',
       'state',
     };
-    final presentTransferColumns =
-        transferColumns.map((row) => row['name'] as String).toSet();
+    final presentTransferColumns = transferColumns
+        .map((row) => row['name'] as String)
+        .toSet();
     if (!presentTransferColumns.containsAll(requiredTransferColumns)) {
       throw StateError('Loom DTN transfer database schema is incomplete');
     }
@@ -227,8 +230,8 @@ final class LoomSqlitePacketStore
       throw const FormatException('Cannot store an already-expired DTN packet');
     }
     if (outer.expiresAtBucket.toUtc().isAfter(
-          current.add(const Duration(days: 7)),
-        )) {
+      current.add(const Duration(days: 7)),
+    )) {
       throw const FormatException('DTN packet exceeds seven-day custody limit');
     }
     if (outer.forwardingState.hopsUsed != 0) {
@@ -312,29 +315,30 @@ final class LoomSqlitePacketStore
   }
 
   @override
-  List<LoomStoredDtnPacket> listNearbyCandidates(DateTime now,
-      {int limit = 50}) {
+  List<LoomStoredDtnPacket> listNearbyCandidates(
+    DateTime now, {
+    int limit = 50,
+  }) {
     _requireAvailableOutsideTransaction();
     if (limit < 1 || limit > 500) throw ArgumentError.value(limit, 'limit');
     final current = now.toUtc().toIso8601String();
     return _db
-        .select('''SELECT * FROM dtn_packets
+        .select(
+          '''SELECT * FROM dtn_packets
                WHERE state IN ('queued', 'gatewayAccepted', 'relayAccepted')
                  AND expires_at > ?
                  AND (next_attempt_at <= ?
                       OR last_error_code LIKE 'destination-%'
                       OR last_error_code LIKE 'direct-%')
                ORDER BY stored_at DESC, packet_id LIMIT ?''',
-            [current, current, limit])
+          [current, current, limit],
+        )
         .map(_packetFromRow)
         .toList(growable: false);
   }
 
   @override
-  List<LoomStoredDtnPacket> listEligible(
-    DateTime now, {
-    int limit = 50,
-  }) {
+  List<LoomStoredDtnPacket> listEligible(DateTime now, {int limit = 50}) {
     _requireAvailableOutsideTransaction();
     if (limit < 1 || limit > 500) throw ArgumentError.value(limit, 'limit');
     final current = now.toUtc().toIso8601String();
@@ -452,10 +456,7 @@ final class LoomSqlitePacketStore
   }
 
   @override
-  LoomStoredDtnPacket markRelayAccepted(
-    String packetId,
-    DateTime acceptedAt,
-  ) {
+  LoomStoredDtnPacket markRelayAccepted(String packetId, DateTime acceptedAt) {
     _requireAvailableOutsideTransaction();
     _validateOpaqueId(packetId, 'packet id');
     final accepted = acceptedAt.toUtc();
@@ -753,7 +754,7 @@ final class LoomSqlitePacketStore
 
       final isGateway =
           transfer.reason == LoomDtnTransferReason.verifiedGateway ||
-              transfer.reason == LoomDtnTransferReason.claimedGateway;
+          transfer.reason == LoomDtnTransferReason.claimedGateway;
       if (transfer.reason != LoomDtnTransferReason.directRecipient) {
         _db.execute(
           '''
@@ -1072,8 +1073,8 @@ final class LoomSqlitePacketStore
     final forwarded = LoomEnvelopeV2Codec.decodeOuter(transfer.wireBytes);
     final expectedCopies =
         transfer.reason == LoomDtnTransferReason.directRecipient
-            ? 1
-            : transfer.copiesGranted;
+        ? 1
+        : transfer.copiesGranted;
 
     if (forwarded.packetId != source.packetId ||
         forwarded.routingHint.scope != source.routingHint.scope ||
@@ -1193,7 +1194,7 @@ final class LoomSqlitePacketStore
     if (plan.copiesBefore == 1) {
       final trustedSingleCopyCustodian =
           plan.reason == LoomDtnTransferReason.destinationNode ||
-              plan.reason == LoomDtnTransferReason.verifiedGateway;
+          plan.reason == LoomDtnTransferReason.verifiedGateway;
       if (!trustedSingleCopyCustodian ||
           plan.copiesGranted != 1 ||
           plan.copiesRetainedAfterSuccess != 0 ||

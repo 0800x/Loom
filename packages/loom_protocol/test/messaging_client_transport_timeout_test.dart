@@ -91,27 +91,29 @@ void main() {
     );
   });
 
-  test('Home-Node peer security lookup has the same bounded body deadline',
-      () async {
-    final stalled = await stallingServer();
-    addTearDown(() async {
-      if (!stalled.release.isCompleted) stalled.release.complete();
-      await stalled.server.close(force: true);
-    });
+  test(
+    'Home-Node peer security lookup has the same bounded body deadline',
+    () async {
+      final stalled = await stallingServer();
+      addTearDown(() async {
+        if (!stalled.release.isCompleted) stalled.release.complete();
+        await stalled.server.close(force: true);
+      });
 
-    final client = LoomUserSecurityClient(
-      connectTimeout: const Duration(seconds: 1),
-      responseHeaderTimeout: const Duration(seconds: 1),
-      responseBodyTimeout: const Duration(milliseconds: 120),
-    );
+      final client = LoomUserSecurityClient(
+        connectTimeout: const Duration(seconds: 1),
+        responseHeaderTimeout: const Duration(seconds: 1),
+        responseBodyTimeout: const Duration(milliseconds: 120),
+      );
 
-    await expectTransportTimeout(
-      client.resolve(
-        baseUri: Uri.parse('http://127.0.0.1:${stalled.server.port}'),
-        accessToken: 'test-access-token',
-        address: '@alice:example.com',
-        deviceProofProvider: proofProvider(),
-      ),
-    );
-  });
+      await expectTransportTimeout(
+        client.resolve(
+          baseUri: Uri.parse('http://127.0.0.1:${stalled.server.port}'),
+          accessToken: 'test-access-token',
+          address: '@alice:example.com',
+          deviceProofProvider: proofProvider(),
+        ),
+      );
+    },
+  );
 }

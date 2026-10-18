@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'public_avatar.dart';
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -25,10 +27,10 @@ final class LoomDirectFirstUserSecurityResolver {
     LoomUserSecurityClient? legacyClient,
     LoomDeviceBundleVerifier? bundleVerifier,
     HttpClient? httpClient,
-  })  : _nodes = nodeClient ?? LoomNodeClient(),
-        _legacy = legacyClient ?? LoomUserSecurityClient(),
-        _bundleVerifier = bundleVerifier ?? LoomDeviceBundleVerifier(),
-        _http = httpClient ?? HttpClient();
+  }) : _nodes = nodeClient ?? LoomNodeClient(),
+       _legacy = legacyClient ?? LoomUserSecurityClient(),
+       _bundleVerifier = bundleVerifier ?? LoomDeviceBundleVerifier(),
+       _http = httpClient ?? HttpClient();
 
   final LoomNodeClient _nodes;
   final LoomUserSecurityClient _legacy;
@@ -98,8 +100,9 @@ final class LoomDirectFirstUserSecurityResolver {
   }) async {
     final node = await _nodes.discoverDomain(targetDomain);
     final uri = node.endpoint.resolve('/api/v2/users/resolve');
-    final request =
-        await _http.postUrl(uri).timeout(const Duration(seconds: 8));
+    final request = await _http
+        .postUrl(uri)
+        .timeout(const Duration(seconds: 8));
     request.followRedirects = false;
     request.headers.contentType = ContentType.json;
     request.headers.set(HttpHeaders.acceptHeader, 'application/json');
@@ -134,9 +137,7 @@ final class LoomDirectFirstUserSecurityResolver {
       if (code == 'user_not_found') {
         throw const LoomProtocolException('user_not_found');
       }
-      throw const LoomProtocolException(
-        'direct_user_resolution_unsupported',
-      );
+      throw const LoomProtocolException('direct_user_resolution_unsupported');
     }
     if (response.statusCode >= 500) {
       throw const LoomProtocolException('direct_user_resolution_unavailable');
@@ -195,8 +196,9 @@ final class LoomDirectFirstUserSecurityResolver {
       credential: accessToken,
       bodyBytes: bodyBytes,
     );
-    final request =
-        await _http.postUrl(uri).timeout(const Duration(seconds: 8));
+    final request = await _http
+        .postUrl(uri)
+        .timeout(const Duration(seconds: 8));
     request.followRedirects = false;
     request.headers.contentType = ContentType.json;
     request.headers.set(HttpHeaders.acceptHeader, 'application/json');
@@ -257,13 +259,14 @@ final class LoomDirectFirstUserSecurityResolver {
     if (homeNodeRaw is! Map<String, Object?> ||
         identityRaw is! Map<String, Object?> ||
         devicesRaw is! List) {
-      throw const LoomProtocolException(
-        'Direct user profile is incomplete',
-      );
+      throw const LoomProtocolException('Direct user profile is incomplete');
     }
     final homeNodeId = _requiredString(homeNodeRaw, 'nodeId', max: 256);
-    final homeNodeDomain =
-        _requiredString(homeNodeRaw, 'domain', max: 512).toLowerCase();
+    final homeNodeDomain = _requiredString(
+      homeNodeRaw,
+      'domain',
+      max: 512,
+    ).toLowerCase();
     if (homeNodeId != expectedNodeId ||
         homeNodeDomain != expectedDomain.toLowerCase()) {
       throw const LoomProtocolException(
@@ -317,10 +320,7 @@ final class LoomDirectFirstUserSecurityResolver {
         utf8.encode(jsonEncode(canonical)),
         signature: Signature(
           signatureBytes,
-          publicKey: SimplePublicKey(
-            publicKeyBytes,
-            type: KeyPairType.ed25519,
-          ),
+          publicKey: SimplePublicKey(publicKeyBytes, type: KeyPairType.ed25519),
         ),
       );
       if (!valid) {
@@ -360,8 +360,11 @@ final class LoomDirectFirstUserSecurityResolver {
     }
     final identityId = _requiredString(identityRaw, 'identityId', max: 128);
     final publicKey = _requiredString(identityRaw, 'publicKey', max: 128);
-    final fingerprint =
-        _requiredString(identityRaw, 'fingerprint', max: 128).toUpperCase();
+    final fingerprint = _requiredString(
+      identityRaw,
+      'fingerprint',
+      max: 128,
+    ).toUpperCase();
     final publicKeyBytes = base64Decode(publicKey);
     if (publicKeyBytes.length != 32) {
       throw const LoomProtocolException(
@@ -373,9 +376,7 @@ final class LoomDirectFirstUserSecurityResolver {
         'chn:${base64UrlEncode(digest.bytes).replaceAll('=', '')}';
     if (derivedIdentityId != identityId ||
         _formatFingerprint(digest.bytes) != fingerprint) {
-      throw const LoomProtocolException(
-        'Resolved identity binding is invalid',
-      );
+      throw const LoomProtocolException('Resolved identity binding is invalid');
     }
 
     final devices = <LoomDeviceKeyBundle>[];
@@ -471,11 +472,10 @@ final class LoomDirectFirstUserSecurityClient extends LoomUserSecurityClient {
     required String accessToken,
     required String address,
     required LoomDeviceRequestProofProvider deviceProofProvider,
-  }) =>
-      _resolver.resolve(
-        baseUri: baseUri,
-        accessToken: accessToken,
-        address: address,
-        deviceProofProvider: deviceProofProvider,
-      );
+  }) => _resolver.resolve(
+    baseUri: baseUri,
+    accessToken: accessToken,
+    address: address,
+    deviceProofProvider: deviceProofProvider,
+  );
 }

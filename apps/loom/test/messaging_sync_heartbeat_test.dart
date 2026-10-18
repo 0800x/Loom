@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('heartbeat syncs only when enabled and never overlaps',
-      (tester) async {
+  testWidgets('heartbeat syncs only when enabled and never overlaps', (
+    tester,
+  ) async {
     var enabled = false;
     var calls = 0;
     var concurrent = 0;

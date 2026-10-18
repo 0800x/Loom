@@ -22,7 +22,8 @@ final class LoomAccountId {
   String toString() => value;
 
   @override
-  bool operator ==(Object other) => other is LoomAccountId && other.value == value;
+  bool operator ==(Object other) =>
+      other is LoomAccountId && other.value == value;
 
   @override
   int get hashCode => value.hashCode;
@@ -41,14 +42,14 @@ final class LoomDeviceId {
     return LoomDeviceId._(value);
   }
 
-  factory LoomDeviceId.generate() =>
-      LoomDeviceId._('dev2_${_randomToken(16)}');
+  factory LoomDeviceId.generate() => LoomDeviceId._('dev2_${_randomToken(16)}');
 
   @override
   String toString() => value;
 
   @override
-  bool operator ==(Object other) => other is LoomDeviceId && other.value == value;
+  bool operator ==(Object other) =>
+      other is LoomDeviceId && other.value == value;
 
   @override
   int get hashCode => value.hashCode;

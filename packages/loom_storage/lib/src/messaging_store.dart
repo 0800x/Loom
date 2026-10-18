@@ -242,20 +242,20 @@ class LoomMessagingStore {
     if (rows.isEmpty) return c;
     final p = rows.first;
     final until = p['muted_until'] as String?;
-    final muted = p['is_muted'] == null
-        ? c.isMuted
-        : p['is_muted'] == 1 &&
-              (until == null ||
-                  DateTime.parse(until).isAfter(DateTime.now().toUtc()));
+    final muted =
+        p['is_muted'] == null
+            ? c.isMuted
+            : p['is_muted'] == 1 &&
+                (until == null ||
+                    DateTime.parse(until).isAfter(DateTime.now().toUtc()));
     return LoomConversation(
       id: c.id,
       kind: c.kind,
       title: c.title,
       peerAddress: c.peerAddress,
       updatedOrder: c.updatedOrder,
-      unreadCount: p['marked_unread'] == 1 && c.unreadCount == 0
-          ? 1
-          : c.unreadCount,
+      unreadCount:
+          p['marked_unread'] == 1 && c.unreadCount == 0 ? 1 : c.unreadCount,
       isPinned: p['is_pinned'] == null ? c.isPinned : p['is_pinned'] == 1,
       isMuted: muted,
     );
@@ -312,10 +312,10 @@ class LoomMessagingStore {
     }
   }
 
-  bool _locallyDeleted(String clientId) => _db.select(
-    'SELECT 1 FROM local_deleted_messages WHERE client_id = ?',
-    [clientId],
-  ).isNotEmpty;
+  bool _locallyDeleted(String clientId) =>
+      _db.select('SELECT 1 FROM local_deleted_messages WHERE client_id = ?', [
+        clientId,
+      ]).isNotEmpty;
 
   /// Device-only tombstones survive replay and server ID reconciliation.
   /// An already in-flight network send cannot be recalled by local deletion.
@@ -519,14 +519,15 @@ class LoomMessagingStore {
         _db.execute('RELEASE SAVEPOINT put_message');
         return;
       }
-      final delivery = byClient.isEmpty
-          ? message.deliveryState
-          : _mergeDeliveryState(
-              LoomDeliveryState.values.byName(
-                byClient.first['delivery_state'] as String,
-              ),
-              message.deliveryState,
-            );
+      final delivery =
+          byClient.isEmpty
+              ? message.deliveryState
+              : _mergeDeliveryState(
+                LoomDeliveryState.values.byName(
+                  byClient.first['delivery_state'] as String,
+                ),
+                message.deliveryState,
+              );
       if (byClient.isNotEmpty && byClient.first['id'] != message.id) {
         _db.execute(
           '''UPDATE messages SET
@@ -715,34 +716,35 @@ class LoomMessagingStore {
       throw ArgumentError('Use one message cursor');
     }
     final cursor = beforeMessage;
-    final rows = cursor != null
-        ? _db.select(
-            '''SELECT * FROM messages WHERE conversation_id = ? AND (
+    final rows =
+        cursor != null
+            ? _db.select(
+              '''SELECT * FROM messages WHERE conversation_id = ? AND (
             created_at < ? OR (created_at = ? AND created_order < ?) OR
             (created_at = ? AND created_order = ? AND id < ?))
             ORDER BY created_at DESC, created_order DESC, id DESC LIMIT ?''',
-            [
-              conversationId,
-              cursor.createdAt.toUtc().toIso8601String(),
-              cursor.createdAt.toUtc().toIso8601String(),
-              cursor.createdOrder,
-              cursor.createdAt.toUtc().toIso8601String(),
-              cursor.createdOrder,
-              cursor.id,
-              limit,
-            ],
-          )
-        : beforeOrder == null
-        ? _db.select(
-            '''SELECT * FROM messages WHERE conversation_id = ?
+              [
+                conversationId,
+                cursor.createdAt.toUtc().toIso8601String(),
+                cursor.createdAt.toUtc().toIso8601String(),
+                cursor.createdOrder,
+                cursor.createdAt.toUtc().toIso8601String(),
+                cursor.createdOrder,
+                cursor.id,
+                limit,
+              ],
+            )
+            : beforeOrder == null
+            ? _db.select(
+              '''SELECT * FROM messages WHERE conversation_id = ?
                ORDER BY created_at DESC, created_order DESC, id DESC LIMIT ?''',
-            [conversationId, limit],
-          )
-        : _db.select(
-            '''SELECT * FROM messages WHERE conversation_id = ? AND created_order < ?
+              [conversationId, limit],
+            )
+            : _db.select(
+              '''SELECT * FROM messages WHERE conversation_id = ? AND created_order < ?
                ORDER BY created_at DESC, created_order DESC, id DESC LIMIT ?''',
-            [conversationId, beforeOrder, limit],
-          );
+              [conversationId, beforeOrder, limit],
+            );
     return rows.map(_messageFromRow).toList(growable: false);
   }
 
@@ -1022,9 +1024,9 @@ class LoomMessagingStore {
     updatedOrder: row['updated_order'] as int,
     unreadCount:
         row['local_marked_unread'] == 1 &&
-            (row['visible_unread_count'] ?? row['unread_count']) == 0
-        ? 1
-        : (row['visible_unread_count'] ?? row['unread_count']) as int,
+                (row['visible_unread_count'] ?? row['unread_count']) == 0
+            ? 1
+            : (row['visible_unread_count'] ?? row['unread_count']) as int,
     isMuted: (row['local_is_muted'] ?? row['is_muted']) != 0,
     isPinned: (row['local_is_pinned'] ?? row['is_pinned']) != 0,
   );

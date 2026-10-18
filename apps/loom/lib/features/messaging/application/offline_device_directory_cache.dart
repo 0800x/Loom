@@ -40,9 +40,7 @@ class LoomOfflineDeviceDirectoryCache {
     if (pin == null || !_isFresh(pin.lastSeenAt, current)) return null;
 
     final known = _securityStore.listDevices(pin.identityId);
-    if (known.any(
-      (item) => item.trustState == LoomDeviceTrustState.changed,
-    )) {
+    if (known.any((item) => item.trustState == LoomDeviceTrustState.changed)) {
       return null;
     }
     final active = known
@@ -89,9 +87,7 @@ class LoomOfflineDeviceDirectoryCache {
   }) async {
     final current = now.toUtc();
     final known = _securityStore.listDevices(identity.identityId);
-    if (known.any(
-      (item) => item.trustState == LoomDeviceTrustState.changed,
-    )) {
+    if (known.any((item) => item.trustState == LoomDeviceTrustState.changed)) {
       return null;
     }
     final active = known

@@ -105,62 +105,60 @@ typedef _CryptDart = _NativeOwnedBuffer Function(int, Pointer<Uint8>, int);
 /// operations; it is never converted to Dart String/JSON by this binding.
 final class LoomVodozemacHandleFfiEngine implements LoomVodozemacHandleEngine {
   LoomVodozemacHandleFfiEngine._(DynamicLibrary library)
-      : _abi = library.lookupFunction<_AbiVersionNative, _AbiVersionDart>(
-          'loom_vodozemac_v2_abi_version',
-        ),
-        _bufferFree =
-            library.lookupFunction<_BufferFreeNative, _BufferFreeDart>(
-          'loom_vodozemac_v2_buffer_free',
-        ),
-        _handleClose =
-            library.lookupFunction<_HandleCloseNative, _HandleCloseDart>(
-          'loom_vodozemac_v2_handle_close',
-        ),
-        _accountNew =
-            library.lookupFunction<_AccountNewNative, _AccountNewDart>(
-          'loom_vodozemac_v2_account_new',
-        ),
-        _accountImport = library.lookupFunction<_ImportNative, _ImportDart>(
-          'loom_vodozemac_v2_account_import',
-        ),
-        _accountExport = library.lookupFunction<_ExportNative, _ExportDart>(
-          'loom_vodozemac_v2_account_export',
-        ),
-        _accountInventory = library.lookupFunction<_ExportNative, _ExportDart>(
-          'loom_vodozemac_v2_account_public_inventory',
-        ),
-        _preparePrekeys = library.lookupFunction<_PrepareNative, _PrepareDart>(
-          'loom_vodozemac_v2_account_prepare_prekeys',
-        ),
-        _markPublished =
-            library.lookupFunction<_MarkPublishedNative, _MarkPublishedDart>(
-          'loom_vodozemac_v2_account_mark_keys_published',
-        ),
-        _forgetFallback =
-            library.lookupFunction<_ForgetFallbackNative, _ForgetFallbackDart>(
-          'loom_vodozemac_v2_account_forget_previous_fallback',
-        ),
-        _sessionImport = library.lookupFunction<_ImportNative, _ImportDart>(
-          'loom_vodozemac_v2_session_import',
-        ),
-        _sessionExport = library.lookupFunction<_ExportNative, _ExportDart>(
-          'loom_vodozemac_v2_session_export',
-        ),
-        _sessionId = library.lookupFunction<_ExportNative, _ExportDart>(
-          'loom_vodozemac_v2_session_id',
-        ),
-        _outbound = library.lookupFunction<_OutboundNative, _OutboundDart>(
-          'loom_vodozemac_v2_create_outbound_session',
-        ),
-        _inbound = library.lookupFunction<_InboundNative, _InboundDart>(
-          'loom_vodozemac_v2_create_inbound_session',
-        ),
-        _encrypt = library.lookupFunction<_CryptNative, _CryptDart>(
-          'loom_vodozemac_v2_encrypt',
-        ),
-        _decrypt = library.lookupFunction<_CryptNative, _CryptDart>(
-          'loom_vodozemac_v2_decrypt',
-        ) {
+    : _abi = library.lookupFunction<_AbiVersionNative, _AbiVersionDart>(
+        'loom_vodozemac_v2_abi_version',
+      ),
+      _bufferFree = library.lookupFunction<_BufferFreeNative, _BufferFreeDart>(
+        'loom_vodozemac_v2_buffer_free',
+      ),
+      _handleClose = library
+          .lookupFunction<_HandleCloseNative, _HandleCloseDart>(
+            'loom_vodozemac_v2_handle_close',
+          ),
+      _accountNew = library.lookupFunction<_AccountNewNative, _AccountNewDart>(
+        'loom_vodozemac_v2_account_new',
+      ),
+      _accountImport = library.lookupFunction<_ImportNative, _ImportDart>(
+        'loom_vodozemac_v2_account_import',
+      ),
+      _accountExport = library.lookupFunction<_ExportNative, _ExportDart>(
+        'loom_vodozemac_v2_account_export',
+      ),
+      _accountInventory = library.lookupFunction<_ExportNative, _ExportDart>(
+        'loom_vodozemac_v2_account_public_inventory',
+      ),
+      _preparePrekeys = library.lookupFunction<_PrepareNative, _PrepareDart>(
+        'loom_vodozemac_v2_account_prepare_prekeys',
+      ),
+      _markPublished = library
+          .lookupFunction<_MarkPublishedNative, _MarkPublishedDart>(
+            'loom_vodozemac_v2_account_mark_keys_published',
+          ),
+      _forgetFallback = library
+          .lookupFunction<_ForgetFallbackNative, _ForgetFallbackDart>(
+            'loom_vodozemac_v2_account_forget_previous_fallback',
+          ),
+      _sessionImport = library.lookupFunction<_ImportNative, _ImportDart>(
+        'loom_vodozemac_v2_session_import',
+      ),
+      _sessionExport = library.lookupFunction<_ExportNative, _ExportDart>(
+        'loom_vodozemac_v2_session_export',
+      ),
+      _sessionId = library.lookupFunction<_ExportNative, _ExportDart>(
+        'loom_vodozemac_v2_session_id',
+      ),
+      _outbound = library.lookupFunction<_OutboundNative, _OutboundDart>(
+        'loom_vodozemac_v2_create_outbound_session',
+      ),
+      _inbound = library.lookupFunction<_InboundNative, _InboundDart>(
+        'loom_vodozemac_v2_create_inbound_session',
+      ),
+      _encrypt = library.lookupFunction<_CryptNative, _CryptDart>(
+        'loom_vodozemac_v2_encrypt',
+      ),
+      _decrypt = library.lookupFunction<_CryptNative, _CryptDart>(
+        'loom_vodozemac_v2_decrypt',
+      ) {
     if (_abi() != 2) {
       throw const LoomVodozemacHandleEngineException('unsupported_abi');
     }
@@ -207,11 +205,10 @@ final class LoomVodozemacHandleFfiEngine implements LoomVodozemacHandleEngine {
 
   @override
   LoomVodozemacNativeHandle importAccount(Uint8List stateBytes) => _withInput(
-        stateBytes,
-        maxBytes: _maxStateBytes,
-        invoke: (pointer, length) =>
-            _handleFrom(_accountImport(pointer, length)),
-      );
+    stateBytes,
+    maxBytes: _maxStateBytes,
+    invoke: (pointer, length) => _handleFrom(_accountImport(pointer, length)),
+  );
 
   @override
   Uint8List exportAccount(LoomVodozemacNativeHandle account) =>
@@ -220,10 +217,9 @@ final class LoomVodozemacHandleFfiEngine implements LoomVodozemacHandleEngine {
   @override
   LoomVodozemacPublicInventory accountInventory(
     LoomVodozemacNativeHandle account,
-  ) =>
-      _decodeInventory(
-        _takeBuffer(_accountInventory(_value(account)), maxBytes: 256 * 1024),
-      );
+  ) => _decodeInventory(
+    _takeBuffer(_accountInventory(_value(account)), maxBytes: 256 * 1024),
+  );
 
   @override
   LoomVodozemacPublicInventory preparePrekeys({
@@ -262,11 +258,10 @@ final class LoomVodozemacHandleFfiEngine implements LoomVodozemacHandleEngine {
 
   @override
   LoomVodozemacNativeHandle importSession(Uint8List stateBytes) => _withInput(
-        stateBytes,
-        maxBytes: _maxStateBytes,
-        invoke: (pointer, length) =>
-            _handleFrom(_sessionImport(pointer, length)),
-      );
+    stateBytes,
+    maxBytes: _maxStateBytes,
+    invoke: (pointer, length) => _handleFrom(_sessionImport(pointer, length)),
+  );
 
   @override
   Uint8List exportSession(LoomVodozemacNativeHandle session) =>
@@ -520,17 +515,16 @@ final class LoomVodozemacHandleFfiEngine implements LoomVodozemacHandleEngine {
     required int maxFirst,
     required int maxSecond,
     required T Function(Pointer<Uint8>, int, Pointer<Uint8>, int) invoke,
-  }) =>
-      _withInput(
-        first,
-        maxBytes: maxFirst,
-        invoke: (firstPointer, firstLength) => _withInput(
-          second,
-          maxBytes: maxSecond,
-          invoke: (secondPointer, secondLength) =>
-              invoke(firstPointer, firstLength, secondPointer, secondLength),
-        ),
-      );
+  }) => _withInput(
+    first,
+    maxBytes: maxFirst,
+    invoke: (firstPointer, firstLength) => _withInput(
+      second,
+      maxBytes: maxSecond,
+      invoke: (secondPointer, secondLength) =>
+          invoke(firstPointer, firstLength, secondPointer, secondLength),
+    ),
+  );
 
   void _checkStatus(int status) {
     if (status == 0) return;

@@ -31,8 +31,9 @@ class LoomNodeShareLink {
     final id = url.queryParameters['nodeId'] ?? '';
     final fingerprint = url.queryParameters['fingerprint'] ?? '';
     if (!RegExp(r'^node:[A-Za-z0-9_-]{43}$').hasMatch(id) ||
-        !RegExp(r'^[A-Fa-f0-9]{64}$')
-            .hasMatch(fingerprint.replaceAll(' ', ''))) {
+        !RegExp(
+          r'^[A-Fa-f0-9]{64}$',
+        ).hasMatch(fingerprint.replaceAll(' ', ''))) {
       throw const FormatException('Invalid server identity');
     }
     return LoomNodeShareLink(

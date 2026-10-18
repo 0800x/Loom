@@ -1,4 +1,5 @@
 import 'transport_security.dart';
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -22,8 +23,8 @@ final class LoomV2MailboxPacket {
     required this.expiresAt,
     required this.priority,
     required this.acceptedAt,
-  })  : mailboxToken = Uint8List.fromList(mailboxToken),
-        envelopeBytes = Uint8List.fromList(envelopeBytes);
+  }) : mailboxToken = Uint8List.fromList(mailboxToken),
+       envelopeBytes = Uint8List.fromList(envelopeBytes);
 
   final String packetId;
   final Uint8List mailboxToken;
@@ -118,7 +119,8 @@ final class LoomV2DeliveryClient {
     final expiry = expiresAt.toUtc();
     if (!expiry.isAfter(DateTime.now().toUtc())) {
       throw const LoomProtocolException(
-          'V2 mailbox expiry must be in the future');
+        'V2 mailbox expiry must be in the future',
+      );
     }
     final json = await _requestJson(
       'PUT',
@@ -132,7 +134,8 @@ final class LoomV2DeliveryClient {
     final returnedExpiry = json['expiresAt'];
     if (returnedToken != _b64u(mailboxToken) || returnedExpiry is! String) {
       throw const LoomProtocolException(
-          'Invalid V2 mailbox registration receipt');
+        'Invalid V2 mailbox registration receipt',
+      );
     }
     final parsed = DateTime.tryParse(returnedExpiry)?.toUtc();
     if (parsed == null) {
@@ -163,14 +166,18 @@ final class LoomV2DeliveryClient {
     if (packets is! List) {
       throw const LoomProtocolException('Invalid V2 mailbox pull response');
     }
-    return packets.map((value) {
-      if (value is! Map) {
-        throw const LoomProtocolException('Invalid V2 mailbox packet');
-      }
-      return LoomV2MailboxPacket.fromJson(
-        value.map((key, value) => MapEntry(key.toString(), value as Object?)),
-      );
-    }).toList(growable: false);
+    return packets
+        .map((value) {
+          if (value is! Map) {
+            throw const LoomProtocolException('Invalid V2 mailbox packet');
+          }
+          return LoomV2MailboxPacket.fromJson(
+            value.map(
+              (key, value) => MapEntry(key.toString(), value as Object?),
+            ),
+          );
+        })
+        .toList(growable: false);
   }
 
   Future<void> acknowledgePacket(String packetId) async {
@@ -200,16 +207,18 @@ final class LoomV2DeliveryClient {
     final uri = baseUri.resolve(path);
     _requireSafeUri(uri);
     final token = await accessTokenProvider();
-    final bodyBytes =
-        body == null ? const <int>[] : utf8.encode(jsonEncode(body));
+    final bodyBytes = body == null
+        ? const <int>[]
+        : utf8.encode(jsonEncode(body));
     final proofHeaders = await deviceProofProvider.headers(
       method: method,
       uri: uri,
       credential: token,
       bodyBytes: bodyBytes,
     );
-    final request =
-        await _http.openUrl(method, uri).timeout(const Duration(seconds: 8));
+    final request = await _http
+        .openUrl(method, uri)
+        .timeout(const Duration(seconds: 8));
     request.followRedirects = false;
     request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
     request.headers.set(HttpHeaders.acceptHeader, 'application/json');

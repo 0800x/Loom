@@ -60,11 +60,7 @@ final class LoomInnerEnvelopeV2 {
       'recipient account id',
       maxLength: 256,
     );
-    _validateOpaqueId(
-      recipientDeviceId,
-      'recipient device id',
-      maxLength: 256,
-    );
+    _validateOpaqueId(recipientDeviceId, 'recipient device id', maxLength: 256);
     if (replyToMessageId != null) {
       _validateOpaqueId(replyToMessageId!, 'reply-to message id');
       if (replyToMessageId == messageId) {
@@ -146,10 +142,8 @@ final class LoomDeliveryReceiptV2 {
 /// The mailbox token is opaque, rotating material; it is not an account,
 /// username, stable device id, conversation id, or public key.
 final class LoomRoutingHintV2 {
-  LoomRoutingHintV2({
-    required this.scope,
-    required Uint8List mailboxToken,
-  }) : mailboxToken = Uint8List.fromList(mailboxToken);
+  LoomRoutingHintV2({required this.scope, required Uint8List mailboxToken})
+    : mailboxToken = Uint8List.fromList(mailboxToken);
 
   final LoomRoutingScopeV2 scope;
   final Uint8List mailboxToken;

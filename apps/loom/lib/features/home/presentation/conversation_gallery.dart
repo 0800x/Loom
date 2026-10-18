@@ -274,344 +274,330 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
     final p = context.loom;
     return PopScope(
       canPop: !batch.sending,
-      child: SizedBox.expand(child: SafeArea(
-              top: false,
-              child: Column(
+      child: SizedBox.expand(
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _albums.isEmpty
-                            ? Text(
-                                _mobile
-                                    ? tr(context, 'Gallery', 'گالری')
-                                    : tr(
-                                        context,
-                                        'Choose files',
-                                        'انتخاب فایل‌ها',
-                                      ),
-                              )
-                            : DropdownButton<AssetPathEntity>(
-                                isExpanded: true,
-                                value: _album,
-                                underline: const SizedBox.shrink(),
-                                items: _albums
-                                    .map(
-                                      (a) => DropdownMenuItem(
-                                        value: a,
-                                        child: Text(
-                                          a.isAll
-                                              ? tr(context, 'Recent', 'اخیر')
-                                              : a.name,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _albums.isEmpty
+                        ? Text(
+                            _mobile
+                                ? tr(context, 'Gallery', 'گالری')
+                                : tr(context, 'Choose files', 'انتخاب فایل‌ها'),
+                          )
+                        : DropdownButton<AssetPathEntity>(
+                            isExpanded: true,
+                            value: _album,
+                            underline: const SizedBox.shrink(),
+                            items: _albums
+                                .map(
+                                  (a) => DropdownMenuItem(
+                                    value: a,
+                                    child: Text(
+                                      a.isAll
+                                          ? tr(context, 'Recent', 'اخیر')
+                                          : a.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: batch.sending
+                                ? null
+                                : (album) {
+                                    ++_generation;
+                                    setState(() {
+                                      _album = album;
+                                      _assets.clear();
+                                      _page = 0;
+                                      _more = true;
+                                      _pageLoading = false;
+                                    });
+                                    unawaited(_nextPage());
+                                  },
+                          ),
+                  ),
+                  IconButton(
+                    tooltip: tr(context, 'System picker', 'انتخابگر سیستم'),
+                    onPressed: batch.sending ? null : _systemPicker,
+                    icon: const Icon(LoomIcons.folder_open),
+                  ),
+                  IconButton(
+                    tooltip: tr(context, 'Close', 'بستن'),
+                    onPressed: batch.sending
+                        ? null
+                        : () => Navigator.pop(context),
+                    icon: const Icon(LoomIcons.close),
+                  ),
+                ],
+              ),
+              if (_permission == PermissionState.limited)
+                TextButton.icon(
+                  onPressed: batch.sending
+                      ? null
+                      : () async {
+                          await PhotoManager.presentLimited(
+                            type: RequestType.common,
+                          );
+                          if (mounted) await _loadLibrary();
+                        },
+                  icon: const Icon(LoomIcons.photo_library_outlined),
+                  label: Text(
+                    tr(
+                      context,
+                      'Manage selected-photo access',
+                      'مدیریت دسترسی عکس‌های انتخاب‌شده',
+                    ),
+                  ),
+                ),
+              if (_error != null || batch.error != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    tr(
+                      context,
+                      'Some items are unavailable or were not sent. Your remaining selection is kept.',
+                      'بعضی موارد در دسترس نیستند یا ارسال نشدند؛ انتخاب‌های باقی‌مانده حفظ شده‌اند.',
+                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelSmall?.copyWith(color: p.critical),
+                  ),
+                ),
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : NotificationListener<ScrollNotification>(
+                        onNotification: (notification) {
+                          if (notification.metrics.extentAfter < 400) {
+                            unawaited(_nextPage());
+                          }
+                          return false;
+                        },
+                        child: CustomScrollView(
+                          controller: _galleryScroll,
+                          slivers: [
+                            if (_assets.isEmpty)
+                              SliverToBoxAdapter(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(20),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        tr(
+                                          context,
+                                          _permission?.hasAccess == false
+                                              ? 'Gallery permission is denied.'
+                                              : 'No photos or videos to show.',
+                                          _permission?.hasAccess == false
+                                              ? 'مجوز گالری داده نشده است.'
+                                              : 'عکس یا ویدیویی موجود نیست.',
                                         ),
                                       ),
-                                    )
-                                    .toList(),
-                                onChanged: batch.sending
-                                    ? null
-                                    : (album) {
-                                        ++_generation;
-                                        setState(() {
-                                          _album = album;
-                                          _assets.clear();
-                                          _page = 0;
-                                          _more = true;
-                                          _pageLoading = false;
-                                        });
-                                        unawaited(_nextPage());
-                                      },
+                                      FilledButton.icon(
+                                        onPressed: batch.sending
+                                            ? null
+                                            : _systemPicker,
+                                        icon: const Icon(
+                                          LoomIcons.photo_library_outlined,
+                                        ),
+                                        label: Text(
+                                          tr(
+                                            context,
+                                            'Choose media',
+                                            'انتخاب مدیا',
+                                          ),
+                                        ),
+                                      ),
+                                      if (_mobile)
+                                        TextButton(
+                                          onPressed: () async {
+                                            await PhotoManager.openSetting();
+                                            if (mounted) {
+                                              await _loadLibrary();
+                                            }
+                                          },
+                                          child: Text(
+                                            tr(
+                                              context,
+                                              'Photo access settings',
+                                              'تنظیمات دسترسی عکس',
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
                               ),
+                            SliverGrid(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  if (_mobile && index == 0) {
+                                    return InkWell(
+                                      onTap: batch.sending
+                                          ? null
+                                          : () => Navigator.pop(
+                                              context,
+                                              'camera',
+                                            ),
+                                      child: LoomGlassSurface(
+                                        blur: false,
+                                        strength: LoomGlassStrength.weak,
+                                        radius: 14,
+                                        child: Center(
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                LoomIcons.camera_alt_outlined,
+                                                size: 32,
+                                                color: p.primary,
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                tr(context, 'Camera', 'دوربین'),
+                                                style: Theme.of(
+                                                  context,
+                                                ).textTheme.labelMedium,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  final asset =
+                                      _assets[index - (_mobile ? 1 : 0)];
+                                  return _GalleryThumb(
+                                    key: ValueKey(asset.id),
+                                    asset: asset,
+                                    number: selected.indexOf(asset.id) + 1,
+                                    enabled: !batch.sending,
+                                    onTap: () => _toggle(
+                                      _GalleryItem(
+                                        id: asset.id,
+                                        asset: asset,
+                                        kind: asset.type == AssetType.video
+                                            ? 'video'
+                                            : 'image',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                childCount: _assets.length + (_mobile ? 1 : 0),
+                              ),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 3,
+                                    crossAxisSpacing: 6,
+                                    mainAxisSpacing: 6,
+                                  ),
+                            ),
+                            if (_pageLoading)
+                              const SliverToBoxAdapter(
+                                child: LinearProgressIndicator(),
+                              ),
+                          ],
+                        ),
                       ),
-                      IconButton(
-                        tooltip: tr(context, 'System picker', 'انتخابگر سیستم'),
-                        onPressed: batch.sending ? null : _systemPicker,
-                        icon: const Icon(LoomIcons.folder_open),
+              ),
+              if (selected.isNotEmpty) ...[
+                TextButton.icon(
+                  onPressed: batch.sending ? null : _previewSelection,
+                  icon: const Icon(LoomIcons.preview_outlined),
+                  label: Text(
+                    tr(
+                      context,
+                      'Preview selection (${selected.length})',
+                      'پیش‌نمایش انتخاب‌ها (${selected.length})',
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 36,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: batch.pending.entries
+                        .map(
+                          (entry) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 3),
+                            child: InputChip(
+                              label: Text('${selected.indexOf(entry.key) + 1}'),
+                              onDeleted: batch.sending
+                                  ? null
+                                  : () => batch.remove(entry.key),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: widget.draft.caption,
+                          enabled: !batch.sending,
+                          minLines: 1,
+                          maxLines: 3,
+                          maxLength: 2000,
+                          decoration: InputDecoration(
+                            hintText: tr(
+                              context,
+                              'Add a caption',
+                              'افزودن توضیح',
+                            ),
+                            counterText: '',
+                          ),
+                        ),
                       ),
-                      IconButton(
-                        tooltip: tr(context, 'Close', 'بستن'),
-                        onPressed: batch.sending
-                            ? null
-                            : () => Navigator.pop(context),
-                        icon: const Icon(LoomIcons.close),
+                      const SizedBox(width: 8),
+                      FilledButton.icon(
+                        onPressed: batch.sending ? null : _previewSelection,
+                        icon: const Icon(LoomIcons.arrow_upward),
+                        label: Text(
+                          '${tr(context, 'Send', 'ارسال')} (${selected.length})',
+                        ),
                       ),
                     ],
                   ),
-                  if (_permission == PermissionState.limited)
-                    TextButton.icon(
-                      onPressed: batch.sending
-                          ? null
-                          : () async {
-                              await PhotoManager.presentLimited(
-                                type: RequestType.common,
-                              );
-                              if (mounted) await _loadLibrary();
-                            },
-                      icon: const Icon(LoomIcons.photo_library_outlined),
-                      label: Text(
-                        tr(
-                          context,
-                          'Manage selected-photo access',
-                          'مدیریت دسترسی عکس‌های انتخاب‌شده',
-                        ),
-                      ),
-                    ),
-                  if (_error != null || batch.error != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        tr(
-                          context,
-                          'Some items are unavailable or were not sent. Your remaining selection is kept.',
-                          'بعضی موارد در دسترس نیستند یا ارسال نشدند؛ انتخاب‌های باقی‌مانده حفظ شده‌اند.',
-                        ),
-                        style: Theme.of(
-                          context,
-                        ).textTheme.labelSmall?.copyWith(color: p.critical),
-                      ),
-                    ),
-                  Expanded(
-                    child: _loading
-                        ? const Center(child: CircularProgressIndicator())
-                        : NotificationListener<ScrollNotification>(
-                            onNotification: (notification) {
-                              if (notification.metrics.extentAfter < 400) {
-                                unawaited(_nextPage());
-                              }
-                              return false;
-                            },
-                            child: CustomScrollView(
-                              controller: _galleryScroll,
-                              slivers: [
-                                if (_assets.isEmpty)
-                                  SliverToBoxAdapter(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(20),
-                                      child: Column(
-                                        children: [
-                                          Text(
-                                            tr(
-                                              context,
-                                              _permission?.hasAccess == false
-                                                  ? 'Gallery permission is denied.'
-                                                  : 'No photos or videos to show.',
-                                              _permission?.hasAccess == false
-                                                  ? 'مجوز گالری داده نشده است.'
-                                                  : 'عکس یا ویدیویی موجود نیست.',
-                                            ),
-                                          ),
-                                          FilledButton.icon(
-                                            onPressed: batch.sending
-                                                ? null
-                                                : _systemPicker,
-                                            icon: const Icon(
-                                              LoomIcons
-                                                  .photo_library_outlined,
-                                            ),
-                                            label: Text(
-                                              tr(
-                                                context,
-                                                'Choose media',
-                                                'انتخاب مدیا',
-                                              ),
-                                            ),
-                                          ),
-                                          if (_mobile)
-                                            TextButton(
-                                              onPressed: () async {
-                                                await PhotoManager.openSetting();
-                                                if (mounted) {
-                                                  await _loadLibrary();
-                                                }
-                                              },
-                                              child: Text(
-                                                tr(
-                                                  context,
-                                                  'Photo access settings',
-                                                  'تنظیمات دسترسی عکس',
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                SliverGrid(
-                                  delegate: SliverChildBuilderDelegate(
-                                    (context, index) {
-                                      if (_mobile && index == 0) {
-                                        return InkWell(
-                                          onTap: batch.sending
-                                              ? null
-                                              : () => Navigator.pop(
-                                                  context,
-                                                  'camera',
-                                                ),
-                                          child: LoomGlassSurface(
-                                            blur: false,
-                                            strength: LoomGlassStrength.weak,
-                                            radius: 14,
-                                            child: Center(
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(
-                                                    LoomIcons
-                                                        .camera_alt_outlined,
-                                                    size: 32,
-                                                    color: p.primary,
-                                                  ),
-                                                  const SizedBox(height: 8),
-                                                  Text(
-                                                    tr(
-                                                      context,
-                                                      'Camera',
-                                                      'دوربین',
-                                                    ),
-                                                    style: Theme.of(
-                                                      context,
-                                                    ).textTheme.labelMedium,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                      final asset =
-                                          _assets[index - (_mobile ? 1 : 0)];
-                                      return _GalleryThumb(
-                                        key: ValueKey(asset.id),
-                                        asset: asset,
-                                        number: selected.indexOf(asset.id) + 1,
-                                        enabled: !batch.sending,
-                                        onTap: () => _toggle(
-                                          _GalleryItem(
-                                            id: asset.id,
-                                            asset: asset,
-                                            kind: asset.type == AssetType.video
-                                                ? 'video'
-                                                : 'image',
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    childCount:
-                                        _assets.length + (_mobile ? 1 : 0),
-                                  ),
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 3,
-                                        crossAxisSpacing: 6,
-                                        mainAxisSpacing: 6,
-                                      ),
-                                ),
-                                if (_pageLoading)
-                                  const SliverToBoxAdapter(
-                                    child: LinearProgressIndicator(),
-                                  ),
-                              ],
-                            ),
-                          ),
+                ),
+              ],
+              if (batch.sending)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
                   ),
-                  if (selected.isNotEmpty) ...[
-                    TextButton.icon(
-                      onPressed: batch.sending ? null : _previewSelection,
-                      icon: const Icon(LoomIcons.preview_outlined),
-                      label: Text(
-                        tr(
-                          context,
-                          'Preview selection (${selected.length})',
-                          'پیش‌نمایش انتخاب‌ها (${selected.length})',
-                        ),
+                  child: Column(
+                    children: [
+                      LinearProgressIndicator(
+                        value: batch.total == 0
+                            ? null
+                            : batch.completed / batch.total,
                       ),
-                    ),
-                    SizedBox(
-                      height: 36,
-                      child: ListView(
+                      Text('${batch.completed} / ${batch.total}'),
+                    ],
+                  ),
+                ),
+              if (MediaQuery.viewInsetsOf(context).bottom == 0)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
+                  child: LayoutBuilder(
+                    builder: (context, bounds) => LoomGlassSurface(
+                      liveBackdrop: true,
+                      radius: 24,
+                      padding: const EdgeInsets.all(4),
+                      child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
-                        children: batch.pending.entries
-                            .map(
-                              (entry) => Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 3,
-                                ),
-                                child: InputChip(
-                                  label: Text(
-                                    '${selected.indexOf(entry.key) + 1}',
-                                  ),
-                                  onDeleted: batch.sending
-                                      ? null
-                                      : () => batch.remove(entry.key),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: widget.draft.caption,
-                              enabled: !batch.sending,
-                              minLines: 1,
-                              maxLines: 3,
-                              maxLength: 2000,
-                              decoration: InputDecoration(
-                                hintText: tr(
-                                  context,
-                                  'Add a caption',
-                                  'افزودن توضیح',
-                                ),
-                                counterText: '',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          FilledButton.icon(
-                            onPressed: batch.sending ? null : _previewSelection,
-                            icon: const Icon(LoomIcons.arrow_upward),
-                            label: Text(
-                              '${tr(context, 'Send', 'ارسال')} (${selected.length})',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  if (batch.sending)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: Column(
-                        children: [
-                          LinearProgressIndicator(
-                            value: batch.total == 0
-                                ? null
-                                : batch.completed / batch.total,
-                          ),
-                          Text('${batch.completed} / ${batch.total}'),
-                        ],
-                      ),
-                    ),
-                  if (MediaQuery.viewInsetsOf(context).bottom == 0)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
-                      child: LayoutBuilder(
-                        builder: (context, bounds) => LoomGlassSurface(
-                          liveBackdrop: true,
-                          radius: 24,
-                          padding: const EdgeInsets.all(4),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
+                        child: Row(
                           children:
                               <Widget>[
                                     _category(
@@ -665,19 +651,24 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
                                     (item) => SizedBox(
                                       width: 92,
                                       height:
-                                          40 + MediaQuery.textScalerOf(context).scale(12) * 2.4,
+                                          40 +
+                                          MediaQuery.textScalerOf(
+                                                context,
+                                              ).scale(12) *
+                                              2.4,
                                       child: item,
                                     ),
                                   )
                                   .toList(),
-                            ),
-                          ),
                         ),
                       ),
                     ),
-                ],
-              ),
-            )),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

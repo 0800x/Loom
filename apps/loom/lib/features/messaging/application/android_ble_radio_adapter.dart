@@ -105,9 +105,7 @@ final class LoomAndroidBleRadioAdapter implements LoomNearbyRadioAdapter {
       final advertisement = LoomNearbyAdvertisement(
         protocolVersion: 1,
         rendezvousId: rendezvousId,
-        bearers: const <LoomNearbyBearer>[
-          LoomNearbyBearer.bluetoothLowEnergy,
-        ],
+        bearers: const <LoomNearbyBearer>[LoomNearbyBearer.bluetoothLowEnergy],
         expiresAt: DateTime.fromMillisecondsSinceEpoch(
           expiresAtMs.toInt(),
           isUtc: true,
@@ -132,9 +130,7 @@ final class LoomAndroidBleRadioAdapter implements LoomNearbyRadioAdapter {
         advertisement.rendezvousId.length < 16 ||
         advertisement.rendezvousId.length > 128 ||
         !advertisement.expiresAt.toUtc().isAfter(now) ||
-        !advertisement.bearers.contains(
-          LoomNearbyBearer.bluetoothLowEnergy,
-        )) {
+        !advertisement.bearers.contains(LoomNearbyBearer.bluetoothLowEnergy)) {
       throw const FormatException('Invalid BLE nearby advertisement');
     }
     await _channel.invokeMethod<Object?>('advertise', <String, Object?>{

@@ -10,17 +10,16 @@ void main() {
   test(
     'photo preparation preserves aspect ratio, color and the original file',
     () async {
-      final folder = await Directory.systemTemp.createTemp(
-        'loom_photo_test_',
-      );
+      final folder = await Directory.systemTemp.createTemp('loom_photo_test_');
       try {
         final input = image.fill(
           image.Image(width: 3000, height: 1500),
           color: image.ColorRgb8(20, 100, 200),
         );
         final original = image.encodePng(input);
-        final source = await File('${folder.path}/source.png')
-            .writeAsBytes(original);
+        final source = await File(
+          '${folder.path}/source.png',
+        ).writeAsBytes(original);
         final prepared = await LoomMediaPreparation.prepare(
           source,
           'image',
@@ -43,9 +42,7 @@ void main() {
   test(
     'oversized source is rejected before decoding and remains intact',
     () async {
-      final folder = await Directory.systemTemp.createTemp(
-        'loom_limit_test_',
-      );
+      final folder = await Directory.systemTemp.createTemp('loom_limit_test_');
       try {
         final source = File('${folder.path}/large.png');
         final handle = await source.open(mode: FileMode.write);
@@ -61,53 +58,61 @@ void main() {
       }
     },
   );
-  test('animated GIF retains every frame and original bytes regardless of extension', () async {
-    final folder = await Directory.systemTemp.createTemp('loom_gif_test_');
-    try {
-      final encoder = image.GifEncoder();
-      encoder.addFrame(
-        image.fill(
-          image.Image(width: 8, height: 8),
-          color: image.ColorRgb8(255, 0, 0),
-        ),
-        duration: 10,
-      );
-      encoder.addFrame(
-        image.fill(
-          image.Image(width: 8, height: 8),
-          color: image.ColorRgb8(0, 0, 255),
-        ),
-        duration: 10,
-      );
-      final bytes = encoder.finish()!;
-      final source = await File('${folder.path}/keyboard.bin')
-          .writeAsBytes(bytes);
-      final prepared = await LoomMediaPreparation.prepare(
-        source,
-        'image',
-        temporaryDirectory: () async => folder,
-      );
-      expect(prepared.owned, false);
-      expect(await prepared.file.readAsBytes(), bytes);
-      expect(image.decodeGif(await prepared.file.readAsBytes())!.numFrames, 2);
-      final metadata = await LoomMediaPreparation.dimensions(
-        prepared.file,
-        'image',
-      );
-      expect(metadata['animated'], true);
-      expect(metadata['mime'], 'image/gif');
-      expect(metadata['width'], 8);
-      await prepared.dispose();
-      expect(await source.exists(), true);
-    } finally {
-      await folder.delete(recursive: true);
-    }
-  });
+  test(
+    'animated GIF retains every frame and original bytes regardless of extension',
+    () async {
+      final folder = await Directory.systemTemp.createTemp('loom_gif_test_');
+      try {
+        final encoder = image.GifEncoder();
+        encoder.addFrame(
+          image.fill(
+            image.Image(width: 8, height: 8),
+            color: image.ColorRgb8(255, 0, 0),
+          ),
+          duration: 10,
+        );
+        encoder.addFrame(
+          image.fill(
+            image.Image(width: 8, height: 8),
+            color: image.ColorRgb8(0, 0, 255),
+          ),
+          duration: 10,
+        );
+        final bytes = encoder.finish()!;
+        final source = await File(
+          '${folder.path}/keyboard.bin',
+        ).writeAsBytes(bytes);
+        final prepared = await LoomMediaPreparation.prepare(
+          source,
+          'image',
+          temporaryDirectory: () async => folder,
+        );
+        expect(prepared.owned, false);
+        expect(await prepared.file.readAsBytes(), bytes);
+        expect(
+          image.decodeGif(await prepared.file.readAsBytes())!.numFrames,
+          2,
+        );
+        final metadata = await LoomMediaPreparation.dimensions(
+          prepared.file,
+          'image',
+        );
+        expect(metadata['animated'], true);
+        expect(metadata['mime'], 'image/gif');
+        expect(metadata['width'], 8);
+        await prepared.dispose();
+        expect(await source.exists(), true);
+      } finally {
+        await folder.delete(recursive: true);
+      }
+    },
+  );
   test('invalid GIF container is rejected without modifying source', () async {
     final folder = await Directory.systemTemp.createTemp('loom_invalid_gif_');
     try {
-      final source = await File('${folder.path}/invalid.gif')
-          .writeAsString('GIF89a-broken');
+      final source = await File(
+        '${folder.path}/invalid.gif',
+      ).writeAsString('GIF89a-broken');
       await expectLater(
         LoomMediaPreparation.prepare(source, 'image'),
         throwsA(anything),

@@ -37,58 +37,59 @@ void main() {
     expect(decoded.receiptPolicy, source.receiptPolicy);
   });
 
-  test('session ciphertext protobuf round trip preserves provider metadata',
-      () {
-    final source = LoomSessionCiphertextWireV2(
-      protocolVersion: 'Loom-Session-v2',
-      sessionLocator: 'opaque-session-locator',
-      ciphertext: Uint8List.fromList(<int>[9, 10, 11, 12]),
-    );
+  test(
+    'session ciphertext protobuf round trip preserves provider metadata',
+    () {
+      final source = LoomSessionCiphertextWireV2(
+        protocolVersion: 'Loom-Session-v2',
+        sessionLocator: 'opaque-session-locator',
+        ciphertext: Uint8List.fromList(<int>[9, 10, 11, 12]),
+      );
 
-    final encoded = LoomEnvelopeV2Codec.encodeSessionCiphertext(source);
-    final decoded = LoomEnvelopeV2Codec.decodeSessionCiphertext(encoded);
+      final encoded = LoomEnvelopeV2Codec.encodeSessionCiphertext(source);
+      final decoded = LoomEnvelopeV2Codec.decodeSessionCiphertext(encoded);
 
-    expect(
-      decoded.version,
-      LoomProtocolVersions.sessionCiphertextEnvelopeV2,
-    );
-    expect(decoded.protocolVersion, source.protocolVersion);
-    expect(decoded.sessionLocator, source.sessionLocator);
-    expect(decoded.ciphertext, source.ciphertext);
-  });
+      expect(decoded.version, LoomProtocolVersions.sessionCiphertextEnvelopeV2);
+      expect(decoded.protocolVersion, source.protocolVersion);
+      expect(decoded.sessionLocator, source.sessionLocator);
+      expect(decoded.ciphertext, source.ciphertext);
+    },
+  );
 
-  test('outer envelope protobuf round trip preserves only routable metadata',
-      () {
-    final source = LoomOuterEnvelopeV2(
-      packetId: 'packet-000000000001',
-      routingHint: LoomRoutingHintV2(
-        scope: LoomRoutingScopeV2.globalRelay,
-        mailboxToken: Uint8List.fromList(List<int>.generate(32, (i) => i)),
-      ),
-      expiresAtBucket: DateTime.utc(2026, 9, 12, 12),
-      priority: LoomPriorityClassV2.urgent,
-      initialHopLimit: 6,
-      forwardingState: const LoomForwardingStateV2(
-        hopsUsed: 2,
-        copiesRemaining: 4,
-      ),
-      encryptedPayload: Uint8List.fromList(<int>[9, 8, 7, 6, 5]),
-    );
+  test(
+    'outer envelope protobuf round trip preserves only routable metadata',
+    () {
+      final source = LoomOuterEnvelopeV2(
+        packetId: 'packet-000000000001',
+        routingHint: LoomRoutingHintV2(
+          scope: LoomRoutingScopeV2.globalRelay,
+          mailboxToken: Uint8List.fromList(List<int>.generate(32, (i) => i)),
+        ),
+        expiresAtBucket: DateTime.utc(2026, 9, 12, 12),
+        priority: LoomPriorityClassV2.urgent,
+        initialHopLimit: 6,
+        forwardingState: const LoomForwardingStateV2(
+          hopsUsed: 2,
+          copiesRemaining: 4,
+        ),
+        encryptedPayload: Uint8List.fromList(<int>[9, 8, 7, 6, 5]),
+      );
 
-    final bytes = LoomEnvelopeV2Codec.encodeOuter(source);
-    expect(bytes.take(2), <int>[0x08, 0x02]);
+      final bytes = LoomEnvelopeV2Codec.encodeOuter(source);
+      expect(bytes.take(2), <int>[0x08, 0x02]);
 
-    final decoded = LoomEnvelopeV2Codec.decodeOuter(bytes);
-    expect(decoded.packetId, source.packetId);
-    expect(decoded.routingHint.scope, source.routingHint.scope);
-    expect(decoded.routingHint.mailboxToken, source.routingHint.mailboxToken);
-    expect(decoded.expiresAtBucket, source.expiresAtBucket);
-    expect(decoded.priority, source.priority);
-    expect(decoded.initialHopLimit, source.initialHopLimit);
-    expect(decoded.forwardingState.hopsUsed, 2);
-    expect(decoded.forwardingState.copiesRemaining, 4);
-    expect(decoded.encryptedPayload, source.encryptedPayload);
-  });
+      final decoded = LoomEnvelopeV2Codec.decodeOuter(bytes);
+      expect(decoded.packetId, source.packetId);
+      expect(decoded.routingHint.scope, source.routingHint.scope);
+      expect(decoded.routingHint.mailboxToken, source.routingHint.mailboxToken);
+      expect(decoded.expiresAtBucket, source.expiresAtBucket);
+      expect(decoded.priority, source.priority);
+      expect(decoded.initialHopLimit, source.initialHopLimit);
+      expect(decoded.forwardingState.hopsUsed, 2);
+      expect(decoded.forwardingState.copiesRemaining, 4);
+      expect(decoded.encryptedPayload, source.encryptedPayload);
+    },
+  );
 
   test('delivery receipt has a pinned protobuf golden vector', () {
     const source = LoomDeliveryReceiptV2(
@@ -167,11 +168,7 @@ void main() {
       recipientDeviceId: 'device-recipient-00000001',
     );
     final encoded = LoomEnvelopeV2Codec.encodeDeliveryReceipt(source);
-    final duplicateVersion = Uint8List.fromList(<int>[
-      ...encoded,
-      0x08,
-      0x02,
-    ]);
+    final duplicateVersion = Uint8List.fromList(<int>[...encoded, 0x08, 0x02]);
 
     expect(
       () => LoomEnvelopeV2Codec.decodeDeliveryReceipt(duplicateVersion),
@@ -216,11 +213,7 @@ void main() {
   });
 
   test('non-minimal protobuf varints fail closed', () {
-    final malformedVersion = Uint8List.fromList(<int>[
-      0x08,
-      0x82,
-      0x00,
-    ]);
+    final malformedVersion = Uint8List.fromList(<int>[0x08, 0x82, 0x00]);
 
     expect(
       () => LoomEnvelopeV2Codec.decodeDeliveryReceipt(malformedVersion),

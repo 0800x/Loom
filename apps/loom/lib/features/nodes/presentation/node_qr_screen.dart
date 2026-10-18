@@ -58,7 +58,9 @@ class LoomNodeShareScreen extends StatelessWidget {
   final LoomNodeShareLink link;
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: LoomGlassAppBar(title: Text(tr(context, 'Share server', 'اشتراک سرور'))),
+    appBar: LoomGlassAppBar(
+      title: Text(tr(context, 'Share server', 'اشتراک سرور')),
+    ),
     body: Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -187,7 +189,9 @@ class _NodeScannerState extends State<LoomNodeQrScanner>
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: LoomGlassAppBar(title: Text(tr(context, 'Scan server QR', 'اسکن QR سرور'))),
+    appBar: LoomGlassAppBar(
+      title: Text(tr(context, 'Scan server QR', 'اسکن QR سرور')),
+    ),
     body: Column(
       children: [
         if (supported)
@@ -249,4 +253,3 @@ class _NodeScannerState extends State<LoomNodeQrScanner>
     ),
   );
 }
-

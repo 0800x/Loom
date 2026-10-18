@@ -68,9 +68,9 @@ class LoomNetworkGenerationChangedException extends SocketException {
     required this.fromGeneration,
     required this.toGeneration,
   }) : super(
-         'Default network changed from generation '
-         '$fromGeneration to $toGeneration',
-       );
+          'Default network changed from generation '
+          '$fromGeneration to $toGeneration',
+        );
 
   final int fromGeneration;
   final int toGeneration;

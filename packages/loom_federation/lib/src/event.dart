@@ -43,24 +43,24 @@ class LoomFederationEvent {
   final String signature;
 
   Map<String, Object?> unsignedJson() => <String, Object?>{
-        'version': version,
-        'eventId': eventId,
-        'originNodeId': originNodeId,
-        'destination': destinationDomain,
-        'conversationId': conversationId,
-        'type': _wireType(type),
-        'createdAt': createdAt.toUtc().toIso8601String(),
-        'expiresAt': expiresAt.toUtc().toIso8601String(),
-        'hopCount': hopCount,
-        'maxHops': maxHops,
-        'nonce': nonce,
-        'body': body,
-      };
+    'version': version,
+    'eventId': eventId,
+    'originNodeId': originNodeId,
+    'destination': destinationDomain,
+    'conversationId': conversationId,
+    'type': _wireType(type),
+    'createdAt': createdAt.toUtc().toIso8601String(),
+    'expiresAt': expiresAt.toUtc().toIso8601String(),
+    'hopCount': hopCount,
+    'maxHops': maxHops,
+    'nonce': nonce,
+    'body': body,
+  };
 
   Map<String, Object?> toJson() => <String, Object?>{
-        ...unsignedJson(),
-        'signature': signature,
-      };
+    ...unsignedJson(),
+    'signature': signature,
+  };
 
   List<int> signingBytes() => utf8.encode(loomCanonicalJson(unsignedJson()));
 
@@ -132,20 +132,20 @@ class LoomFederationEvent {
 }
 
 String _wireType(LoomFederationEventType type) => switch (type) {
-      LoomFederationEventType.message => 'MessageEvent',
-      LoomFederationEventType.membership => 'MembershipEvent',
-      LoomFederationEventType.groupUpdate => 'GroupUpdate',
-      LoomFederationEventType.receipt => 'Receipt',
-      LoomFederationEventType.callAuthorization => 'CallAuthorization',
-      LoomFederationEventType.keyPackageUpdate => 'KeyPackageUpdate',
-    };
+  LoomFederationEventType.message => 'MessageEvent',
+  LoomFederationEventType.membership => 'MembershipEvent',
+  LoomFederationEventType.groupUpdate => 'GroupUpdate',
+  LoomFederationEventType.receipt => 'Receipt',
+  LoomFederationEventType.callAuthorization => 'CallAuthorization',
+  LoomFederationEventType.keyPackageUpdate => 'KeyPackageUpdate',
+};
 
 LoomFederationEventType _parseWireType(String value) => switch (value) {
-      'MessageEvent' => LoomFederationEventType.message,
-      'MembershipEvent' => LoomFederationEventType.membership,
-      'GroupUpdate' => LoomFederationEventType.groupUpdate,
-      'Receipt' => LoomFederationEventType.receipt,
-      'CallAuthorization' => LoomFederationEventType.callAuthorization,
-      'KeyPackageUpdate' => LoomFederationEventType.keyPackageUpdate,
-      _ => throw FormatException('Unsupported federation event type: $value'),
-    };
+  'MessageEvent' => LoomFederationEventType.message,
+  'MembershipEvent' => LoomFederationEventType.membership,
+  'GroupUpdate' => LoomFederationEventType.groupUpdate,
+  'Receipt' => LoomFederationEventType.receipt,
+  'CallAuthorization' => LoomFederationEventType.callAuthorization,
+  'KeyPackageUpdate' => LoomFederationEventType.keyPackageUpdate,
+  _ => throw FormatException('Unsupported federation event type: $value'),
+};

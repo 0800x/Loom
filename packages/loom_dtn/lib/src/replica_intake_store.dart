@@ -4,10 +4,7 @@ import 'dart:typed_data';
 import 'package:loom_protocol/loom_protocol.dart';
 import 'package:sqlite3/sqlite3.dart';
 
-enum LoomReplicaIntakeDisposition {
-  accepted,
-  duplicate,
-}
+enum LoomReplicaIntakeDisposition { accepted, duplicate }
 
 /// Result returned only after the inbound packet is known to be durably stored.
 ///
@@ -112,7 +109,8 @@ final class LoomSqliteReplicaIntakeStore {
     final present = columns.map((row) => row['name'] as String).toSet();
     if (!present.containsAll(required)) {
       throw StateError(
-          'Loom DTN packet schema is incomplete for replica intake');
+        'Loom DTN packet schema is incomplete for replica intake',
+      );
     }
   }
 
@@ -137,11 +135,13 @@ final class LoomSqliteReplicaIntakeStore {
     }
     if (expiry.isAfter(current.add(const Duration(days: 7)))) {
       throw const FormatException(
-          'Inbound DTN packet exceeds seven-day custody limit');
+        'Inbound DTN packet exceeds seven-day custody limit',
+      );
     }
     if (outer.forwardingState.hopsUsed < 1) {
       throw const FormatException(
-          'Peer-delivered DTN packet must have advanced one hop');
+        'Peer-delivered DTN packet must have advanced one hop',
+      );
     }
     if (outer.forwardingState.hopsUsed > outer.initialHopLimit) {
       throw const FormatException('Inbound DTN packet exceeded hop limit');
@@ -150,8 +150,10 @@ final class LoomSqliteReplicaIntakeStore {
     // The model currently permits up to 16 encoded copies. That field is
     // untrusted. The exact source bytes remain stored, while local forwarding
     // authority is clamped to our stricter policy cap.
-    final effectiveCopies =
-        outer.forwardingState.copiesRemaining.clamp(1, maxAcceptedLocalCopies);
+    final effectiveCopies = outer.forwardingState.copiesRemaining.clamp(
+      1,
+      maxAcceptedLocalCopies,
+    );
 
     _db.execute('BEGIN IMMEDIATE');
     var began = true;
@@ -163,8 +165,8 @@ final class LoomSqliteReplicaIntakeStore {
       if (existingRows.isNotEmpty) {
         final existing = existingRows.first;
         _verifySameImmutablePacket(existing, outer);
-        final storedAt =
-            DateTime.parse(existing['stored_at'] as String).toUtc();
+        final storedAt = DateTime.parse(existing['stored_at'] as String)
+            .toUtc();
         final currentCopies = existing['current_copies_remaining'] as int;
         _db.execute('COMMIT');
         began = false;
@@ -232,8 +234,10 @@ final class LoomSqliteReplicaIntakeStore {
 
     if (stored.packetId != incoming.packetId ||
         stored.routingHint.scope != incoming.routingHint.scope ||
-        !_sameBytes(stored.routingHint.mailboxToken,
-            incoming.routingHint.mailboxToken) ||
+        !_sameBytes(
+          stored.routingHint.mailboxToken,
+          incoming.routingHint.mailboxToken,
+        ) ||
         stored.expiresAtBucket.toUtc() != incoming.expiresAtBucket.toUtc() ||
         stored.priority != incoming.priority ||
         stored.initialHopLimit != incoming.initialHopLimit ||

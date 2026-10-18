@@ -110,8 +110,8 @@ final class LoomSqlitePacketRouteStore implements LoomPacketRouteStore {
       return LoomDtnDestinationRoute(
         packetId: packetId,
         destinationNodeDomain: storedDomain,
-        recordedAt:
-            DateTime.parse(existing.first['recorded_at'] as String).toUtc(),
+        recordedAt: DateTime.parse(existing.first['recorded_at'] as String)
+            .toUtc(),
       );
     }
     _db.execute(

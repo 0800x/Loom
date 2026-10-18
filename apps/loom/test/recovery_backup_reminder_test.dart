@@ -64,17 +64,11 @@ void main() {
       await store.defer('identity-a');
       await store.defer('identity-b');
       expect(
-        await store.recordExport(
-          'identity-a',
-          LoomRecoveryExportResult.saved,
-        ),
+        await store.recordExport('identity-a', LoomRecoveryExportResult.saved),
         isTrue,
       );
       expect(await store.load('identity-a'), LoomRecoveryBackupStatus.saved);
-      expect(
-        await store.load('identity-b'),
-        LoomRecoveryBackupStatus.deferred,
-      );
+      expect(await store.load('identity-b'), LoomRecoveryBackupStatus.deferred);
       expect(await store.load('identity-c'), isNull);
     },
   );

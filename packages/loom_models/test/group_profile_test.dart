@@ -9,10 +9,7 @@ final png = base64Decode(
 );
 void main() {
   test('profile supports a bounded PNG and explicit removal', () {
-    final image = LoomGroupProfile.fromJson({
-      'v': 1,
-      'png': base64Encode(png),
-    });
+    final image = LoomGroupProfile.fromJson({'v': 1, 'png': base64Encode(png)});
     expect(image.png, base64Encode(png));
     expect(LoomGroupProfile.fromJson({'v': 1, 'png': null}).png, isNull);
   });

@@ -66,10 +66,9 @@ final class LoomNearbyLegacyDeliveryIntake {
     if (createdAt == null) {
       throw const FormatException('Malformed Nearby message timestamp');
     }
-    final order =
-        payload['serverOrder'] is int
-            ? payload['serverOrder'] as int
-            : fallbackOrder;
+    final order = payload['serverOrder'] is int
+        ? payload['serverOrder'] as int
+        : fallbackOrder;
     final metadata = payload['metadata'];
     return LoomMessageRecord(
       id: id,
@@ -81,10 +80,9 @@ final class LoomNearbyLegacyDeliveryIntake {
       protocolVersion: protocolVersion,
       createdOrder: order,
       createdAt: createdAt,
-      deliveryState:
-          senderAddress.toLowerCase() == ownAddress.toLowerCase()
-              ? LoomDeliveryState.sent
-              : LoomDeliveryState.delivered,
+      deliveryState: senderAddress.toLowerCase() == ownAddress.toLowerCase()
+          ? LoomDeliveryState.sent
+          : LoomDeliveryState.delivered,
       transportPath: LoomMessageTransportPath.nearby,
       replyToMessageId: payload['replyToMessageId'] as String?,
       metadata: metadata is Map<String, Object?> ? metadata : const {},

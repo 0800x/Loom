@@ -30,9 +30,8 @@ void main() {
       await store.load();
       expect(store.pendingUpload, isTrue);
       await store.synchronize(
-        fetch:
-            () async =>
-                throw StateError('legacy photo must not be overwritten'),
+        fetch: () async =>
+            throw StateError('legacy photo must not be overwritten'),
         upload: (body) async {
           expect((body['avatar'] as Map)['png'], png);
           return {...body, 'revision': 'r1'};

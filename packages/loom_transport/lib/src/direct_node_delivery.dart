@@ -11,9 +11,9 @@ String _base64UrlNoPadding(List<int> bytes) =>
     base64Url.encode(bytes).replaceAll('=', '');
 
 String _millisecondIso(DateTime value) => DateTime.fromMillisecondsSinceEpoch(
-  value.toUtc().millisecondsSinceEpoch,
-  isUtc: true,
-).toIso8601String();
+      value.toUtc().millisecondsSinceEpoch,
+      isUtc: true,
+    ).toIso8601String();
 
 bool _bytesEqual(List<int> left, List<int> right) {
   if (left.length != right.length) return false;
@@ -63,8 +63,8 @@ final class LoomDirectNodeTarget {
     final basePath = endpoint.path.isEmpty
         ? '/'
         : endpoint.path.endsWith('/')
-        ? endpoint.path
-        : '${endpoint.path}/';
+            ? endpoint.path
+            : '${endpoint.path}/';
     return endpoint.replace(
       path: '${basePath}api/v2/packets/direct',
       query: null,
@@ -177,9 +177,9 @@ final class LoomDirectNodeTransferSender implements LoomDtnTransferSender {
     LoomDirectHttpPoster? poster,
     DateTime Function()? clock,
     Uint8List Function()? nonceFactory,
-  }) : poster = poster ?? LoomIoDirectHttpPoster(),
-       _clock = clock ?? DateTime.now,
-       _nonceFactory = nonceFactory ?? _secureNonce;
+  })  : poster = poster ?? LoomIoDirectHttpPoster(),
+        _clock = clock ?? DateTime.now,
+        _nonceFactory = nonceFactory ?? _secureNonce;
 
   final LoomPacketStore packetStore;
   final LoomDirectNodeTarget target;

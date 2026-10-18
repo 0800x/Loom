@@ -1,4 +1,5 @@
 import 'transport_security.dart';
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -12,8 +13,8 @@ class LoomSecurityClient {
   LoomSecurityClient({
     HttpClient? httpClient,
     LoomDeviceBundleVerifier? bundleVerifier,
-  })  : _http = httpClient ?? HttpClient(),
-        _bundleVerifier = bundleVerifier ?? LoomDeviceBundleVerifier();
+  }) : _http = httpClient ?? HttpClient(),
+       _bundleVerifier = bundleVerifier ?? LoomDeviceBundleVerifier();
 
   final HttpClient _http;
   final LoomDeviceBundleVerifier _bundleVerifier;
@@ -108,9 +109,7 @@ class LoomSecurityClient {
       );
     }
     if (devices.length > 256) {
-      throw const LoomProtocolException(
-        'Device list exceeds supported limit',
-      );
+      throw const LoomProtocolException('Device list exceeds supported limit');
     }
     return List<LoomDeviceKeyBundle>.unmodifiable(devices);
   }
@@ -134,8 +133,9 @@ class LoomSecurityClient {
       uri: uri,
       credential: accessToken,
     );
-    final request =
-        await _http.postUrl(uri).timeout(const Duration(seconds: 8));
+    final request = await _http
+        .postUrl(uri)
+        .timeout(const Duration(seconds: 8));
     request.followRedirects = false;
     request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
     request.headers.set(HttpHeaders.acceptHeader, 'application/json');

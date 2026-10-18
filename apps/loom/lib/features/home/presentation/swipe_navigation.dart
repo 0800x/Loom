@@ -64,11 +64,7 @@ class _LoomSectionSwipeState extends State<LoomSectionSwipe> {
 /// The inner folder pager wins the gesture arena. At its last edge, hand off
 /// one completed drag to the shell, rather than competing with a second pager.
 class LoomFolderSwipeBoundary extends StatefulWidget {
-  const LoomFolderSwipeBoundary({
-    required this.child,
-    this.onNext,
-    super.key,
-  });
+  const LoomFolderSwipeBoundary({required this.child, this.onNext, super.key});
   final Widget child;
   final VoidCallback? onNext;
   @override

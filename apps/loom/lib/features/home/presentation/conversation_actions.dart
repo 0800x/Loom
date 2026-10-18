@@ -335,10 +335,7 @@ Future<void> _showDeliveryGuide(BuildContext context) =>
             ),
           ),
           ListTile(
-            leading: Icon(
-              LoomIcons.done_all,
-              color: context.loom.textMuted,
-            ),
+            leading: Icon(LoomIcons.done_all, color: context.loom.textMuted),
             title: Text(tr(context, 'Delivered', 'دریافت‌شده')),
             subtitle: Text(
               tr(

@@ -1,4 +1,5 @@
 import 'transport_security.dart';
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -68,8 +69,8 @@ class LoomCallClient implements LoomCallApi {
       final urls = urlsValue is String
           ? <String>[urlsValue]
           : urlsValue is List
-              ? urlsValue.whereType<String>().toList(growable: false)
-              : const <String>[];
+          ? urlsValue.whereType<String>().toList(growable: false)
+          : const <String>[];
       if (urls.isEmpty ||
           urls.length > 8 ||
           urls.any((url) => !_validIceUrl(url))) {
@@ -122,10 +123,10 @@ class LoomCallClient implements LoomCallApi {
       }
       try {
         final kind = _kind(value['kind']);
-        final createdAt =
-            DateTime.parse(_required(value, 'createdAt', 80)).toUtc();
-        final expiresAt =
-            DateTime.parse(_required(value, 'expiresAt', 80)).toUtc();
+        final createdAt = DateTime.parse(_required(value, 'createdAt', 80))
+            .toUtc();
+        final expiresAt = DateTime.parse(_required(value, 'expiresAt', 80))
+            .toUtc();
         if (expiresAt.isBefore(DateTime.now().toUtc())) {
           trace?.call('pending_rejected:expired');
           continue;
@@ -159,8 +160,10 @@ class LoomCallClient implements LoomCallApi {
     return List<LoomPendingCall>.unmodifiable(result);
   }
 
-  Future<Map<String, Object?>> _getJson(String path,
-      {bool retryAuthentication = true}) async {
+  Future<Map<String, Object?>> _getJson(
+    String path, {
+    bool retryAuthentication = true,
+  }) async {
     _requireSafeBaseUri(baseUri);
     final token = await accessTokenProvider();
     _requireBearer(token);
@@ -183,9 +186,7 @@ class LoomCallClient implements LoomCallApi {
     await for (final chunk in response.timeout(const Duration(seconds: 12))) {
       bytes.addAll(chunk);
       if (bytes.length > 1024 * 1024) {
-        throw const LoomProtocolException(
-          'Call response exceeds size limit',
-        );
+        throw const LoomProtocolException('Call response exceeds size limit');
       }
     }
     if (response.statusCode == HttpStatus.unauthorized &&
@@ -230,10 +231,10 @@ class LoomCallClient implements LoomCallApi {
   }
 
   LoomCallKind _kind(Object? value) => switch (value) {
-        'audio' => LoomCallKind.audio,
-        'video' => LoomCallKind.video,
-        _ => throw const FormatException('Invalid call kind'),
-      };
+    'audio' => LoomCallKind.audio,
+    'video' => LoomCallKind.video,
+    _ => throw const FormatException('Invalid call kind'),
+  };
 
   String _required(Map<String, Object?> json, String key, int max) {
     final value = json[key];
@@ -284,8 +285,9 @@ class LoomCallSignalingConnection {
   Stream<LoomCallSignal> get signals => _controller.stream;
   bool get connected => _socket?.readyState == WebSocket.open;
 
-  Future<void> connect() => _connecting ??=
-      _connectWithRecovery().whenComplete(() => _connecting = null);
+  Future<void> connect() => _connecting ??= _connectWithRecovery().whenComplete(
+    () => _connecting = null,
+  );
 
   Future<void> _connectWithRecovery() async {
     try {
@@ -328,8 +330,10 @@ class LoomCallSignalingConnection {
       HttpHeaders.authorizationHeader: 'Bearer $token',
       ...proof,
     };
-    final socket = await WebSocket.connect(uri.toString(), headers: headers)
-        .timeout(const Duration(seconds: 10));
+    final socket = await WebSocket.connect(
+      uri.toString(),
+      headers: headers,
+    ).timeout(const Duration(seconds: 10));
     if (_disposed) {
       await socket.close();
       return;
@@ -396,10 +400,9 @@ class LoomCallSignalingConnection {
           return;
         }
         final reason = _safe(decoded['reason'], 256);
-        _controller.addError(LoomCallSignalingException(
-          callId,
-          reason ?? 'call_signaling_failed',
-        ));
+        _controller.addError(
+          LoomCallSignalingException(callId, reason ?? 'call_signaling_failed'),
+        );
         return;
       }
       if (kind is! String || !_supportedSignalKind(kind)) {
@@ -496,15 +499,15 @@ class LoomCallSignalingConnection {
   }
 
   bool _supportedSignalKind(String kind) => const <String>{
-        'call.offer',
-        'call.ringing',
-        'call.answer',
-        'call.ice',
-        'call.media',
-        'call.reject',
-        'call.busy',
-        'call.end',
-      }.contains(kind);
+    'call.offer',
+    'call.ringing',
+    'call.answer',
+    'call.ice',
+    'call.media',
+    'call.reject',
+    'call.busy',
+    'call.end',
+  }.contains(kind);
 
   String? _safe(Object? value, int max) {
     if (value is! String ||
@@ -550,9 +553,9 @@ class LoomCallSignalingConnection {
 
   Uri _webSocketUri(Uri base) {
     requireLoomTransport(base);
-    return base.resolve('/realtime/v1').replace(
-          scheme: base.scheme == 'https' ? 'wss' : 'ws',
-        );
+    return base
+        .resolve('/realtime/v1')
+        .replace(scheme: base.scheme == 'https' ? 'wss' : 'ws');
   }
 
   Future<void> close() async {

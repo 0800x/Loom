@@ -197,9 +197,8 @@ final class _FakePoster implements LoomDirectHttpPoster {
       body: <String, Object?>{
         'accepted': true,
         'packetId': body['packetId'],
-        'acceptedAt': now
-            .add(const Duration(milliseconds: 20))
-            .toIso8601String(),
+        'acceptedAt':
+            now.add(const Duration(milliseconds: 20)).toIso8601String(),
         'idempotent': false,
       },
     );

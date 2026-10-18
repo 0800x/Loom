@@ -24,11 +24,11 @@ class LoomAvatar extends StatelessWidget {
     final initials = label.trim().isEmpty
         ? '?'
         : label
-            .trim()
-            .split(RegExp(r'\s+'))
-            .take(2)
-            .map((e) => e.characters.first.toUpperCase())
-            .join();
+              .trim()
+              .split(RegExp(r'\s+'))
+              .take(2)
+              .map((e) => e.characters.first.toUpperCase())
+              .join();
     return SizedBox.square(
       dimension: size,
       child: Stack(
@@ -78,10 +78,7 @@ class LoomPresenceIndicator extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: p.connectivity,
-          border: Border.all(
-            color: p.surface,
-            width: LoomBorders.selectedRail,
-          ),
+          border: Border.all(color: p.surface, width: LoomBorders.selectedRail),
         ),
       ),
     );

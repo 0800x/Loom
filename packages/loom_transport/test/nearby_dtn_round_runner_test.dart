@@ -18,7 +18,8 @@ void main() {
       durablyAccept: ({
         required transmissionId,
         required exactOuterEnvelopeBytes,
-      }) => throw StateError('no incoming links expected'),
+      }) =>
+          throw StateError('no incoming links expected'),
     );
     final radio = _RecordingRadio();
     final now = DateTime.utc(2026, 9, 10, 12);
@@ -69,8 +70,8 @@ final class _RecordingRadio implements LoomNearbyRadioAdapter {
 
   @override
   Set<LoomNearbyBearer> get supportedBearers => const <LoomNearbyBearer>{
-    LoomNearbyBearer.bluetoothLowEnergy,
-  };
+        LoomNearbyBearer.bluetoothLowEnergy,
+      };
 
   @override
   Future<LoomNearbyAdvertisingSession> advertise(
@@ -83,7 +84,8 @@ final class _RecordingRadio implements LoomNearbyRadioAdapter {
   @override
   Stream<LoomNearbyCandidate> scan({
     Duration timeout = const Duration(seconds: 8),
-  }) => const Stream<LoomNearbyCandidate>.empty();
+  }) =>
+      const Stream<LoomNearbyCandidate>.empty();
 
   @override
   Future<LoomNearbyLink> connect(LoomNearbyCandidate candidate) =>

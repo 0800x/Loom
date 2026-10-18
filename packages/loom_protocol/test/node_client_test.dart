@@ -141,93 +141,105 @@ void main() {
     },
   );
 
-  test('rejects a signed discovery document with a mismatched Node ID',
-      () async {
-    final algorithm = Ed25519();
-    final keyPair = await algorithm.newKeyPair();
-    final publicKey = await keyPair.extractPublicKey();
-    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    final authority = 'localhost:${server.port}';
-    final endpoint = 'http://$authority';
-    const forgedNodeId = 'node:not-derived-from-key';
+  test(
+    'rejects a signed discovery document with a mismatched Node ID',
+    () async {
+      final algorithm = Ed25519();
+      final keyPair = await algorithm.newKeyPair();
+      final publicKey = await keyPair.extractPublicKey();
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      final authority = 'localhost:${server.port}';
+      final endpoint = 'http://$authority';
+      const forgedNodeId = 'node:not-derived-from-key';
 
-    server.listen((request) async {
-      request.response.headers.contentType = ContentType.json;
-      const protocol = 'loom-federation-v1';
-      final encodedKey = base64Encode(publicKey.bytes);
-      final signature = await algorithm.sign(
-        utf8.encode(
-          '$authority\n$protocol\n$endpoint\n$forgedNodeId\n$encodedKey',
-        ),
-        keyPair: keyPair,
-      );
-      request.response.write(jsonEncode({
-        'endpoint': endpoint,
-        'nodeId': forgedNodeId,
-        'protocol': protocol,
-        'publicKey': encodedKey,
-        'signature': base64Encode(signature.bytes),
-      }));
-      await request.response.close();
-    });
+      server.listen((request) async {
+        request.response.headers.contentType = ContentType.json;
+        const protocol = 'loom-federation-v1';
+        final encodedKey = base64Encode(publicKey.bytes);
+        final signature = await algorithm.sign(
+          utf8.encode(
+            '$authority\n$protocol\n$endpoint\n$forgedNodeId\n$encodedKey',
+          ),
+          keyPair: keyPair,
+        );
+        request.response.write(
+          jsonEncode({
+            'endpoint': endpoint,
+            'nodeId': forgedNodeId,
+            'protocol': protocol,
+            'publicKey': encodedKey,
+            'signature': base64Encode(signature.bytes),
+          }),
+        );
+        await request.response.close();
+      });
 
-    try {
-      final client = LoomNodeClient();
-      await expectLater(
-        client.discoverDomain(authority),
-        throwsA(isA<LoomProtocolException>().having(
-          (error) => error.message,
-          'message',
-          contains('Node ID'),
-        )),
-      );
-    } finally {
-      await server.close(force: true);
-    }
-  });
+      try {
+        final client = LoomNodeClient();
+        await expectLater(
+          client.discoverDomain(authority),
+          throwsA(
+            isA<LoomProtocolException>().having(
+              (error) => error.message,
+              'message',
+              contains('Node ID'),
+            ),
+          ),
+        );
+      } finally {
+        await server.close(force: true);
+      }
+    },
+  );
 
-  test('rejects a signed discovery endpoint on a different authority',
-      () async {
-    final algorithm = Ed25519();
-    final keyPair = await algorithm.newKeyPair();
-    final publicKey = await keyPair.extractPublicKey();
-    final nodeId = await nodeIdFor(publicKey.bytes);
-    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    final authority = 'localhost:${server.port}';
-    final endpoint = 'http://127.0.0.1:${server.port}';
+  test(
+    'rejects a signed discovery endpoint on a different authority',
+    () async {
+      final algorithm = Ed25519();
+      final keyPair = await algorithm.newKeyPair();
+      final publicKey = await keyPair.extractPublicKey();
+      final nodeId = await nodeIdFor(publicKey.bytes);
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      final authority = 'localhost:${server.port}';
+      final endpoint = 'http://127.0.0.1:${server.port}';
 
-    server.listen((request) async {
-      request.response.headers.contentType = ContentType.json;
-      const protocol = 'loom-federation-v1';
-      final encodedKey = base64Encode(publicKey.bytes);
-      final signature = await algorithm.sign(
-        utf8.encode('$authority\n$protocol\n$endpoint\n$nodeId\n$encodedKey'),
-        keyPair: keyPair,
-      );
-      request.response.write(jsonEncode({
-        'endpoint': endpoint,
-        'nodeId': nodeId,
-        'protocol': protocol,
-        'publicKey': encodedKey,
-        'signature': base64Encode(signature.bytes),
-      }));
-      await request.response.close();
-    });
+      server.listen((request) async {
+        request.response.headers.contentType = ContentType.json;
+        const protocol = 'loom-federation-v1';
+        final encodedKey = base64Encode(publicKey.bytes);
+        final signature = await algorithm.sign(
+          utf8.encode('$authority\n$protocol\n$endpoint\n$nodeId\n$encodedKey'),
+          keyPair: keyPair,
+        );
+        request.response.write(
+          jsonEncode({
+            'endpoint': endpoint,
+            'nodeId': nodeId,
+            'protocol': protocol,
+            'publicKey': encodedKey,
+            'signature': base64Encode(signature.bytes),
+          }),
+        );
+        await request.response.close();
+      });
 
-    try {
-      final client = LoomNodeClient();
-      await expectLater(
-        client.discoverDomain(authority),
-        throwsA(isA<LoomProtocolException>().having(
-          (error) => error.message,
-          'message',
-          contains('requested domain'),
-        )),
-      );
-    } finally {
-      await server.close(force: true);
-    }
-  });
+      try {
+        final client = LoomNodeClient();
+        await expectLater(
+          client.discoverDomain(authority),
+          throwsA(
+            isA<LoomProtocolException>().having(
+              (error) => error.message,
+              'message',
+              contains('requested domain'),
+            ),
+          ),
+        );
+      } finally {
+        await server.close(force: true);
+      }
+    },
+  );
 
   test('rejects cleartext endpoints on the public Internet', () async {
     final client = LoomNodeClient();

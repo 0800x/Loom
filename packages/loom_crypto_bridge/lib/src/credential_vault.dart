@@ -1,4 +1,5 @@
 import 'app_lock.dart';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 abstract interface class LoomCredentialVault {

@@ -140,11 +140,12 @@ class _FakeApi implements LoomMessagingApi {
     required String conversationId,
     required File encryptedFile,
     required String contentType,
-  }) async => LoomAttachmentReceipt(
-    attachmentId: 'att-1',
-    sizeBytes: await encryptedFile.length(),
-    contentType: contentType,
-  );
+  }) async =>
+      LoomAttachmentReceipt(
+        attachmentId: 'att-1',
+        sizeBytes: await encryptedFile.length(),
+        contentType: contentType,
+      );
 
   @override
   Future<LoomSyncPage> sync({String? cursor, int limit = 200}) async => page;
@@ -187,7 +188,9 @@ void main() {
       }
     },
   );
-  test('blocked conversation does not hold a healthy send; same chat sends sequentially', () async {
+  test(
+      'blocked conversation does not hold a healthy send; same chat sends sequentially',
+      () async {
     final store = LoomMessagingStore.openInMemory();
     addTearDown(store.close);
     final api = _ControlledApi()
@@ -230,7 +233,9 @@ void main() {
     expect(store.pendingSendCount, 0);
   });
 
-  test('403 stops automatic retries but explicit retry keeps ciphertext and client id', () async {
+  test(
+      '403 stops automatic retries but explicit retry keeps ciphertext and client id',
+      () async {
     final store = LoomMessagingStore.openInMemory();
     addTearDown(store.close);
     final api = _ControlledApi()..rejectStatus = 403;

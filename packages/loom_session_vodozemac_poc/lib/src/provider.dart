@@ -489,9 +489,7 @@ final class LoomVodozemacPocSessionProvider
 
     if (transaction is! LoomSessionInventoryTransaction) return;
     final sessions = await (transaction as LoomSessionInventoryTransaction)
-        .listSessionsForRemoteDevice(
-      remoteDevice,
-    );
+        .listSessionsForRemoteDevice(remoteDevice);
     final now = DateTime.now().toUtc();
     for (final session in sessions) {
       if (session.protocolVersion != protocolVersion ||
@@ -569,12 +567,11 @@ final class LoomVodozemacPocSessionProvider
     required String contextId,
     required int revision,
     required String value,
-  }) =>
-      stateProtector.protect(
-        contextId: contextId,
-        revision: revision,
-        plaintext: Uint8List.fromList(utf8.encode(value)),
-      );
+  }) => stateProtector.protect(
+    contextId: contextId,
+    revision: revision,
+    plaintext: Uint8List.fromList(utf8.encode(value)),
+  );
 
   Future<String> _unprotectString({
     required String contextId,
@@ -637,10 +634,7 @@ final class LoomVodozemacPocSessionProvider
     final prefix = utf8.encode(
       '${ciphertext.protocolVersion}\u0000${ciphertext.sessionLocator}\u0000',
     );
-    return 'vodozemac-poc:${sha256.convert(<int>[
-          ...prefix,
-          ...ciphertext.bytes
-        ])}';
+    return 'vodozemac-poc:${sha256.convert(<int>[...prefix, ...ciphertext.bytes])}';
   }
 
   static void _validateSessionId(String value) {

@@ -54,9 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  Future<void> _save(
-    Future<void> Function(LoomLocalAvatarStore) action,
-  ) async {
+  Future<void> _save(Future<void> Function(LoomLocalAvatarStore) action) async {
     final avatar = _avatar;
     if (_saving || avatar == null) {
       return;
@@ -146,9 +144,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.loom;
-    final onboarding = widget.preview
-        ? null
-        : LoomOnboardingScope.of(context);
+    final onboarding = widget.preview ? null : LoomOnboardingScope.of(context);
     final receipt = onboarding?.receipt;
     final identity = onboarding?.committedIdentity;
     final name = widget.preview
@@ -214,9 +210,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 if (address != null)
                   ListTile(
                     title: Text(address, textDirection: TextDirection.ltr),
-                    subtitle: Text(
-                      tr(context, 'Loom address', 'نشانی لوم'),
-                    ),
+                    subtitle: Text(tr(context, 'Loom address', 'نشانی لوم')),
                     trailing: const Icon(LoomIcons.copy_outlined),
                     onTap: () => _copy(address),
                   ),
@@ -321,11 +315,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             spacing: 6,
                             runSpacing: 6,
                             children: [
-                              for (
-                                var i = 0;
-                                i < loomAvatarColors.length;
-                                i++
-                              )
+                              for (var i = 0; i < loomAvatarColors.length; i++)
                                 Semantics(
                                   selected: _avatar?.colorIndex == i,
                                   label: _colorLabel(context, i),
@@ -340,8 +330,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               )
                                             : null,
                                         style: IconButton.styleFrom(
-                                          backgroundColor:
-                                              loomAvatarColors[i],
+                                          backgroundColor: loomAvatarColors[i],
                                           foregroundColor: Colors.white,
                                           disabledBackgroundColor:
                                               loomAvatarColors[i].withValues(
@@ -489,9 +478,9 @@ class _Section extends StatelessWidget {
           padding: const EdgeInsetsDirectional.only(start: 6, bottom: 8),
           child: Text(
             title,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: context.loom.textSecondary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: context.loom.textSecondary),
           ),
         ),
         LoomSettingsGroup(children: children),

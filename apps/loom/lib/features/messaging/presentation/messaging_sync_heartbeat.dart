@@ -27,8 +27,7 @@ class LoomMessagingSyncHeartbeat extends StatefulWidget {
       _LoomMessagingSyncHeartbeatState();
 }
 
-class _LoomMessagingSyncHeartbeatState
-    extends State<LoomMessagingSyncHeartbeat>
+class _LoomMessagingSyncHeartbeatState extends State<LoomMessagingSyncHeartbeat>
     with WidgetsBindingObserver {
   Timer? _timer;
   bool _running = false;

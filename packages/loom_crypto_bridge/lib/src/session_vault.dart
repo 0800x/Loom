@@ -1,4 +1,5 @@
 import 'app_lock.dart';
+
 import 'dart:convert';
 
 import 'package:loom_models/loom_models.dart';
@@ -110,10 +111,9 @@ class LoomStoredSession {
         capabilities: strings(nodeJson, 'capabilities'),
         region: nodeJson['region'] as String?,
         operatorName: nodeJson['operatorName'] as String?,
-        lastVerified:
-            lastVerified is String
-                ? DateTime.tryParse(lastVerified)?.toUtc()
-                : null,
+        lastVerified: lastVerified is String
+            ? DateTime.tryParse(lastVerified)?.toUtc()
+            : null,
       ),
       liveInfo: LoomNodeLiveInfo(
         nodeId: requiredString(liveJson, 'nodeId'),
@@ -162,4 +162,3 @@ class LoomSecureSessionVault implements LoomSessionVault {
   @override
   Future<void> clear() => _storage.delete(key: _key);
 }
-

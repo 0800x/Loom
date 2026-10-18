@@ -392,19 +392,22 @@ void main() {
     expect(controller.errorMessage, 'The username or password is incorrect.');
   });
 
-  test('registration cannot replace a stored identity with a different pending identity', () async {
-    final original = _identity('original');
-    setup(stored: original);
-    controller.committedIdentity = original;
-    controller.pendingIdentity = _pending(_identity('different'));
-    controller.receipt = _receipt;
-    expect(await controller.commitAndRegister(), isFalse);
-    expect(client.registrations, 0);
-    expect(core.commits, 0);
-    expect(core.stored, same(original));
-    expect(controller.receipt, same(_receipt));
-    expect(sessions.writes + credentials.writes, 0);
-  });
+  test(
+    'registration cannot replace a stored identity with a different pending identity',
+    () async {
+      final original = _identity('original');
+      setup(stored: original);
+      controller.committedIdentity = original;
+      controller.pendingIdentity = _pending(_identity('different'));
+      controller.receipt = _receipt;
+      expect(await controller.commitAndRegister(), isFalse);
+      expect(client.registrations, 0);
+      expect(core.commits, 0);
+      expect(core.stored, same(original));
+      expect(controller.receipt, same(_receipt));
+      expect(sessions.writes + credentials.writes, 0);
+    },
+  );
 
   test(
     'server account mismatch cannot commit a fresh restored identity',
@@ -498,29 +501,32 @@ void main() {
     },
   );
 
-  test('logout during identity commit prevents subsequent device and session writes', () async {
-    setup();
-    expect(await controller.restoreIdentityWords(_words.join(' ')), isTrue);
-    core.commitGate = Completer<void>();
-    core.commitStarted = Completer<void>();
-    final attempt = signIn();
-    await core.commitStarted!.future;
-    controller.resetPending();
-    core.commitGate!.complete();
-    expect(await attempt, isFalse);
-    expect(
-      core.commits,
-      1,
-      reason: 'the already-started storage commit cannot be rolled back',
-    );
-    expect(deviceCore.creations, 0);
-    expect(security.publications, 0);
-    expect(sessions.writes + credentials.writes, 0);
-    expect(controller.committedIdentity, isNull);
-    expect(controller.receipt, isNull);
-    expect(controller.accessToken, isNull);
-    expect(controller.status, LoomOnboardingStatus.idle);
-  });
+  test(
+    'logout during identity commit prevents subsequent device and session writes',
+    () async {
+      setup();
+      expect(await controller.restoreIdentityWords(_words.join(' ')), isTrue);
+      core.commitGate = Completer<void>();
+      core.commitStarted = Completer<void>();
+      final attempt = signIn();
+      await core.commitStarted!.future;
+      controller.resetPending();
+      core.commitGate!.complete();
+      expect(await attempt, isFalse);
+      expect(
+        core.commits,
+        1,
+        reason: 'the already-started storage commit cannot be rolled back',
+      );
+      expect(deviceCore.creations, 0);
+      expect(security.publications, 0);
+      expect(sessions.writes + credentials.writes, 0);
+      expect(controller.committedIdentity, isNull);
+      expect(controller.receipt, isNull);
+      expect(controller.accessToken, isNull);
+      expect(controller.status, LoomOnboardingStatus.idle);
+    },
+  );
 
   test(
     'late session persistence completion cannot undo logout state',

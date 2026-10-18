@@ -40,9 +40,9 @@ final class LoomDestinationNodeUplink {
     LoomDestinationNodeDiscovery? discoverNode,
     LoomDirectHttpPoster? poster,
     DateTime Function()? clock,
-  }) : _discoverNode = discoverNode ?? LoomNodeClient().discoverDomain,
-       poster = poster ?? LoomIoDirectHttpPoster(),
-       _clock = clock ?? DateTime.now;
+  })  : _discoverNode = discoverNode ?? LoomNodeClient().discoverDomain,
+        poster = poster ?? LoomIoDirectHttpPoster(),
+        _clock = clock ?? DateTime.now;
 
   final LoomPacketStore packetStore;
   final LoomPacketRouteStore routeStore;
@@ -220,11 +220,13 @@ final class LoomDestinationNodeUplink {
     LoomStoredDtnTransfer transfer,
     String errorCode, {
     required Duration retryDelay,
-  }) => transferExecutor.executePrepared(
-    transmissionId: transfer.transmissionId,
-    sender: _LoomFailedDestinationSender(clock: _clock, errorCode: errorCode),
-    retryDelay: retryDelay,
-  );
+  }) =>
+      transferExecutor.executePrepared(
+        transmissionId: transfer.transmissionId,
+        sender:
+            _LoomFailedDestinationSender(clock: _clock, errorCode: errorCode),
+        retryDelay: retryDelay,
+      );
 
   String _nextTransmissionId(DateTime now) {
     _sequence += 1;

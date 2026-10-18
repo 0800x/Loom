@@ -16,10 +16,7 @@ void main() {
     );
     addTearDown(runtime.close);
 
-    expect(
-      runtime.sendReadiness,
-      LoomV2SendReadiness.blockedProviderReview,
-    );
+    expect(runtime.sendReadiness, LoomV2SendReadiness.blockedProviderReview);
     expect(runtime.productionSendEnabled, isFalse);
     expect(File('${root.path}/loom-crypto-v2.sqlite3').existsSync(), isTrue);
     expect(

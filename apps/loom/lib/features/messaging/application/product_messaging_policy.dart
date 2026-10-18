@@ -3,10 +3,7 @@ import 'v2_messaging_runtime.dart';
 /// Product migration policy. The default preserves the existing v1 product,
 /// while an explicitly v2-required surface is forbidden from silently falling
 /// back to the legacy direct-message protocol when v2 is unavailable.
-enum LoomProductMessagingMode {
-  legacyOnly,
-  v2Required,
-}
+enum LoomProductMessagingMode { legacyOnly, v2Required }
 
 final class LoomProductMessagingPolicy {
   const LoomProductMessagingPolicy({
@@ -36,10 +33,7 @@ final class LoomProductMessagingPolicy {
 /// callback fails. This prevents accidental unauthenticated/protocol downgrade
 /// hidden behind generic retry code.
 final class LoomProductMessagingDispatcher {
-  const LoomProductMessagingDispatcher({
-    required this.policy,
-    this.v2Runtime,
-  });
+  const LoomProductMessagingDispatcher({required this.policy, this.v2Runtime});
 
   final LoomProductMessagingPolicy policy;
   final LoomV2MessagingRuntime? v2Runtime;

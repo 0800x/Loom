@@ -39,9 +39,7 @@ class _ConversationHeader extends StatelessWidget {
               child: IconButton(
                 onPressed: onBack,
                 tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                icon: const LoomDirectionalIcon(
-                  LoomIcons.arrow_back_rounded,
-                ),
+                icon: const LoomDirectionalIcon(LoomIcons.arrow_back_rounded),
                 constraints: const BoxConstraints.tightFor(
                   width: 52,
                   height: 52,
@@ -258,9 +256,7 @@ class _LoomMenuButtonState extends State<_LoomMenuButton> {
             focusNode: index == 0 ? _firstFocus : null,
             onPressed: () => onSelected(item.$1),
             style: const ButtonStyle(
-              minimumSize: WidgetStatePropertyAll(
-                Size(0, LoomSizing.minTouch),
-              ),
+              minimumSize: WidgetStatePropertyAll(Size(0, LoomSizing.minTouch)),
             ),
             leadingIcon: Icon(item.$2, size: LoomIconSize.standard),
             child: Text(item.$3, softWrap: true),

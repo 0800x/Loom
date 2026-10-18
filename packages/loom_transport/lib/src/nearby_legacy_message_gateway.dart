@@ -18,9 +18,9 @@ const _rendezvousPrefix = 'msg-gw-v1-';
 String _b64u(List<int> bytes) => base64UrlEncode(bytes).replaceAll('=', '');
 
 String _iso(DateTime value) => DateTime.fromMillisecondsSinceEpoch(
-  value.toUtc().millisecondsSinceEpoch,
-  isUtc: true,
-).toIso8601String();
+      value.toUtc().millisecondsSinceEpoch,
+      isUtc: true,
+    ).toIso8601String();
 
 Uint8List _randomBytes(int length) {
   final random = Random.secure();
@@ -53,10 +53,10 @@ final class LoomNearbyLegacyMessageGateway {
     LoomDirectHttpPoster? poster,
     Future<LoomWellKnownNode> Function(String domain)? discoverNode,
     DateTime Function()? clock,
-  }) : bootstrap = bootstrap ?? LoomNearbyDtnPeerBootstrap(),
-       poster = poster ?? LoomIoDirectHttpPoster(),
-       _discoverNode = discoverNode ?? LoomNodeClient().discoverDomain,
-       _clock = clock ?? DateTime.now;
+  })  : bootstrap = bootstrap ?? LoomNearbyDtnPeerBootstrap(),
+        poster = poster ?? LoomIoDirectHttpPoster(),
+        _discoverNode = discoverNode ?? LoomNodeClient().discoverDomain,
+        _clock = clock ?? DateTime.now;
 
   final LoomNearbyDtnPeerBootstrap bootstrap;
   final LoomDirectHttpPoster poster;
@@ -352,8 +352,8 @@ final class LoomNearbyLegacyMessageGateway {
     final basePath = endpoint.path.isEmpty
         ? '/'
         : endpoint.path.endsWith('/')
-        ? endpoint.path
-        : '${endpoint.path}/';
+            ? endpoint.path
+            : '${endpoint.path}/';
     return endpoint.replace(
       path: '${basePath}api/v1/messages/direct',
       query: null,
@@ -424,7 +424,8 @@ final class LoomNearbyLegacyMessageGatewayRoundRunner {
 Future<void> _sendJson(
   LoomNearbySecureConnection connection,
   Map<String, Object?> value,
-) => connection.send(utf8.encode(jsonEncode(value)));
+) =>
+    connection.send(utf8.encode(jsonEncode(value)));
 
 Future<Map<String, Object?>> _receiveJson(
   LoomNearbySecureConnection connection, {

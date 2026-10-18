@@ -435,14 +435,13 @@ class _LoomNearbyDiagnosticsScreenState
         expiresAt: DateTime.now().toUtc().add(const Duration(minutes: 2)),
       );
 
-  static LoomProximityGatewayBearer _gatewayBearer(
-    LoomNearbyBearer bearer,
-  ) => switch (bearer) {
-    LoomNearbyBearer.bluetoothLowEnergy => LoomProximityGatewayBearer.ble,
-    LoomNearbyBearer.wifiDirect => LoomProximityGatewayBearer.wifiDirect,
-    LoomNearbyBearer.wifiAware => LoomProximityGatewayBearer.wifiAware,
-    _ => throw UnsupportedError('Unsupported last-mile bearer: $bearer'),
-  };
+  static LoomProximityGatewayBearer _gatewayBearer(LoomNearbyBearer bearer) =>
+      switch (bearer) {
+        LoomNearbyBearer.bluetoothLowEnergy => LoomProximityGatewayBearer.ble,
+        LoomNearbyBearer.wifiDirect => LoomProximityGatewayBearer.wifiDirect,
+        LoomNearbyBearer.wifiAware => LoomProximityGatewayBearer.wifiAware,
+        _ => throw UnsupportedError('Unsupported last-mile bearer: $bearer'),
+      };
 
   static String _newRendezvousId() {
     final random = Random.secure();
@@ -625,4 +624,3 @@ class _LoomNearbyDiagnosticsScreenState
     );
   }
 }
-

@@ -280,9 +280,7 @@ class LoomOnboardingController extends ChangeNotifier {
       _storedSession = verifiedStored;
       final identity = committedIdentity ?? await _identityCore.readIdentity();
       if (identity == null) {
-        throw const LoomProtocolException(
-          'Local Loom identity is unavailable',
-        );
+        throw const LoomProtocolException('Local Loom identity is unavailable');
       }
       final proofProvider = await _deviceProofProviderFor(
         identity: identity,
@@ -956,8 +954,7 @@ class LoomOnboardingController extends ChangeNotifier {
   }
 }
 
-class LoomOnboardingScope
-    extends InheritedNotifier<LoomOnboardingController> {
+class LoomOnboardingScope extends InheritedNotifier<LoomOnboardingController> {
   const LoomOnboardingScope({
     required LoomOnboardingController controller,
     required super.child,

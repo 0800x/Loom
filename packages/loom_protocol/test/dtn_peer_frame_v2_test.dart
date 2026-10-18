@@ -62,10 +62,7 @@ void main() {
       ),
     );
     final bytes = Uint8List.fromList(<int>[...valid, 0x20, 0x00]);
-    expect(
-      () => LoomDtnPeerFrameV2Codec.decode(bytes),
-      throwsFormatException,
-    );
+    expect(() => LoomDtnPeerFrameV2Codec.decode(bytes), throwsFormatException);
   });
 
   test('duplicate oneof bodies are rejected', () {
@@ -86,10 +83,7 @@ void main() {
       ..._lengthField(3, ackSubmessage),
     ]);
 
-    expect(
-      () => LoomDtnPeerFrameV2Codec.decode(bytes),
-      throwsFormatException,
-    );
+    expect(() => LoomDtnPeerFrameV2Codec.decode(bytes), throwsFormatException);
   });
 
   test('unsupported peer-frame version is rejected', () {
@@ -102,20 +96,14 @@ void main() {
       0x03,
       ..._lengthField(2, transferSubmessage),
     ]);
-    expect(
-      () => LoomDtnPeerFrameV2Codec.decode(bytes),
-      throwsFormatException,
-    );
+    expect(() => LoomDtnPeerFrameV2Codec.decode(bytes), throwsFormatException);
   });
 
   test('invalid hop ACK boolean value is rejected', () {
     final ack = <int>[
       ..._lengthField(1, _utf8('transmission-peer-frame-0006')),
       ..._lengthField(2, _utf8('packet-peer-frame-0006')),
-      ..._varintField(
-        3,
-        DateTime.utc(2026, 9, 5, 12).millisecondsSinceEpoch,
-      ),
+      ..._varintField(3, DateTime.utc(2026, 9, 5, 12).millisecondsSinceEpoch),
       ..._varintField(4, 2),
     ];
     final frame = Uint8List.fromList(<int>[
@@ -123,10 +111,7 @@ void main() {
       0x02,
       ..._lengthField(3, ack),
     ]);
-    expect(
-      () => LoomDtnPeerFrameV2Codec.decode(frame),
-      throwsFormatException,
-    );
+    expect(() => LoomDtnPeerFrameV2Codec.decode(frame), throwsFormatException);
   });
 
   test('raw ACK timestamp is bounded before DateTime construction', () {
@@ -141,39 +126,31 @@ void main() {
       0x02,
       ..._lengthField(3, ack),
     ]);
-    expect(
-      () => LoomDtnPeerFrameV2Codec.decode(frame),
-      throwsFormatException,
-    );
+    expect(() => LoomDtnPeerFrameV2Codec.decode(frame), throwsFormatException);
   });
 
-  test('malformed embedded OuterEnvelope is rejected at peer-frame boundary',
-      () {
-    final transfer = _transferSubmessage(
-      'transmission-peer-frame-0008',
-      Uint8List.fromList(<int>[1, 2, 3, 4]),
-    );
-    final frame = Uint8List.fromList(<int>[
-      0x08,
-      0x02,
-      ..._lengthField(2, transfer),
-    ]);
-    expect(
-      () => LoomDtnPeerFrameV2Codec.decode(frame),
-      throwsFormatException,
-    );
-  });
+  test(
+    'malformed embedded OuterEnvelope is rejected at peer-frame boundary',
+    () {
+      final transfer = _transferSubmessage(
+        'transmission-peer-frame-0008',
+        Uint8List.fromList(<int>[1, 2, 3, 4]),
+      );
+      final frame = Uint8List.fromList(<int>[
+        0x08,
+        0x02,
+        ..._lengthField(2, transfer),
+      ]);
+      expect(
+        () => LoomDtnPeerFrameV2Codec.decode(frame),
+        throwsFormatException,
+      );
+    },
+  );
 
   test('non-minimal protobuf varint is rejected', () {
-    final bytes = Uint8List.fromList(<int>[
-      0x08,
-      0x82,
-      0x00,
-    ]);
-    expect(
-      () => LoomDtnPeerFrameV2Codec.decode(bytes),
-      throwsFormatException,
-    );
+    final bytes = Uint8List.fromList(<int>[0x08, 0x82, 0x00]);
+    expect(() => LoomDtnPeerFrameV2Codec.decode(bytes), throwsFormatException);
   });
 }
 
@@ -197,33 +174,32 @@ Uint8List _outerWire(String packetId) {
 }
 
 List<int> _transferSubmessage(String transmissionId, Uint8List outer) => <int>[
-      ..._lengthField(1, _utf8(transmissionId)),
-      ..._lengthField(2, outer),
-    ];
+  ..._lengthField(1, _utf8(transmissionId)),
+  ..._lengthField(2, outer),
+];
 
 List<int> _ackSubmessage({
   required String transmissionId,
   required String packetId,
   required int acceptedAtMs,
   required bool duplicate,
-}) =>
-    <int>[
-      ..._lengthField(1, _utf8(transmissionId)),
-      ..._lengthField(2, _utf8(packetId)),
-      ..._varintField(3, acceptedAtMs),
-      ..._varintField(4, duplicate ? 1 : 0),
-    ];
+}) => <int>[
+  ..._lengthField(1, _utf8(transmissionId)),
+  ..._lengthField(2, _utf8(packetId)),
+  ..._varintField(3, acceptedAtMs),
+  ..._varintField(4, duplicate ? 1 : 0),
+];
 
 List<int> _lengthField(int fieldNumber, List<int> bytes) => <int>[
-      ..._varint((fieldNumber << 3) | 2),
-      ..._varint(bytes.length),
-      ...bytes,
-    ];
+  ..._varint((fieldNumber << 3) | 2),
+  ..._varint(bytes.length),
+  ...bytes,
+];
 
 List<int> _varintField(int fieldNumber, int value) => <int>[
-      ..._varint(fieldNumber << 3),
-      ..._varint(value),
-    ];
+  ..._varint(fieldNumber << 3),
+  ..._varint(value),
+];
 
 List<int> _varint(int value) {
   final result = <int>[];

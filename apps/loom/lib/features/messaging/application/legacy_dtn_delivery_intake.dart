@@ -136,10 +136,9 @@ final class LoomLegacyDtnDeliveryIntake {
             );
           }
           store.upsertConversation(conversation);
-          final createdAt =
-              capsule.createdAt.year >= 2020
-                  ? capsule.createdAt
-                  : fallbackCreatedAt.toUtc();
+          final createdAt = capsule.createdAt.year >= 2020
+              ? capsule.createdAt
+              : fallbackCreatedAt.toUtc();
           final localOrder = createdAt.microsecondsSinceEpoch;
           store.putMessage(
             LoomMessageRecord(
@@ -152,10 +151,9 @@ final class LoomLegacyDtnDeliveryIntake {
               protocolVersion: capsule.protocolVersion,
               createdOrder: localOrder,
               createdAt: createdAt,
-              deliveryState:
-                  incoming
-                      ? LoomDeliveryState.delivered
-                      : LoomDeliveryState.sent,
+              deliveryState: incoming
+                  ? LoomDeliveryState.delivered
+                  : LoomDeliveryState.sent,
               transportPath: LoomMessageTransportPath.nearby,
               replyToMessageId: capsule.replyToMessageId,
               metadata: capsule.metadata,

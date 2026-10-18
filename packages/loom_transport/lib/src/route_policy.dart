@@ -11,15 +11,13 @@ class LoomRoutePolicy {
     List<LoomRouteCandidate> candidates, {
     required String homeNodeId,
   }) {
-    final eligible = candidates
-        .where((candidate) {
-          if (!candidate.reachable) return false;
-          if (!candidate.identityVerified) return false;
-          if (candidate.nodeId != homeNodeId) return false;
-          if (!_allowsTransport(candidate.endpoint)) return false;
-          return true;
-        })
-        .toList(growable: false);
+    final eligible = candidates.where((candidate) {
+      if (!candidate.reachable) return false;
+      if (!candidate.identityVerified) return false;
+      if (candidate.nodeId != homeNodeId) return false;
+      if (!_allowsTransport(candidate.endpoint)) return false;
+      return true;
+    }).toList(growable: false);
     return _orderedSelection(eligible, destinationNodeId: null);
   }
 
@@ -38,14 +36,12 @@ class LoomRoutePolicy {
         destinationNodeId.isEmpty) {
       throw const FormatException('Invalid destination node id');
     }
-    final eligible = candidates
-        .where((candidate) {
-          if (!candidate.reachable || !candidate.identityVerified) return false;
-          if (!_allowsTransport(candidate.endpoint)) return false;
-          return candidate.nodeId == destinationNodeId ||
-              candidate.nodeId == homeNodeId;
-        })
-        .toList(growable: false);
+    final eligible = candidates.where((candidate) {
+      if (!candidate.reachable || !candidate.identityVerified) return false;
+      if (!_allowsTransport(candidate.endpoint)) return false;
+      return candidate.nodeId == destinationNodeId ||
+          candidate.nodeId == homeNodeId;
+    }).toList(growable: false);
     return _orderedSelection(eligible, destinationNodeId: destinationNodeId);
   }
 
@@ -59,8 +55,7 @@ class LoomRoutePolicy {
         state: LoomConnectivityState.nodeUnreachable,
       );
     }
-    final ordered = [...eligible]
-      ..sort((a, b) {
+    final ordered = [...eligible]..sort((a, b) {
         final aDestination =
             destinationNodeId != null && a.nodeId == destinationNodeId;
         final bDestination =

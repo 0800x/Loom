@@ -38,9 +38,7 @@ Future<LoomRecoveryBackup> readCommittedLoomRecoveryBackup({
         after.publicKey != before.publicKey) {
       throw StateError('The active identity changed');
     }
-    return LoomRecoveryBackup(
-      words: Mnemonic(entropy, Language.english).words,
-    );
+    return LoomRecoveryBackup(words: Mnemonic(entropy, Language.english).words);
   } finally {
     entropy.fillRange(0, entropy.length, 0);
   }

@@ -43,8 +43,9 @@ void main() {
   });
 
   test('destination route is immutable for one PacketId', () {
-    final root =
-        Directory.systemTemp.createTempSync('loom-dtn-route-conflict-');
+    final root = Directory.systemTemp.createTempSync(
+      'loom-dtn-route-conflict-',
+    );
     addTearDown(() => root.deleteSync(recursive: true));
     final path = '${root.path}${Platform.pathSeparator}dtn.sqlite3';
     final now = DateTime.utc(2026, 9, 10, 11);

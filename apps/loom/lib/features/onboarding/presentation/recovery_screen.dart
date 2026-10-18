@@ -116,9 +116,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     });
     Uint8List? bytes;
     try {
-      final backup = LoomRecoveryBackup(
-        words: pending.recovery.mnemonicWords,
-      );
+      final backup = LoomRecoveryBackup(words: pending.recovery.mnemonicWords);
       bytes = pdf ? backup.printablePdf() : backup.fileBytes;
       _activeExportBytes = bytes;
       final saved = await saveLoomRecoveryFile(

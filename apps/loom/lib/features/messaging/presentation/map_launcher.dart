@@ -9,11 +9,7 @@ const loomMapsChannel = MethodChannel('loom/maps');
 
 /// Explicit user action only. Android's resolver offers every installed geo
 /// handler, including local map apps, rather than binding the pin to Google.
-Future<void> openLoomMaps(
-  BuildContext context,
-  double lat,
-  double lon,
-) async {
+Future<void> openLoomMaps(BuildContext context, double lat, double lon) async {
   if (!lat.isFinite || !lon.isFinite || lat.abs() > 90 || lon.abs() > 180) {
     throw ArgumentError('Invalid coordinates');
   }

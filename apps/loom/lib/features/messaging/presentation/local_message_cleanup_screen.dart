@@ -97,7 +97,9 @@ class _LoomLocalMessageCleanupScreenState
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
-                child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+                child: Text(
+                  MaterialLocalizations.of(context).cancelButtonLabel,
+                ),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(dialogContext, true),
@@ -120,7 +122,9 @@ class _LoomLocalMessageCleanupScreenState
     final conversations = messaging?.conversations ?? const [];
     return Scaffold(
       appBar: LoomGlassAppBar(
-        title: Text(tr(context, 'Local message cleanup', 'پاک‌سازی محلی پیام‌ها')),
+        title: Text(
+          tr(context, 'Local message cleanup', 'پاک‌سازی محلی پیام‌ها'),
+        ),
       ),
       body: messaging == null
           ? Center(
@@ -151,23 +155,30 @@ class _LoomLocalMessageCleanupScreenState
                   const SizedBox(height: 12),
                   Text(
                     _error!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 12),
                 if (conversations.isEmpty)
-                  Text(tr(context, 'No local chats.', 'گفتگوی محلی وجود ندارد.'))
+                  Text(
+                    tr(context, 'No local chats.', 'گفتگوی محلی وجود ندارد.'),
+                  )
                 else
                   for (final conversation in conversations)
                     Builder(
                       builder: (context) {
-                        final messages =
-                            messaging.visibleMessagesFor(conversation.id);
-                        final title = conversation.title?.trim().isNotEmpty == true
+                        final messages = messaging.visibleMessagesFor(
+                          conversation.id,
+                        );
+                        final title =
+                            conversation.title?.trim().isNotEmpty == true
                             ? conversation.title!.trim()
-                            : conversation.peerAddress?.trim().isNotEmpty == true
-                                ? conversation.peerAddress!.trim()
-                                : conversation.id;
+                            : conversation.peerAddress?.trim().isNotEmpty ==
+                                  true
+                            ? conversation.peerAddress!.trim()
+                            : conversation.id;
                         return Card(
                           child: ExpansionTile(
                             title: Text(title),
@@ -190,9 +201,9 @@ class _LoomLocalMessageCleanupScreenState
                                     onPressed: _busy
                                         ? null
                                         : () => _clearConversation(
-                                              messaging,
-                                              conversation.id,
-                                            ),
+                                            messaging,
+                                            conversation.id,
+                                          ),
                                     child: Text(
                                       tr(
                                         context,
@@ -236,9 +247,9 @@ class _LoomLocalMessageCleanupScreenState
                                       onPressed: _busy
                                           ? null
                                           : () => _deleteMessage(
-                                                messaging,
-                                                message,
-                                              ),
+                                              messaging,
+                                              message,
+                                            ),
                                       child: Text(
                                         tr(context, 'Delete', 'پاک کردن'),
                                       ),
@@ -254,4 +265,3 @@ class _LoomLocalMessageCleanupScreenState
     );
   }
 }
-

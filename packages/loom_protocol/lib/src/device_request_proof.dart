@@ -39,8 +39,10 @@ class LoomDeviceRequestProofProvider {
     required String credential,
     required String bodySha256,
   }) async {
-    if (!RegExp(r'^dev_[0-9a-f-]{36}$', caseSensitive: false)
-        .hasMatch(deviceId)) {
+    if (!RegExp(
+      r'^dev_[0-9a-f-]{36}$',
+      caseSensitive: false,
+    ).hasMatch(deviceId)) {
       throw const LoomProtocolException('Invalid local device identifier');
     }
     if (credential.isEmpty ||

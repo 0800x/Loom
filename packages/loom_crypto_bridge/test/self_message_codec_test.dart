@@ -7,27 +7,29 @@ void main() {
   final entropy = List<int>.generate(32, (index) => index);
 
   LoomSelfMessageCodec codec() => LoomSelfMessageCodec(
-        recoveryEntropyProvider: () async => List<int>.from(entropy),
-      );
+    recoveryEntropyProvider: () async => List<int>.from(entropy),
+  );
 
-  test('Saved Message round-trips with identity and conversation binding',
-      () async {
-    final value = await codec().encryptText(
-      identityId: 'chn:alice',
-      conversationId: 'self-1',
-      plaintext: 'سلام لوم',
-    );
-
-    expect(value, isNot(contains('سلام')));
-    expect(
-      await codec().decryptText(
+  test(
+    'Saved Message round-trips with identity and conversation binding',
+    () async {
+      final value = await codec().encryptText(
         identityId: 'chn:alice',
         conversationId: 'self-1',
-        envelope: value,
-      ),
-      'سلام لوم',
-    );
-  });
+        plaintext: 'سلام لوم',
+      );
+
+      expect(value, isNot(contains('سلام')));
+      expect(
+        await codec().decryptText(
+          identityId: 'chn:alice',
+          conversationId: 'self-1',
+          envelope: value,
+        ),
+        'سلام لوم',
+      );
+    },
+  );
 
   test('Saved Message cannot be moved to another conversation', () async {
     final value = await codec().encryptText(

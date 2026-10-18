@@ -11,28 +11,31 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('Nearby DTN mode refuses to start without a registered device', () async {
-    final nodes = LoomNodeDirectoryController();
-    final onboarding = LoomOnboardingController(nodes: nodes);
-    var runtimeFactoryCalls = 0;
-    final controller = LoomNearbyDtnServiceController(
-      onboarding: onboarding,
-      runtimeFactory: (path) {
-        runtimeFactoryCalls++;
-        throw StateError('runtime must not open');
-      },
-      supportPathProvider: () async => '/unused',
-    );
-    addTearDown(controller.dispose);
-    addTearDown(onboarding.dispose);
-    addTearDown(nodes.dispose);
+  test(
+    'Nearby DTN mode refuses to start without a registered device',
+    () async {
+      final nodes = LoomNodeDirectoryController();
+      final onboarding = LoomOnboardingController(nodes: nodes);
+      var runtimeFactoryCalls = 0;
+      final controller = LoomNearbyDtnServiceController(
+        onboarding: onboarding,
+        runtimeFactory: (path) {
+          runtimeFactoryCalls++;
+          throw StateError('runtime must not open');
+        },
+        supportPathProvider: () async => '/unused',
+      );
+      addTearDown(controller.dispose);
+      addTearDown(onboarding.dispose);
+      addTearDown(nodes.dispose);
 
-    expect(await controller.enable(), isFalse);
-    expect(controller.enabled, isFalse);
-    expect(controller.status, LoomNearbyDtnServiceStatus.error);
-    expect(runtimeFactoryCalls, 0);
-    expect(controller.errorMessage, contains('registered Loom device'));
-  });
+      expect(await controller.enable(), isFalse);
+      expect(controller.enabled, isFalse);
+      expect(controller.status, LoomNearbyDtnServiceStatus.error);
+      expect(runtimeFactoryCalls, 0);
+      expect(controller.errorMessage, contains('registered Loom device'));
+    },
+  );
 
   test('Nearby DTN auto recovery retries only transient errors', () {
     expect(
@@ -57,61 +60,67 @@ void main() {
     }
   });
 
-  test('Test E - stale enable completion cannot reactivate after disable',
-      () async {
-    final harness = _Harness();
-    addTearDown(harness.dispose);
-    final supported = Completer<Set<LoomNearbyBearer>>();
-    harness.runtime.supportedFuture = supported.future;
+  test(
+    'Test E - stale enable completion cannot reactivate after disable',
+    () async {
+      final harness = _Harness();
+      addTearDown(harness.dispose);
+      final supported = Completer<Set<LoomNearbyBearer>>();
+      harness.runtime.supportedFuture = supported.future;
 
-    final enabling = harness.controller.enable();
-    await harness.runtime.supportedCalled.future;
-    final disabling = harness.controller.disable();
-    supported.complete(<LoomNearbyBearer>{
-      LoomNearbyBearer.bluetoothLowEnergy,
-    });
+      final enabling = harness.controller.enable();
+      await harness.runtime.supportedCalled.future;
+      final disabling = harness.controller.disable();
+      supported.complete(<LoomNearbyBearer>{
+        LoomNearbyBearer.bluetoothLowEnergy,
+      });
 
-    expect(await enabling, isFalse);
-    await disabling;
-    expect(harness.controller.enabled, isFalse);
-    expect(harness.controller.status, LoomNearbyDtnServiceStatus.off);
-    expect(harness.runtime.startForegroundCalls, 0);
-  });
+      expect(await enabling, isFalse);
+      await disabling;
+      expect(harness.controller.enabled, isFalse);
+      expect(harness.controller.status, LoomNearbyDtnServiceStatus.off);
+      expect(harness.runtime.startForegroundCalls, 0);
+    },
+  );
 
-  test('Test D - network restoration kicks uplink while Nearby stays active',
-      () async {
-    final harness = _Harness(active: true);
-    addTearDown(harness.dispose);
-    expect(await harness.controller.enable(), isTrue);
-    final before = harness.runtime.uplinkKicks;
+  test(
+    'Test D - network restoration kicks uplink while Nearby stays active',
+    () async {
+      final harness = _Harness(active: true);
+      addTearDown(harness.dispose);
+      expect(await harness.controller.enable(), isTrue);
+      final before = harness.runtime.uplinkKicks;
 
-    LoomDefaultNetworkGeneration.advance(
-      transportClass: 'wifi',
-      validated: true,
-    );
-    await Future<void>.delayed(Duration.zero);
+      LoomDefaultNetworkGeneration.advance(
+        transportClass: 'wifi',
+        validated: true,
+      );
+      await Future<void>.delayed(Duration.zero);
 
-    expect(harness.controller.enabled, isTrue);
-    expect(harness.controller.status, LoomNearbyDtnServiceStatus.active);
-    expect(harness.runtime.uplinkKicks, greaterThan(before));
-  });
+      expect(harness.controller.enabled, isTrue);
+      expect(harness.controller.status, LoomNearbyDtnServiceStatus.active);
+      expect(harness.runtime.uplinkKicks, greaterThan(before));
+    },
+  );
 
-  test('Test F - online carrier keeps Nearby scan/carry lifecycle enabled',
-      () async {
-    final harness = _Harness(active: true);
-    addTearDown(harness.dispose);
-    expect(await harness.controller.enable(), isTrue);
+  test(
+    'Test F - online carrier keeps Nearby scan/carry lifecycle enabled',
+    () async {
+      final harness = _Harness(active: true);
+      addTearDown(harness.dispose);
+      expect(await harness.controller.enable(), isTrue);
 
-    LoomDefaultNetworkGeneration.advance(
-      transportClass: 'cellular',
-      validated: true,
-    );
-    await Future<void>.delayed(Duration.zero);
+      LoomDefaultNetworkGeneration.advance(
+        transportClass: 'cellular',
+        validated: true,
+      );
+      await Future<void>.delayed(Duration.zero);
 
-    expect(harness.controller.enabled, isTrue);
-    expect(harness.runtime.stopForegroundCalls, 0);
-    expect(harness.runtime.closed, isFalse);
-  });
+      expect(harness.controller.enabled, isTrue);
+      expect(harness.runtime.stopForegroundCalls, 0);
+      expect(harness.runtime.closed, isFalse);
+    },
+  );
 }
 
 final class _Harness {
@@ -140,33 +149,37 @@ final class _Harness {
       signerFactory: (_, __) async => const _Signer(),
       roundExecutor: ({required runtime, required signer, required bearer}) =>
           this.runtime.roundBlocker.future,
-      messageGatewayRoundExecutor: ({
-        required runtime,
-        required signer,
-        required bearer,
-        required gateway,
-      }) async => 0,
+      messageGatewayRoundExecutor:
+          ({
+            required runtime,
+            required signer,
+            required bearer,
+            required gateway,
+          }) async => 0,
       supportPathProvider: () async => '/unused',
       roundPause: const Duration(days: 1),
     );
   }
 
   final LoomNodeDirectoryController nodes = LoomNodeDirectoryController();
-  late final LoomOnboardingController onboarding =
-      LoomOnboardingController(nodes: nodes);
+  late final LoomOnboardingController onboarding = LoomOnboardingController(
+    nodes: nodes,
+  );
   late final _FakeRuntime runtime;
   late final LoomNearbyDtnServiceController controller;
 
   void dispose() {
     controller.dispose();
     if (!runtime.roundBlocker.isCompleted) {
-      runtime.roundBlocker.complete(const LoomNearbyDtnRoundResult(
-        discoveredCandidates: 0,
-        connectedCandidates: 0,
-        inboundPacketsAccepted: 0,
-        outboundPacketsAccepted: 0,
-        failedEncounters: 0,
-      ));
+      runtime.roundBlocker.complete(
+        const LoomNearbyDtnRoundResult(
+          discoveredCandidates: 0,
+          connectedCandidates: 0,
+          inboundPacketsAccepted: 0,
+          outboundPacketsAccepted: 0,
+          failedEncounters: 0,
+        ),
+      );
     }
     onboarding.dispose();
     nodes.dispose();

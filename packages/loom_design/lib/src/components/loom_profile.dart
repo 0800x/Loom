@@ -62,7 +62,8 @@ class LoomProfileHero extends StatelessWidget {
                 ),
               ],
             ),
-            child: avatar ??
+            child:
+                avatar ??
                 LoomAvatar(
                   label: name,
                   size: LoomSizing.profileAvatar,
@@ -75,9 +76,8 @@ class LoomProfileHero extends StatelessWidget {
           const SizedBox(height: LoomSpacing.xxs),
           Text(
             presence,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: p.connectivity),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: p.connectivity),
           ),
           if (address != null) ...[
             const SizedBox(height: LoomSpacing.xxs),
@@ -102,6 +102,5 @@ class LoomRouteMark extends StatelessWidget {
   final double size;
 
   @override
-  Widget build(BuildContext context) =>
-      LoomBrandMark(size: size, glow: false);
+  Widget build(BuildContext context) => LoomBrandMark(size: size, glow: false);
 }

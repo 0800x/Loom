@@ -24,9 +24,7 @@ void main() {
             final changes = Listenable.merge([camera, permission]);
             final actions = <String>[];
             final theme = switch (mode) {
-              LoomThemeMode.light => LoomTheme.light(
-                fontFamily: 'Vazirmatn',
-              ),
+              LoomThemeMode.light => LoomTheme.light(fontFamily: 'Vazirmatn'),
               LoomThemeMode.dark => LoomTheme.dark(fontFamily: 'Vazirmatn'),
               LoomThemeMode.oled => LoomTheme.oled(fontFamily: 'Vazirmatn'),
             };

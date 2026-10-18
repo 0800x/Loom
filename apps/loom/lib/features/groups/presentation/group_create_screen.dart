@@ -27,8 +27,7 @@ class LoomGroupCreateScreen extends StatefulWidget {
   final Future<Uint8List?> Function()? pickPhoto;
 
   @override
-  State<LoomGroupCreateScreen> createState() =>
-      _LoomGroupCreateScreenState();
+  State<LoomGroupCreateScreen> createState() => _LoomGroupCreateScreenState();
 }
 
 class _LoomGroupCreateScreenState extends State<LoomGroupCreateScreen> {
@@ -287,9 +286,7 @@ class _LoomGroupCreateScreenState extends State<LoomGroupCreateScreen> {
             child: Align(
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: LoomSizing.formMax,
-                ),
+                constraints: const BoxConstraints(maxWidth: LoomSizing.formMax),
                 child: Form(
                   key: _form,
                   child: ListenableBuilder(
@@ -458,9 +455,7 @@ class _LoomGroupCreateScreenState extends State<LoomGroupCreateScreen> {
                                 'Search people',
                                 'جستجوی افراد',
                               ),
-                              prefixIcon: const Icon(
-                                LoomIcons.search_rounded,
-                              ),
+                              prefixIcon: const Icon(LoomIcons.search_rounded),
                               suffixIcon: IconButton(
                                 tooltip: tr(
                                   context,
@@ -469,8 +464,7 @@ class _LoomGroupCreateScreenState extends State<LoomGroupCreateScreen> {
                                 ),
                                 onPressed:
                                     _submitting ||
-                                        _people.state ==
-                                            LoomPeopleState.loading
+                                        _people.state == LoomPeopleState.loading
                                     ? null
                                     : _find,
                                 icon: const Icon(

@@ -17,8 +17,8 @@ class LoomMessagingTransportUnavailable extends LoomProtocolException {
   const LoomMessagingTransportUnavailable(super.message);
 }
 
-typedef LoomMessagingRoutesRefresher =
-    Future<List<LoomMessagingRoute>> Function();
+typedef LoomMessagingRoutesRefresher = Future<List<LoomMessagingRoute>>
+    Function();
 
 class LoomMessagingRoute {
   const LoomMessagingRoute({
@@ -43,9 +43,9 @@ class LoomRoutedMessagingApi implements LoomMessagingApi {
     this.sendAttemptBudget = const Duration(seconds: 8),
     this.lanFallbackBudget = const Duration(seconds: 1),
     this.failedRouteCooldown = const Duration(seconds: 30),
-  }) : _routes = List<LoomMessagingRoute>.unmodifiable(routes),
-       _routesGeneration = LoomDefaultNetworkGeneration.current.generation,
-       policy = policy ?? const LoomRoutePolicy();
+  })  : _routes = List<LoomMessagingRoute>.unmodifiable(routes),
+        _routesGeneration = LoomDefaultNetworkGeneration.current.generation,
+        policy = policy ?? const LoomRoutePolicy();
 
   final String homeNodeId;
   List<LoomMessagingRoute> _routes;
@@ -196,9 +196,8 @@ class LoomRoutedMessagingApi implements LoomMessagingApi {
           final reserve = remaining == null
               ? lanFallbackBudget
               : Duration(microseconds: remaining.inMicroseconds ~/ 2);
-          routeBudget = reserve < lanFallbackBudget
-              ? reserve
-              : lanFallbackBudget;
+          routeBudget =
+              reserve < lanFallbackBudget ? reserve : lanFallbackBudget;
         }
         final routeCategory = route.candidate.kind.name;
         LoomTransportDiagnostics.event(
@@ -317,19 +316,20 @@ class LoomRoutedMessagingApi implements LoomMessagingApi {
     required String protocolVersion,
     String? replyToMessageId,
     Map<String, Object?> metadata = const {},
-  }) => _try(
-    (api) => api.sendOpaqueMessage(
-      conversationId: conversationId,
-      clientId: clientId,
-      type: type,
-      ciphertext: ciphertext,
-      protocolVersion: protocolVersion,
-      replyToMessageId: replyToMessageId,
-      metadata: metadata,
-    ),
-    budget: sendAttemptBudget,
-    sendAttemptId: clientId,
-  );
+  }) =>
+      _try(
+        (api) => api.sendOpaqueMessage(
+          conversationId: conversationId,
+          clientId: clientId,
+          type: type,
+          ciphertext: ciphertext,
+          protocolVersion: protocolVersion,
+          replyToMessageId: replyToMessageId,
+          metadata: metadata,
+        ),
+        budget: sendAttemptBudget,
+        sendAttemptId: clientId,
+      );
 
   @override
   Future<LoomSyncPage> sync({String? cursor, int limit = 200}) =>
@@ -339,24 +339,26 @@ class LoomRoutedMessagingApi implements LoomMessagingApi {
   Future<void> markRead({
     required String conversationId,
     required int throughOrder,
-  }) => _try(
-    (api) => api.markRead(
-      conversationId: conversationId,
-      throughOrder: throughOrder,
-    ),
-  );
+  }) =>
+      _try(
+        (api) => api.markRead(
+          conversationId: conversationId,
+          throughOrder: throughOrder,
+        ),
+      );
 
   @override
   Future<LoomAttachmentReceipt> uploadEncryptedAttachment({
     required String conversationId,
     required File encryptedFile,
     required String contentType,
-  }) => _try(
-    (api) => api.uploadEncryptedAttachment(
-      conversationId: conversationId,
-      encryptedFile: encryptedFile,
-      contentType: contentType,
-    ),
-    boundLanFallback: false,
-  );
+  }) =>
+      _try(
+        (api) => api.uploadEncryptedAttachment(
+          conversationId: conversationId,
+          encryptedFile: encryptedFile,
+          contentType: contentType,
+        ),
+        boundLanFallback: false,
+      );
 }

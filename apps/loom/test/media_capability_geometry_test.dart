@@ -22,10 +22,7 @@ void main() {
       LoomMediaCapabilities.cameraCaptureFor(TargetPlatform.android),
       isTrue,
     );
-    expect(
-      LoomMediaCapabilities.cameraCaptureFor(TargetPlatform.iOS),
-      isTrue,
-    );
+    expect(LoomMediaCapabilities.cameraCaptureFor(TargetPlatform.iOS), isTrue);
   });
   test('circular crop fits narrow and landscape available space', () {
     for (final available in [
@@ -77,10 +74,7 @@ void main() {
     'Windows capture and QR routes offer truthful fallbacks without starting plugins',
     (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: LoomTheme.light(),
-          home: const LoomCameraScreen(),
-        ),
+        MaterialApp(theme: LoomTheme.light(), home: const LoomCameraScreen()),
       );
       await tester.pumpAndSettle();
       expect(find.text('Choose file'), findsOneWidget);

@@ -50,47 +50,47 @@ class LoomContainerTransform extends StatelessWidget {
   final bool curvedStretch;
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
-        animation: animation,
-        child: RepaintBoundary(child: child),
-        builder: (context, child) {
-          final reduced = LoomAccessibility.fromContext(context).reduceMotion;
-          final t = reduced
-              ? 1.0
-              : linear
-                  ? animation.value
-                  : const LoomSpringCurve().transform(animation.value);
-          final rect = Rect.lerp(origin, destination, t)!;
-          final sx = rect.width / destination.width;
-          final sy = rect.height / destination.height;
-          return Positioned.fromRect(
-            rect: destination,
-            child: Transform(
-              alignment: Alignment.topLeft,
-              transform: Matrix4.identity()
-                ..translateByDouble(
-                  rect.left - destination.left,
-                  rect.top - destination.top,
-                  0,
-                  1,
-                )
-                ..scaleByDouble(sx, sy, 1, 1),
-              child: ClipPath(
-                clipper: LoomSurfaceClipper(
-                  progress: t,
-                  curvedStretch: curvedStretch,
-                  radius: Radius.elliptical(
-                    (sourceRadius + (radius - sourceRadius) * t) /
-                        math.max(sx, .001),
-                    (sourceRadius + (radius - sourceRadius) * t) /
-                        math.max(sy, .001),
-                  ),
-                ),
-                child: child,
+    animation: animation,
+    child: RepaintBoundary(child: child),
+    builder: (context, child) {
+      final reduced = LoomAccessibility.fromContext(context).reduceMotion;
+      final t = reduced
+          ? 1.0
+          : linear
+          ? animation.value
+          : const LoomSpringCurve().transform(animation.value);
+      final rect = Rect.lerp(origin, destination, t)!;
+      final sx = rect.width / destination.width;
+      final sy = rect.height / destination.height;
+      return Positioned.fromRect(
+        rect: destination,
+        child: Transform(
+          alignment: Alignment.topLeft,
+          transform: Matrix4.identity()
+            ..translateByDouble(
+              rect.left - destination.left,
+              rect.top - destination.top,
+              0,
+              1,
+            )
+            ..scaleByDouble(sx, sy, 1, 1),
+          child: ClipPath(
+            clipper: LoomSurfaceClipper(
+              progress: t,
+              curvedStretch: curvedStretch,
+              radius: Radius.elliptical(
+                (sourceRadius + (radius - sourceRadius) * t) /
+                    math.max(sx, .001),
+                (sourceRadius + (radius - sourceRadius) * t) /
+                    math.max(sy, .001),
               ),
             ),
-          );
-        },
+            child: child,
+          ),
+        ),
       );
+    },
+  );
 }
 
 /// Keeps the cached child intact while the outline stretches and settles.
@@ -180,8 +180,7 @@ class LoomSurfaceRoute<T> extends PopupRoute<T> {
     controller!.stop();
     // Preserve the current geometry when interrupting an opening spring.
     if (!_interactive.value) {
-      controller!.value =
-          const LoomSpringCurve().transform(controller!.value);
+      controller!.value = const LoomSpringCurve().transform(controller!.value);
       _interactive.value = true;
     }
     _dragStart = controller!.value;
@@ -223,119 +222,122 @@ class LoomSurfaceRoute<T> extends PopupRoute<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
   ) {
-    return LayoutBuilder(builder: (context, bounds) {
-    final media = MediaQuery.of(context);
-    final viewport = Size(bounds.maxWidth, bounds.maxHeight);
-    final available = Rect.fromLTRB(
-      8,
-      media.padding.top + 8,
-      viewport.width - 8,
-      viewport.height - media.viewInsets.bottom - media.padding.bottom - 8,
-    );
-    final width = math.min(600.0, available.width);
-    final height = math.max(
-      1.0,
-      math.min(available.height, viewport.height * .82),
-    );
-    final destination = fullscreen
-        ? Offset.zero & viewport
-        : Rect.fromLTWH(
-            available.center.dx - width / 2,
-            available.bottom - height,
-            width,
-            height,
-          );
-    final overlayBox =
-        Navigator.of(context).overlay?.context.findRenderObject();
-    final source = origin == null
-        ? Rect.fromCenter(
-            center: destination.bottomCenter,
-            width: 48,
-            height: 48,
-          )
-        : overlayBox is RenderBox
+    return LayoutBuilder(
+      builder: (context, bounds) {
+        final media = MediaQuery.of(context);
+        final viewport = Size(bounds.maxWidth, bounds.maxHeight);
+        final available = Rect.fromLTRB(
+          8,
+          media.padding.top + 8,
+          viewport.width - 8,
+          viewport.height - media.viewInsets.bottom - media.padding.bottom - 8,
+        );
+        final width = math.min(600.0, available.width);
+        final height = math.max(
+          1.0,
+          math.min(available.height, viewport.height * .82),
+        );
+        final destination = fullscreen
+            ? Offset.zero & viewport
+            : Rect.fromLTWH(
+                available.center.dx - width / 2,
+                available.bottom - height,
+                width,
+                height,
+              );
+        final overlayBox = Navigator.of(context).overlay?.context
+            .findRenderObject();
+        final source = origin == null
+            ? Rect.fromCenter(
+                center: destination.bottomCenter,
+                width: 48,
+                height: 48,
+              )
+            : overlayBox is RenderBox
             ? overlayBox.globalToLocal(origin!.topLeft) & origin!.size
             : origin!;
-    return Stack(
-      children: [
-        ValueListenableBuilder<bool>(
-          valueListenable: _interactive,
-          builder: (context, interactive, child) => LoomContainerTransform(
-            animation: animation,
-            origin: source,
-            destination: destination,
-            radius: fullscreen ? 0 : 28,
-            linear: interactive,
-            curvedStretch: fullscreen,
-            child: child!,
-          ),
-          child: Material(
-            color: backgroundColor,
-            child: Stack(fit: StackFit.expand, children: [
-              Column(
-                children: [
-                  if (!fullscreen)
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onVerticalDragStart: _start,
-                      onVerticalDragUpdate: _update,
-                      onVerticalDragEnd: _end,
-                      onVerticalDragCancel: () {
-                        _drag = 0;
-                        if (_interactive.value) _settle();
-                      },
-                      child: SizedBox(
-                        height: 28,
-                        width: double.infinity,
-                        child: Center(
-                          child: Container(
-                            width: 36,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).dividerColor,
-                              borderRadius: BorderRadius.circular(4),
+        return Stack(
+          children: [
+            ValueListenableBuilder<bool>(
+              valueListenable: _interactive,
+              builder: (context, interactive, child) => LoomContainerTransform(
+                animation: animation,
+                origin: source,
+                destination: destination,
+                radius: fullscreen ? 0 : 28,
+                linear: interactive,
+                curvedStretch: fullscreen,
+                child: child!,
+              ),
+              child: Material(
+                color: backgroundColor,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Column(
+                      children: [
+                        if (!fullscreen)
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onVerticalDragStart: _start,
+                            onVerticalDragUpdate: _update,
+                            onVerticalDragEnd: _end,
+                            onVerticalDragCancel: () {
+                              _drag = 0;
+                              if (_interactive.value) _settle();
+                            },
+                            child: SizedBox(
+                              height: 28,
+                              width: double.infinity,
+                              child: Center(
+                                child: Container(
+                                  width: 36,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).dividerColor,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        Expanded(child: builder(context)),
+                      ],
+                    ),
+                    if (fullscreen)
+                      Positioned(
+                        top: media.padding.top,
+                        left: viewport.width / 2 - 32,
+                        width: 64,
+                        height: 44,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onVerticalDragStart: _start,
+                          onVerticalDragUpdate: _update,
+                          onVerticalDragEnd: _end,
+                          onVerticalDragCancel: () {
+                            if (_interactive.value) _settle();
+                          },
+                          child: Center(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.onSurface
+                                    .withValues(alpha: .35),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const SizedBox(width: 30, height: 4),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  Expanded(child: builder(context)),
-                ],
-              ),
-              if (fullscreen)
-                Positioned(
-                  top: media.padding.top,
-                  left: viewport.width / 2 - 32,
-                  width: 64,
-                  height: 44,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onVerticalDragStart: _start,
-                    onVerticalDragUpdate: _update,
-                    onVerticalDragEnd: _end,
-                    onVerticalDragCancel: () {
-                      if (_interactive.value) _settle();
-                    },
-                    child: Center(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: .35),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const SizedBox(width: 30, height: 4),
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
-            ]),
-          ),
-        ),
-      ],
+              ),
+            ),
+          ],
+        );
+      },
     );
-    });
   }
 }
 

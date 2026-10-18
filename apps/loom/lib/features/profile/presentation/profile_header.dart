@@ -227,4 +227,3 @@ class _LoomProfileHeaderState extends State<LoomProfileHeader> {
     );
   }
 }
-

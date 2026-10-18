@@ -114,254 +114,233 @@ class _LoomActiveCallScreenState extends State<LoomActiveCallScreen> {
       fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
     ).copyWith(platform: Theme.of(context).platform),
     child: Builder(
-      builder:
-          (context) => AnimatedBuilder(
-            animation: widget.engine,
-            builder: (context, _) {
-              final state = widget.engine.state;
-              final remote = widget.engine.remoteRenderer;
-              final local = widget.engine.localRenderer;
-              final video = state.kind == LoomCallKind.video;
-              final terminal =
-                  state.lifecycle == LoomCallLifecycle.ended ||
-                  state.lifecycle == LoomCallLifecycle.failed;
-              final visible = terminal || !video || _chromeVisible;
-              final reduced =
-                  LoomAccessibility.fromContext(context).reduceMotion;
-              final duration = reduced ? Duration.zero : LoomMotion.component;
-              final showRemote =
-                  video &&
-                  remote != null &&
-                  state.remoteVideoAvailable &&
-                  state.remoteCameraEnabled;
-              return Scaffold(
-                backgroundColor: Colors.black,
-                body: SafeArea(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final wrapped = video && constraints.maxWidth < 390;
-                      final textScale =
-                          MediaQuery.textScalerOf(context).scale(11) / 11;
-                      final controlsHeight =
-                          terminal
-                              ? 90.0
-                              : (wrapped ? 2 : 1) * (66 + 26 * textScale) + 24;
-                      final previewWidth =
-                          constraints.maxWidth < 360 ? 88.0 : 108.0;
-                      final previewHeight =
-                          constraints.maxHeight < 450 ? 84.0 : 144.0;
-                      const minY = 80.0;
-                      final maxY =
-                          (constraints.maxHeight -
-                                  controlsHeight -
-                                  previewHeight -
-                                  20)
-                              .clamp(minY, double.infinity)
-                              .toDouble();
-                      final maxX =
-                          (constraints.maxWidth - previewWidth - 12)
-                              .clamp(12.0, double.infinity)
-                              .toDouble();
-                      final position = _previewPosition ?? Offset(maxX, minY);
-                      final x = position.dx.clamp(12.0, maxX).toDouble();
-                      final y = position.dy.clamp(minY, maxY).toDouble();
-                      return GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap:
-                            video && !terminal
-                                ? () => setState(
-                                  () => _chromeVisible = !_chromeVisible,
+      builder: (context) => AnimatedBuilder(
+        animation: widget.engine,
+        builder: (context, _) {
+          final state = widget.engine.state;
+          final remote = widget.engine.remoteRenderer;
+          final local = widget.engine.localRenderer;
+          final video = state.kind == LoomCallKind.video;
+          final terminal =
+              state.lifecycle == LoomCallLifecycle.ended ||
+              state.lifecycle == LoomCallLifecycle.failed;
+          final visible = terminal || !video || _chromeVisible;
+          final reduced = LoomAccessibility.fromContext(context).reduceMotion;
+          final duration = reduced ? Duration.zero : LoomMotion.component;
+          final showRemote =
+              video &&
+              remote != null &&
+              state.remoteVideoAvailable &&
+              state.remoteCameraEnabled;
+          return Scaffold(
+            backgroundColor: Colors.black,
+            body: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final wrapped = video && constraints.maxWidth < 390;
+                  final textScale =
+                      MediaQuery.textScalerOf(context).scale(11) / 11;
+                  final controlsHeight = terminal
+                      ? 90.0
+                      : (wrapped ? 2 : 1) * (66 + 26 * textScale) + 24;
+                  final previewWidth = constraints.maxWidth < 360
+                      ? 88.0
+                      : 108.0;
+                  final previewHeight = constraints.maxHeight < 450
+                      ? 84.0
+                      : 144.0;
+                  const minY = 80.0;
+                  final maxY =
+                      (constraints.maxHeight -
+                              controlsHeight -
+                              previewHeight -
+                              20)
+                          .clamp(minY, double.infinity)
+                          .toDouble();
+                  final maxX = (constraints.maxWidth - previewWidth - 12)
+                      .clamp(12.0, double.infinity)
+                      .toDouble();
+                  final position = _previewPosition ?? Offset(maxX, minY);
+                  final x = position.dx.clamp(12.0, maxX).toDouble();
+                  final y = position.dy.clamp(minY, maxY).toDouble();
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: video && !terminal
+                        ? () => setState(() => _chromeVisible = !_chromeVisible)
+                        : null,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: showRemote
+                              ? RepaintBoundary(
+                                  child: RTCVideoView(
+                                    remote,
+                                    objectFit: RTCVideoViewObjectFit
+                                        .RTCVideoViewObjectFitCover,
+                                  ),
                                 )
-                                : null,
-                        child: Stack(
-                          children: [
-                            Positioned.fill(
-                              child:
-                                  showRemote
-                                      ? RepaintBoundary(
-                                        child: RTCVideoView(
-                                          remote,
-                                          objectFit:
-                                              RTCVideoViewObjectFit
-                                                  .RTCVideoViewObjectFitCover,
-                                        ),
-                                      )
-                                      : _CallBackdrop(
-                                        peerLabel: widget.peerLabel,
-                                        peerImage: widget.peerImage,
-                                        state: state,
-                                        bottomInset: controlsHeight + 20,
-                                        compact: constraints.maxHeight < 620,
-                                      ),
-                            ),
-                            if (showRemote)
-                              const Positioned(
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                height: 150,
-                                child: IgnorePointer(
-                                  child: DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [
-                                          Colors.black87,
-                                          Colors.transparent,
-                                        ],
-                                      ),
-                                    ),
-                                  ),
+                              : _CallBackdrop(
+                                  peerLabel: widget.peerLabel,
+                                  peerImage: widget.peerImage,
+                                  state: state,
+                                  bottomInset: controlsHeight + 20,
+                                  compact: constraints.maxHeight < 620,
                                 ),
-                              ),
-                            if (video &&
-                                state.cameraEnabled &&
-                                local != null &&
-                                !terminal &&
-                                constraints.maxHeight >
-                                    controlsHeight + previewHeight + 100)
-                              AnimatedPositioned(
-                                left: x,
-                                top: y,
-                                width: previewWidth,
-                                height: previewHeight,
-                                duration:
-                                    _draggingPreview ? Duration.zero : duration,
-                                curve: LoomMotion.emphasized,
-                                child: Semantics(
-                                  label: tr(
-                                    context,
-                                    'Your camera preview',
-                                    'پیش‌نمایش دوربین شما',
-                                  ),
-                                  child: GestureDetector(
-                                    onTap: () {},
-                                    onPanStart:
-                                        (_) => setState(
-                                          () => _draggingPreview = true,
-                                        ),
-                                    onPanUpdate:
-                                        (details) => setState(() {
-                                          _previewPosition = Offset(
-                                            (x + details.delta.dx)
-                                                .clamp(12.0, maxX)
-                                                .toDouble(),
-                                            (y + details.delta.dy)
-                                                .clamp(minY, maxY)
-                                                .toDouble(),
-                                          );
-                                        }),
-                                    onPanEnd:
-                                        (_) => setState(() {
-                                          _draggingPreview = false;
-                                          _previewPosition = Offset(
-                                            x < maxX / 2 ? 12 : maxX,
-                                            y,
-                                          );
-                                        }),
-                                    onPanCancel:
-                                        () => setState(
-                                          () => _draggingPreview = false,
-                                        ),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: Colors.white38,
-                                        ),
-                                        boxShadow: const [
-                                          BoxShadow(
-                                            color: Colors.black38,
-                                            blurRadius: 18,
-                                          ),
-                                        ],
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(19),
-                                        child: RepaintBoundary(
-                                          child: RTCVideoView(
-                                            local,
-                                            mirror: true,
-                                            objectFit:
-                                                RTCVideoViewObjectFit
-                                                    .RTCVideoViewObjectFitCover,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            PositionedDirectional(
-                              start: 8,
-                              end: 8,
-                              top: 8,
-                              child: ExcludeSemantics(
-                                excluding: !visible,
-                                child: IgnorePointer(
-                                  ignoring: !visible,
-                                  child: AnimatedOpacity(
-                                    opacity: visible ? 1 : 0,
-                                    duration: duration,
-                                    child: _TopChrome(
-                                      peerLabel: widget.peerLabel,
-                                      state: state,
-                                      onBack:
-                                          () =>
-                                              Navigator.of(context).maybePop(),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            PositionedDirectional(
-                              start: 12,
-                              end: 12,
-                              bottom: 14,
-                              child: ExcludeSemantics(
-                                excluding: !visible,
-                                child: IgnorePointer(
-                                  ignoring: !visible,
-                                  child: AnimatedSlide(
-                                    offset:
-                                        visible
-                                            ? Offset.zero
-                                            : const Offset(0, 1.3),
-                                    duration: duration,
-                                    curve: LoomMotion.emphasized,
-                                    child: AnimatedOpacity(
-                                      opacity: visible ? 1 : 0,
-                                      duration: duration,
-                                      child:
-                                          terminal
-                                              ? _EndedControls(
-                                                state: state,
-                                                onClose:
-                                                    () =>
-                                                        Navigator.of(
-                                                          context,
-                                                        ).maybePop(),
-                                              )
-                                              : _LiveControls(
-                                                engine: widget.engine,
-                                                state: state,
-                                                wrapped: wrapped,
-                                              ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
-                      );
-                    },
-                  ),
-                ),
-              );
-            },
-          ),
+                        if (showRemote)
+                          const Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: 150,
+                            child: IgnorePointer(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.black87,
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (video &&
+                            state.cameraEnabled &&
+                            local != null &&
+                            !terminal &&
+                            constraints.maxHeight >
+                                controlsHeight + previewHeight + 100)
+                          AnimatedPositioned(
+                            left: x,
+                            top: y,
+                            width: previewWidth,
+                            height: previewHeight,
+                            duration: _draggingPreview
+                                ? Duration.zero
+                                : duration,
+                            curve: LoomMotion.emphasized,
+                            child: Semantics(
+                              label: tr(
+                                context,
+                                'Your camera preview',
+                                'پیش‌نمایش دوربین شما',
+                              ),
+                              child: GestureDetector(
+                                onTap: () {},
+                                onPanStart: (_) =>
+                                    setState(() => _draggingPreview = true),
+                                onPanUpdate: (details) => setState(() {
+                                  _previewPosition = Offset(
+                                    (x + details.delta.dx)
+                                        .clamp(12.0, maxX)
+                                        .toDouble(),
+                                    (y + details.delta.dy)
+                                        .clamp(minY, maxY)
+                                        .toDouble(),
+                                  );
+                                }),
+                                onPanEnd: (_) => setState(() {
+                                  _draggingPreview = false;
+                                  _previewPosition = Offset(
+                                    x < maxX / 2 ? 12 : maxX,
+                                    y,
+                                  );
+                                }),
+                                onPanCancel: () =>
+                                    setState(() => _draggingPreview = false),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: Colors.white38),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Colors.black38,
+                                        blurRadius: 18,
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(19),
+                                    child: RepaintBoundary(
+                                      child: RTCVideoView(
+                                        local,
+                                        mirror: true,
+                                        objectFit: RTCVideoViewObjectFit
+                                            .RTCVideoViewObjectFitCover,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        PositionedDirectional(
+                          start: 8,
+                          end: 8,
+                          top: 8,
+                          child: ExcludeSemantics(
+                            excluding: !visible,
+                            child: IgnorePointer(
+                              ignoring: !visible,
+                              child: AnimatedOpacity(
+                                opacity: visible ? 1 : 0,
+                                duration: duration,
+                                child: _TopChrome(
+                                  peerLabel: widget.peerLabel,
+                                  state: state,
+                                  onBack: () =>
+                                      Navigator.of(context).maybePop(),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        PositionedDirectional(
+                          start: 12,
+                          end: 12,
+                          bottom: 14,
+                          child: ExcludeSemantics(
+                            excluding: !visible,
+                            child: IgnorePointer(
+                              ignoring: !visible,
+                              child: AnimatedSlide(
+                                offset: visible
+                                    ? Offset.zero
+                                    : const Offset(0, 1.3),
+                                duration: duration,
+                                curve: LoomMotion.emphasized,
+                                child: AnimatedOpacity(
+                                  opacity: visible ? 1 : 0,
+                                  duration: duration,
+                                  child: terminal
+                                      ? _EndedControls(
+                                          state: state,
+                                          onClose: () =>
+                                              Navigator.of(context).maybePop(),
+                                        )
+                                      : _LiveControls(
+                                          engine: widget.engine,
+                                          state: state,
+                                          wrapped: wrapped,
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        },
+      ),
     ),
   );
 }
@@ -445,99 +424,97 @@ class _CallBackdrop extends StatelessWidget {
           center: const Alignment(0, -.5),
           radius: 1.3,
           colors: [
-            Color.alphaBlend(context.loom.primary.withAlphaFraction(.14), const Color(0xFF1B1C21)),
+            Color.alphaBlend(
+              context.loom.primary.withAlphaFraction(.14),
+              const Color(0xFF1B1C21),
+            ),
             const Color(0xFF1B1C21),
             const Color(0xFF111318),
           ],
         ),
       ),
       child: LayoutBuilder(
-        builder:
-            (context, constraints) => SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(24, 76, 24, bottomInset),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight:
-                      (constraints.maxHeight - 76 - bottomInset)
-                          .clamp(0.0, double.infinity)
-                          .toDouble(),
+        builder: (context, constraints) => SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(24, 76, 24, bottomInset),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: (constraints.maxHeight - 76 - bottomInset)
+                  .clamp(0.0, double.infinity)
+                  .toDouble(),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                LoomConnectionPulse(
+                  active: connecting,
+                  size: compact ? 108 : 156,
+                  child: LoomAvatar(
+                    label: peerLabel,
+                    image: peerImage,
+                    size: compact ? 78 : 116,
+                  ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                const SizedBox(height: 12),
+                Text(
+                  peerLabel,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                AnimatedSwitcher(
+                  duration: LoomAccessibility.fromContext(context).reduceMotion
+                      ? Duration.zero
+                      : LoomMotion.component,
+                  child: Text(
+                    _statusText(context, state),
+                    key: ValueKey(_statusText(context, state)),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ),
+                if (state.kind == LoomCallKind.video &&
+                    state.lifecycle == LoomCallLifecycle.connected &&
+                    !state.remoteCameraEnabled) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    tr(
+                      context,
+                      'Their camera is off',
+                      'دوربین طرف مقابل خاموش است',
+                    ),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 5,
                   children: [
-                    LoomConnectionPulse(
-                      active: connecting,
-                      size: compact ? 108 : 156,
-                      child: LoomAvatar(
-                        label: peerLabel,
-                        image: peerImage,
-                        size: compact ? 78 : 116,
-                      ),
+                    const Icon(
+                      LoomIcons.lock_outline_rounded,
+                      size: 14,
+                      color: Colors.white60,
                     ),
-                    const SizedBox(height: 12),
                     Text(
-                      peerLabel,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
+                      tr(context, 'Encrypted call', 'تماس رمزگذاری‌شده'),
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 12,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    AnimatedSwitcher(
-                      duration:
-                          LoomAccessibility.fromContext(context).reduceMotion
-                              ? Duration.zero
-                              : LoomMotion.component,
-                      child: Text(
-                        _statusText(context, state),
-                        key: ValueKey(_statusText(context, state)),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white70),
-                      ),
-                    ),
-                    if (state.kind == LoomCallKind.video &&
-                        state.lifecycle == LoomCallLifecycle.connected &&
-                        !state.remoteCameraEnabled) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        tr(
-                          context,
-                          'Their camera is off',
-                          'دوربین طرف مقابل خاموش است',
-                        ),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white70),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 5,
-                      children: [
-                        const Icon(
-                          LoomIcons.lock_outline_rounded,
-                          size: 14,
-                          color: Colors.white60,
-                        ),
-                        Text(
-                          tr(context, 'Encrypted call', 'تماس رمزگذاری‌شده'),
-                          style: const TextStyle(
-                            color: Colors.white60,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
+          ),
+        ),
       ),
     );
   }
@@ -604,26 +581,22 @@ class _LiveControls extends StatelessWidget {
     final controls = [
       _Action(
         key: const ValueKey('mute'),
-        icon:
-            state.muted ? LoomIcons.mic_off_rounded : LoomIcons.mic_rounded,
-        label:
-            state.muted
-                ? tr(context, 'Unmute', 'وصل صدا')
-                : tr(context, 'Mute', 'بی‌صدا'),
+        icon: state.muted ? LoomIcons.mic_off_rounded : LoomIcons.mic_rounded,
+        label: state.muted
+            ? tr(context, 'Unmute', 'وصل صدا')
+            : tr(context, 'Mute', 'بی‌صدا'),
         selected: state.muted,
         onTap: () => engine.setMuted(!state.muted),
       ),
       if (video)
         _Action(
           key: const ValueKey('camera'),
-          icon:
-              state.cameraEnabled
-                  ? LoomIcons.videocam_rounded
-                  : LoomIcons.videocam_off_rounded,
-          label:
-              state.cameraEnabled
-                  ? tr(context, 'Camera off', 'قطع تصویر')
-                  : tr(context, 'Camera on', 'وصل تصویر'),
+          icon: state.cameraEnabled
+              ? LoomIcons.videocam_rounded
+              : LoomIcons.videocam_off_rounded,
+          label: state.cameraEnabled
+              ? tr(context, 'Camera off', 'قطع تصویر')
+              : tr(context, 'Camera on', 'وصل تصویر'),
           selected: !state.cameraEnabled,
           onTap: () => engine.setCameraEnabled(!state.cameraEnabled),
         ),
@@ -636,14 +609,12 @@ class _LiveControls extends StatelessWidget {
         ),
       _Action(
         key: const ValueKey('speaker'),
-        icon:
-            state.speakerEnabled
-                ? LoomIcons.volume_up_rounded
-                : LoomIcons.hearing_rounded,
-        label:
-            state.speakerEnabled
-                ? tr(context, 'Earpiece', 'گوشی')
-                : tr(context, 'Speaker', 'بلندگو'),
+        icon: state.speakerEnabled
+            ? LoomIcons.volume_up_rounded
+            : LoomIcons.hearing_rounded,
+        label: state.speakerEnabled
+            ? tr(context, 'Earpiece', 'گوشی')
+            : tr(context, 'Speaker', 'بلندگو'),
         selected: state.speakerEnabled,
         onTap: () => engine.setSpeakerEnabled(!state.speakerEnabled),
       ),
@@ -771,22 +742,19 @@ class _ActionState extends State<_Action> {
             child: IconButton.filled(
               onPressed: enabled ? _invoke : null,
               tooltip: widget.label,
-              icon:
-                  _busy
-                      ? const LoomBusyIndicator(color: Colors.white)
-                      : Icon(widget.icon),
+              icon: _busy
+                  ? const LoomBusyIndicator(color: Colors.white)
+                  : Icon(widget.icon),
               style: IconButton.styleFrom(
                 minimumSize: const Size.square(48),
-                backgroundColor:
-                    widget.destructive
-                        ? const Color(0xFFCC343F)
-                        : widget.selected
-                        ? Colors.white
-                        : Colors.white.withAlphaFraction(.12),
-                foregroundColor:
-                    widget.selected && !widget.destructive
-                        ? const Color(0xFF111318)
-                        : Colors.white,
+                backgroundColor: widget.destructive
+                    ? const Color(0xFFCC343F)
+                    : widget.selected
+                    ? Colors.white
+                    : Colors.white.withAlphaFraction(.12),
+                foregroundColor: widget.selected && !widget.destructive
+                    ? const Color(0xFF111318)
+                    : Colors.white,
                 disabledForegroundColor: Colors.white38,
                 disabledBackgroundColor: Colors.white.withAlphaFraction(.06),
               ),
@@ -846,11 +814,7 @@ String _statusText(BuildContext context, LoomCallSnapshot state) {
       'در حال تماس…',
     ),
     LoomCallLifecycle.ringing => tr(context, 'Ringing…', 'در حال زنگ خوردن…'),
-    LoomCallLifecycle.connecting => tr(
-      context,
-      'Connecting…',
-      'در حال اتصال…',
-    ),
+    LoomCallLifecycle.connecting => tr(context, 'Connecting…', 'در حال اتصال…'),
     LoomCallLifecycle.connected => tr(context, 'Connected', 'متصل'),
     LoomCallLifecycle.reconnecting => tr(
       context,
@@ -876,4 +840,3 @@ String _duration(Duration value) {
   }
   return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
 }
-

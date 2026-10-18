@@ -35,10 +35,7 @@ final class LoomDtnSendAccepted extends LoomDtnSendResult {
 }
 
 final class LoomDtnSendFailed extends LoomDtnSendResult {
-  const LoomDtnSendFailed({
-    required this.completedAt,
-    required this.errorCode,
-  });
+  const LoomDtnSendFailed({required this.completedAt, required this.errorCode});
 
   /// Transport-provided informational time. The executor does not trust it for
   /// local state transitions; it records its own observation time.
@@ -54,11 +51,7 @@ abstract interface class LoomDtnTransferSender {
   Future<LoomDtnSendResult> sendPrepared(LoomStoredDtnTransfer transfer);
 }
 
-enum LoomDtnExecutionStatus {
-  accepted,
-  failed,
-  alreadyAccepted,
-}
+enum LoomDtnExecutionStatus { accepted, failed, alreadyAccepted }
 
 final class LoomDtnExecutionResult {
   const LoomDtnExecutionResult({
@@ -101,10 +94,14 @@ final class LoomDtnTransferExecutor {
     if (packet == null) throw StateError('DTN packet $packetId does not exist');
     final plan = router.planNext(
       packet: packet,
-      opportunities: opportunities.where((opportunity) =>
-          opportunity.directRecipient ||
-          !transferStore.hasAcceptedTransfer(
-              packetId, opportunity.opportunityId)),
+      opportunities: opportunities.where(
+        (opportunity) =>
+            opportunity.directRecipient ||
+            !transferStore.hasAcceptedTransfer(
+              packetId,
+              opportunity.opportunityId,
+            ),
+      ),
       now: now,
     );
     if (plan == null) return null;
@@ -233,10 +230,7 @@ final class LoomDtnTransferExecutor {
     return observed.isBefore(prepared) ? prepared : observed;
   }
 
-  static void _validateAck(
-    LoomStoredDtnTransfer transfer,
-    LoomDtnHopAck ack,
-  ) {
+  static void _validateAck(LoomStoredDtnTransfer transfer, LoomDtnHopAck ack) {
     if (ack.transmissionId != transfer.transmissionId ||
         ack.packetId != transfer.packetId) {
       throw const LoomDtnPacketConflict(

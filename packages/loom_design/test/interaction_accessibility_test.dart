@@ -53,7 +53,8 @@ void main() {
     ]) {
       final background = theme.colorScheme.primary.computeLuminance();
       final foreground = theme.colorScheme.onPrimary.computeLuminance();
-      final ratio = (math.max(background, foreground) + .05) /
+      final ratio =
+          (math.max(background, foreground) + .05) /
           (math.min(background, foreground) + .05);
       expect(ratio, greaterThanOrEqualTo(4.5));
     }
@@ -96,10 +97,7 @@ void main() {
       await tester.pumpAndSettle();
       final context = tester.element(find.text('Copy'));
       expect(LoomAccessibility.fromContext(context).reduceMotion, isTrue);
-      expect(
-        LoomAccessibility.fromContext(context).reduceTransparency,
-        isTrue,
-      );
+      expect(LoomAccessibility.fromContext(context).reduceTransparency, isTrue);
       expect(find.byType(BackdropFilter), findsNothing);
       expect(tester.takeException(), isNull);
     },

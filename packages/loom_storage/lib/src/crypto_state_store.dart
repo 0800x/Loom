@@ -675,9 +675,10 @@ final class LoomCryptoStateStore implements LoomCryptoTransactionRunner {
         state: LoomCryptoOutboxState.values.byName(row['state'] as String),
         attemptCount: row['attempt_count'] as int,
         nextAttemptAt: DateTime.parse(row['next_attempt_at'] as String).toUtc(),
-        acknowledgedAt: row['acknowledged_at'] == null
-            ? null
-            : DateTime.parse(row['acknowledged_at'] as String).toUtc(),
+        acknowledgedAt:
+            row['acknowledged_at'] == null
+                ? null
+                : DateTime.parse(row['acknowledged_at'] as String).toUtc(),
       );
 
   bool _sameOutbox(LoomCryptoOutboxRecord a, LoomCryptoOutboxRecord b) =>

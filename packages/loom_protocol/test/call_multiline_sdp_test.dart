@@ -6,13 +6,14 @@ import 'package:loom_models/loom_models.dart';
 import 'package:loom_protocol/loom_protocol.dart';
 import 'package:test/test.dart';
 
-const sdp = 'v=0\r\no=- 1234 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n'
+const sdp =
+    'v=0\r\no=- 1234 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n'
     'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=ice-ufrag:test\r\n';
 
 LoomDeviceRequestProofProvider proof() => LoomDeviceRequestProofProvider(
-      deviceId: 'dev_00000000-0000-4000-8000-000000000001',
-      signer: (_) async => List<int>.filled(64, 0),
-    );
+  deviceId: 'dev_00000000-0000-4000-8000-000000000001',
+  signer: (_) async => List<int>.filled(64, 0),
+);
 
 void main() {
   for (final kind in LoomCallKind.values) {

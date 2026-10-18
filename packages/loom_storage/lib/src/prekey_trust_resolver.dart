@@ -6,9 +6,8 @@ import 'package:loom_sessions/loom_sessions.dart';
 
 import 'security_store.dart';
 
-typedef LoomAccountToIdentityIdResolver = Future<String?> Function(
-  String accountId,
-);
+typedef LoomAccountToIdentityIdResolver =
+    Future<String?> Function(String accountId);
 
 /// Bridges Architecture-v2 prekey authorization to the existing public device
 /// trust cache without pretending v2 AccountId is the same value as v1

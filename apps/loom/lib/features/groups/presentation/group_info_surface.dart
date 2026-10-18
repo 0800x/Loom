@@ -165,173 +165,179 @@ class _LoomGroupInfoSurfaceState extends State<LoomGroupInfoSurface> {
                     child: LoomGlassSurface(
                       padding: const EdgeInsets.all(20),
                       child: Column(
-                      children: [
-                        LoomGroupAvatar(
-                          groupId: group.id,
-                          label: group.title,
-                          size: 92,
-                          groups: groups,
-                        ),
-                        if (admin && widget.onPhoto != null)
-                          TextButton.icon(
-                            onPressed: groups.busy ? null : widget.onPhoto,
-                            icon: const Icon(
-                              LoomIcons.photo_library_outlined,
-                            ),
-                            label: Text(
-                              tr(
-                                context,
-                                'Edit group photo',
-                                'ویرایش تصویر گروه',
-                              ),
-                            ),
+                        children: [
+                          LoomGroupAvatar(
+                            groupId: group.id,
+                            label: group.title,
+                            size: 92,
+                            groups: groups,
                           ),
-                        const SizedBox(height: 16),
-                        Text(
-                          group.title,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${people.length} ${tr(context, 'members', 'عضو')}',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 20),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 12,
-                          runSpacing: 8,
-                          children: [
-                            if (admin)
-                              FilledButton.icon(
-                                onPressed: groups.busy
-                                    ? null
-                                    : widget.onAddMember,
-                                icon: const Icon(
-                                  LoomIcons.person_add_alt_rounded,
-                                ),
-                                label: Text(
-                                  tr(context, 'Add members', 'افزودن اعضا'),
-                                ),
+                          if (admin && widget.onPhoto != null)
+                            TextButton.icon(
+                              onPressed: groups.busy ? null : widget.onPhoto,
+                              icon: const Icon(
+                                LoomIcons.photo_library_outlined,
                               ),
-                            if (admin)
-                              OutlinedButton.icon(
-                                onPressed: groups.busy ? null : widget.onInvite,
-                                icon: const Icon(LoomIcons.link),
-                                label: Text(
-                                  tr(context, 'Invite link', 'لینک دعوت'),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        LoomSettingsGroup(
-                          children: [
-                            if (widget.onNotifications != null)
-                              LoomSettingsRow(
-                                icon: widget.muted
-                                    ? LoomIcons.notifications_off_outlined
-                                    : LoomIcons.notifications_none_rounded,
-                                title: tr(context, 'Notifications', 'اعلان‌ها'),
-                                subtitle: widget.muted
-                                    ? tr(context, 'Off', 'خاموش')
-                                    : tr(context, 'On', 'روشن'),
-                                onTap: widget.onNotifications,
-                              ),
-                            if (widget.onMedia != null)
-                              LoomSettingsRow(
-                                icon: LoomIcons.photo_library_outlined,
-                                title: tr(
+                              label: Text(
+                                tr(
                                   context,
-                                  'Shared media',
-                                  'رسانه‌های مشترک',
+                                  'Edit group photo',
+                                  'ویرایش تصویر گروه',
                                 ),
-                                onTap: widget.onMedia,
-                                showDivider: admin,
-                              ),
-                            if (admin)
-                              LoomSettingsRow(
-                                icon: LoomIcons.person_add_alt_rounded,
-                                title: tr(
-                                  context,
-                                  'Join requests',
-                                  'درخواست‌های عضویت',
-                                ),
-                                subtitle: '$pendingRequests',
-                                onTap: groups.busy ? null : widget.onRequests,
-                                showDivider: false,
-                              ),
-                          ],
-                        ),
-                        if (groups.busy) const LinearProgressIndicator(),
-                        if (groups.error != null)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            child: Text(
-                              tr(
-                                context,
-                                'The change could not be completed. Pull down to refresh and try again.',
-                                'تغییر انجام نشد. برای تازه‌سازی صفحه را پایین بکشید و دوباره تلاش کنید.',
-                              ),
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.error,
                               ),
                             ),
+                          const SizedBox(height: 16),
+                          Text(
+                            group.title,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.headlineSmall,
                           ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _tab(
-                                context,
-                                '${tr(context, 'Members', 'اعضا')} (${people.length})',
-                                false,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _tab(
-                                context,
-                                '${tr(context, 'Administrators', 'مدیرها')} ($admins)',
-                                true,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          key: const ValueKey('group-member-search'),
-                          controller: _search,
-                          onChanged: (value) => setState(
-                            () => _query = value.trim().toLowerCase(),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${people.length} ${tr(context, 'members', 'عضو')}',
+                            style: Theme.of(context).textTheme.bodyMedium,
                           ),
-                          decoration: InputDecoration(
-                            hintText: tr(
-                              context,
-                              'Search members',
-                              'جست‌وجوی اعضا',
-                            ),
-                            prefixIcon: const Icon(LoomIcons.search_rounded),
-                            suffixIcon: _query.isEmpty
-                                ? null
-                                : IconButton(
-                                    tooltip: tr(
-                                      context,
-                                      'Clear search',
-                                      'پاک کردن جست‌وجو',
-                                    ),
-                                    icon: const Icon(LoomIcons.close_rounded),
-                                    onPressed: () => setState(() {
-                                      _search.clear();
-                                      _query = '';
-                                    }),
+                          const SizedBox(height: 20),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 12,
+                            runSpacing: 8,
+                            children: [
+                              if (admin)
+                                FilledButton.icon(
+                                  onPressed: groups.busy
+                                      ? null
+                                      : widget.onAddMember,
+                                  icon: const Icon(
+                                    LoomIcons.person_add_alt_rounded,
                                   ),
+                                  label: Text(
+                                    tr(context, 'Add members', 'افزودن اعضا'),
+                                  ),
+                                ),
+                              if (admin)
+                                OutlinedButton.icon(
+                                  onPressed: groups.busy
+                                      ? null
+                                      : widget.onInvite,
+                                  icon: const Icon(LoomIcons.link),
+                                  label: Text(
+                                    tr(context, 'Invite link', 'لینک دعوت'),
+                                  ),
+                                ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    ),
+                          const SizedBox(height: 20),
+                          LoomSettingsGroup(
+                            children: [
+                              if (widget.onNotifications != null)
+                                LoomSettingsRow(
+                                  icon: widget.muted
+                                      ? LoomIcons.notifications_off_outlined
+                                      : LoomIcons.notifications_none_rounded,
+                                  title: tr(
+                                    context,
+                                    'Notifications',
+                                    'اعلان‌ها',
+                                  ),
+                                  subtitle: widget.muted
+                                      ? tr(context, 'Off', 'خاموش')
+                                      : tr(context, 'On', 'روشن'),
+                                  onTap: widget.onNotifications,
+                                ),
+                              if (widget.onMedia != null)
+                                LoomSettingsRow(
+                                  icon: LoomIcons.photo_library_outlined,
+                                  title: tr(
+                                    context,
+                                    'Shared media',
+                                    'رسانه‌های مشترک',
+                                  ),
+                                  onTap: widget.onMedia,
+                                  showDivider: admin,
+                                ),
+                              if (admin)
+                                LoomSettingsRow(
+                                  icon: LoomIcons.person_add_alt_rounded,
+                                  title: tr(
+                                    context,
+                                    'Join requests',
+                                    'درخواست‌های عضویت',
+                                  ),
+                                  subtitle: '$pendingRequests',
+                                  onTap: groups.busy ? null : widget.onRequests,
+                                  showDivider: false,
+                                ),
+                            ],
+                          ),
+                          if (groups.busy) const LinearProgressIndicator(),
+                          if (groups.error != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Text(
+                                tr(
+                                  context,
+                                  'The change could not be completed. Pull down to refresh and try again.',
+                                  'تغییر انجام نشد. برای تازه‌سازی صفحه را پایین بکشید و دوباره تلاش کنید.',
+                                ),
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _tab(
+                                  context,
+                                  '${tr(context, 'Members', 'اعضا')} (${people.length})',
+                                  false,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _tab(
+                                  context,
+                                  '${tr(context, 'Administrators', 'مدیرها')} ($admins)',
+                                  true,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            key: const ValueKey('group-member-search'),
+                            controller: _search,
+                            onChanged: (value) => setState(
+                              () => _query = value.trim().toLowerCase(),
+                            ),
+                            decoration: InputDecoration(
+                              hintText: tr(
+                                context,
+                                'Search members',
+                                'جست‌وجوی اعضا',
+                              ),
+                              prefixIcon: const Icon(LoomIcons.search_rounded),
+                              suffixIcon: _query.isEmpty
+                                  ? null
+                                  : IconButton(
+                                      tooltip: tr(
+                                        context,
+                                        'Clear search',
+                                        'پاک کردن جست‌وجو',
+                                      ),
+                                      icon: const Icon(LoomIcons.close_rounded),
+                                      onPressed: () => setState(() {
+                                        _search.clear();
+                                        _query = '';
+                                      }),
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
                     ),
                   ),
                 ),

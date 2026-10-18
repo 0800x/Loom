@@ -746,7 +746,9 @@ class _ConversationPaneState extends State<_ConversationPane>
       if (!mounted) {
         return;
       }
-      final caption = TextEditingController(text: pending.sticker ? '' : composer.text);
+      final caption = TextEditingController(
+        text: pending.sticker ? '' : composer.text,
+      );
       String? confirmed;
       try {
         if (pending.sticker) {
@@ -1696,9 +1698,10 @@ class _ConversationPaneState extends State<_ConversationPane>
                                             )
                                             ? const SizedBox.square(
                                                 dimension: 16,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                ),
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
                                               )
                                             : const Icon(
                                                 LoomIcons.history_rounded,
@@ -1801,7 +1804,8 @@ class _ConversationPaneState extends State<_ConversationPane>
                                                 ? () => _reply(message)
                                                 : null,
                                             quotedText:
-                                                quotedId == null && quote == null
+                                                quotedId == null &&
+                                                    quote == null
                                                 ? null
                                                 : message.content
                                                           .resolvedReplyExcerpt(
@@ -1833,7 +1837,9 @@ class _ConversationPaneState extends State<_ConversationPane>
                                                       ),
                                             content:
                                                 message.readable &&
-                                                    (message.content.attachment !=
+                                                    (message
+                                                                .content
+                                                                .attachment !=
                                                             null ||
                                                         message
                                                                 .content
@@ -1904,58 +1910,66 @@ class _ConversationPaneState extends State<_ConversationPane>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (messaging?.pendingMedia != null &&
-                          messaging!.pendingMedia!.conversationId == conversation?.id)
+                          messaging!.pendingMedia!.conversationId ==
+                              conversation?.id)
                         Padding(
                           padding: const EdgeInsets.fromLTRB(10, 4, 10, 0),
                           child: LoomGlassSurface(
                             liveBackdrop: true,
                             radius: 16,
                             child: ListTile(
-                          leading: const Icon(LoomIcons.attachment),
-                          title: Text(
-                            tr(
-                              context,
-                              sending
-                                  ? 'Preparing media for sending…'
-                                  : 'Selected media is ready',
-                              sending
-                                  ? 'آماده‌سازی مدیا برای ارسال…'
-                                  : 'مدیای انتخاب‌شده آماده است',
+                              leading: const Icon(LoomIcons.attachment),
+                              title: Text(
+                                tr(
+                                  context,
+                                  sending
+                                      ? 'Preparing media for sending…'
+                                      : 'Selected media is ready',
+                                  sending
+                                      ? 'آماده‌سازی مدیا برای ارسال…'
+                                      : 'مدیای انتخاب‌شده آماده است',
+                                ),
+                              ),
+                              subtitle: Text(
+                                tr(
+                                  context,
+                                  sending
+                                      ? 'Your draft is kept until it is queued'
+                                      : defaultTargetPlatform ==
+                                            TargetPlatform.windows
+                                      ? 'Click to preview and send'
+                                      : 'Tap to preview and send',
+                                  sending
+                                      ? 'پیش‌نویس تا قرار گرفتن در صف حفظ می‌شود'
+                                      : 'برای پیش‌نمایش و ارسال بزنید',
+                                ),
+                              ),
+                              onTap: sending ? null : _previewPendingMedia,
+                              trailing: IconButton(
+                                tooltip: tr(context, 'Discard', 'حذف انتخاب'),
+                                onPressed: sending || _mediaPreviewOpen
+                                    ? null
+                                    : messaging.discardPendingMedia,
+                                icon: const Icon(LoomIcons.close),
+                              ),
                             ),
-                          ),
-                          subtitle: Text(
-                            tr(
-                              context,
-                              sending
-                                  ? 'Your draft is kept until it is queued'
-                                  : defaultTargetPlatform == TargetPlatform.windows
-                                  ? 'Click to preview and send'
-                                  : 'Tap to preview and send',
-                              sending
-                                  ? 'پیش‌نویس تا قرار گرفتن در صف حفظ می‌شود'
-                                  : 'برای پیش‌نمایش و ارسال بزنید',
-                            ),
-                          ),
-                          onTap: sending ? null : _previewPendingMedia,
-                          trailing: IconButton(
-                            tooltip: tr(context, 'Discard', 'حذف انتخاب'),
-                            onPressed: sending || _mediaPreviewOpen
-                                ? null
-                                : messaging.discardPendingMedia,
-                            icon: const Icon(LoomIcons.close),
-                          ),
-                        ),
                           ),
                         ),
                       AnimatedSize(
-                        duration: LoomAccessibility.fromContext(context).reduceMotion
+                        duration:
+                            LoomAccessibility.fromContext(context).reduceMotion
                             ? Duration.zero
                             : LoomMotion.component,
                         alignment: Alignment.bottomCenter,
                         child: reply == null
                             ? const SizedBox.shrink()
                             : Padding(
-                                padding: const EdgeInsets.fromLTRB(10, 4, 10, 0),
+                                padding: const EdgeInsets.fromLTRB(
+                                  10,
+                                  4,
+                                  10,
+                                  0,
+                                ),
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: context.loom.surfaceElevated,
@@ -1967,7 +1981,9 @@ class _ConversationPaneState extends State<_ConversationPane>
                                       ),
                                     ),
                                   ),
-                                  padding: const EdgeInsetsDirectional.only(start: 12),
+                                  padding: const EdgeInsetsDirectional.only(
+                                    start: 12,
+                                  ),
                                   child: Row(
                                     children: [
                                       Icon(
@@ -1978,10 +1994,15 @@ class _ConversationPaneState extends State<_ConversationPane>
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              tr(context, 'Replying to', 'در پاسخ به'),
+                                              tr(
+                                                context,
+                                                'Replying to',
+                                                'در پاسخ به',
+                                              ),
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .labelMedium
@@ -2011,7 +2032,9 @@ class _ConversationPaneState extends State<_ConversationPane>
                                             conversation?.id,
                                           ),
                                         ),
-                                        icon: const Icon(LoomIcons.close_rounded),
+                                        icon: const Icon(
+                                          LoomIcons.close_rounded,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -2027,17 +2050,21 @@ class _ConversationPaneState extends State<_ConversationPane>
                             10 + MediaQuery.paddingOf(context).bottom,
                           ),
                           child: _InlineVoiceComposer(
-                            key: ValueKey('voice-${conversation?.id ?? "preview"}'),
+                            key: ValueKey(
+                              'voice-${conversation?.id ?? "preview"}',
+                            ),
                             controller: composer,
                             focusNode: composerFocus,
                             enabled: canCompose,
                             sending: sending,
                             onContentInserted: !preview && canCompose
-                                ? (content) => unawaited(_insertKeyboardMedia(content))
+                                ? (content) =>
+                                      unawaited(_insertKeyboardMedia(content))
                                 : null,
                             onSend: preview ? null : _send,
                             onAttach: canCompose ? _attach : null,
-                            onAttachmentOrigin: (rect) => _attachmentOrigin = rect,
+                            onAttachmentOrigin: (rect) =>
+                                _attachmentOrigin = rect,
                             onVideoSend: (file, duration) async {
                               final target = conversation;
                               final session = messaging;
@@ -2058,7 +2085,8 @@ class _ConversationPaneState extends State<_ConversationPane>
                                 duration: duration,
                                 reply: reply,
                               );
-                              if (ok && widget.drafts.replies[target.id] == reply) {
+                              if (ok &&
+                                  widget.drafts.replies[target.id] == reply) {
                                 widget.drafts.replies.remove(target.id);
                               }
                               return ok;
@@ -2082,7 +2110,8 @@ class _ConversationPaneState extends State<_ConversationPane>
                                 duration: duration,
                                 reply: reply,
                               );
-                              if (ok && widget.drafts.replies[target.id] == reply) {
+                              if (ok &&
+                                  widget.drafts.replies[target.id] == reply) {
                                 widget.drafts.replies.remove(target.id);
                               }
                               if (mounted) setState(() {});

@@ -94,13 +94,13 @@ final class _CryptoSigner implements LoomDirectTransportSigner {
 
   @override
   Future<Uint8List> ed25519PublicKey() async => Uint8List.fromList(
-    (await _keyPair.extractPublicKey() as SimplePublicKey).bytes,
-  );
+        (await _keyPair.extractPublicKey() as SimplePublicKey).bytes,
+      );
 
   @override
   Future<Uint8List> sign(Uint8List canonicalBytes) async => Uint8List.fromList(
-    (await _algorithm.sign(canonicalBytes, keyPair: _keyPair)).bytes,
-  );
+        (await _algorithm.sign(canonicalBytes, keyPair: _keyPair)).bytes,
+      );
 }
 
 final class _DuplexNearbyPair {

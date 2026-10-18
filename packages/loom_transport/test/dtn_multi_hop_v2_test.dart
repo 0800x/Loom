@@ -60,21 +60,21 @@ void main() {
     final bConnection = _connection(firstPair.right);
     final bReceiver = LoomNearbyDtnTransferReceiver(
       connection: bConnection,
-      durablyAccept:
-          ({required transmissionId, required exactOuterEnvelopeBytes}) {
-            final acceptedAt = now.add(const Duration(seconds: 1));
-            final result = bIntake.acceptReplica(
-              exactOuterEnvelopeBytes: exactOuterEnvelopeBytes,
-              now: acceptedAt,
-            );
-            return LoomDtnHopAck(
-              transmissionId: transmissionId,
-              packetId: result.packetId,
-              acceptedAt: acceptedAt,
-              duplicate:
-                  result.disposition == LoomReplicaIntakeDisposition.duplicate,
-            );
-          },
+      durablyAccept: (
+          {required transmissionId, required exactOuterEnvelopeBytes}) {
+        final acceptedAt = now.add(const Duration(seconds: 1));
+        final result = bIntake.acceptReplica(
+          exactOuterEnvelopeBytes: exactOuterEnvelopeBytes,
+          now: acceptedAt,
+        );
+        return LoomDtnHopAck(
+          transmissionId: transmissionId,
+          packetId: result.packetId,
+          acceptedAt: acceptedAt,
+          duplicate:
+              result.disposition == LoomReplicaIntakeDisposition.duplicate,
+        );
+      },
     );
 
     final receiveOnB = bReceiver.receiveAndAcknowledge();
@@ -138,21 +138,21 @@ void main() {
     final cConnection = _connection(secondPair.right);
     final cReceiver = LoomNearbyDtnTransferReceiver(
       connection: cConnection,
-      durablyAccept:
-          ({required transmissionId, required exactOuterEnvelopeBytes}) {
-            final acceptedAt = now.add(const Duration(hours: 2, seconds: 1));
-            final result = cIntake.acceptReplica(
-              exactOuterEnvelopeBytes: exactOuterEnvelopeBytes,
-              now: acceptedAt,
-            );
-            return LoomDtnHopAck(
-              transmissionId: transmissionId,
-              packetId: result.packetId,
-              acceptedAt: acceptedAt,
-              duplicate:
-                  result.disposition == LoomReplicaIntakeDisposition.duplicate,
-            );
-          },
+      durablyAccept: (
+          {required transmissionId, required exactOuterEnvelopeBytes}) {
+        final acceptedAt = now.add(const Duration(hours: 2, seconds: 1));
+        final result = cIntake.acceptReplica(
+          exactOuterEnvelopeBytes: exactOuterEnvelopeBytes,
+          now: acceptedAt,
+        );
+        return LoomDtnHopAck(
+          transmissionId: transmissionId,
+          packetId: result.packetId,
+          acceptedAt: acceptedAt,
+          duplicate:
+              result.disposition == LoomReplicaIntakeDisposition.duplicate,
+        );
+      },
     );
 
     final receiveOnC = cReceiver.receiveAndAcknowledge();
@@ -189,36 +189,36 @@ void main() {
 }
 
 Uint8List _sourcePacket(String packetId) => LoomEnvelopeV2Codec.encodeOuter(
-  LoomOuterEnvelopeV2(
-    packetId: packetId,
-    routingHint: LoomRoutingHintV2(
-      scope: LoomRoutingScopeV2.globalRelay,
-      mailboxToken: Uint8List.fromList(List<int>.filled(32, 55)),
-    ),
-    expiresAtBucket: DateTime.utc(2026, 9, 6, 12),
-    priority: LoomPriorityClassV2.normal,
-    initialHopLimit: 4,
-    forwardingState: const LoomForwardingStateV2(
-      hopsUsed: 0,
-      copiesRemaining: 4,
-    ),
-    encryptedPayload: Uint8List.fromList(<int>[90, 91, 92, 93]),
-  ),
-);
+      LoomOuterEnvelopeV2(
+        packetId: packetId,
+        routingHint: LoomRoutingHintV2(
+          scope: LoomRoutingScopeV2.globalRelay,
+          mailboxToken: Uint8List.fromList(List<int>.filled(32, 55)),
+        ),
+        expiresAtBucket: DateTime.utc(2026, 9, 6, 12),
+        priority: LoomPriorityClassV2.normal,
+        initialHopLimit: 4,
+        forwardingState: const LoomForwardingStateV2(
+          hopsUsed: 0,
+          copiesRemaining: 4,
+        ),
+        encryptedPayload: Uint8List.fromList(<int>[90, 91, 92, 93]),
+      ),
+    );
 
 LoomDtnOpportunity _carrier(String id) => LoomDtnOpportunity(
-  opportunityId: id,
-  authenticated: true,
-  directRecipient: false,
-  gatewayClaim: LoomGatewayClaimState.none,
-  supportedRelayScopes: const <LoomRoutingScopeV2>{},
-  canStoreCarry: true,
-  linkQualityPercent: 85,
-  congestionPercent: 5,
-  batteryConstrained: false,
-  recentSuccessfulTransfers: 1,
-  recentFailedTransfers: 0,
-);
+      opportunityId: id,
+      authenticated: true,
+      directRecipient: false,
+      gatewayClaim: LoomGatewayClaimState.none,
+      supportedRelayScopes: const <LoomRoutingScopeV2>{},
+      canStoreCarry: true,
+      linkQualityPercent: 85,
+      congestionPercent: 5,
+      batteryConstrained: false,
+      recentSuccessfulTransfers: 1,
+      recentFailedTransfers: 0,
+    );
 
 LoomNearbySecureConnection _connection(LoomNearbyLink link) =>
     LoomNearbySecureConnection(

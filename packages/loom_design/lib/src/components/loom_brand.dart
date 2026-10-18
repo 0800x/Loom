@@ -11,7 +11,9 @@ class LoomBrandMark extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     image: true,
-    label: Localizations.localeOf(context).languageCode == 'fa' ? 'لوم' : 'Loom',
+    label: Localizations.localeOf(context).languageCode == 'fa'
+        ? 'لوم'
+        : 'Loom',
     child: Image.asset(
       Theme.of(context).brightness == Brightness.light
           ? 'assets/branding/loom_logo_light.png'

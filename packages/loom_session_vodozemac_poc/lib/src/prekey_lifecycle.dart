@@ -32,11 +32,11 @@ final class LoomVodozemacPocPrekeyPublicationItem {
   final DateTime expiresAt;
 
   Map<String, Object?> toServerJson() => <String, Object?>{
-        'prekeyId': prekeyId,
-        'keyKind': keyKind.wireName,
-        'bundleBase64': _base64UrlNoPadding(bundle),
-        'expiresAt': expiresAt.toUtc().toIso8601String(),
-      };
+    'prekeyId': prekeyId,
+    'keyKind': keyKind.wireName,
+    'bundleBase64': _base64UrlNoPadding(bundle),
+    'expiresAt': expiresAt.toUtc().toIso8601String(),
+  };
 }
 
 final class LoomVodozemacPocPrekeyPublicationBatch {
@@ -59,8 +59,7 @@ final class LoomVodozemacPocPrekeyPublicationBatch {
         'Duplicate vodozemac PoC prekey publication id',
       );
     }
-    if (this
-            .items
+    if (this.items
             .where(
               (item) => item.keyKind == LoomVodozemacPocPrekeyKind.fallback,
             )
@@ -220,7 +219,8 @@ final class LoomVodozemacPocPrekeyLifecycle {
 
     final accountPickle = await _unprotectString(accountRecord);
     final currentFallbackExpiry = lifecycle.currentFallbackExpiresAt;
-    final rotateFallback = currentFallbackExpiry == null ||
+    final rotateFallback =
+        currentFallbackExpiry == null ||
         !currentFallbackExpiry.isAfter(timestamp.add(fallbackRotationLead));
     final inventory = await provider.engine.preparePrekeys(
       accountPickle: accountPickle,
@@ -570,10 +570,12 @@ final class _PublicationLifecycleState {
           'pending': pendingValue,
           'lastAcknowledgedBatchId': lastAcknowledgedBatchId,
           'currentFallbackId': currentFallbackId,
-          'currentFallbackExpiresAt':
-              currentFallbackExpiresAt?.toUtc().toIso8601String(),
-          'previousFallbackRetainUntil':
-              previousFallbackRetainUntil?.toUtc().toIso8601String(),
+          'currentFallbackExpiresAt': currentFallbackExpiresAt
+              ?.toUtc()
+              .toIso8601String(),
+          'previousFallbackRetainUntil': previousFallbackRetainUntil
+              ?.toUtc()
+              .toIso8601String(),
         }),
       ),
     );
@@ -649,18 +651,17 @@ final class _PublicationLifecycleState {
     DateTime? currentFallbackExpiresAt,
     DateTime? previousFallbackRetainUntil,
     bool clearPreviousFallbackRetainUntil = false,
-  }) =>
-      _PublicationLifecycleState(
-        pending: clearPending ? null : pending ?? this.pending,
-        lastAcknowledgedBatchId:
-            lastAcknowledgedBatchId ?? this.lastAcknowledgedBatchId,
-        currentFallbackId: currentFallbackId ?? this.currentFallbackId,
-        currentFallbackExpiresAt:
-            currentFallbackExpiresAt ?? this.currentFallbackExpiresAt,
-        previousFallbackRetainUntil: clearPreviousFallbackRetainUntil
-            ? null
-            : previousFallbackRetainUntil ?? this.previousFallbackRetainUntil,
-      );
+  }) => _PublicationLifecycleState(
+    pending: clearPending ? null : pending ?? this.pending,
+    lastAcknowledgedBatchId:
+        lastAcknowledgedBatchId ?? this.lastAcknowledgedBatchId,
+    currentFallbackId: currentFallbackId ?? this.currentFallbackId,
+    currentFallbackExpiresAt:
+        currentFallbackExpiresAt ?? this.currentFallbackExpiresAt,
+    previousFallbackRetainUntil: clearPreviousFallbackRetainUntil
+        ? null
+        : previousFallbackRetainUntil ?? this.previousFallbackRetainUntil,
+  );
 
   static String? _nullableString(Object? value) {
     if (value == null) return null;

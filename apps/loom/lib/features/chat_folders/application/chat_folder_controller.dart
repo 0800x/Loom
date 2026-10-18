@@ -448,8 +448,7 @@ class LoomChatFolderController extends ChangeNotifier {
   ];
 }
 
-class LoomChatFoldersScope
-    extends InheritedNotifier<LoomChatFolderController> {
+class LoomChatFoldersScope extends InheritedNotifier<LoomChatFolderController> {
   const LoomChatFoldersScope({
     required LoomChatFolderController controller,
     required super.child,

@@ -160,8 +160,9 @@ class _LoomGroupAttachmentState extends State<LoomGroupAttachment> {
         if (defaultTargetPlatform == TargetPlatform.android) {
           final exported = Uint8List.fromList(bytes);
           try {
-            await const MethodChannel('loom/attachment_export')
-                .invokeMethod<bool>('save', {'name': name, 'bytes': exported});
+            await const MethodChannel(
+              'loom/attachment_export',
+            ).invokeMethod<bool>('save', {'name': name, 'bytes': exported});
           } finally {
             exported.fillRange(0, exported.length, 0);
           }

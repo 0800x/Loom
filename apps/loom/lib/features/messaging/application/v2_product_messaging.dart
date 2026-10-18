@@ -39,15 +39,16 @@ final class LoomV2ProductMessaging {
     final authorization = LoomAuthorizedPrekeyWireV1.decode(
       claimedAuthorizedPrekeyWire,
     );
-    final verified = await LoomPrekeyAuthorizationVerifierV1(
-      deviceSignatureVerifier: LoomDevicePrekeySignatureVerifier(
-        keyResolver: runtime.deviceDirectoryStore,
-      ),
-    ).verify(
-      authorization: authorization,
-      now: now,
-      expectedProviderProtocolVersion: provider.protocolVersion,
-    );
+    final verified =
+        await LoomPrekeyAuthorizationVerifierV1(
+          deviceSignatureVerifier: LoomDevicePrekeySignatureVerifier(
+            keyResolver: runtime.deviceDirectoryStore,
+          ),
+        ).verify(
+          authorization: authorization,
+          now: now,
+          expectedProviderProtocolVersion: provider.protocolVersion,
+        );
 
     return runtime.cryptoStateStore.runDurably(
       (transaction) => establishLoomOutgoingFromVerifiedPrekey(

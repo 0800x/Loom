@@ -53,9 +53,7 @@ void main() {
     (tester) async {
       final nodes = LoomNodeDirectoryController();
       final onboarding = LoomOnboardingController(nodes: nodes);
-      final messaging = LoomMessagingSessionController(
-        onboarding: onboarding,
-      );
+      final messaging = LoomMessagingSessionController(onboarding: onboarding);
       final calls = LoomCallSessionController(
         onboarding: onboarding,
         messaging: messaging,

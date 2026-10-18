@@ -257,8 +257,7 @@ void main() {
         throwsFormatException,
       );
       expect(
-        () =>
-            LoomGroupCallSnapshot.fromJson(snapshot()..['epoch'] = -1, state),
+        () => LoomGroupCallSnapshot.fromJson(snapshot()..['epoch'] = -1, state),
         throwsFormatException,
       );
       final role = snapshot();

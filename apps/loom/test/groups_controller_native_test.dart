@@ -33,9 +33,7 @@ void main() {
         FlutterSecureStorage.setMockInitialValues({});
         LoomAppLock.instance.enabled = false;
         LoomAppLock.instance.locked = false;
-        final support = await Directory.systemTemp.createTemp(
-          'loom-app-mls-',
-        );
+        final support = await Directory.systemTemp.createTemp('loom-app-mls-');
         final messenger =
             TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
         const paths = MethodChannel('plugins.flutter.io/path_provider');

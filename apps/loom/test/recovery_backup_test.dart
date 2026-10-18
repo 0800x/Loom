@@ -88,8 +88,9 @@ void main() {
         final offset = int.parse(offsets[i].group(1)!);
         expect(pdf.substring(offset), startsWith('${i + 1} 0 obj'));
       }
-      final stream = RegExp(r'/Length (\d+) >>\nstream\n([\s\S]*?)endstream')
-          .firstMatch(pdf)!;
+      final stream = RegExp(
+        r'/Length (\d+) >>\nstream\n([\s\S]*?)endstream',
+      ).firstMatch(pdf)!;
       expect(
         ascii.encode(stream.group(2)!).length,
         int.parse(stream.group(1)!),

@@ -82,59 +82,61 @@ class _GallerySelectionPreviewState extends State<_GallerySelectionPreview> {
                                 file,
                                 fit: BoxFit.contain,
                                 cacheWidth: 1080,
-                                errorBuilder: (_, _, _) => const Icon(
-                                  LoomIcons.broken_image_outlined,
-                                ),
+                                errorBuilder: (_, _, _) =>
+                                    const Icon(LoomIcons.broken_image_outlined),
                               ),
                       );
                     },
                   ),
                 ),
               ),
-              LoomReveal(offset: 6, child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      LoomComposerKeyboard(
-                        controller: widget.caption,
-                        enabled: widget.authorized(),
-                        onSend: () => Navigator.pop(context, true),
-                        child: TextField(
+              LoomReveal(
+                offset: 6,
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        LoomComposerKeyboard(
                           controller: widget.caption,
-                          minLines: 1,
-                          maxLines: 3,
-                          maxLength: 2000,
-                          decoration: InputDecoration(
-                            counterText: '',
-                            hintText: tr(
-                              context,
-                              'Caption for this selection',
-                              'توضیح برای این انتخاب‌ها',
+                          enabled: widget.authorized(),
+                          onSend: () => Navigator.pop(context, true),
+                          child: TextField(
+                            controller: widget.caption,
+                            minLines: 1,
+                            maxLines: 3,
+                            maxLength: 2000,
+                            decoration: InputDecoration(
+                              counterText: '',
+                              hintText: tr(
+                                context,
+                                'Caption for this selection',
+                                'توضیح برای این انتخاب‌ها',
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      FilledButton.icon(
-                        onPressed: widget.authorized()
-                            ? () => Navigator.pop(context, true)
-                            : null,
-                        icon: const Icon(LoomIcons.send_rounded),
-                        label: Text(
-                          tr(
-                            context,
-                            'Send ${widget.items.length} items',
-                            'ارسال ${widget.items.length} مورد',
+                        const SizedBox(height: 8),
+                        FilledButton.icon(
+                          onPressed: widget.authorized()
+                              ? () => Navigator.pop(context, true)
+                              : null,
+                          icon: const Icon(LoomIcons.send_rounded),
+                          label: Text(
+                            tr(
+                              context,
+                              'Send ${widget.items.length} items',
+                              'ارسال ${widget.items.length} مورد',
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              )),
+              ),
             ],
           ),
   );

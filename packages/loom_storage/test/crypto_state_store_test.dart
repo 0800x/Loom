@@ -184,46 +184,49 @@ void main() {
     );
   });
 
-  test('pending outbox can be rescheduled and acknowledged without rewriting ciphertext', () async {
-    final outbox = _outbox(
-      sessionRevision: 0,
-      bytes: <int>[50, 51],
-      createdAt: createdAt,
-    );
-    await store.runDurably((transaction) async {
-      await transaction.writeSession(
-        _session(revision: 0, stateByte: 50, createdAt: createdAt),
-        expectedRevision: null,
+  test(
+    'pending outbox can be rescheduled and acknowledged without rewriting ciphertext',
+    () async {
+      final outbox = _outbox(
+        sessionRevision: 0,
+        bytes: <int>[50, 51],
+        createdAt: createdAt,
       );
-      await transaction.putOutbox(outbox);
-    });
+      await store.runDurably((transaction) async {
+        await transaction.writeSession(
+          _session(revision: 0, stateByte: 50, createdAt: createdAt),
+          expectedRevision: null,
+        );
+        await transaction.putOutbox(outbox);
+      });
 
-    expect(store.listPendingOutbox(createdAt), hasLength(1));
-    store.rescheduleOutbox(
-      'operation-1',
-      attemptCount: 1,
-      nextAttemptAt: createdAt.add(const Duration(minutes: 5)),
-    );
-    expect(store.listPendingOutbox(createdAt), isEmpty);
-    expect(
-      store
-          .listPendingOutbox(createdAt.add(const Duration(minutes: 5)))
-          .single
-          .attemptCount,
-      1,
-    );
+      expect(store.listPendingOutbox(createdAt), hasLength(1));
+      store.rescheduleOutbox(
+        'operation-1',
+        attemptCount: 1,
+        nextAttemptAt: createdAt.add(const Duration(minutes: 5)),
+      );
+      expect(store.listPendingOutbox(createdAt), isEmpty);
+      expect(
+        store
+            .listPendingOutbox(createdAt.add(const Duration(minutes: 5)))
+            .single
+            .attemptCount,
+        1,
+      );
 
-    store.acknowledgeOutbox(
-      'operation-1',
-      createdAt.add(const Duration(minutes: 6)),
-    );
-    expect(
-      store.listPendingOutbox(createdAt.add(const Duration(days: 1))),
-      isEmpty,
-    );
-    expect(store.readOutbox('operation-1')!.packetId, 'packet-0001');
-    expect(store.readOutbox('operation-1')!.ciphertext.bytes, <int>[50, 51]);
-  });
+      store.acknowledgeOutbox(
+        'operation-1',
+        createdAt.add(const Duration(minutes: 6)),
+      );
+      expect(
+        store.listPendingOutbox(createdAt.add(const Duration(days: 1))),
+        isEmpty,
+      );
+      expect(store.readOutbox('operation-1')!.packetId, 'packet-0001');
+      expect(store.readOutbox('operation-1')!.ciphertext.bytes, <int>[50, 51]);
+    },
+  );
 }
 
 LoomSessionRecord _session({

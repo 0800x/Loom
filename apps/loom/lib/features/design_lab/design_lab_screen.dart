@@ -274,10 +274,9 @@ class _DesignLabScreenState extends State<DesignLabScreen> {
               const SizedBox(height: 30),
               Text(
                 'Preview width mode: ${expanded ? 'expanded' : 'compact'}',
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall
-                    ?.copyWith(color: p.textMuted),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: p.textMuted),
               ),
             ],
           ),
@@ -295,8 +294,9 @@ class _DesignLabScreenState extends State<DesignLabScreen> {
     );
     if (largeText) {
       preview = MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: const TextScaler.linear(1.35)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: const TextScaler.linear(1.35)),
         child: preview,
       );
     }
@@ -312,8 +312,7 @@ class _Title extends StatelessWidget {
   final String text;
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: 22, bottom: 8),
-        child: Text(text, style: Theme.of(context).textTheme.titleMedium),
-      );
+    padding: const EdgeInsets.only(top: 22, bottom: 8),
+    child: Text(text, style: Theme.of(context).textTheme.titleMedium),
+  );
 }
-

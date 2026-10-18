@@ -1,4 +1,5 @@
 import 'app_lock.dart';
+
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
@@ -22,11 +23,11 @@ class LoomSelfMessageCodec {
     AesGcm? cipher,
     Hkdf? kdf,
     Random? random,
-  })  : _storage = LoomSecretStorage(storage),
-        _recoveryEntropyProvider = recoveryEntropyProvider,
-        _cipher = cipher ?? AesGcm.with256bits(),
-        _kdf = kdf ?? Hkdf(hmac: Hmac.sha256(), outputLength: 32),
-        _random = random ?? Random.secure();
+  }) : _storage = LoomSecretStorage(storage),
+       _recoveryEntropyProvider = recoveryEntropyProvider,
+       _cipher = cipher ?? AesGcm.with256bits(),
+       _kdf = kdf ?? Hkdf(hmac: Hmac.sha256(), outputLength: 32),
+       _random = random ?? Random.secure();
 
   static const protocolVersion = 'loom-self-message-v1';
 

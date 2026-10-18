@@ -75,10 +75,7 @@ abstract final class LoomAddress {
     if (separator <= 1 || separator == value.length - 1) {
       throw const FormatException('Invalid Loom canonical address');
     }
-    return normalizeInput(
-      value,
-      homeNode: value.substring(separator + 1),
-    );
+    return normalizeInput(value, homeNode: value.substring(separator + 1));
   }
 
   /// Home Nodes are authorities, not arbitrary URLs. Host:port is supported

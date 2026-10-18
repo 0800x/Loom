@@ -22,15 +22,13 @@ class _MemoryDeviceSecurity implements LoomDeviceSecurityCore {
     required String deviceId,
     required String deviceName,
     required LoomIdentitySigner identitySigner,
-  }) async =>
-      bundle;
+  }) async => bundle;
 
   @override
   Future<LoomDeviceKeyBundle?> readDevice({
     required String identityId,
     required String deviceId,
-  }) async =>
-      bundle;
+  }) async => bundle;
 
   @override
   Future<List<int>> exportAgreementSecret({
@@ -136,8 +134,7 @@ class _MemoryDeviceSecurity implements LoomDeviceSecurityCore {
       return (await Hmac.sha256().calculateMac(
         context,
         secretKey: shared,
-      ))
-          .bytes;
+      )).bytes;
     } finally {
       shared.destroy();
     }
@@ -154,16 +151,17 @@ class _MemoryDeviceSecurity implements LoomDeviceSecurityCore {
     required String identityId,
     required String deviceId,
     required List<int> payload,
-  }) async =>
-      (await signing.sign(payload, keyPair: signingPair)).bytes;
+  }) async => (await signing.sign(payload, keyPair: signingPair)).bytes;
 }
 
 Future<
-    ({
-      LoomDeviceKeyBundle bundle,
-      SimpleKeyPair signingPair,
-      SimpleKeyPair agreementPair
-    })> _device(String identityId, String deviceId) async {
+  ({
+    LoomDeviceKeyBundle bundle,
+    SimpleKeyPair signingPair,
+    SimpleKeyPair agreementPair,
+  })
+>
+_device(String identityId, String deviceId) async {
   final ed = Ed25519();
   final x = X25519();
   final signingPair = await ed.newKeyPair();

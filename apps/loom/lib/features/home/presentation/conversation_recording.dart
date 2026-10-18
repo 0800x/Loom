@@ -201,9 +201,7 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
   void _changed() {
     if (mounted) {
       final showPreview =
-          _previewAllowed &&
-          _videoDraft.active &&
-          !LoomAppLock.instance.locked;
+          _previewAllowed && _videoDraft.active && !LoomAppLock.instance.locked;
       if (showPreview &&
           (!_overlay.isShowing ||
               _previewMotion.status == AnimationStatus.reverse ||
@@ -518,9 +516,7 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
                               onPressed: _retaking
                                   ? null
                                   : () => _retake(lens: alternateLens),
-                              icon: const Icon(
-                                LoomIcons.cameraswitch_outlined,
-                              ),
+                              icon: const Icon(LoomIcons.cameraswitch_outlined),
                               label: Text(
                                 alternateLens == CameraLensDirection.back
                                     ? tr(
@@ -800,47 +796,50 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
                             unawaited(_voice.start(locked: true));
                           }
                         },
-                  child: LoomPressable(enabled: widget.enabled && !busy && !widget.sending, child: AnimatedContainer(
-                    duration:
-                        LoomAccessibility.fromContext(context).reduceMotion
-                        ? Duration.zero
-                        : const Duration(milliseconds: 220),
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: _voice.capturing ? p.critical : p.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: busy || widget.sending
-                        ? Padding(
-                            padding: const EdgeInsets.all(14),
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: p.onPrimary,
-                            ),
-                          )
-                        : LoomComposerMorph(
-                            child: Icon(
-                              phase == VoicePhase.locked
-                                  ? LoomIcons.stop
-                                  : phase == VoicePhase.draft || hasText
-                                  ? LoomIcons.arrow_upward_rounded
-                                  : _video
-                                  ? LoomIcons.videocam_rounded
-                                  : LoomIcons.mic_rounded,
-                              key: ValueKey(
-                                phase == VoicePhase.locked
-                                    ? 'stop'
-                                    : phase == VoicePhase.draft || hasText
-                                    ? 'send'
-                                    : _video
-                                    ? 'video'
-                                    : 'voice',
+                  child: LoomPressable(
+                    enabled: widget.enabled && !busy && !widget.sending,
+                    child: AnimatedContainer(
+                      duration:
+                          LoomAccessibility.fromContext(context).reduceMotion
+                          ? Duration.zero
+                          : const Duration(milliseconds: 220),
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: _voice.capturing ? p.critical : p.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: busy || widget.sending
+                          ? Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: p.onPrimary,
                               ),
-                              color: p.onPrimary,
+                            )
+                          : LoomComposerMorph(
+                              child: Icon(
+                                phase == VoicePhase.locked
+                                    ? LoomIcons.stop
+                                    : phase == VoicePhase.draft || hasText
+                                    ? LoomIcons.arrow_upward_rounded
+                                    : _video
+                                    ? LoomIcons.videocam_rounded
+                                    : LoomIcons.mic_rounded,
+                                key: ValueKey(
+                                  phase == VoicePhase.locked
+                                      ? 'stop'
+                                      : phase == VoicePhase.draft || hasText
+                                      ? 'send'
+                                      : _video
+                                      ? 'video'
+                                      : 'voice',
+                                ),
+                                color: p.onPrimary,
+                              ),
                             ),
-                          ),
-                  )),
+                    ),
+                  ),
                 ),
               ),
             ),

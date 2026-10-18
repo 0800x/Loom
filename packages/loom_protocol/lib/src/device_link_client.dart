@@ -1,4 +1,5 @@
 import 'transport_security.dart';
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -35,7 +36,7 @@ class LoomDeviceLinkRedemption {
 
 class LoomDeviceLinkClient {
   LoomDeviceLinkClient({HttpClient? httpClient})
-      : _http = httpClient ?? HttpClient();
+    : _http = httpClient ?? HttpClient();
 
   final HttpClient _http;
 
@@ -50,11 +51,13 @@ class LoomDeviceLinkClient {
     _requireSafeBaseUri(baseUri);
     _requireBearer(accessToken);
     final uri = baseUri.resolve('/api/v1/device-links/invitations');
-    final bodyBytes = utf8.encode(jsonEncode(<String, Object?>{
-      'linkId': linkId,
-      'tokenHash': tokenHash,
-      'payload': payload,
-    }));
+    final bodyBytes = utf8.encode(
+      jsonEncode(<String, Object?>{
+        'linkId': linkId,
+        'tokenHash': tokenHash,
+        'payload': payload,
+      }),
+    );
     final proofHeaders = await deviceProofProvider.headers(
       method: 'POST',
       uri: uri,
@@ -78,12 +81,14 @@ class LoomDeviceLinkClient {
         expiresAt is! String ||
         sourceDeviceId is! String) {
       throw const LoomProtocolException(
-          'Invalid device-link invitation response');
+        'Invalid device-link invitation response',
+      );
     }
     final expiry = DateTime.tryParse(expiresAt)?.toUtc();
     if (expiry == null || expiry.isBefore(DateTime.now().toUtc())) {
       throw const LoomProtocolException(
-          'Invalid device-link invitation expiry');
+        'Invalid device-link invitation expiry',
+      );
     }
     return LoomDeviceLinkInvitation(
       linkId: linkId,
@@ -104,10 +109,9 @@ class LoomDeviceLinkClient {
     _requireSafeBaseUri(baseUri);
     _requireBearer(accessToken);
     final uri = baseUri.resolve('/api/v1/device-links/redeem');
-    final bodyBytes = utf8.encode(jsonEncode(<String, Object?>{
-      'linkId': linkId,
-      'token': token,
-    }));
+    final bodyBytes = utf8.encode(
+      jsonEncode(<String, Object?>{'linkId': linkId, 'token': token}),
+    );
     final response = await _post(
       uri: uri,
       accessToken: accessToken,
@@ -132,7 +136,8 @@ class LoomDeviceLinkClient {
         sourceDeviceId.isEmpty ||
         expiresAt is! String) {
       throw const LoomProtocolException(
-          'Invalid device-link redemption response');
+        'Invalid device-link redemption response',
+      );
     }
     final expiry = DateTime.tryParse(expiresAt)?.toUtc();
     if (expiry == null || expiry.isBefore(DateTime.now().toUtc())) {
@@ -156,8 +161,9 @@ class LoomDeviceLinkClient {
     _requireSafeBaseUri(baseUri);
     _requireBearer(accessToken);
     final uri = baseUri.resolve('/api/v1/device-links/complete');
-    final bodyBytes =
-        utf8.encode(jsonEncode(<String, Object?>{'linkId': linkId}));
+    final bodyBytes = utf8.encode(
+      jsonEncode(<String, Object?>{'linkId': linkId}),
+    );
     final proofHeaders = await deviceProofProvider.headers(
       method: 'POST',
       uri: uri,
@@ -183,8 +189,9 @@ class LoomDeviceLinkClient {
     required List<int> bodyBytes,
     Map<String, String>? proofHeaders,
   }) async {
-    final request =
-        await _http.postUrl(uri).timeout(const Duration(seconds: 8));
+    final request = await _http
+        .postUrl(uri)
+        .timeout(const Duration(seconds: 8));
     request.followRedirects = false;
     request.headers.contentType = ContentType.json;
     request.headers.set(HttpHeaders.acceptHeader, 'application/json');
@@ -227,14 +234,16 @@ class LoomDeviceLinkClient {
     if (response.contentLength > maxBytes) {
       await response.drain<void>();
       throw const LoomProtocolException(
-          'Response exceeds maximum allowed size');
+        'Response exceeds maximum allowed size',
+      );
     }
     final bytes = <int>[];
     await for (final chunk in response) {
       bytes.addAll(chunk);
       if (bytes.length > maxBytes) {
         throw const LoomProtocolException(
-            'Response exceeds maximum allowed size');
+          'Response exceeds maximum allowed size',
+        );
       }
     }
     return bytes;

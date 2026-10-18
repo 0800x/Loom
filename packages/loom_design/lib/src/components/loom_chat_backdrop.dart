@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../loom_theme.dart';
 import '../loom_accessibility.dart';
 
@@ -15,22 +16,24 @@ class LoomChatBackdrop extends StatelessWidget {
       color: palette.background,
       child: Stack(
         children: [
-          if (!highContrast) Positioned.fill(
-            child: IgnorePointer(
-              child: Image.asset(
-                'assets/wallpapers/loom-doodles.png',
-                package: 'loom_design',
-                repeat: ImageRepeat.repeat,
-                fit: BoxFit.none,
-                scale: 2.5,
-                alignment: Alignment.topLeft,
-                color: palette.textMuted.withValues(alpha: .09),
-                colorBlendMode: BlendMode.srcIn,
-                excludeFromSemantics: true,
-                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+          if (!highContrast)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Image.asset(
+                  'assets/wallpapers/loom-doodles.png',
+                  package: 'loom_design',
+                  repeat: ImageRepeat.repeat,
+                  fit: BoxFit.none,
+                  scale: 2.5,
+                  alignment: Alignment.topLeft,
+                  color: palette.textMuted.withValues(alpha: .09),
+                  colorBlendMode: BlendMode.srcIn,
+                  excludeFromSemantics: true,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const SizedBox.shrink(),
+                ),
               ),
             ),
-          ),
           child,
         ],
       ),

@@ -53,9 +53,9 @@ class LoomNodeDirectoryRepository {
     LoomNodeDirectoryConfig? config,
     LoomNodeClient? nodeClient,
     LoomRegistryClient? registryClient,
-  })  : config = config ?? LoomNodeDirectoryConfig.fromEnvironment(),
-        _nodeClient = nodeClient ?? LoomNodeClient(),
-        _registryClient = registryClient ?? LoomRegistryClient();
+  }) : config = config ?? LoomNodeDirectoryConfig.fromEnvironment(),
+       _nodeClient = nodeClient ?? LoomNodeClient(),
+       _registryClient = registryClient ?? LoomRegistryClient();
 
   final LoomNodeDirectoryConfig config;
   final LoomNodeClient _nodeClient;

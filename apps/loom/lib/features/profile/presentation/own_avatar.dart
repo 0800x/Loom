@@ -65,14 +65,13 @@ class _LoomOwnAvatarState extends State<LoomOwnAvatar> {
   Widget build(BuildContext context) {
     final color = loomAvatarColors[_store?.colorIndex ?? 0];
     final photo = _store?.photo;
-    final initials =
-        widget.name
-            .trim()
-            .split(RegExp(r'\s+'))
-            .where((part) => part.isNotEmpty)
-            .take(2)
-            .map((part) => part.characters.first.toUpperCase())
-            .join();
+    final initials = widget.name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .take(2)
+        .map((part) => part.characters.first.toUpperCase())
+        .join();
     final monogram = Center(
       child: Text(
         initials.isEmpty ? '?' : initials,
@@ -104,25 +103,23 @@ class _LoomOwnAvatarState extends State<LoomOwnAvatar> {
             padding: const EdgeInsets.all(2),
             child: ClipOval(
               child: AnimatedSwitcher(
-                duration:
-                    LoomAccessibility.fromContext(context).reduceMotion
-                        ? Duration.zero
-                        : const Duration(milliseconds: 180),
-                child:
-                    photo == null
-                        ? KeyedSubtree(
-                          key: ValueKey('initials-${_store?.colorIndex}'),
-                          child: monogram,
-                        )
-                        : Image.memory(
-                          photo,
-                          key: ObjectKey(photo),
-                          width: widget.size,
-                          height: widget.size,
-                          fit: BoxFit.cover,
-                          gaplessPlayback: true,
-                          errorBuilder: (_, __, ___) => monogram,
-                        ),
+                duration: LoomAccessibility.fromContext(context).reduceMotion
+                    ? Duration.zero
+                    : const Duration(milliseconds: 180),
+                child: photo == null
+                    ? KeyedSubtree(
+                        key: ValueKey('initials-${_store?.colorIndex}'),
+                        child: monogram,
+                      )
+                    : Image.memory(
+                        photo,
+                        key: ObjectKey(photo),
+                        width: widget.size,
+                        height: widget.size,
+                        fit: BoxFit.cover,
+                        gaplessPlayback: true,
+                        errorBuilder: (_, __, ___) => monogram,
+                      ),
               ),
             ),
           ),

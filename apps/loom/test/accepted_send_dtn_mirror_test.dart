@@ -27,24 +27,25 @@ void main() {
         conversationsProvider: () => <LoomConversation>[harness.conversation],
         messagesProvider: (_) => harness.messages,
         routeResolver: (_) async => harness.route,
-        dtnWriter: ({
-          required destinationNodeDomain,
-          required senderAddress,
-          required recipientDevices,
-          required conversationId,
-          required clientId,
-          required type,
-          required ciphertext,
-          required protocolVersion,
-          replyToMessageId,
-          createdAt,
-          required metadata,
-        }) async {
-          writes++;
-          mirroredClientId = clientId;
-          mirroredCiphertext = ciphertext;
-          if (!mirrored.isCompleted) mirrored.complete();
-        },
+        dtnWriter:
+            ({
+              required destinationNodeDomain,
+              required senderAddress,
+              required recipientDevices,
+              required conversationId,
+              required clientId,
+              required type,
+              required ciphertext,
+              required protocolVersion,
+              replyToMessageId,
+              createdAt,
+              required metadata,
+            }) async {
+              writes++;
+              mirroredClientId = clientId;
+              mirroredCiphertext = ciphertext;
+              if (!mirrored.isCompleted) mirrored.complete();
+            },
         clock: () => harness.now,
       );
       addTearDown(mirror.dispose);
@@ -81,22 +82,23 @@ void main() {
         conversationsProvider: () => <LoomConversation>[harness.conversation],
         messagesProvider: (_) => harness.messages,
         routeResolver: (_) async => harness.route,
-        dtnWriter: ({
-          required destinationNodeDomain,
-          required senderAddress,
-          required recipientDevices,
-          required conversationId,
-          required clientId,
-          required type,
-          required ciphertext,
-          required protocolVersion,
-          replyToMessageId,
-          createdAt,
-          required metadata,
-        }) async {
-          writes++;
-          if (!mirrored.isCompleted) mirrored.complete();
-        },
+        dtnWriter:
+            ({
+              required destinationNodeDomain,
+              required senderAddress,
+              required recipientDevices,
+              required conversationId,
+              required clientId,
+              required type,
+              required ciphertext,
+              required protocolVersion,
+              replyToMessageId,
+              createdAt,
+              required metadata,
+            }) async {
+              writes++;
+              if (!mirrored.isCompleted) mirrored.complete();
+            },
         clock: () => harness.now,
       );
       addTearDown(mirror.dispose);

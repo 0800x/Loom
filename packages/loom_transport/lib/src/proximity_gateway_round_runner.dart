@@ -60,13 +60,13 @@ final class LoomProximityGatewayRoundRunner {
     LoomNearbyProximityGatewayExchange? packetExchange,
     DateTime Function()? clock,
     String Function()? rendezvousIdFactory,
-  }) : bootstrap = bootstrap ?? const LoomProximityGatewayBootstrap(),
-       receiptExchange =
-           receiptExchange ?? const LoomProximityDeliveryReceiptExchange(),
-       packetExchange =
-           packetExchange ?? const LoomNearbyProximityGatewayExchange(),
-       _clock = clock ?? DateTime.now,
-       _rendezvousIdFactory = rendezvousIdFactory ?? _randomRendezvousId;
+  })  : bootstrap = bootstrap ?? const LoomProximityGatewayBootstrap(),
+        receiptExchange =
+            receiptExchange ?? const LoomProximityDeliveryReceiptExchange(),
+        packetExchange =
+            packetExchange ?? const LoomNearbyProximityGatewayExchange(),
+        _clock = clock ?? DateTime.now,
+        _rendezvousIdFactory = rendezvousIdFactory ?? _randomRendezvousId;
 
   final LoomProximityGatewayBootstrap bootstrap;
   final LoomProximityDeliveryReceiptExchange receiptExchange;
@@ -116,21 +116,20 @@ final class LoomProximityGatewayRoundRunner {
     final inboundTasks = <Future<int>>[];
     var failed = 0;
     final incomingSubscription = advertising.incomingLinks.listen((link) {
-      final task =
-          _serveRecipient(
-            link: link,
-            signer: signer,
-            recipientIdentityId: recipientIdentityId,
-            recipientDeviceId: recipientDeviceId,
-            recipientNodeId: recipientNodeId,
-            recipientNodeDomain: recipientNodeDomain,
-            bearer: gatewayBearer,
-            acceptLegacyDelivery: acceptLegacyDelivery,
-            acceptV2Packet: acceptV2Packet,
-          ).catchError((Object _) {
-            failed++;
-            return 0;
-          });
+      final task = _serveRecipient(
+        link: link,
+        signer: signer,
+        recipientIdentityId: recipientIdentityId,
+        recipientDeviceId: recipientDeviceId,
+        recipientNodeId: recipientNodeId,
+        recipientNodeDomain: recipientNodeDomain,
+        bearer: gatewayBearer,
+        acceptLegacyDelivery: acceptLegacyDelivery,
+        acceptV2Packet: acceptV2Packet,
+      ).catchError((Object _) {
+        failed++;
+        return 0;
+      });
       inboundTasks.add(task);
     });
 
@@ -333,8 +332,8 @@ final class LoomProximityGatewayRoundRunner {
         LoomNearbyBearer.wifiDirect => LoomProximityGatewayBearer.wifiDirect,
         LoomNearbyBearer.wifiAware => LoomProximityGatewayBearer.wifiAware,
         _ => throw StateError(
-          'Bearer ${bearer.name} is not supported by proximity gateway',
-        ),
+            'Bearer ${bearer.name} is not supported by proximity gateway',
+          ),
       };
 
   static String _randomRendezvousId() {

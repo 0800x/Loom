@@ -16,16 +16,16 @@ class _GoldenState {
 }
 
 Widget _host(Widget child, _GoldenState state) => MaterialApp(
-      theme: state.theme,
-      locale: state.locale,
-      supportedLocales: const [Locale('en'), Locale('fa')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: child,
-    );
+  theme: state.theme,
+  locale: state.locale,
+  supportedLocales: const [Locale('en'), Locale('fa')],
+  localizationsDelegates: const [
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ],
+  home: child,
+);
 
 void _phone(WidgetTester tester) {
   tester.view.physicalSize = const Size(430, 932);
@@ -50,127 +50,100 @@ void main() {
   ];
 
   for (final state in states) {
-    testWidgets(
-      'Node Selection ${state.name}',
-      (tester) async {
-        _phone(tester);
-        await tester.pumpWidget(
-          _host(const NodeSelectionScreen(), state),
-        );
-        await expectLater(
-          find.byType(NodeSelectionScreen),
-          matchesGoldenFile('node_selection_${state.name}.png'),
-        );
-      },
-      skip: !runGoldens,
-    );
+    testWidgets('Node Selection ${state.name}', (tester) async {
+      _phone(tester);
+      await tester.pumpWidget(_host(const NodeSelectionScreen(), state));
+      await expectLater(
+        find.byType(NodeSelectionScreen),
+        matchesGoldenFile('node_selection_${state.name}.png'),
+      );
+    }, skip: !runGoldens);
 
-    testWidgets(
-      'Chat List ${state.name}',
-      (tester) async {
-        _phone(tester);
-        await tester.pumpWidget(
-          _host(const MessengerShell(preview: true), state),
-        );
-        await expectLater(
-          find.byType(MessengerShell),
-          matchesGoldenFile('chat_list_${state.name}.png'),
-        );
-      },
-      skip: !runGoldens,
-    );
+    testWidgets('Chat List ${state.name}', (tester) async {
+      _phone(tester);
+      await tester.pumpWidget(
+        _host(const MessengerShell(preview: true), state),
+      );
+      await expectLater(
+        find.byType(MessengerShell),
+        matchesGoldenFile('chat_list_${state.name}.png'),
+      );
+    }, skip: !runGoldens);
 
-    testWidgets(
-      'Profile ${state.name}',
-      (tester) async {
-        _phone(tester);
-        await tester.pumpWidget(
-          _host(const ProfileScreen(preview: true), state),
-        );
-        await expectLater(
-          find.byType(ProfileScreen),
-          matchesGoldenFile('profile_${state.name}.png'),
-        );
-      },
-      skip: !runGoldens,
-    );
+    testWidgets('Profile ${state.name}', (tester) async {
+      _phone(tester);
+      await tester.pumpWidget(_host(const ProfileScreen(preview: true), state));
+      await expectLater(
+        find.byType(ProfileScreen),
+        matchesGoldenFile('profile_${state.name}.png'),
+      );
+    }, skip: !runGoldens);
 
-    testWidgets(
-      'Settings ${state.name}',
-      (tester) async {
-        _phone(tester);
-        await tester.pumpWidget(
-          _host(const MessengerShell(preview: true), state),
-        );
-        final settingsLabel =
-            state.locale.languageCode == 'fa' ? 'تنظیمات' : 'Settings';
-        await tester.tap(find.text(settingsLabel).last);
-        await tester.pumpAndSettle();
-        await expectLater(
-          find.byType(MessengerShell),
-          matchesGoldenFile('settings_${state.name}.png'),
-        );
-      },
-      skip: !runGoldens,
-    );
+    testWidgets('Settings ${state.name}', (tester) async {
+      _phone(tester);
+      await tester.pumpWidget(
+        _host(const MessengerShell(preview: true), state),
+      );
+      final settingsLabel = state.locale.languageCode == 'fa'
+          ? 'تنظیمات'
+          : 'Settings';
+      await tester.tap(find.text(settingsLabel).last);
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(MessengerShell),
+        matchesGoldenFile('settings_${state.name}.png'),
+      );
+    }, skip: !runGoldens);
 
-    testWidgets(
-      'Desktop Shell ${state.name}',
-      (tester) async {
-        _desktop(tester);
-        await tester.pumpWidget(
-          _host(const MessengerShell(preview: true), state),
-        );
-        await expectLater(
-          find.byType(MessengerShell),
-          matchesGoldenFile('desktop_shell_${state.name}.png'),
-        );
-      },
-      skip: !runGoldens,
-    );
+    testWidgets('Desktop Shell ${state.name}', (tester) async {
+      _desktop(tester);
+      await tester.pumpWidget(
+        _host(const MessengerShell(preview: true), state),
+      );
+      await expectLater(
+        find.byType(MessengerShell),
+        matchesGoldenFile('desktop_shell_${state.name}.png'),
+      );
+    }, skip: !runGoldens);
 
-    testWidgets(
-      'Glass Components ${state.name}',
-      (tester) async {
-        _phone(tester);
-        await tester.pumpWidget(
-          _host(
-            const Scaffold(
-              body: Padding(
-                padding: EdgeInsets.all(LoomSpacing.ml),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    LoomGlassSurface(
-                      strength: LoomGlassStrength.strong,
-                      padding: EdgeInsets.all(LoomSpacing.md),
-                      child: Text('Glass surface'),
-                    ),
-                    SizedBox(height: LoomSpacing.sm),
-                    LoomGlassComposer(
-                      hintText: 'Message',
-                      attachTooltip: 'Attach',
-                      voiceTooltip: 'Voice message',
-                      sendTooltip: 'Send',
-                    ),
-                    SizedBox(height: LoomSpacing.sm),
-                    LoomConnectivityPill(
-                      state: LoomConnectivity.online,
-                      label: 'Online',
-                    ),
-                  ],
-                ),
+    testWidgets('Glass Components ${state.name}', (tester) async {
+      _phone(tester);
+      await tester.pumpWidget(
+        _host(
+          const Scaffold(
+            body: Padding(
+              padding: EdgeInsets.all(LoomSpacing.ml),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  LoomGlassSurface(
+                    strength: LoomGlassStrength.strong,
+                    padding: EdgeInsets.all(LoomSpacing.md),
+                    child: Text('Glass surface'),
+                  ),
+                  SizedBox(height: LoomSpacing.sm),
+                  LoomGlassComposer(
+                    hintText: 'Message',
+                    attachTooltip: 'Attach',
+                    voiceTooltip: 'Voice message',
+                    sendTooltip: 'Send',
+                  ),
+                  SizedBox(height: LoomSpacing.sm),
+                  LoomConnectivityPill(
+                    state: LoomConnectivity.online,
+                    label: 'Online',
+                  ),
+                ],
               ),
             ),
-            state,
           ),
-        );
-        await expectLater(
-          find.byType(Scaffold),
-          matchesGoldenFile('glass_components_${state.name}.png'),
-        );
-      },
-      skip: !runGoldens,
-    );
+          state,
+        ),
+      );
+      await expectLater(
+        find.byType(Scaffold),
+        matchesGoldenFile('glass_components_${state.name}.png'),
+      );
+    }, skip: !runGoldens);
   }
 }

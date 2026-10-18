@@ -39,13 +39,10 @@ class LoomDeviceLinkQrData {
 }
 
 class LoomDeviceLinkCodec {
-  LoomDeviceLinkCodec({
-    Random? random,
-    AesGcm? cipher,
-    Hkdf? kdf,
-  })  : _random = random ?? Random.secure(),
-        _cipher = cipher ?? AesGcm.with256bits(),
-        _kdf = kdf ?? Hkdf(hmac: Hmac.sha256(), outputLength: 32);
+  LoomDeviceLinkCodec({Random? random, AesGcm? cipher, Hkdf? kdf})
+    : _random = random ?? Random.secure(),
+      _cipher = cipher ?? AesGcm.with256bits(),
+      _kdf = kdf ?? Hkdf(hmac: Hmac.sha256(), outputLength: 32);
 
   static const String protocolVersion = 'loom-device-link-v2';
   static const String _qrPrefix = 'loom-device-link:';
@@ -92,14 +89,16 @@ class LoomDeviceLinkCodec {
     if (node.isEmpty || node.length > 512 || node.contains(RegExp(r'[\r\n]'))) {
       throw ArgumentError.value(homeNode, 'homeNode');
     }
-    final encoded = utf8.encode(jsonEncode(<String, Object?>{
-      'v': 2,
-      'protocol': protocolVersion,
-      'homeNode': node,
-      'linkId': linkId,
-      'token': token,
-      'encryptionSecret': encryptionSecret,
-    }));
+    final encoded = utf8.encode(
+      jsonEncode(<String, Object?>{
+        'v': 2,
+        'protocol': protocolVersion,
+        'homeNode': node,
+        'linkId': linkId,
+        'token': token,
+        'encryptionSecret': encryptionSecret,
+      }),
+    );
     return '$_qrPrefix${_base64UrlNoPadding(encoded)}';
   }
 
@@ -159,14 +158,18 @@ class LoomDeviceLinkCodec {
 
     final secretBytes = _secretBytes(encryptionSecret);
     final nonce = _randomBytes(12);
-    final clear = Uint8List.fromList(utf8.encode(jsonEncode(<String, Object?>{
-      'v': 2,
-      'identityId': identityId,
-      'sourceDeviceId': sourceDeviceId,
-      'recoveryEntropy': base64Encode(recoveryEntropy),
-      'sourceAgreementSecret': base64Encode(sourceAgreementSecret),
-      'createdAt': DateTime.now().toUtc().toIso8601String(),
-    })));
+    final clear = Uint8List.fromList(
+      utf8.encode(
+        jsonEncode(<String, Object?>{
+          'v': 2,
+          'identityId': identityId,
+          'sourceDeviceId': sourceDeviceId,
+          'recoveryEntropy': base64Encode(recoveryEntropy),
+          'sourceAgreementSecret': base64Encode(sourceAgreementSecret),
+          'createdAt': DateTime.now().toUtc().toIso8601String(),
+        }),
+      ),
+    );
     final material = await _material(
       secretBytes: secretBytes,
       linkId: linkId,
@@ -237,10 +240,16 @@ class LoomDeviceLinkCodec {
           payload['sourceDeviceId'] != sourceDeviceId) {
         throw const FormatException('Device-link identity binding mismatch');
       }
-      final recovery =
-          _fieldBytes(payload, 'recoveryEntropy', expectedLength: 32);
-      final history =
-          _fieldBytes(payload, 'sourceAgreementSecret', expectedLength: 32);
+      final recovery = _fieldBytes(
+        payload,
+        'recoveryEntropy',
+        expectedLength: 32,
+      );
+      final history = _fieldBytes(
+        payload,
+        'sourceAgreementSecret',
+        expectedLength: 32,
+      );
       return LoomDeviceLinkPackage(
         identityId: expectedIdentityId,
         sourceDeviceId: sourceDeviceId,
@@ -320,8 +329,8 @@ class LoomDeviceLinkCodec {
   }
 
   Uint8List _randomBytes(int length) => Uint8List.fromList(
-        List<int>.generate(length, (_) => _random.nextInt(256)),
-      );
+    List<int>.generate(length, (_) => _random.nextInt(256)),
+  );
 
   String _base64UrlNoPadding(List<int> bytes) =>
       base64UrlEncode(bytes).replaceAll('=', '');

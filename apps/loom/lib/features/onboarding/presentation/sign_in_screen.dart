@@ -23,8 +23,7 @@ class _LoomSignInScreenState extends State<LoomSignInScreen> {
   final nodeDomain = TextEditingController();
   final username = TextEditingController();
   final password = TextEditingController();
-  final LoomPasswordLoginBootstrap _bootstrap =
-      LoomPasswordLoginBootstrap();
+  final LoomPasswordLoginBootstrap _bootstrap = LoomPasswordLoginBootstrap();
   bool obscurePassword = true;
   bool identityCheckStarted = false;
   bool checkingIdentity = true;

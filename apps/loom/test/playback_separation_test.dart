@@ -41,26 +41,32 @@ void main() {
     var activeBuilds = 0, inactiveBuilds = 0, stateChanges = 0;
     void stateChanged() => stateChanges++;
     p.addListener(stateChanged);
-    await tester.pumpWidget(MaterialApp(home: Column(children: [
-      LoomPlaybackProgressBuilder(
-        controller: p,
-        source: File('/music/active'),
-        sourceId: 'active',
-        builder: (_) {
-          activeBuilds++;
-          return Text('Active ${p.position.inSeconds}');
-        },
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Column(
+          children: [
+            LoomPlaybackProgressBuilder(
+              controller: p,
+              source: File('/music/active'),
+              sourceId: 'active',
+              builder: (_) {
+                activeBuilds++;
+                return Text('Active ${p.position.inSeconds}');
+              },
+            ),
+            LoomPlaybackProgressBuilder(
+              controller: p,
+              source: File('/music/inactive'),
+              sourceId: 'inactive',
+              builder: (_) {
+                inactiveBuilds++;
+                return const Text('Inactive');
+              },
+            ),
+          ],
+        ),
       ),
-      LoomPlaybackProgressBuilder(
-        controller: p,
-        source: File('/music/inactive'),
-        sourceId: 'inactive',
-        builder: (_) {
-          inactiveBuilds++;
-          return const Text('Inactive');
-        },
-      ),
-    ])));
+    );
     final initialActive = activeBuilds, initialInactive = inactiveBuilds;
     for (var second = 1; second <= 5; second++) {
       p.position = Duration(seconds: second);

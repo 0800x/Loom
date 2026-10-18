@@ -131,9 +131,7 @@ class _NodeSelectionScreenState extends State<NodeSelectionScreen> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: LoomSizing.contentMax,
-            ),
+            constraints: const BoxConstraints(maxWidth: LoomSizing.contentMax),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: LoomSpacing.md),
               child: Column(
@@ -155,8 +153,7 @@ class _NodeSelectionScreenState extends State<NodeSelectionScreen> {
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                         ),
-                        if (controller.state ==
-                            LoomNodeDirectoryState.loading)
+                        if (controller.state == LoomNodeDirectoryState.loading)
                           const SizedBox.square(
                             dimension: 22,
                             child: CircularProgressIndicator(strokeWidth: 2),
@@ -242,8 +239,7 @@ class _NodeSelectionScreenState extends State<NodeSelectionScreen> {
                             action: () => _manualDomain(context),
                           );
                         }
-                        if (controller.state ==
-                                LoomNodeDirectoryState.error &&
+                        if (controller.state == LoomNodeDirectoryState.error &&
                             controller.nodes.isEmpty) {
                           return _EmptyDirectory(
                             title: tr(
@@ -371,11 +367,8 @@ class _NodeSelectionScreenState extends State<NodeSelectionScreen> {
                             label: Text(s.enterManually),
                           ),
                           TextButton.icon(
-                            onPressed: () =>
-                                scanLoomNode(context, controller),
-                            icon: const Icon(
-                              LoomIcons.qr_code_scanner_rounded,
-                            ),
+                            onPressed: () => scanLoomNode(context, controller),
+                            icon: const Icon(LoomIcons.qr_code_scanner_rounded),
                             label: Text(s.scanQr),
                           ),
                           TextButton.icon(

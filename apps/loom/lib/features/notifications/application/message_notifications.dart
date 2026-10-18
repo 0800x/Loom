@@ -129,9 +129,7 @@ class LoomMessageNotifications with WidgetsBindingObserver {
         unawaited(
           bridge.show(
             conversation.id,
-            LoomAppLock.instance.locked
-                ? 'Loom'
-                : conversation.title ?? 'Loom',
+            LoomAppLock.instance.locked ? 'Loom' : conversation.title ?? 'Loom',
           ),
         );
       }

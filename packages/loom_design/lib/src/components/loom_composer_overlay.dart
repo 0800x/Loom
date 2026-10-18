@@ -9,7 +9,8 @@ class LoomComposerOverlay extends StatefulWidget {
     super.key,
   });
 
-  final Widget Function(BuildContext context, double bottomExtent) historyBuilder;
+  final Widget Function(BuildContext context, double bottomExtent)
+  historyBuilder;
   final Widget composer;
 
   @override

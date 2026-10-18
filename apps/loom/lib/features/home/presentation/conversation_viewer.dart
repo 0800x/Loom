@@ -53,9 +53,7 @@ class _MediaViewerState extends State<_MediaViewer>
     }
     if (player.value.isPlaying) {
       await player.pause();
-    } else if (await LoomPlaybackController.instance.claimVideo(
-          _pauseVideo,
-        ) &&
+    } else if (await LoomPlaybackController.instance.claimVideo(_pauseVideo) &&
         mounted &&
         !LoomAppLock.instance.locked) {
       await player.play();

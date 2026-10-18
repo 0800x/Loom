@@ -525,4 +525,3 @@ class _ErrorNotice extends StatelessWidget {
     ),
   );
 }
-

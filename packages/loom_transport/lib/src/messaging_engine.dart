@@ -48,12 +48,13 @@ class LoomMessagingEngine {
     required String conversationId,
     required String plaintext,
     String? replyToMessageId,
-  }) => _queue(
-    conversationId: conversationId,
-    plaintext: plaintext,
-    replyToMessageId: replyToMessageId,
-    maxCharacters: 32000,
-  );
+  }) =>
+      _queue(
+        conversationId: conversationId,
+        plaintext: plaintext,
+        replyToMessageId: replyToMessageId,
+        maxCharacters: 32000,
+      );
 
   /// Rich documents are encrypted by the same device-bound encoder. A bounded
   /// quote/descriptor must not consume the user's existing text allowance.
@@ -61,12 +62,13 @@ class LoomMessagingEngine {
     required String conversationId,
     required String encodedContent,
     String? replyToMessageId,
-  }) => _queue(
-    conversationId: conversationId,
-    plaintext: encodedContent,
-    replyToMessageId: replyToMessageId,
-    maxCharacters: 64 * 1024,
-  );
+  }) =>
+      _queue(
+        conversationId: conversationId,
+        plaintext: encodedContent,
+        replyToMessageId: replyToMessageId,
+        maxCharacters: 64 * 1024,
+      );
 
   Future<LoomMessageRecord> _queue({
     required String conversationId,
@@ -199,8 +201,8 @@ class LoomMessagingEngine {
             operation.operationId,
             attemptCount: operation.attemptCount + 1,
             nextAttemptAt: DateTime.now().toUtc().add(
-              const Duration(seconds: 30),
-            ),
+                  const Duration(seconds: 30),
+                ),
             lastError: _safeError(error),
           );
         }
@@ -280,8 +282,8 @@ class LoomMessagingEngine {
         operation.operationId,
         attemptCount: attempts,
         nextAttemptAt: DateTime.now().toUtc().add(
-          Duration(seconds: cappedSeconds, milliseconds: jitter),
-        ),
+              Duration(seconds: cappedSeconds, milliseconds: jitter),
+            ),
         lastError: _safeError(error),
       );
       store.updateDeliveryByClientId(
@@ -447,9 +449,8 @@ class LoomMessagingEngine {
     if (createdAt == null) {
       throw const FormatException('Malformed message createdAt');
     }
-    final order = p['serverOrder'] is int
-        ? p['serverOrder'] as int
-        : fallbackOrder;
+    final order =
+        p['serverOrder'] is int ? p['serverOrder'] as int : fallbackOrder;
     final metadata = p['metadata'];
     return LoomMessageRecord(
       id: id,
@@ -463,8 +464,8 @@ class LoomMessagingEngine {
       createdAt: createdAt,
       deliveryState:
           eventSenderAddress.toLowerCase() == senderAddress.toLowerCase()
-          ? LoomDeliveryState.sent
-          : LoomDeliveryState.delivered,
+              ? LoomDeliveryState.sent
+              : LoomDeliveryState.delivered,
       transportPath: LoomMessageTransportPath.internet,
       replyToMessageId: p['replyToMessageId'] as String?,
       metadata: metadata is Map<String, Object?> ? metadata : const {},

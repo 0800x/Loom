@@ -746,11 +746,7 @@ String _stateOrDuration(BuildContext context, LoomCallSnapshot state) {
       'در حال تماس…',
     ),
     LoomCallLifecycle.ringing => tr(context, 'Ringing…', 'در حال زنگ خوردن…'),
-    LoomCallLifecycle.connecting => tr(
-      context,
-      'Connecting…',
-      'در حال اتصال…',
-    ),
+    LoomCallLifecycle.connecting => tr(context, 'Connecting…', 'در حال اتصال…'),
     LoomCallLifecycle.reconnecting => tr(
       context,
       'Reconnecting…',

@@ -63,10 +63,7 @@ void main() {
         path: '/join',
         queryParameters: {'node': link.node.toString(), 'token': token},
       );
-      expect(
-        LoomGroupInviteLink.tryParse(custom.toString())!.node,
-        link.node,
-      );
+      expect(LoomGroupInviteLink.tryParse(custom.toString())!.node, link.node);
       final loom = custom.replace(scheme: 'loom');
       expect(LoomGroupInviteLink.tryParse(loom.toString())!.node, link.node);
       expect(LoomGroupInviteLink.tryParse('$loom&token=$token'), isNull);
@@ -186,9 +183,7 @@ void main() {
       LoomGroupsScope(
         controller: groups,
         child: MaterialApp(
-          home: LoomGroupJoinScreen(
-            initialLink: 'https://home.test/g/$token',
-          ),
+          home: LoomGroupJoinScreen(initialLink: 'https://home.test/g/$token'),
         ),
       ),
     );

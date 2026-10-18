@@ -99,9 +99,10 @@ final class LoomAccountRootStoreV2 implements LoomTrustedAccountRootResolverV2 {
     if (key.length != 32) return null;
     final validFrom = DateTime.tryParse(row['valid_from'] as String)?.toUtc();
     final validUntilRaw = row['valid_until'] as String?;
-    final validUntil = validUntilRaw == null
-        ? null
-        : DateTime.tryParse(validUntilRaw)?.toUtc();
+    final validUntil =
+        validUntilRaw == null
+            ? null
+            : DateTime.tryParse(validUntilRaw)?.toUtc();
     if (validFrom == null || (validUntilRaw != null && validUntil == null)) {
       return null;
     }

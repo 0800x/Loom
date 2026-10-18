@@ -196,10 +196,9 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
       supportedBearers = Set<LoomNearbyBearer>.unmodifiable(usable);
       if (usable.isEmpty) {
         status = LoomNearbyDtnServiceStatus.permissionDenied;
-        errorMessage =
-            lastPermissionError == null
-                ? 'No Nearby bearer was authorized and ready.'
-                : 'No Nearby bearer could be authorized: ${_safeError(lastPermissionError)}';
+        errorMessage = lastPermissionError == null
+            ? 'No Nearby bearer was authorized and ready.'
+            : 'No Nearby bearer could be authorized: ${_safeError(lastPermissionError)}';
         notifyListeners();
         _stopObservingLifecycle();
         _closeRuntimeIf(runtime);
@@ -246,7 +245,8 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
       final LoomNearbyDtnRuntimePort activeRuntime = runtime;
       if (activeRuntime is LoomNearbyRecipientProbeRuntime) {
         (activeRuntime as LoomNearbyRecipientProbeRuntime)
-            .recipientProbeAcceptor = _acceptRecipientProbe;
+                .recipientProbeAcceptor =
+            _acceptRecipientProbe;
         activeRuntime.coordinator.onInboxChanged = () async {
           await _consumeLocalRecipientPackets();
           if (_enabled && _isCurrentLifecycle(lifecycleGeneration)) {
@@ -446,9 +446,7 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
     _wakeOnlineWork('app_resumed');
   }
 
-  void _onDefaultNetworkGenerationChanged(
-    LoomDefaultNetworkSnapshot snapshot,
-  ) {
+  void _onDefaultNetworkGenerationChanged(LoomDefaultNetworkSnapshot snapshot) {
     if (_disposed) return;
     LoomTransportDiagnostics.event(
       'nearby_network_generation_observed',
@@ -542,10 +540,9 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
       if (!_priorityRoundRequested) {
         // Give DTN another turn between maintenance protocols. Cycling every
         // protocol on every bearer first used to starve chat for tens of seconds.
-        final maintenance =
-            ordered.isEmpty
-                ? <LoomNearbyBearer>[]
-                : [ordered[(maintenanceIndex ~/ 2) % ordered.length]];
+        final maintenance = ordered.isEmpty
+            ? <LoomNearbyBearer>[]
+            : [ordered[(maintenanceIndex ~/ 2) % ordered.length]];
         final runMessageGateway = maintenanceIndex++ % 2 == 0;
         for (final bearer in maintenance) {
           if (!_enabled ||
@@ -729,8 +726,8 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
         return clientId is String &&
             canConfirmLegacyDelivery?.call(clientId) == true;
       },
-      acceptV2Packet:
-          (packet) => LoomLegacyDtnDeliveryIntake.acceptGatewayPacket(
+      acceptV2Packet: (packet) =>
+          LoomLegacyDtnDeliveryIntake.acceptGatewayPacket(
             applicationSupportPath: supportPath,
             ownAddress: receipt.address,
             identityId: identity.identityId,
@@ -823,13 +820,12 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
     if (!_disposed) notifyListeners();
   }
 
-  static List<LoomNearbyBearer> _orderedBearers(
-    Set<LoomNearbyBearer> values,
-  ) => const <LoomNearbyBearer>[
-    LoomNearbyBearer.bluetoothLowEnergy,
-    LoomNearbyBearer.wifiAware,
-    LoomNearbyBearer.wifiDirect,
-  ].where(values.contains).toList(growable: false);
+  static List<LoomNearbyBearer> _orderedBearers(Set<LoomNearbyBearer> values) =>
+      const <LoomNearbyBearer>[
+        LoomNearbyBearer.bluetoothLowEnergy,
+        LoomNearbyBearer.wifiAware,
+        LoomNearbyBearer.wifiDirect,
+      ].where(values.contains).toList(growable: false);
 
   static String _safeError(Object error) {
     final text = error.toString().replaceAll(RegExp(r'[\r\n]+'), ' ');
@@ -857,18 +853,19 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
     required LoomNearbyDtnRuntimePort runtime,
     required LoomDirectTransportSigner signer,
     required LoomNearbyBearer bearer,
-  }) => LoomNearbyDtnRoundRunner(
-    coordinator: runtime.coordinator,
-    signer: signer,
-  ).run(
-    radio: runtime.radioFor(bearer),
-    bearer: bearer,
-    allowStoreCarry: true,
-    scanTimeout: const Duration(seconds: 3),
-    advertisementLifetime: const Duration(seconds: 12),
-    maxCandidates: 4,
-    maxPacketsPerLink: 8,
-  );
+  }) =>
+      LoomNearbyDtnRoundRunner(
+        coordinator: runtime.coordinator,
+        signer: signer,
+      ).run(
+        radio: runtime.radioFor(bearer),
+        bearer: bearer,
+        allowStoreCarry: true,
+        scanTimeout: const Duration(seconds: 3),
+        advertisementLifetime: const Duration(seconds: 12),
+        maxCandidates: 4,
+        maxPacketsPerLink: 8,
+      );
 
   static Future<int> _defaultMessageGatewayRoundExecutor({
     required LoomNearbyDtnRuntimePort runtime,

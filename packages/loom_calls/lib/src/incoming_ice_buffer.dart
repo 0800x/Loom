@@ -5,7 +5,7 @@ import 'package:loom_models/loom_models.dart';
 /// and expiry keep unsolicited signaling from becoming an unbounded queue.
 class LoomIncomingIceBuffer {
   LoomIncomingIceBuffer(this.localIdentityId, {DateTime Function()? now})
-      : _now = now ?? DateTime.now;
+    : _now = now ?? DateTime.now;
 
   final String localIdentityId;
   final DateTime Function() _now;
@@ -21,7 +21,9 @@ class LoomIncomingIceBuffer {
       final expires = signal.createdAt.add(const Duration(seconds: 45));
       if (!expires.isAfter(now)) return;
       _offers.putIfAbsent(
-          signal.callId, () => _OfferedIce(signal.senderIdentityId, expires));
+        signal.callId,
+        () => _OfferedIce(signal.senderIdentityId, expires),
+      );
       while (_offers.length > 4) {
         _offers.remove(_offers.keys.first);
       }

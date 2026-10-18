@@ -32,8 +32,8 @@ final class LoomNearbyDtnRoundRunner {
     required this.signer,
     DateTime Function()? clock,
     String Function()? rendezvousIdFactory,
-  }) : _clock = clock ?? DateTime.now,
-       _rendezvousIdFactory = rendezvousIdFactory ?? _createRandomRendezvousId;
+  })  : _clock = clock ?? DateTime.now,
+        _rendezvousIdFactory = rendezvousIdFactory ?? _createRandomRendezvousId;
 
   final LoomNearbyDtnEncounterCoordinator coordinator;
   final LoomDirectTransportSigner signer;
@@ -76,15 +76,15 @@ final class LoomNearbyDtnRoundRunner {
     final incomingSubscription = advertising.incomingLinks.listen((link) {
       final task = coordinator
           .acceptOverLink(
-            link: link,
-            signer: signer,
-            localCanStoreCarry: allowStoreCarry,
-            maxPackets: maxPacketsPerLink,
-          )
+        link: link,
+        signer: signer,
+        localCanStoreCarry: allowStoreCarry,
+        maxPackets: maxPacketsPerLink,
+      )
           .catchError((Object _) {
-            failedEncounters++;
-            return 0;
-          });
+        failedEncounters++;
+        return 0;
+      });
       inboundTasks.add(task);
     });
 
@@ -115,7 +115,7 @@ final class LoomNearbyDtnRoundRunner {
             maxPackets: maxPacketsPerLink,
             supportsRecipientProbe:
                 candidate.advertisement.rendezvousId.startsWith('dtn-rp1-') ||
-                candidate.advertisement.rendezvousId.startsWith('dtn-dx1-'),
+                    candidate.advertisement.rendezvousId.startsWith('dtn-dx1-'),
             supportsDuplex: candidate.advertisement.rendezvousId.startsWith(
               'dtn-dx1-',
             ),

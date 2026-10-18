@@ -100,17 +100,18 @@ class LoomGenerationAwareMessagingClient
     required String protocolVersion,
     String? replyToMessageId,
     Map<String, Object?> metadata = const <String, Object?>{},
-  }) => _run(
-    (client) => client.sendOpaqueMessage(
-      conversationId: conversationId,
-      clientId: clientId,
-      type: type,
-      ciphertext: ciphertext,
-      protocolVersion: protocolVersion,
-      replyToMessageId: replyToMessageId,
-      metadata: metadata,
-    ),
-  );
+  }) =>
+      _run(
+        (client) => client.sendOpaqueMessage(
+          conversationId: conversationId,
+          clientId: clientId,
+          type: type,
+          ciphertext: ciphertext,
+          protocolVersion: protocolVersion,
+          replyToMessageId: replyToMessageId,
+          metadata: metadata,
+        ),
+      );
 
   @override
   Future<LoomSyncPage> sync({String? cursor, int limit = 200}) =>
@@ -120,23 +121,25 @@ class LoomGenerationAwareMessagingClient
   Future<void> markRead({
     required String conversationId,
     required int throughOrder,
-  }) => _run(
-    (client) => client.markRead(
-      conversationId: conversationId,
-      throughOrder: throughOrder,
-    ),
-  );
+  }) =>
+      _run(
+        (client) => client.markRead(
+          conversationId: conversationId,
+          throughOrder: throughOrder,
+        ),
+      );
 
   @override
   Future<LoomAttachmentReceipt> uploadEncryptedAttachment({
     required String conversationId,
     required File encryptedFile,
     required String contentType,
-  }) => _run(
-    (client) => client.uploadEncryptedAttachment(
-      conversationId: conversationId,
-      encryptedFile: encryptedFile,
-      contentType: contentType,
-    ),
-  );
+  }) =>
+      _run(
+        (client) => client.uploadEncryptedAttachment(
+          conversationId: conversationId,
+          encryptedFile: encryptedFile,
+          contentType: contentType,
+        ),
+      );
 }

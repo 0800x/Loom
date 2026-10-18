@@ -142,9 +142,9 @@ class _LoomCreateDialState extends State<LoomCreateDial> {
                                             action.$2,
                                             maxLines: 2,
                                             textAlign: TextAlign.end,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelMedium,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.labelMedium,
                                           ),
                                         ),
                                       ),

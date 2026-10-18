@@ -51,8 +51,8 @@ final class LoomNearbyInternetGatewayEncounter {
     required this.durablyAccept,
     LoomNearbyDtnPeerBootstrap? bootstrap,
     DateTime Function()? clock,
-  }) : bootstrap = bootstrap ?? LoomNearbyDtnPeerBootstrap(),
-       _clock = clock ?? DateTime.now;
+  })  : bootstrap = bootstrap ?? LoomNearbyDtnPeerBootstrap(),
+        _clock = clock ?? DateTime.now;
 
   final LoomPacketStore packetStore;
   final LoomPacketRouteStore routeStore;
@@ -398,7 +398,8 @@ final class _NearbyInternetGatewayTransferSender
 Future<void> _sendJson(
   LoomNearbySecureConnection connection,
   Map<String, Object?> value,
-) => connection.send(utf8.encode(jsonEncode(value)));
+) =>
+    connection.send(utf8.encode(jsonEncode(value)));
 
 Future<Map<String, Object?>> _receiveJson(
   LoomNearbySecureConnection connection, {

@@ -128,15 +128,13 @@ class _LoomGroupsScreenState extends State<LoomGroupsScreen>
     if (mounted && id != null) _select(groups, id);
   }
 
-  Future<void> _members(
-    LoomGroupsController groups,
-    LoomGroupState group,
-  ) => Navigator.of(context).push<void>(
-    MaterialPageRoute<void>(
-      builder: (_) =>
-          LoomGroupsScreen(initialGroupId: group.id, managementOnly: true),
-    ),
-  );
+  Future<void> _members(LoomGroupsController groups, LoomGroupState group) =>
+      Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              LoomGroupsScreen(initialGroupId: group.id, managementOnly: true),
+        ),
+      );
 
   Future<bool> _confirm(String title, String detail, String action) async =>
       await showDialog<bool>(
@@ -381,17 +379,34 @@ class _LoomGroupsScreenState extends State<LoomGroupsScreen>
         children: [
           LoomDetailTile(
             leading: const Icon(LoomIcons.link),
-            title: Text(tr(context, 'Anyone with the link can join', 'عضویت آزاد با لینک')),
+            title: Text(
+              tr(
+                context,
+                'Anyone with the link can join',
+                'عضویت آزاد با لینک',
+              ),
+            ),
             onTap: () => Navigator.pop(context, 'open'),
           ),
           LoomDetailTile(
             leading: const Icon(LoomIcons.people_outline_rounded),
-            title: Text(tr(context, 'Administrator approval required', 'عضویت با تأیید مدیر')),
+            title: Text(
+              tr(
+                context,
+                'Administrator approval required',
+                'عضویت با تأیید مدیر',
+              ),
+            ),
             onTap: () => Navigator.pop(context, 'approval'),
           ),
           LoomDetailTile(
-            leading: Icon(LoomIcons.close_rounded, color: context.loom.critical),
-            title: Text(tr(context, 'Revoke invitation links', 'لغو لینک‌های دعوت')),
+            leading: Icon(
+              LoomIcons.close_rounded,
+              color: context.loom.critical,
+            ),
+            title: Text(
+              tr(context, 'Revoke invitation links', 'لغو لینک‌های دعوت'),
+            ),
             onTap: () => Navigator.pop(context, 'revoke'),
           ),
         ],
@@ -862,12 +877,29 @@ class _LoomGroupsScreenState extends State<LoomGroupsScreen>
                             focusNode: _focus,
                             sending: _uploading || groups.busy,
                             hintText: tr(context, 'Message', 'پیام'),
-                            attachTooltip: tr(context, 'Attach file or media', 'ارسال فایل یا مدیا'),
-                            voiceTooltip: tr(context, 'Voice message', 'پیام صوتی'),
+                            attachTooltip: tr(
+                              context,
+                              'Attach file or media',
+                              'ارسال فایل یا مدیا',
+                            ),
+                            voiceTooltip: tr(
+                              context,
+                              'Voice message',
+                              'پیام صوتی',
+                            ),
                             sendTooltip: tr(context, 'Send', 'ارسال'),
-                            onChanged: (value) => groups.saveDraft(group.id, value),
-                            onSend: groups.ready && !groups.busy && !_uploading ? () => _send(groups) : null,
-                            onAttach: groups.ready && !groups.busy && !_uploading && groups.sendAttachment != null ? () => _attach(groups, group.id) : null,
+                            onChanged: (value) =>
+                                groups.saveDraft(group.id, value),
+                            onSend: groups.ready && !groups.busy && !_uploading
+                                ? () => _send(groups)
+                                : null,
+                            onAttach:
+                                groups.ready &&
+                                    !groups.busy &&
+                                    !_uploading &&
+                                    groups.sendAttachment != null
+                                ? () => _attach(groups, group.id)
+                                : null,
                           ),
                         ),
                     ],

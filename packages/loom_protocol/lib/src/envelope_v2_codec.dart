@@ -125,10 +125,14 @@ abstract final class LoomEnvelopeV2Codec {
       conversationRef: _requireField(conversationRef, 'conversation_ref'),
       senderAccountId: _requireField(senderAccountId, 'sender_account_id'),
       senderDeviceId: _requireField(senderDeviceId, 'sender_device_id'),
-      recipientAccountId:
-          _requireField(recipientAccountId, 'recipient_account_id'),
-      recipientDeviceId:
-          _requireField(recipientDeviceId, 'recipient_device_id'),
+      recipientAccountId: _requireField(
+        recipientAccountId,
+        'recipient_account_id',
+      ),
+      recipientDeviceId: _requireField(
+        recipientDeviceId,
+        'recipient_device_id',
+      ),
       contentKind: _requireField(contentKind, 'content_kind'),
       contentPayload: _requireField(contentPayload, 'content_payload'),
       createdAt: _dateFromUnixMs(
@@ -360,8 +364,10 @@ abstract final class LoomEnvelopeV2Codec {
     );
     final receipt = LoomDeliveryReceiptV2(
       forMessageId: _requireField(forMessageId, 'for_message_id'),
-      recipientDeviceId:
-          _requireField(recipientDeviceId, 'recipient_device_id'),
+      recipientDeviceId: _requireField(
+        recipientDeviceId,
+        'recipient_device_id',
+      ),
       status: _requireField(status, 'status'),
       receivedAt: receivedAtMs == null
           ? null
@@ -464,41 +470,41 @@ abstract final class LoomEnvelopeV2Codec {
       };
 
   static int _encodeReceiptPolicy(LoomReceiptPolicyV2 value) => switch (value) {
-        LoomReceiptPolicyV2.none => 1,
-        LoomReceiptPolicyV2.delivered => 2,
-        LoomReceiptPolicyV2.deliveredAndRead => 3,
-      };
+    LoomReceiptPolicyV2.none => 1,
+    LoomReceiptPolicyV2.delivered => 2,
+    LoomReceiptPolicyV2.deliveredAndRead => 3,
+  };
 
   static LoomReceiptPolicyV2 _decodeReceiptPolicy(int value) => switch (value) {
-        1 => LoomReceiptPolicyV2.none,
-        2 => LoomReceiptPolicyV2.delivered,
-        3 => LoomReceiptPolicyV2.deliveredAndRead,
-        _ => throw FormatException('Unknown receipt policy $value'),
-      };
+    1 => LoomReceiptPolicyV2.none,
+    2 => LoomReceiptPolicyV2.delivered,
+    3 => LoomReceiptPolicyV2.deliveredAndRead,
+    _ => throw FormatException('Unknown receipt policy $value'),
+  };
 
   static int _encodeRoutingScope(LoomRoutingScopeV2 value) => switch (value) {
-        LoomRoutingScopeV2.localDevice => 1,
-        LoomRoutingScopeV2.domesticRelay => 2,
-        LoomRoutingScopeV2.globalRelay => 3,
-      };
+    LoomRoutingScopeV2.localDevice => 1,
+    LoomRoutingScopeV2.domesticRelay => 2,
+    LoomRoutingScopeV2.globalRelay => 3,
+  };
 
   static LoomRoutingScopeV2 _decodeRoutingScope(int value) => switch (value) {
-        1 => LoomRoutingScopeV2.localDevice,
-        2 => LoomRoutingScopeV2.domesticRelay,
-        3 => LoomRoutingScopeV2.globalRelay,
-        _ => throw FormatException('Unknown routing scope $value'),
-      };
+    1 => LoomRoutingScopeV2.localDevice,
+    2 => LoomRoutingScopeV2.domesticRelay,
+    3 => LoomRoutingScopeV2.globalRelay,
+    _ => throw FormatException('Unknown routing scope $value'),
+  };
 
   static int _encodePriority(LoomPriorityClassV2 value) => switch (value) {
-        LoomPriorityClassV2.normal => 1,
-        LoomPriorityClassV2.urgent => 2,
-      };
+    LoomPriorityClassV2.normal => 1,
+    LoomPriorityClassV2.urgent => 2,
+  };
 
   static LoomPriorityClassV2 _decodePriority(int value) => switch (value) {
-        1 => LoomPriorityClassV2.normal,
-        2 => LoomPriorityClassV2.urgent,
-        _ => throw FormatException('Unknown priority class $value'),
-      };
+    1 => LoomPriorityClassV2.normal,
+    2 => LoomPriorityClassV2.urgent,
+    _ => throw FormatException('Unknown priority class $value'),
+  };
 
   static int _encodeDeliveryStatus(LoomDeliveryReceiptStatusV2 value) =>
       switch (value) {
@@ -669,7 +675,8 @@ final class _ProtoReader {
     final length = readVarint();
     if (length < 0 || length > maxBytes) {
       throw const FormatException(
-          'Length-delimited protobuf field exceeds limit');
+        'Length-delimited protobuf field exceeds limit',
+      );
     }
     final end = _offset + length;
     if (end < _offset || end > _bytes.length) {

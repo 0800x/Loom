@@ -18,13 +18,15 @@ final class LoomTrustedAccountRootKeyV2 {
     required this.validFrom,
     this.validUntil,
   }) : ed25519PublicKey = Uint8List.fromList(ed25519PublicKey) {
-    if (accountKeyVersion < 1 || accountKeyVersion > 0x7fffffff ||
+    if (accountKeyVersion < 1 ||
+        accountKeyVersion > 0x7fffffff ||
         this.ed25519PublicKey.length != 32) {
       throw const FormatException('Invalid trusted account root key');
     }
     final from = validFrom.toUtc();
     final until = validUntil?.toUtc();
-    if (from.year < 2020 || from.year >= 2200 ||
+    if (from.year < 2020 ||
+        from.year >= 2200 ||
         (until != null && !until.isAfter(from))) {
       throw const FormatException('Invalid account root validity window');
     }

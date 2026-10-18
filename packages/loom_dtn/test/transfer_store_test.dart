@@ -15,9 +15,7 @@ void main() {
     final plan = const LoomMessageRouter().planNext(
       packet: packet,
       now: now,
-      opportunities: <LoomDtnOpportunity>[
-        _peer('peer-alpha'),
-      ],
+      opportunities: <LoomDtnOpportunity>[_peer('peer-alpha')],
     )!;
 
     final transfer = store.prepareTransfer(
@@ -38,8 +36,11 @@ void main() {
     expect(forwarded.forwardingState.hopsUsed, 1);
     expect(forwarded.forwardingState.copiesRemaining, 2);
 
-    expect(store.listEligible(now), isEmpty,
-        reason: 'a prepared transfer owns the packet forwarding lease');
+    expect(
+      store.listEligible(now),
+      isEmpty,
+      reason: 'a prepared transfer owns the packet forwarding lease',
+    );
     expect(store.listPreparedTransfers(), hasLength(1));
   });
 
@@ -99,45 +100,52 @@ void main() {
     final updated = store.read(packet.packetId)!;
     expect(updated.initialCopiesRemaining, 5);
     expect(updated.copiesRemaining, 3);
-    expect(updated.wireBytes, sourceBytes,
-        reason: 'source custody bytes must never be rewritten');
+    expect(
+      updated.wireBytes,
+      sourceBytes,
+      reason: 'source custody bytes must never be rewritten',
+    );
     expect(
       LoomEnvelopeV2Codec.decodeOuter(updated.wireBytes)
           .forwardingState
           .copiesRemaining,
       5,
     );
-    expect(store.readTransfer(transfer.transmissionId)!.state,
-        LoomDtnTransferState.accepted);
+    expect(
+      store.readTransfer(transfer.transmissionId)!.state,
+      LoomDtnTransferState.accepted,
+    );
   });
 
-  test('failed prepared transfer releases reservation without spending copies',
-      () {
-    final store = LoomSqlitePacketStore.openInMemory();
-    addTearDown(store.close);
-    final packet = _putPacket(store, now: now, copies: 4);
-    final plan = const LoomMessageRouter().planNext(
-      packet: packet,
-      now: now,
-      opportunities: <LoomDtnOpportunity>[_peer('peer-fail')],
-    )!;
-    final transfer = store.prepareTransfer(
-      transmissionId: 'transmission-00000005',
-      plan: plan,
-      now: now,
-    );
+  test(
+    'failed prepared transfer releases reservation without spending copies',
+    () {
+      final store = LoomSqlitePacketStore.openInMemory();
+      addTearDown(store.close);
+      final packet = _putPacket(store, now: now, copies: 4);
+      final plan = const LoomMessageRouter().planNext(
+        packet: packet,
+        now: now,
+        opportunities: <LoomDtnOpportunity>[_peer('peer-fail')],
+      )!;
+      final transfer = store.prepareTransfer(
+        transmissionId: 'transmission-00000005',
+        plan: plan,
+        now: now,
+      );
 
-    final failed = store.markTransferFailed(
-      transfer.transmissionId,
-      now.add(const Duration(seconds: 2)),
-      errorCode: 'link_timeout',
-    );
+      final failed = store.markTransferFailed(
+        transfer.transmissionId,
+        now.add(const Duration(seconds: 2)),
+        errorCode: 'link_timeout',
+      );
 
-    expect(failed.state, LoomDtnTransferState.failed);
-    expect(failed.errorCode, 'link_timeout');
-    expect(store.read(packet.packetId)!.copiesRemaining, 4);
-    expect(store.listEligible(now), hasLength(1));
-  });
+      expect(failed.state, LoomDtnTransferState.failed);
+      expect(failed.errorCode, 'link_timeout');
+      expect(store.read(packet.packetId)!.copiesRemaining, 4);
+      expect(store.listEligible(now), hasLength(1));
+    },
+  );
 
   test('single-copy verified gateway handoff can be explicitly recovered', () {
     final store = LoomSqlitePacketStore.openInMemory();
@@ -146,9 +154,7 @@ void main() {
     final plan = const LoomMessageRouter().planNext(
       packet: packet,
       now: now,
-      opportunities: <LoomDtnOpportunity>[
-        _gateway('verified-gateway'),
-      ],
+      opportunities: <LoomDtnOpportunity>[_gateway('verified-gateway')],
     )!;
     expect(plan.requiresSingleCopyCustodyHandoff, isTrue);
 
@@ -182,41 +188,45 @@ void main() {
     expect(recovered.isEligibleForForwarding, isTrue);
   });
 
-  test('relay acceptance prevents reclaiming a single-copy gateway handoff',
-      () {
-    final store = LoomSqlitePacketStore.openInMemory();
-    addTearDown(store.close);
-    final packet = _putPacket(store, now: now, copies: 1);
-    final plan = const LoomMessageRouter().planNext(
-      packet: packet,
-      now: now,
-      opportunities: <LoomDtnOpportunity>[_gateway('relay-gateway')],
-    )!;
-    final transfer = store.prepareTransfer(
-      transmissionId: 'transmission-00000007',
-      plan: plan,
-      now: now,
-    );
-    store.markTransferAccepted(
-      transfer.transmissionId,
-      now.add(const Duration(seconds: 1)),
-    );
-    store.markRelayAccepted(
-      packet.packetId,
-      now.add(const Duration(seconds: 2)),
-    );
-
-    expect(
-      () => store.releaseSingleCopyHandoff(
+  test(
+    'relay acceptance prevents reclaiming a single-copy gateway handoff',
+    () {
+      final store = LoomSqlitePacketStore.openInMemory();
+      addTearDown(store.close);
+      final packet = _putPacket(store, now: now, copies: 1);
+      final plan = const LoomMessageRouter().planNext(
+        packet: packet,
+        now: now,
+        opportunities: <LoomDtnOpportunity>[_gateway('relay-gateway')],
+      )!;
+      final transfer = store.prepareTransfer(
+        transmissionId: 'transmission-00000007',
+        plan: plan,
+        now: now,
+      );
+      store.markTransferAccepted(
         transfer.transmissionId,
-        now.add(const Duration(minutes: 1)),
-        errorCode: 'gateway_lost',
-      ),
-      throwsA(isA<LoomDtnPacketConflict>()),
-    );
-    expect(
-        store.read(packet.packetId)!.state, LoomDtnPacketState.relayAccepted);
-  });
+        now.add(const Duration(seconds: 1)),
+      );
+      store.markRelayAccepted(
+        packet.packetId,
+        now.add(const Duration(seconds: 2)),
+      );
+
+      expect(
+        () => store.releaseSingleCopyHandoff(
+          transfer.transmissionId,
+          now.add(const Duration(minutes: 1)),
+          errorCode: 'gateway_lost',
+        ),
+        throwsA(isA<LoomDtnPacketConflict>()),
+      );
+      expect(
+        store.read(packet.packetId)!.state,
+        LoomDtnPacketState.relayAccepted,
+      );
+    },
+  );
 
   test('prepared transfer and exact bytes survive process restart', () {
     final directory = Directory.systemTemp.createTempSync('loom-dtn-xfer-');
@@ -247,9 +257,7 @@ void main() {
     expect(reopened.listEligible(now), isEmpty);
   });
 
-  test(
-      'direct recipient transfer ACK does not consume copy budget or mark delivered',
-      () {
+  test('direct recipient transfer ACK does not consume copy budget or mark delivered', () {
     final store = LoomSqlitePacketStore.openInMemory();
     addTearDown(store.close);
     final packet = _putPacket(store, now: now, copies: 2);
@@ -308,45 +316,45 @@ LoomStoredDtnPacket _putPacket(
 }
 
 LoomDtnOpportunity _peer(String id) => LoomDtnOpportunity(
-      opportunityId: id,
-      authenticated: true,
-      directRecipient: false,
-      gatewayClaim: LoomGatewayClaimState.none,
-      supportedRelayScopes: const <LoomRoutingScopeV2>{},
-      canStoreCarry: true,
-      linkQualityPercent: 70,
-      congestionPercent: 10,
-      batteryConstrained: false,
-      recentSuccessfulTransfers: 0,
-      recentFailedTransfers: 0,
-    );
+  opportunityId: id,
+  authenticated: true,
+  directRecipient: false,
+  gatewayClaim: LoomGatewayClaimState.none,
+  supportedRelayScopes: const <LoomRoutingScopeV2>{},
+  canStoreCarry: true,
+  linkQualityPercent: 70,
+  congestionPercent: 10,
+  batteryConstrained: false,
+  recentSuccessfulTransfers: 0,
+  recentFailedTransfers: 0,
+);
 
 LoomDtnOpportunity _gateway(String id) => LoomDtnOpportunity(
-      opportunityId: id,
-      authenticated: true,
-      directRecipient: false,
-      gatewayClaim: LoomGatewayClaimState.verifiedRecently,
-      supportedRelayScopes: const <LoomRoutingScopeV2>{
-        LoomRoutingScopeV2.globalRelay,
-      },
-      canStoreCarry: true,
-      linkQualityPercent: 70,
-      congestionPercent: 10,
-      batteryConstrained: false,
-      recentSuccessfulTransfers: 0,
-      recentFailedTransfers: 0,
-    );
+  opportunityId: id,
+  authenticated: true,
+  directRecipient: false,
+  gatewayClaim: LoomGatewayClaimState.verifiedRecently,
+  supportedRelayScopes: const <LoomRoutingScopeV2>{
+    LoomRoutingScopeV2.globalRelay,
+  },
+  canStoreCarry: true,
+  linkQualityPercent: 70,
+  congestionPercent: 10,
+  batteryConstrained: false,
+  recentSuccessfulTransfers: 0,
+  recentFailedTransfers: 0,
+);
 
 LoomDtnOpportunity _recipient(String id) => LoomDtnOpportunity(
-      opportunityId: id,
-      authenticated: true,
-      directRecipient: true,
-      gatewayClaim: LoomGatewayClaimState.none,
-      supportedRelayScopes: const <LoomRoutingScopeV2>{},
-      canStoreCarry: false,
-      linkQualityPercent: 70,
-      congestionPercent: 10,
-      batteryConstrained: false,
-      recentSuccessfulTransfers: 0,
-      recentFailedTransfers: 0,
-    );
+  opportunityId: id,
+  authenticated: true,
+  directRecipient: true,
+  gatewayClaim: LoomGatewayClaimState.none,
+  supportedRelayScopes: const <LoomRoutingScopeV2>{},
+  canStoreCarry: false,
+  linkQualityPercent: 70,
+  congestionPercent: 10,
+  batteryConstrained: false,
+  recentSuccessfulTransfers: 0,
+  recentFailedTransfers: 0,
+);

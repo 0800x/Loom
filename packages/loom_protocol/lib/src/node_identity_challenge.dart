@@ -1,4 +1,5 @@
 import 'transport_security.dart';
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -13,7 +14,7 @@ import 'node_client.dart';
 /// pinned earlier.
 class LoomPinnedNodeVerifier {
   LoomPinnedNodeVerifier({HttpClient? httpClient})
-      : _http = httpClient ?? HttpClient();
+    : _http = httpClient ?? HttpClient();
 
   final HttpClient _http;
   final Ed25519 _ed25519 = Ed25519();
@@ -40,14 +41,16 @@ class LoomPinnedNodeVerifier {
     final challenge = base64UrlEncode(challengeBytes).replaceAll('=', '');
     try {
       final uri = baseUri.resolve('/api/v1/server/challenge');
-      final request =
-          await _http.postUrl(uri).timeout(const Duration(seconds: 8));
+      final request = await _http
+          .postUrl(uri)
+          .timeout(const Duration(seconds: 8));
       request.followRedirects = false;
       request.headers.contentType = ContentType.json;
       request.headers.set(HttpHeaders.acceptHeader, 'application/json');
       request.write(jsonEncode({'challenge': challenge}));
-      final response =
-          await request.close().timeout(const Duration(seconds: 10));
+      final response = await request.close().timeout(
+        const Duration(seconds: 10),
+      );
       final bytes = await _readLimited(response, 64 * 1024);
       if (response.statusCode != HttpStatus.ok) {
         throw LoomProtocolException(

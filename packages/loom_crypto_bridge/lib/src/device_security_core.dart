@@ -1,4 +1,5 @@
 import 'app_lock.dart';
+
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -72,7 +73,7 @@ abstract interface class LoomDeviceSecurityCore {
 
 class LoomDeviceSecurityCoreV1 implements LoomDeviceSecurityCore {
   LoomDeviceSecurityCoreV1({FlutterSecureStorage? storage})
-      : _storage = LoomSecretStorage(storage);
+    : _storage = LoomSecretStorage(storage);
 
   static const int _maxHistoricalDevices = 32;
 
@@ -298,7 +299,8 @@ class LoomDeviceSecurityCoreV1 implements LoomDeviceSecurityCore {
     if (associatedData.isEmpty || associatedData.length > 16 * 1024) {
       throw ArgumentError.value(associatedData.length, 'associatedData.length');
     }
-    final encoded = await _storage.read(
+    final encoded =
+        await _storage.read(
           key: _key(identityId, deviceId, 'agreement-secret'),
         ) ??
         await _storage.read(key: _historySecretKey(identityId, deviceId));
@@ -339,9 +341,8 @@ class LoomDeviceSecurityCoreV1 implements LoomDeviceSecurityCore {
       remoteAgreementPublicKey: remoteAgreementPublicKey,
       context: utf8.encode('Loom-Nearby-Rendezvous-v1\n$timeSlot'),
     );
-    return base64UrlEncode(
-      tag.take(18).toList(growable: false),
-    ).replaceAll('=', '');
+    return base64UrlEncode(tag.take(18).toList(growable: false))
+        .replaceAll('=', '');
   }
 
   @override

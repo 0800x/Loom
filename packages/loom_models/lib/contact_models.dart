@@ -1,9 +1,4 @@
-enum LoomContactSecurityState {
-  resolved,
-  verified,
-  changed,
-  unavailable,
-}
+enum LoomContactSecurityState { resolved, verified, changed, unavailable }
 
 class LoomContact {
   const LoomContact({
@@ -41,17 +36,16 @@ class LoomContact {
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? lastResolvedAt,
-  }) =>
-      LoomContact(
-        identityId: identityId ?? this.identityId,
-        accountId: accountId ?? this.accountId,
-        username: username ?? this.username,
-        displayName: displayName ?? this.displayName,
-        canonicalAddress: canonicalAddress ?? this.canonicalAddress,
-        homeNode: homeNode ?? this.homeNode,
-        securityState: securityState ?? this.securityState,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        lastResolvedAt: lastResolvedAt ?? this.lastResolvedAt,
-      );
+  }) => LoomContact(
+    identityId: identityId ?? this.identityId,
+    accountId: accountId ?? this.accountId,
+    username: username ?? this.username,
+    displayName: displayName ?? this.displayName,
+    canonicalAddress: canonicalAddress ?? this.canonicalAddress,
+    homeNode: homeNode ?? this.homeNode,
+    securityState: securityState ?? this.securityState,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    lastResolvedAt: lastResolvedAt ?? this.lastResolvedAt,
+  );
 }

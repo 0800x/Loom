@@ -76,9 +76,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: LoomTheme.dark(),
-        home: const Scaffold(
-          body: LoomChatBackdrop(child: Text('messages')),
-        ),
+        home: const Scaffold(body: LoomChatBackdrop(child: Text('messages'))),
       ),
     );
 

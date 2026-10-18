@@ -56,7 +56,8 @@ void main() {
           required transmissionId,
           required exactOuterEnvelopeBytes,
           required destinationNodeDomain,
-        }) => throw StateError('sender must not accept gateway packets'),
+        }) =>
+            throw StateError('sender must not accept gateway packets'),
         bootstrap: LoomNearbyDtnPeerBootstrap(clock: () => now),
         clock: () => now.add(const Duration(seconds: 2)),
       );
@@ -68,30 +69,28 @@ void main() {
           transferStore: bPackets,
           clock: () => now.add(const Duration(seconds: 1)),
         ),
-        durablyAccept:
-            ({
-              required transmissionId,
-              required exactOuterEnvelopeBytes,
-              required destinationNodeDomain,
-            }) {
-              final intake = bIntake.acceptReplica(
-                exactOuterEnvelopeBytes: exactOuterEnvelopeBytes,
-                now: now.add(const Duration(seconds: 1)),
-              );
-              bRoutes.rememberDestinationRoute(
-                packetId: intake.packetId,
-                destinationNodeDomain: destinationNodeDomain,
-                now: now.add(const Duration(seconds: 1)),
-              );
-              return LoomDtnHopAck(
-                transmissionId: transmissionId,
-                packetId: intake.packetId,
-                acceptedAt: intake.storedAt,
-                duplicate:
-                    intake.disposition ==
-                    LoomReplicaIntakeDisposition.duplicate,
-              );
-            },
+        durablyAccept: ({
+          required transmissionId,
+          required exactOuterEnvelopeBytes,
+          required destinationNodeDomain,
+        }) {
+          final intake = bIntake.acceptReplica(
+            exactOuterEnvelopeBytes: exactOuterEnvelopeBytes,
+            now: now.add(const Duration(seconds: 1)),
+          );
+          bRoutes.rememberDestinationRoute(
+            packetId: intake.packetId,
+            destinationNodeDomain: destinationNodeDomain,
+            now: now.add(const Duration(seconds: 1)),
+          );
+          return LoomDtnHopAck(
+            transmissionId: transmissionId,
+            packetId: intake.packetId,
+            acceptedAt: intake.storedAt,
+            duplicate:
+                intake.disposition == LoomReplicaIntakeDisposition.duplicate,
+          );
+        },
         bootstrap: LoomNearbyDtnPeerBootstrap(clock: () => now),
         clock: () => now.add(const Duration(seconds: 1)),
       );
@@ -170,34 +169,34 @@ void main() {
           required transmissionId,
           required exactOuterEnvelopeBytes,
           required destinationNodeDomain,
-        }) => throw StateError('sender cannot receive'),
+        }) =>
+            throw StateError('sender cannot receive'),
       );
       final b = _encounter(
         packets: bPackets,
         routes: bRoutes,
         now: now,
-        accept:
-            ({
-              required transmissionId,
-              required exactOuterEnvelopeBytes,
-              required destinationNodeDomain,
-            }) {
-              final intake = bIntake.acceptReplica(
-                exactOuterEnvelopeBytes: exactOuterEnvelopeBytes,
-                now: now,
-              );
-              bRoutes.rememberDestinationRoute(
-                packetId: intake.packetId,
-                destinationNodeDomain: destinationNodeDomain,
-                now: now,
-              );
-              return LoomDtnHopAck(
-                transmissionId: transmissionId,
-                packetId: intake.packetId,
-                acceptedAt: now,
-                duplicate: false,
-              );
-            },
+        accept: ({
+          required transmissionId,
+          required exactOuterEnvelopeBytes,
+          required destinationNodeDomain,
+        }) {
+          final intake = bIntake.acceptReplica(
+            exactOuterEnvelopeBytes: exactOuterEnvelopeBytes,
+            now: now,
+          );
+          bRoutes.rememberDestinationRoute(
+            packetId: intake.packetId,
+            destinationNodeDomain: destinationNodeDomain,
+            now: now,
+          );
+          return LoomDtnHopAck(
+            transmissionId: transmissionId,
+            packetId: intake.packetId,
+            acceptedAt: now,
+            duplicate: false,
+          );
+        },
       );
       final pair = _DuplexNearbyPair();
       final receiving = b.acceptOverLink(
@@ -228,18 +227,19 @@ LoomNearbyInternetGatewayEncounter _encounter({
   required LoomSqlitePacketRouteStore routes,
   required DateTime now,
   required LoomNearbyGatewayDurableAccept accept,
-}) => LoomNearbyInternetGatewayEncounter(
-  packetStore: packets,
-  routeStore: routes,
-  transferExecutor: LoomDtnTransferExecutor(
-    packetStore: packets,
-    transferStore: packets,
-    clock: () => now,
-  ),
-  durablyAccept: accept,
-  bootstrap: LoomNearbyDtnPeerBootstrap(clock: () => now),
-  clock: () => now,
-);
+}) =>
+    LoomNearbyInternetGatewayEncounter(
+      packetStore: packets,
+      routeStore: routes,
+      transferExecutor: LoomDtnTransferExecutor(
+        packetStore: packets,
+        transferStore: packets,
+        clock: () => now,
+      ),
+      durablyAccept: accept,
+      bootstrap: LoomNearbyDtnPeerBootstrap(clock: () => now),
+      clock: () => now,
+    );
 
 Uint8List _wire(String packetId, DateTime now, {required int copies}) =>
     LoomEnvelopeV2Codec.encodeOuter(
@@ -271,13 +271,13 @@ final class _CryptoSigner implements LoomDirectTransportSigner {
 
   @override
   Future<Uint8List> ed25519PublicKey() async => Uint8List.fromList(
-    (await _keyPair.extractPublicKey() as SimplePublicKey).bytes,
-  );
+        (await _keyPair.extractPublicKey() as SimplePublicKey).bytes,
+      );
 
   @override
   Future<Uint8List> sign(Uint8List canonicalBytes) async => Uint8List.fromList(
-    (await _algorithm.sign(canonicalBytes, keyPair: _keyPair)).bytes,
-  );
+        (await _algorithm.sign(canonicalBytes, keyPair: _keyPair)).bytes,
+      );
 }
 
 final class _DuplexNearbyPair {

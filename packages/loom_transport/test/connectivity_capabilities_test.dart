@@ -4,7 +4,9 @@ import 'package:test/test.dart';
 void main() {
   final now = DateTime.utc(2026, 9, 6);
 
-  test('capability snapshot derives legacy display without collapsing router state', () {
+  test(
+      'capability snapshot derives legacy display without collapsing router state',
+      () {
     final snapshot = LoomConnectivityCapabilities(
       observedAt: now,
       nearbyBearers: const <LoomNearbyBearer>{

@@ -15,12 +15,8 @@ abstract final class LoomNearbyMessageReceipts {
     String path,
     String address,
   ) async {
-    final security = LoomSecurityStore.openFile(
-      '$path/loom_security.sqlite3',
-    );
-    final pins = LoomPeerIdentityStore.openFile(
-      '$path/loom_security.sqlite3',
-    );
+    final security = LoomSecurityStore.openFile('$path/loom_security.sqlite3');
+    final pins = LoomPeerIdentityStore.openFile('$path/loom_security.sqlite3');
     try {
       return await LoomOfflineDeviceDirectoryCache(
         securityStore: security,
@@ -44,10 +40,9 @@ abstract final class LoomNearbyMessageReceipts {
       '$applicationSupportPath/loom-messages-v1.sqlite3',
     );
     try {
-      final pending =
-          onlyClientId == null
-              ? store.pendingNearbyReceipts()
-              : <String>[onlyClientId];
+      final pending = onlyClientId == null
+          ? store.pendingNearbyReceipts()
+          : <String>[onlyClientId];
       for (final id in pending) {
         try {
           final message = store.messageByClientId(id);
@@ -67,20 +62,20 @@ abstract final class LoomNearbyMessageReceipts {
             recipient: ownAddress,
             deviceId: deviceId,
             ciphertext: message.ciphertext,
-            sign:
-                (bytes) => deviceSecurity.signDevicePayload(
-                  identityId: identityId,
-                  deviceId: deviceId,
-                  payload: Uint8List.fromList(bytes),
-                ),
+            sign: (bytes) => deviceSecurity.signDevicePayload(
+              identityId: identityId,
+              deviceId: deviceId,
+              payload: Uint8List.fromList(bytes),
+            ),
           );
           // Fixed-size id avoids client-id truncation and makes replays idempotent.
           final receiptId =
               'nr_${await LoomNearbyMessageReceipt.ciphertextDigest(receipt.encode())}';
           await const LoomLegacyDtnCustodyWriter().persist(
             applicationSupportPath: applicationSupportPath,
-            destinationNodeDomain:
-                LoomAddress.parseCanonical(peer.address).homeNode,
+            destinationNodeDomain: LoomAddress.parseCanonical(
+              peer.address,
+            ).homeNode,
             senderAddress: ownAddress,
             conversationId: message.conversationId,
             clientId: receiptId,

@@ -11,9 +11,9 @@ class LoomSecurityController extends ChangeNotifier {
     LoomIdentityCore? identityCore,
     LoomDeviceSecurityCore? deviceCore,
     LoomVerificationService? verification,
-  })  : _identityCore = identityCore ?? LoomIdentityCoreV1(),
-        _deviceCore = deviceCore ?? LoomDeviceSecurityCoreV1(),
-        _verification = verification ?? LoomVerificationService();
+  }) : _identityCore = identityCore ?? LoomIdentityCoreV1(),
+       _deviceCore = deviceCore ?? LoomDeviceSecurityCoreV1(),
+       _verification = verification ?? LoomVerificationService();
 
   final LoomIdentityCore _identityCore;
   final LoomDeviceSecurityCore _deviceCore;

@@ -27,9 +27,7 @@ class LoomWallpaperStore extends ChangeNotifier {
   Future<void>? _loading;
   Future<void> _writes = Future.value();
   LoomWallpaper selection(String? key) =>
-      _values[key ?? 'default'] ??
-      _values['default'] ??
-      const LoomWallpaper();
+      _values[key ?? 'default'] ?? _values['default'] ?? const LoomWallpaper();
   bool hasOverride(String key) => _values.containsKey(key);
   static final Map<String, String> _chatKeys = {};
   static final Map<String, Future<String?>> _pendingKeys = {};
@@ -40,7 +38,9 @@ class LoomWallpaperStore extends ChangeNotifier {
     if (cached != null) return Future.value(cached);
     return _pendingKeys.putIfAbsent(raw, () {
       final result = Sha256().hash(utf8.encode(raw)).then<String?>((hash) {
-        final key = hash.bytes.map((v) => v.toRadixString(16).padLeft(2, '0')).join();
+        final key = hash.bytes
+            .map((v) => v.toRadixString(16).padLeft(2, '0'))
+            .join();
         if (_chatKeys.length >= 128) _chatKeys.remove(_chatKeys.keys.first);
         _chatKeys[raw] = key;
         return key;
@@ -80,8 +80,9 @@ class LoomWallpaperStore extends ChangeNotifier {
   Future<void> load() => _loading ??= _load();
   Future<void> _load() async {
     try {
-      root = await Directory('${(await _directory()).path}/loom-wallpapers')
-          .create(recursive: true);
+      root = await Directory(
+        '${(await _directory()).path}/loom-wallpapers',
+      ).create(recursive: true);
       final json = jsonDecode(
         await File('${root!.path}/preferences.json').readAsString(),
       );

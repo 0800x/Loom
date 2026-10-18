@@ -13,9 +13,9 @@ const _legacyReceiptKind = 'proximity.gateway.legacy-receipt-ack.v1';
 
 String _b64u(List<int> bytes) => base64UrlEncode(bytes).replaceAll('=', '');
 String _iso(DateTime value) => DateTime.fromMillisecondsSinceEpoch(
-  value.toUtc().millisecondsSinceEpoch,
-  isUtc: true,
-).toIso8601String();
+      value.toUtc().millisecondsSinceEpoch,
+      isUtc: true,
+    ).toIso8601String();
 
 Uint8List _nonce([int length = 24]) {
   final random = Random.secure();
@@ -40,26 +40,26 @@ final class LoomRecipientDeliveryReceipt {
   final String signature;
 
   Uint8List canonicalBytes() => Uint8List.fromList(
-    utf8.encode(
-      jsonEncode(<Object?>[
-        _recipientReceiptDomain,
-        1,
-        leaseId,
-        deliveryId,
-        recipientDeviceId,
-        _iso(acceptedAt),
-      ]),
-    ),
-  );
+        utf8.encode(
+          jsonEncode(<Object?>[
+            _recipientReceiptDomain,
+            1,
+            leaseId,
+            deliveryId,
+            recipientDeviceId,
+            _iso(acceptedAt),
+          ]),
+        ),
+      );
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'version': 1,
-    'leaseId': leaseId,
-    'deliveryId': deliveryId,
-    'recipientDeviceId': recipientDeviceId,
-    'acceptedAt': _iso(acceptedAt),
-    'signature': signature,
-  };
+        'version': 1,
+        'leaseId': leaseId,
+        'deliveryId': deliveryId,
+        'recipientDeviceId': recipientDeviceId,
+        'acceptedAt': _iso(acceptedAt),
+        'signature': signature,
+      };
 
   factory LoomRecipientDeliveryReceipt.fromJson(Map<String, Object?> json) {
     String text(String key, {int max = 256}) {
@@ -223,9 +223,8 @@ extension LoomProximityRecipientReceiptClient on LoomProximityGatewayClient {
       'leaseId': lease.leaseId,
       'recipientDeviceId': lease.recipientDeviceId,
       'packetIds': packetIds,
-      'recipientDeliveryReceipts': receipts
-          .map((receipt) => receipt.toJson())
-          .toList(growable: false),
+      'recipientDeliveryReceipts':
+          receipts.map((receipt) => receipt.toJson()).toList(growable: false),
     };
     body['gatewayProof'] = await _custodyProof(
       leaseId: lease.leaseId,

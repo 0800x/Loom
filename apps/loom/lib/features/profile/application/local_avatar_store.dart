@@ -14,8 +14,8 @@ class LoomLocalAvatarStore extends ChangeNotifier {
   }) : _directory = directory ?? getApplicationSupportDirectory;
 
   static final _accounts = <String, LoomLocalAvatarStore>{};
-  static LoomLocalAvatarStore forIdentity(String identityId) => _accounts
-      .putIfAbsent(identityId, () => LoomLocalAvatarStore(identityId));
+  static LoomLocalAvatarStore forIdentity(String identityId) =>
+      _accounts.putIfAbsent(identityId, () => LoomLocalAvatarStore(identityId));
 
   final String identityId;
   final Future<Directory> Function() _directory;

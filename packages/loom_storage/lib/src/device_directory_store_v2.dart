@@ -204,12 +204,12 @@ final class LoomDeviceDirectoryStoreV2
              WHERE account_id = ? AND device_id = ?''',
           <Object?>[snapshot.accountId.value, revocation.deviceId.value],
         );
-        final previousMax = sticky.isEmpty
-            ? 0
-            : sticky.first['max_revoked_key_version'] as int;
-        final previousSequence = sticky.isEmpty
-            ? 0
-            : sticky.first['last_revocation_sequence'] as int;
+        final previousMax =
+            sticky.isEmpty ? 0 : sticky.first['max_revoked_key_version'] as int;
+        final previousSequence =
+            sticky.isEmpty
+                ? 0
+                : sticky.first['last_revocation_sequence'] as int;
         _db.execute(
           '''INSERT INTO v2_device_revocation_sticky (
              account_id, device_id, max_revoked_key_version, last_revocation_sequence
@@ -277,14 +277,15 @@ final class LoomDeviceDirectoryStoreV2
     LoomDeviceId.parse(deviceId);
     if (deviceKeyVersion < 1) return null;
 
-    final latest = _db
-        .select(
-          '''SELECT MAX(key_version) AS latest
+    final latest =
+        _db
+            .select(
+              '''SELECT MAX(key_version) AS latest
          FROM v2_device_authorizations
          WHERE account_id = ? AND device_id = ?''',
-          <Object?>[accountId, deviceId],
-        )
-        .first['latest'];
+              <Object?>[accountId, deviceId],
+            )
+            .first['latest'];
     if (latest is! int || latest != deviceKeyVersion) return null;
 
     final sticky = _db.select(

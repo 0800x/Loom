@@ -8,12 +8,11 @@ import '../../../app/loom_strings.dart';
 import '../application/call_session_controller.dart';
 
 String callFailureMessage(BuildContext context, Object error) {
-  final raw =
-      error is LoomCallUnavailableException
-          ? error.message
-          : error is LoomProtocolException
-          ? error.message
-          : error.toString();
+  final raw = error is LoomCallUnavailableException
+      ? error.message
+      : error is LoomProtocolException
+      ? error.message
+      : error.toString();
   final code = raw.toLowerCase();
   if (code.contains('video_calls_disabled')) {
     return tr(
@@ -123,46 +122,45 @@ Future<void> showCallFailure(BuildContext context, Object error) {
   return showDialog<void>(
     context: context,
     useRootNavigator: true,
-    builder:
-        (dialogContext) => LoomGlassScope(
-          quality: glassQuality,
-          child: Dialog(
-            backgroundColor: Colors.transparent,
-            child: LoomGlassSurface(
-              strength: LoomGlassStrength.strong,
-              radius: LoomRadii.sheet,
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tr(
-                          dialogContext,
-                          'Call could not connect',
-                          'تماس برقرار نشد',
-                        ),
-                        style: Theme.of(dialogContext).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(callFailureMessage(dialogContext, error)),
-                      const SizedBox(height: 20),
-                      Align(
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: TextButton(
-                          onPressed: () => Navigator.of(dialogContext).pop(),
-                          child: Text(tr(dialogContext, 'Close', 'بستن')),
-                        ),
-                      ),
-                    ],
+    builder: (dialogContext) => LoomGlassScope(
+      quality: glassQuality,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        child: LoomGlassSurface(
+          strength: LoomGlassStrength.strong,
+          radius: LoomRadii.sheet,
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tr(
+                      dialogContext,
+                      'Call could not connect',
+                      'تماس برقرار نشد',
+                    ),
+                    style: Theme.of(dialogContext).textTheme.titleLarge,
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  Text(callFailureMessage(dialogContext, error)),
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: Text(tr(dialogContext, 'Close', 'بستن')),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
+      ),
+    ),
   );
 }

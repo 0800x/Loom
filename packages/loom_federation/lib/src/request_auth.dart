@@ -18,12 +18,12 @@ class LoomFederationRequestProof {
   final String signature;
 
   Map<String, String> toHeaders() => <String, String>{
-        'X-Loom-Node-Id': nodeId,
-        'X-Loom-Timestamp': timestamp.toUtc().toIso8601String(),
-        'X-Loom-Nonce': nonce,
-        'X-Loom-Signature': signature,
-        'X-Loom-Federation-Version': 'loom-federation-v1',
-      };
+    'X-Loom-Node-Id': nodeId,
+    'X-Loom-Timestamp': timestamp.toUtc().toIso8601String(),
+    'X-Loom-Nonce': nonce,
+    'X-Loom-Signature': signature,
+    'X-Loom-Federation-Version': 'loom-federation-v1',
+  };
 }
 
 List<int> loomFederationRequestSigningBytes({

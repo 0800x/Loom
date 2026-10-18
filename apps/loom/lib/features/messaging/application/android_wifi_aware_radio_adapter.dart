@@ -6,8 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'android_wifi_readiness_policy.dart';
 
-final class LoomAndroidWifiAwareRadioAdapter
-    implements LoomNearbyRadioAdapter {
+final class LoomAndroidWifiAwareRadioAdapter implements LoomNearbyRadioAdapter {
   LoomAndroidWifiAwareRadioAdapter({MethodChannel? channel})
     : _channel = channel ?? const MethodChannel(_channelName);
 

@@ -26,22 +26,23 @@ class _LoomPressableState extends State<LoomPressable> {
 
   @override
   Widget build(BuildContext context) => Listener(
-        onPointerDown: widget.enabled ? (_) => _press(true) : null,
-        onPointerUp: (_) => _press(false),
-        onPointerCancel: (_) => _press(false),
-        child: AnimatedScale(
-          scale: widget.enabled &&
-                  _pressed &&
-                  !LoomAccessibility.fromContext(context).reduceMotion
-              ? .97
-              : 1,
-          duration: LoomAccessibility.fromContext(context).reduceMotion
-              ? Duration.zero
-              : const Duration(milliseconds: 90),
-          curve: LoomMotion.standard,
-          child: widget.child,
-        ),
-      );
+    onPointerDown: widget.enabled ? (_) => _press(true) : null,
+    onPointerUp: (_) => _press(false),
+    onPointerCancel: (_) => _press(false),
+    child: AnimatedScale(
+      scale:
+          widget.enabled &&
+              _pressed &&
+              !LoomAccessibility.fromContext(context).reduceMotion
+          ? .97
+          : 1,
+      duration: LoomAccessibility.fromContext(context).reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 90),
+      curve: LoomMotion.standard,
+      child: widget.child,
+    ),
+  );
 }
 
 /// A one-time entry transition. Rebuilding an existing keyed item does not
@@ -103,40 +104,38 @@ class LoomSendReveal extends StatelessWidget {
     final moving =
         animate && !LoomAccessibility.fromContext(context).reduceMotion;
     return TweenAnimationBuilder<double>(
-        key: ValueKey(moving),
-        tween: Tween(begin: moving ? 0 : 1, end: 1),
-        duration: moving ? const Duration(milliseconds: 330) : Duration.zero,
-        curve: Curves.easeOutCubic,
-        onEnd: onEnd,
-        child: child,
-        builder: (context, progress, child) => ClipRect(
-                child: Align(
-              alignment: Alignment.bottomCenter,
-              heightFactor: moving ? progress : 1,
-              child: Opacity(
-                opacity:
-                    ((outgoing ? .25 : 0) + progress * (outgoing ? .75 : 1))
-                        .clamp(
-                  0.0,
-                  1.0,
-                ),
-                child: Transform.translate(
-                  offset: Offset(
-                    (Directionality.of(context) == TextDirection.rtl ? -1 : 1) *
-                        (outgoing ? 14 : 0) *
-                        (1 - progress),
-                    (outgoing ? 38 : 8) * (1 - progress),
-                  ),
-                  child: Transform.scale(
-                    scale: outgoing ? .94 + .06 * progress : 1,
-                    alignment: AlignmentDirectional.bottomEnd.resolve(
-                      Directionality.of(context),
-                    ),
-                    child: child,
-                  ),
-                ),
+      key: ValueKey(moving),
+      tween: Tween(begin: moving ? 0 : 1, end: 1),
+      duration: moving ? const Duration(milliseconds: 330) : Duration.zero,
+      curve: Curves.easeOutCubic,
+      onEnd: onEnd,
+      child: child,
+      builder: (context, progress, child) => ClipRect(
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          heightFactor: moving ? progress : 1,
+          child: Opacity(
+            opacity: ((outgoing ? .25 : 0) + progress * (outgoing ? .75 : 1))
+                .clamp(0.0, 1.0),
+            child: Transform.translate(
+              offset: Offset(
+                (Directionality.of(context) == TextDirection.rtl ? -1 : 1) *
+                    (outgoing ? 14 : 0) *
+                    (1 - progress),
+                (outgoing ? 38 : 8) * (1 - progress),
               ),
-            )));
+              child: Transform.scale(
+                scale: outgoing ? .94 + .06 * progress : 1,
+                alignment: AlignmentDirectional.bottomEnd.resolve(
+                  Directionality.of(context),
+                ),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -166,7 +165,8 @@ class _LoomConnectionPulseState extends State<LoomConnectionPulse>
   );
 
   void _sync() {
-    final animate = widget.active &&
+    final animate =
+        widget.active &&
         TickerMode.valuesOf(context).enabled &&
         !LoomAccessibility.fromContext(context).reduceMotion;
     if (animate && !_pulse.isAnimating) {
@@ -293,9 +293,9 @@ class LoomDirectionalIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Transform.flip(
-        flipX: Directionality.of(context) == TextDirection.rtl,
-        child: Icon(icon, size: size, color: color),
-      );
+    flipX: Directionality.of(context) == TextDirection.rtl,
+    child: Icon(icon, size: size, color: color),
+  );
 }
 
 class LoomBusyIndicator extends StatelessWidget {
@@ -305,11 +305,11 @@ class LoomBusyIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox.square(
-        dimension: size,
-        child: LoomAccessibility.fromContext(context).reduceMotion
-            ? Icon(LoomIcons.schedule_rounded, size: size, color: color)
-            : CircularProgressIndicator(strokeWidth: 2, color: color),
-      );
+    dimension: size,
+    child: LoomAccessibility.fromContext(context).reduceMotion
+        ? Icon(LoomIcons.schedule_rounded, size: size, color: color)
+        : CircularProgressIndicator(strokeWidth: 2, color: color),
+  );
 }
 
 /// Small, shared transition for composer and preview action icons.
@@ -322,19 +322,26 @@ class LoomComposerMorph extends StatelessWidget {
     final reduced = LoomAccessibility.fromContext(context).reduceMotion;
     return AnimatedSwitcher(
       duration: reduced ? Duration.zero : const Duration(milliseconds: 200),
-      reverseDuration: reduced ? Duration.zero : const Duration(milliseconds: 140),
+      reverseDuration: reduced
+          ? Duration.zero
+          : const Duration(milliseconds: 140),
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
-      transitionBuilder: (child, animation) => reduced ? child : FadeTransition(
-        opacity: animation,
-        child: SlideTransition(
-          position: Tween<Offset>(begin: const Offset(0, .12), end: Offset.zero).animate(animation),
-          child: ScaleTransition(
-            scale: Tween<double>(begin: .86, end: 1).animate(animation),
-            child: child,
-          ),
-        ),
-      ),
+      transitionBuilder: (child, animation) => reduced
+          ? child
+          : FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, .12),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: .86, end: 1).animate(animation),
+                  child: child,
+                ),
+              ),
+            ),
       child: child,
     );
   }
