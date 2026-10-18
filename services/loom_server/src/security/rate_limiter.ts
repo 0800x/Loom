@@ -39,10 +39,17 @@ export class LoomRateLimiter {
         if (!bucket) this.overflow[index] = bucket = { tokens: limit, updatedAt: now, limit };
       }
     }
-    // A collision with a larger quota must not replenish a smaller quota.
-    bucket.limit = Math.min(bucket.limit, limit);
     const elapsed = Math.max(0, now - bucket.updatedAt);
     bucket.tokens = Math.min(bucket.limit, bucket.tokens + elapsed * bucket.limit / 60000);
+    // Only a fully recovered bucket has no outstanding quota history. An idle
+    // shard must not retain a colliding subject's smaller quota forever.
+    if (bucket.tokens >= bucket.limit) {
+      bucket.limit = limit;
+      bucket.tokens = limit;
+    } else {
+      bucket.limit = Math.min(bucket.limit, limit);
+      bucket.tokens = Math.min(bucket.tokens, bucket.limit);
+    }
     bucket.updatedAt = Math.max(bucket.updatedAt, now);
     if (bucket.tokens + 1e-9 < 1) throw new RateLimitError(Math.max(1, Math.ceil((1 - bucket.tokens) * 60 / bucket.limit)));
     bucket.tokens = Math.max(0, bucket.tokens - 1);

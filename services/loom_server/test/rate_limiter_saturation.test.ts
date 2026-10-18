@@ -44,3 +44,12 @@ test('high-cardinality churn keeps memory fixed and cannot increase a collided q
   assert.throws(() => limiter.consume('small', 'c', 1, 59000), RateLimitError);
   limiter.consume('small', 'c', 1, 60000);
 });
+
+test('an idle overflow shard recovers its capacity without resetting outstanding debt', () => {
+  const limiter = new LoomRateLimiter(1, 1, 1);
+  limiter.consume('x', 'exact', 1, 0);
+  limiter.consume('small', 'overflow', 1, 0);
+  assert.throws(() => limiter.consume('large', 'new', 100, 59000), RateLimitError);
+  for (let i = 0; i < 100; i++) limiter.consume('large', 'new', 100, 60000);
+  assert.throws(() => limiter.consume('large', 'new', 100, 60000), RateLimitError);
+});
