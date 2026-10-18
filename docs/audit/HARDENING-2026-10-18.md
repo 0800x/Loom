@@ -120,3 +120,24 @@ wire/crypto/storage contracts. Exact remaining blockers: S1 migration conflict,
 S4 resource budgets (V5/V7), unexecuted platform/scanner checks, and separate
 Phase 3/4 findings. Keep the PR draft while assessing those blockers and hosted
 checks. Do not merge it under a claim that all requested phases are complete.
+
+## Hosted CI follow-up (head 871ce282222b188b05814f27c1e55a6c888acc7c)
+
+The hosted checks were inspected after publication. Node v2 opaque delivery and
+repository hygiene passed in the push run. Four Architecture-v2 Dart jobs failed
+at `dart format --output=none --set-exit-if-changed .`, before analyze/test:
+
+| Package | Status | Evidence |
+| --- | --- | --- |
+| packages/loom_storage | VERIFIED, unrelated formatting failure | [job 117615240436](https://github.com/0800x/Loom/actions/runs/39107100428/job/117615240436): 33 files, 16 would change, exit 1 |
+| packages/loom_sessions | VERIFIED, unrelated formatting failure | [job 117615240431](https://github.com/0800x/Loom/actions/runs/39107100428/job/117615240431): 17 files, 4 would change, exit 1 |
+| packages/loom_messaging | VERIFIED, unrelated formatting failure | [job 117615240423](https://github.com/0800x/Loom/actions/runs/39107100428/job/117615240423): 14 files, 5 would change, exit 1 |
+| packages/loom_transport | VERIFIED, unrelated formatting failure | [job 117615240407](https://github.com/0800x/Loom/actions/runs/39107100428/job/117615240407): 45 files, 39 would change, exit 1 |
+
+`git diff --name-only main HEAD --` for those four package directories was empty;
+their source bytes remain identical to the base. This is not a claim that their
+functional tests passed: the formatter stopped those jobs before tests. Some
+other hosted jobs were still running when inspected. These failures add an
+explicit merge blocker. Under the task's unrelated-failure/out-of-phase stop
+conditions, no Dart files or workflow checks were changed to suppress them.
+PR #1 stays draft; main is unchanged.
