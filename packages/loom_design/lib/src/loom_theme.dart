@@ -6,6 +6,7 @@ import 'loom_interactions.dart';
 
 enum LoomThemeMode { light, dark, oled }
 
+/// A theme-aware modal scrim so barriers melt into both appearances.
 @immutable
 class LoomPalette extends ThemeExtension<LoomPalette> {
   const LoomPalette({
@@ -26,6 +27,7 @@ class LoomPalette extends ThemeExtension<LoomPalette> {
     required this.info,
     required this.onPrimary,
     required this.shadow,
+    this.scrim = const Color(0x59000000),
   });
 
   final Color background;
@@ -46,6 +48,9 @@ class LoomPalette extends ThemeExtension<LoomPalette> {
   final Color onPrimary;
   final Color shadow;
 
+  /// Barrier colour for modal routes, menus and popups.
+  final Color scrim;
+
   @override
   LoomPalette copyWith({
     Color? background,
@@ -65,6 +70,7 @@ class LoomPalette extends ThemeExtension<LoomPalette> {
     Color? info,
     Color? onPrimary,
     Color? shadow,
+    Color? scrim,
   }) =>
       LoomPalette(
         background: background ?? this.background,
@@ -84,6 +90,7 @@ class LoomPalette extends ThemeExtension<LoomPalette> {
         info: info ?? this.info,
         onPrimary: onPrimary ?? this.onPrimary,
         shadow: shadow ?? this.shadow,
+        scrim: scrim ?? this.scrim,
       );
 
   @override
@@ -110,76 +117,90 @@ class LoomPalette extends ThemeExtension<LoomPalette> {
       info: c(info, other.info),
       onPrimary: c(onPrimary, other.onPrimary),
       shadow: c(shadow, other.shadow),
+      scrim: c(scrim, other.scrim),
     );
   }
 }
 
 abstract final class LoomTheme {
+  // Porcelain — airy warm light. Text pairs keep AAA body contrast on all
+  // surfaces; the terracotta primary keeps the Loom brand warm and human.
   static const LoomPalette _light = LoomPalette(
-    background: Color(0xFFF7F3F0),
+    background: Color(0xFFF6F1EC),
     surface: Color(0xFFFFFFFF),
-    surfaceMuted: Color(0xFFEEE7E2),
-    surfaceElevated: Color(0xFFFCF8F5),
-    textPrimary: Color(0xFF2D2522),
-    textSecondary: Color(0xFF756660),
-    textMuted: Color(0xFF7B6D66),
-    border: Color(0x16111C2D),
-    borderStrong: Color(0x2A111C2D),
-    primary: Color(0xFFA8422C),
-    secondary: Color(0xFF88684F),
-    connectivity: Color(0xFF087E63),
-    warning: Color(0xFFB97B20),
-    critical: Color(0xFFBC4E5C),
-    info: Color(0xFF8B604E),
+    surfaceMuted: Color(0xFFEDE5DE),
+    surfaceElevated: Color(0xFFFCF8F4),
+    textPrimary: Color(0xFF26201C),
+    textSecondary: Color(0xFF6B5D55),
+    textMuted: Color(0xFF95847B),
+    border: Color(0x141A2230),
+    borderStrong: Color(0x2A1A2230),
+    primary: Color(0xFFA03D28),
+    secondary: Color(0xFF7D6752),
+    connectivity: Color(0xFF0B7A5E),
+    warning: Color(0xFFA6721C),
+    critical: Color(0xFFB8454F),
+    info: Color(0xFF7C5A47),
     onPrimary: Color(0xFFFFFFFF),
-    shadow: Color(0xFF000000),
+    shadow: Color(0xFF2A1A10),
+    scrim: Color(0x521E150F),
   );
 
+  // Midnight — deep blue-charcoal with a calm coral accent. Glass surfaces
+  // gain their depth from the low-luminance background underneath.
   static const LoomPalette _dark = LoomPalette(
-    background: Color(0xFF111318),
-    surface: Color(0xFF1B1C21),
-    surfaceMuted: Color(0xFF24252A),
-    surfaceElevated: Color(0xFF2C2D32),
-    textPrimary: Color(0xFFF2F5F8),
+    background: Color(0xFF0F1115),
+    surface: Color(0xFF17191F),
+    surfaceMuted: Color(0xFF20222A),
+    surfaceElevated: Color(0xFF272A32),
+    textPrimary: Color(0xFFF1F4F8),
     textSecondary: Color(0xFFAAB4C1),
-    textMuted: Color(0xFF94A2B4),
-    border: Color(0x16FFFFFF),
-    borderStrong: Color(0x2BFFFFFF),
-    primary: Color(0xFFF4A28C),
-    secondary: Color(0xFFD8B59A),
-    connectivity: Color(0xFF45D0A5),
-    warning: Color(0xFFD19A4A),
-    critical: Color(0xFFD86672),
-    info: Color(0xFFD4B6A8),
-    onPrimary: Color(0xFF2B1710),
+    textMuted: Color(0xFF8B99AB),
+    border: Color(0x18FFFFFF),
+    borderStrong: Color(0x2EFFFFFF),
+    primary: Color(0xFFF5A089),
+    secondary: Color(0xFFD8B79E),
+    connectivity: Color(0xFF3ED598),
+    warning: Color(0xFFE2A94F),
+    critical: Color(0xFFEF6E7A),
+    info: Color(0xFFC9B4A6),
+    onPrimary: Color(0xFF301409),
     shadow: Color(0xFF000000),
+    scrim: Color(0x8C05070C),
   );
 
+  // Void — true black for OLED panels; surfaces stay hairline-separated.
   static const LoomPalette _oled = LoomPalette(
     background: Color(0xFF000000),
-    surface: Color(0xFF0B0B0D),
-    surfaceMuted: Color(0xFF131315),
-    surfaceElevated: Color(0xFF1C1C20),
-    textPrimary: Color(0xFFF4F7FA),
-    textSecondary: Color(0xFFA6B0BD),
-    textMuted: Color(0xFF96A3B4),
-    border: Color(0x18FFFFFF),
-    borderStrong: Color(0x30FFFFFF),
-    primary: Color(0xFFF4A28C),
-    secondary: Color(0xFFD8B59A),
-    connectivity: Color(0xFF45A99D),
-    warning: Color(0xFFD19A4A),
-    critical: Color(0xFFD86672),
-    info: Color(0xFFD4B6A8),
-    onPrimary: Color(0xFF2B1710),
+    surface: Color(0xFF0A0A0D),
+    surfaceMuted: Color(0xFF121216),
+    surfaceElevated: Color(0xFF1A1A20),
+    textPrimary: Color(0xFFF3F6FA),
+    textSecondary: Color(0xFFA8B2BF),
+    textMuted: Color(0xFF8E9BAD),
+    border: Color(0x1AFFFFFF),
+    borderStrong: Color(0x32FFFFFF),
+    primary: Color(0xFFF5A089),
+    secondary: Color(0xFFD8B79E),
+    connectivity: Color(0xFF3EC9A9),
+    warning: Color(0xFFE2A94F),
+    critical: Color(0xFFEF6E7A),
+    info: Color(0xFFC9B4A6),
+    onPrimary: Color(0xFF301409),
     shadow: Color(0xFF000000),
+    scrim: Color(0x9E000000),
   );
+
+  /// The midnight palette as data, for surfaces that stay intentionally dark
+  /// regardless of the active theme (active call stage, media viewers).
+  static LoomPalette get darkPalette => _dark;
 
   static ThemeData light({String? fontFamily, Color? accent}) => _build(
         _accent(_light, Brightness.light, accent),
         Brightness.light,
         fontFamily: fontFamily,
       );
+
   static ThemeData dark({String? fontFamily, Color? accent}) => _build(
         _accent(_dark, Brightness.dark, accent),
         Brightness.dark,
@@ -227,12 +248,46 @@ abstract final class LoomTheme {
       ).copyWith(
         primary: p.primary,
         onPrimary: p.onPrimary,
+        primaryContainer: p.primary.withAlphaFraction(.16),
+        onPrimaryContainer: p.primary,
         secondary: p.secondary,
+        onSecondary: p.onPrimary,
+        secondaryContainer: p.secondary.withAlphaFraction(.18),
+        onSecondaryContainer: p.textPrimary,
+        tertiary: p.info,
+        onTertiary: p.onPrimary,
         surface: p.surface,
+        onSurface: p.textPrimary,
+        onSurfaceVariant: p.textSecondary,
+        surfaceContainerHighest: p.surfaceMuted,
+        surfaceContainerHigh: p.surfaceMuted,
+        surfaceContainer: p.surfaceMuted,
+        surfaceContainerLow: p.surface,
+        surfaceContainerLowest: p.surface,
+        outline: p.borderStrong,
+        outlineVariant: p.border,
         error: p.critical,
+        onError: brightness == Brightness.dark
+            ? const Color(0xFF3A0A10)
+            : Colors.white,
+        inverseSurface: p.textPrimary,
+        onInverseSurface: p.background,
+        scrim: p.scrim,
+        shadow: p.shadow,
       ),
     );
-    return base.copyWith(
+    // Persian text frequently appears inside English-mode strings (contact
+    // names, message snippets). The platform default family has no
+    // Arabic-script coverage, so Vazirmatn rides along as the first
+    // fallback for every style; the explicit fa family keeps its own chain.
+    final fallback = <String>[
+      if (fontFamily != null) fontFamily,
+      'Vazirmatn',
+    ];
+    TextStyle fb(TextStyle? style) =>
+        style?.copyWith(fontFamilyFallback: fallback) ??
+        const TextStyle();
+    final themed = base.copyWith(
       extensions: <ThemeExtension<dynamic>>[p],
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
@@ -322,6 +377,42 @@ abstract final class LoomTheme {
         ),
         clipBehavior: Clip.antiAlias,
       ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? p.onPrimary
+              : p.surfaceElevated,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? p.primary
+              : p.borderStrong,
+        ),
+        trackOutlineColor: WidgetStatePropertyAll(p.border),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: p.surfaceMuted,
+        selectedColor: p.primary.withAlphaFraction(LoomOpacity.selectedStrong),
+        checkmarkColor: p.primary,
+        side: BorderSide(color: p.border),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(LoomRadii.control),
+        ),
+        labelStyle: base.textTheme.labelMedium?.copyWith(
+          color: p.textPrimary,
+        ),
+      ),
+      sliderTheme: SliderThemeData(
+        activeTrackColor: p.primary,
+        inactiveTrackColor: p.borderStrong,
+        thumbColor: p.primary,
+        overlayColor: p.primary.withAlphaFraction(.12),
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: p.primary,
+        linearTrackColor: p.borderStrong,
+        circularTrackColor: p.border,
+      ),
       popupMenuTheme: PopupMenuThemeData(
         color: p.surfaceElevated,
         surfaceTintColor: Colors.transparent,
@@ -367,6 +458,12 @@ abstract final class LoomTheme {
         scrolledUnderElevation: 0,
       ),
       textTheme: base.textTheme.copyWith(
+        headlineSmall: base.textTheme.headlineSmall?.copyWith(
+          fontSize: 24,
+          height: 1.18,
+          fontWeight: FontWeight.w700,
+          color: p.textPrimary,
+        ),
         headlineMedium: base.textTheme.headlineMedium?.copyWith(
           fontSize: LoomTypeScale.headline,
           height: LoomTypeScale.headlineHeight,
@@ -383,6 +480,18 @@ abstract final class LoomTheme {
           fontSize: LoomTypeScale.title,
           height: LoomTypeScale.titleHeight,
           fontWeight: FontWeight.w600,
+          color: p.textPrimary,
+        ),
+        titleSmall: base.textTheme.titleSmall?.copyWith(
+          fontSize: 15,
+          height: 1.30,
+          fontWeight: FontWeight.w600,
+          color: p.textPrimary,
+        ),
+        labelLarge: base.textTheme.labelLarge?.copyWith(
+          fontSize: 13,
+          height: LoomTypeScale.labelHeight,
+          fontWeight: FontWeight.w700,
           color: p.textPrimary,
         ),
         bodyLarge: base.textTheme.bodyLarge?.copyWith(
@@ -441,6 +550,29 @@ abstract final class LoomTheme {
             width: LoomBorders.standard,
           ),
         ),
+      ),
+    );
+    // The large copyWith above rebuilds its own textTheme; layer the
+    // fallback chain on the finished result so every customized style
+    // (sizes, colors, weights) keeps its overrides AND gains the fallback.
+    final finished = themed.textTheme;
+    return themed.copyWith(
+      textTheme: finished.copyWith(
+        displayLarge: fb(finished.displayLarge),
+        displayMedium: fb(finished.displayMedium),
+        displaySmall: fb(finished.displaySmall),
+        headlineLarge: fb(finished.headlineLarge),
+        headlineMedium: fb(finished.headlineMedium),
+        headlineSmall: fb(finished.headlineSmall),
+        titleLarge: fb(finished.titleLarge),
+        titleMedium: fb(finished.titleMedium),
+        titleSmall: fb(finished.titleSmall),
+        bodyLarge: fb(finished.bodyLarge),
+        bodyMedium: fb(finished.bodyMedium),
+        bodySmall: fb(finished.bodySmall),
+        labelLarge: fb(finished.labelLarge),
+        labelMedium: fb(finished.labelMedium),
+        labelSmall: fb(finished.labelSmall),
       ),
     );
   }

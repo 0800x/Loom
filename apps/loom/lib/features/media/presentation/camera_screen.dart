@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:loom_crypto_bridge/loom_crypto_bridge.dart';
 import 'package:loom_design/loom_design.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -162,6 +163,25 @@ class _CameraScreenState extends State<LoomCameraScreen>
       if (mounted && epoch == _epoch) {
         setState(() => _busy = false);
       }
+    }
+  }
+
+  /// Deep-link into the OS app-settings page after a permission denial.
+  Future<void> _openSystemSettings() async {
+    try {
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        await launchUrl(
+          Uri.parse('app-settings:'),
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        await launchUrl(
+          Uri.parse('package:app.loom.messenger'),
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (_) {
+      // The OS may refuse the deep link; the retry button still works.
     }
   }
 
@@ -449,15 +469,50 @@ class _CameraScreenState extends State<LoomCameraScreen>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                tr(
-                                  context,
-                                  'Camera unavailable. Check permissions.',
-                                  'دوربین در دسترس نیست؛ مجوزها را بررسی کنید.',
-                                ),
+                                _error == 'CameraAccessDenied'
+                                    ? tr(
+                                        context,
+                                        'Camera access is denied. Allow the camera for Loom in system settings.',
+                                        'دسترسی دوربین رد شده؛ در تنظیمات سیستم به لوم اجازهٔ دوربین بدهید.',
+                                      )
+                                    : tr(
+                                        context,
+                                        'Camera unavailable. Check permissions.',
+                                        'دوربین در دسترس نیست؛ مجوزها را بررسی کنید.',
+                                      ),
+                                textAlign: TextAlign.center,
                               ),
-                              TextButton(
-                                onPressed: _initialize,
-                                child: Text(tr(context, 'Retry', 'تلاش مجدد')),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextButton(
+                                    onPressed: _initialize,
+                                    child: Text(
+                                      tr(context, 'Retry', 'تلاش مجدد'),
+                                    ),
+                                  ),
+                                  if (_error == 'CameraAccessDenied' &&
+                                      !kIsWeb &&
+                                      (defaultTargetPlatform ==
+                                              TargetPlatform.android ||
+                                          defaultTargetPlatform ==
+                                              TargetPlatform.iOS))
+                                    TextButton(
+                                      key: const ValueKey(
+                                        'open-camera-settings',
+                                      ),
+                                      onPressed: () => unawaited(
+                                        _openSystemSettings(),
+                                      ),
+                                      child: Text(
+                                        tr(
+                                          context,
+                                          'Open settings',
+                                          'باز کردن تنظیمات',
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ],
                           ))

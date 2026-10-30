@@ -107,11 +107,11 @@ class LoomAppearancePanel extends StatelessWidget {
           children: [
             for (final option in <(int?, String)>[
               (null, tr(context, 'Default', 'پیش‌فرض')),
-              (0xFF2196F3, tr(context, 'Blue', 'آبی')),
+              (0xFF3B82F6, tr(context, 'Blue', 'آبی')),
               (0xFF8B5CF6, tr(context, 'Purple', 'بنفش')),
-              (0xFF009688, tr(context, 'Teal', 'سبزآبی')),
-              (0xFFE91E63, tr(context, 'Pink', 'صورتی')),
-              (0xFFFF9800, tr(context, 'Orange', 'نارنجی')),
+              (0xFF14B8A6, tr(context, 'Teal', 'سبزآبی')),
+              (0xFFEC4899, tr(context, 'Pink', 'صورتی')),
+              (0xFFF59E0B, tr(context, 'Amber', 'کهربایی')),
             ])
               ChoiceChip(
                 label: Text(option.$2),

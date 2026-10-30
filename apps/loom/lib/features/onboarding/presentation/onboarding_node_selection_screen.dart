@@ -375,6 +375,7 @@ class _LoomOnboardingNodeSelectionScreenState
               ),
             )
           : null,
+      error: controller.errorMessage,
       children: [
         LoomGlassSurface(
           blur: false,
@@ -456,12 +457,18 @@ class _LoomOnboardingNodeSelectionScreenState
           ),
         ),
         if (verifiedHere && controller.selectedNodeVerified) ...[
-          const SizedBox(height: 16),
-          LoomGlassSurface(
-            blur: false,
-            radius: 24,
-            padding: const EdgeInsets.all(20),
-            child: Column(
+          const SizedBox(height: LoomSpacing.md),
+          AnimatedSize(
+            duration: LoomMotion.component,
+            curve: LoomMotion.emphasized,
+            alignment: Alignment.topCenter,
+            child: LoomReveal(
+              order: 1,
+              child: LoomGlassSurface(
+                blur: false,
+                radius: LoomRadii.navigation,
+                padding: const EdgeInsets.all(LoomSpacing.ml),
+                child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
@@ -499,7 +506,7 @@ class _LoomOnboardingNodeSelectionScreenState
 
                 if (!signingIn &&
                     controller.selectedLiveInfo!.registration != 'open') ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: LoomSpacing.sm),
                   Text(
                     tr(
                       context,
@@ -518,15 +525,8 @@ class _LoomOnboardingNodeSelectionScreenState
                 ],
               ],
             ),
+            ),
           ),
-        ],
-        if (controller.errorMessage != null) ...[
-          const SizedBox(height: LoomSpacing.sm),
-          Text(
-            controller.errorMessage!,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: palette.critical),
           ),
         ],
         const SizedBox(height: LoomSpacing.xl),
@@ -570,20 +570,42 @@ class _LoomOnboardingNodeSelectionScreenState
           for (final node in controller.nodes.take(30)) ...[
             _NodeChoice(
               node: node,
+              selected:
+                  controller.selectedNode?.domain == node.domain,
               onTap: loading ? null : () => _selectNode(node),
             ),
             const SizedBox(height: LoomSpacing.xs),
           ],
+        if (controller.nodes.length > 30)
+          Padding(
+            padding: const EdgeInsets.only(top: LoomSpacing.xxs),
+            child: Text(
+              tr(
+                context,
+                'Showing the first 30 servers — search by entering an address.',
+                '۳۰ سرور اول نمایش داده شده — برای جستجو نشانی را وارد کنید.',
+              ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: palette.textMuted),
+              textAlign: TextAlign.center,
+            ),
+          ),
       ],
     );
   }
 }
 
 class _NodeChoice extends StatelessWidget {
-  const _NodeChoice({required this.node, required this.onTap});
+  const _NodeChoice({
+    required this.node,
+    required this.onTap,
+    this.selected = false,
+  });
 
   final LoomNodeDescriptor node;
   final VoidCallback? onTap;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -602,10 +624,15 @@ class _NodeChoice extends StatelessWidget {
               height: 42,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: palette.primary.withAlphaFraction(.10),
+                color: selected
+                    ? palette.primary.withAlphaFraction(.18)
+                    : palette.primary.withAlphaFraction(.10),
                 borderRadius: BorderRadius.circular(LoomRadii.control),
               ),
-              child: const Icon(LoomIcons.hub_outlined),
+              child: Icon(
+                selected ? LoomIcons.check_circle_rounded : LoomIcons.hub_outlined,
+                color: selected ? palette.primary : null,
+              ),
             ),
             const SizedBox(width: LoomSpacing.sm),
             Expanded(

@@ -609,16 +609,24 @@ class _WideLayout extends StatelessWidget {
       body: SafeArea(
         child: Row(
           children: [
-            Container(
-              width: 88,
-              color: palette.surface,
-              padding: const EdgeInsets.symmetric(
-                horizontal: LoomSpacing.xs,
-                vertical: LoomSpacing.md,
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
+                  colors: [palette.surface, palette.surfaceElevated],
+                ),
               ),
-              child: _DesktopNavigation(
-                selected: selected,
-                onSelected: onSelected,
+              child: Container(
+                width: LoomSizing.navRail,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: LoomSpacing.xs,
+                  vertical: LoomSpacing.md,
+                ),
+                child: _DesktopNavigation(
+                  selected: selected,
+                  onSelected: onSelected,
+                ),
               ),
             ),
             VerticalDivider(width: 1, color: palette.border),
@@ -646,14 +654,7 @@ class _WideLayout extends StatelessWidget {
                             ? -1
                             : 1),
                   ),
-                  child: SizedBox(
-                    width: 8,
-                    child: VerticalDivider(
-                      width: 8,
-                      thickness: 1,
-                      color: palette.border,
-                    ),
-                  ),
+                  child: _ListResizeHandle(color: palette.border),
                 ),
               ),
               Expanded(
@@ -776,28 +777,54 @@ class _DesktopDestination extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.loom;
+    final reduceMotion = LoomAccessibility.fromContext(context).reduceMotion;
     return Padding(
       padding: const EdgeInsets.only(bottom: LoomSpacing.xs),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(LoomRadii.surface),
         child: AnimatedContainer(
-          duration: LoomAccessibility.fromContext(context).reduceMotion
-              ? Duration.zero
-              : LoomMotion.component,
+          duration: reduceMotion ? Duration.zero : LoomMotion.component,
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: LoomSpacing.sm),
           decoration: BoxDecoration(
-            color: selected
-                ? palette.primary.withAlphaFraction(.13)
-                : Colors.transparent,
+            gradient: selected
+                ? LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      palette.primary.withAlphaFraction(.16),
+                      palette.primary.withAlphaFraction(.05),
+                    ],
+                  )
+                : null,
             borderRadius: BorderRadius.circular(LoomRadii.surface),
+            border: Border.all(
+              color: selected
+                  ? palette.primary.withAlphaFraction(.14)
+                  : Colors.transparent,
+            ),
           ),
           child: Column(
             children: [
-              Icon(
-                icon,
-                color: selected ? palette.primary : palette.textSecondary,
+              TweenAnimationBuilder<double>(
+                tween: Tween(end: selected ? 1.0 : 0.0),
+                duration: reduceMotion ? Duration.zero : LoomMotion.component,
+                curve: LoomMotion.emphasized,
+                builder: (context, t, _) => Transform.translate(
+                  offset: Offset(0, -1.5 * t),
+                  child: Transform.scale(
+                    scale: 1 + .04 * t,
+                    child: Icon(
+                      icon,
+                      color: Color.lerp(
+                        palette.textSecondary,
+                        palette.primary,
+                        t,
+                      ),
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 5),
               Text(
@@ -809,6 +836,45 @@ class _DesktopDestination extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A quiet resize affordance: the hairline divider warms to the accent while
+/// the pointer rests on it, so the drag zone no longer feels invisible.
+class _ListResizeHandle extends StatefulWidget {
+  const _ListResizeHandle({required this.color});
+
+  final Color color;
+
+  @override
+  State<_ListResizeHandle> createState() => _ListResizeHandleState();
+}
+
+class _ListResizeHandleState extends State<_ListResizeHandle> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = context.loom.primary;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: SizedBox(
+        width: 8,
+        child: Center(
+          child: AnimatedContainer(
+            duration: LoomMotion.component,
+            curve: LoomMotion.standard,
+            width: _hover ? 3 : 1,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              color: _hover ? accent.withAlphaFraction(.55) : widget.color,
+              borderRadius: BorderRadius.circular(LoomRadii.pill),
+            ),
           ),
         ),
       ),
@@ -972,6 +1038,24 @@ class _ChatListState extends State<_ChatList> {
       });
     }
     return result.toList(growable: false);
+  }
+
+  /// Unread total for a folder chip, using the same predicate as the list
+  /// (minus the search filter, which only ever narrows the visible page).
+  int _folderUnreadCount(
+    BuildContext context,
+    LoomChatFolderDefinition folder,
+  ) {
+    var total = 0;
+    for (final item in widget.messaging?.conversations ??
+        const <models.LoomConversation>[]) {
+      final archived = widget.messaging?.isArchived(item.id) ?? false;
+      if (archived != _showArchived) continue;
+      if (folder.matches(item)) {
+        total += item.unreadCount;
+      }
+    }
+    return total;
   }
 
   @override
@@ -1188,25 +1272,70 @@ class _ChatListState extends State<_ChatList> {
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     separatorBuilder: (_, __) => const SizedBox(width: 4),
                     itemCount: folders.length,
-                    itemBuilder: (context, index) => ChoiceChip(
-                      selected: selectedIndex == index,
-                      showCheckmark: false,
-                      label: Text(
-                        loomChatFolderDisplayName(context, folders[index]),
-                      ),
-                      onSelected: (_) => _selectFolder(folders, index),
-                      side: BorderSide.none,
-                      backgroundColor: Colors.transparent,
-                      selectedColor: palette.primary.withAlphaFraction(.13),
-                      labelStyle: TextStyle(
-                        color: selectedIndex == index
-                            ? palette.primary
-                            : palette.textSecondary,
-                        fontWeight: selectedIndex == index
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                      ),
-                    ),
+                    itemBuilder: (context, index) {
+                      final folder = folders[index];
+                      final selected = selectedIndex == index;
+                      final unread = _folderUnreadCount(context, folder);
+                      return ChoiceChip(
+                        selected: selected,
+                        showCheckmark: false,
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              loomChatFolderDisplayName(context, folder),
+                            ),
+                            if (unread > 0) ...[
+                              const SizedBox(width: 5),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 1,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 17,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: selected
+                                      ? palette.primary
+                                      : palette.primary
+                                            .withAlphaFraction(.16),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  unread > 99 ? '99+' : '$unread',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    height: 1.5,
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                    fontWeight: FontWeight.w700,
+                                    color: selected
+                                        ? palette.onPrimary
+                                        : palette.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        onSelected: (_) => _selectFolder(folders, index),
+                        side: BorderSide.none,
+                        backgroundColor: Colors.transparent,
+                        selectedColor:
+                            palette.primary.withAlphaFraction(.13),
+                        labelStyle: TextStyle(
+                          color: selected
+                              ? palette.primary
+                              : palette.textSecondary,
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      );
+                    },
                   ),
                 ),
               Expanded(

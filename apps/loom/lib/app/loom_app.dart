@@ -63,15 +63,24 @@ class LoomApp extends StatefulWidget {
   State<LoomApp> createState() => _LoomAppState();
 }
 
-class _LoomAppState extends State<LoomApp> {
+class _LoomAppState extends State<LoomApp>
+    with SingleTickerProviderStateMixin {
   LoomThemeMode mode = LoomThemeMode.dark;
   LoomGlassQuality glassQuality = LoomGlassQuality.high;
   int? accent;
   LoomMotionPreference motion = LoomMotionPreference.system;
   LoomChatDensity chatDensity = LoomChatDensity.comfortable;
-  Locale locale = const Locale('en');
+  /// The persisted language choice: 'en', 'fa', or 'sys' (follow the OS).
+  /// New installs follow the system language; Persian users get FA out of
+  /// the box instead of hunting through settings.
+  String localePreference = 'sys';
   final _appearanceStore = LoomAppearancePreferencesStore();
   bool _appearanceChanged = false;
+
+  // Theme changes crossfade instead of snapping. The previous ThemeData is
+  // kept briefly and every color/radius eases into the new appearance.
+  ThemeData? _themeFrom;
+  AnimationController? _themeLerp;
 
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   final LoomCallRouteObserver callRouteObserver = LoomCallRouteObserver();
@@ -166,8 +175,8 @@ class _LoomAppState extends State<LoomApp> {
     }
     setState(() {
       mode = saved.theme;
-      glassQuality = LoomGlassQuality.high;
-      locale = saved.locale;
+      glassQuality = saved.glass;
+      localePreference = saved.localePreference;
       accent = saved.accent;
       motion = saved.motion;
       chatDensity = saved.chatDensity;
@@ -181,7 +190,7 @@ class _LoomAppState extends State<LoomApp> {
         LoomAppearancePreferences(
           theme: mode,
           glass: glassQuality,
-          locale: locale,
+          localePreference: localePreference,
           accent: accent,
           motion: motion,
           chatDensity: chatDensity,
@@ -191,7 +200,7 @@ class _LoomAppState extends State<LoomApp> {
   }
 
   void _setTheme(LoomThemeMode value) {
-    setState(() => mode = value);
+    _mutateWithThemeTransition(() => mode = value);
     _saveAppearance();
   }
 
@@ -201,7 +210,11 @@ class _LoomAppState extends State<LoomApp> {
   }
 
   void _setLocale(Locale value) {
-    setState(() => locale = value);
+    // Settings may hand back the resolved locale or the 'sys' sentinel.
+    _mutateWithThemeTransition(
+      () => localePreference =
+          value.languageCode == _systemLocaleCode ? 'sys' : value.languageCode,
+    );
     _saveAppearance();
   }
 
@@ -369,6 +382,7 @@ class _LoomAppState extends State<LoomApp> {
   @override
   void dispose() {
     _groupLinkChannel.setMethodCallHandler(null);
+    _themeLerp?.dispose();
     // Notify surviving playback hosts after the locked teardown finishes.
     scheduleMicrotask(() => unawaited(LoomPlaybackController.closeAll()));
     onboarding.removeListener(_onOnboardingChanged);
@@ -390,8 +404,25 @@ class _LoomAppState extends State<LoomApp> {
     super.dispose();
   }
 
+  static const _systemLocaleCode = 'sys';
+
+  /// The concrete locale rendered by MaterialApp, resolved from the
+  /// preference: explicit choices win, otherwise follow the OS (fa→fa,
+  /// everything else→en). Recomputed on every build so a mid-session OS
+  /// language change is picked up on the next theme pass.
+  Locale get _resolvedLocale {
+    switch (localePreference) {
+      case 'fa':
+        return const Locale('fa');
+      case 'en':
+        return const Locale('en');
+    }
+    final system = WidgetsBinding.instance.platformDispatcher.locale;
+    return system.languageCode == 'fa' ? const Locale('fa') : const Locale('en');
+  }
+
   String? get _localeFontFamily =>
-      locale.languageCode == 'fa' ? 'Vazirmatn' : null;
+      _resolvedLocale.languageCode == 'fa' ? 'Vazirmatn' : null;
 
   ThemeData get _theme => switch (mode) {
     LoomThemeMode.light => LoomTheme.light(
@@ -408,11 +439,46 @@ class _LoomAppState extends State<LoomApp> {
     ),
   };
 
+  /// The theme actually rendered; eases from the previous theme after a
+  /// change, and respects the reduced-motion preference.
+  ThemeData get _displayedTheme {
+    final lerp = _themeLerp;
+    final from = _themeFrom;
+    if (lerp == null || from == null) {
+      return _theme;
+    }
+    final eased = Curves.easeOutCubic.transform(lerp.value);
+    return ThemeData.lerp(from, _theme, eased);
+  }
+
+  void _mutateWithThemeTransition(VoidCallback mutate) {
+    // The explicit in-app reduced-motion preference wins; system signals are
+    // not readable above MaterialApp, and the settings toggle covers intent.
+    final reduceMotion = motion == LoomMotionPreference.reduced;
+    final from = _theme;
+    setState(mutate);
+    if (identical(from, _theme) || reduceMotion) {
+      return;
+    }
+    _themeLerp?.dispose();
+    _themeFrom = from;
+    _themeLerp =
+        AnimationController(vsync: this, duration: LoomMotion.choreography)
+          ..addListener(() => setState(() {}))
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) {
+              _themeFrom = null;
+            }
+          })
+          ..forward();
+  }
+
   Widget _settings(LoomSettingsSection section) => LoomSettingsDetailScreen(
     section: section,
     themeMode: mode,
     glassQuality: glassQuality,
-    locale: locale,
+    locale: _resolvedLocale,
+    localePreference: localePreference,
     onThemeChanged: _setTheme,
     onGlassQualityChanged: _setGlass,
     onLocaleChanged: _setLocale,
@@ -513,7 +579,9 @@ class _LoomAppState extends State<LoomApp> {
                                   },
                                   accent: accent,
                                   onAccentChanged: (value) {
-                                    setState(() => accent = value);
+                                    _mutateWithThemeTransition(
+                                      () => accent = value,
+                                    );
                                     _saveAppearance();
                                   },
                                   onChanged: _setTheme,
@@ -548,8 +616,8 @@ class _LoomAppState extends State<LoomApp> {
                             ),
                         debugShowCheckedModeBanner: false,
                         title: 'Loom',
-                        theme: _theme,
-                        locale: locale,
+                        theme: _displayedTheme,
+                        locale: _resolvedLocale,
                         localizationsDelegates: const [
                           GlobalMaterialLocalizations.delegate,
                           GlobalWidgetsLocalizations.delegate,
@@ -613,7 +681,7 @@ class _LoomAppState extends State<LoomApp> {
                             '/design-lab': (_) => DesignLabScreen(
                               themeMode: mode,
                               glassQuality: glassQuality,
-                              locale: locale,
+                              locale: _resolvedLocale,
                               onThemeChanged: _setTheme,
                               onGlassQualityChanged: _setGlass,
                               onLocaleChanged: _setLocale,

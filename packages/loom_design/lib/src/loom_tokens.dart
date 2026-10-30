@@ -34,6 +34,10 @@ abstract final class LoomElevation {
   static const double floatingBlur = 16;
   static const double chromeOffset = 3;
   static const double floatingOffset = 7;
+
+  /// Live blur chrome (floating bars over scrolling content).
+  static const double liveBlur = 22;
+  static const double liveOffset = 6;
 }
 
 abstract final class LoomIconSize {
@@ -94,6 +98,27 @@ abstract final class LoomOpacity {
   static const double chromeShadowDark = 0.08;
   static const double floatingShadowLight = 0.06;
   static const double floatingShadowDark = 0.12;
+  static const double liveShadowLight = 0.08;
+  static const double liveShadowDark = 0.22;
+
+  /// Specular sheen painted over glass panes; keeps text legible while the
+  /// surface stays visibly translucent.
+  static const double sheenLight = 0.10;
+  static const double sheenDark = 0.055;
+  static const double sheenShadow = 0.035;
+
+  /// Bright inner edge that sells the glass thickness on hairline borders.
+  static const double glassEdgeLight = 0.66;
+  static const double glassEdgeDark = 0.14;
+
+  static const double highContrastSurface = 0.96;
+
+  /// Content stamped over photos/video keeps a quiet scrim behind it.
+  static const double onMediaScrim = 0.42;
+  static const double onMediaText = 0.92;
+
+  /// Modal scrims; theme-aware values live in LoomPalette.scrim.
+  static const double barrierFloat = 0.46;
 }
 
 abstract final class LoomTypeScale {
@@ -119,6 +144,7 @@ abstract final class LoomMotion {
   static const Duration micro = Duration(milliseconds: 120);
   static const Duration component = Duration(milliseconds: 180);
   static const Duration route = Duration(milliseconds: 260);
+  static const Duration choreography = Duration(milliseconds: 340);
   static const Curve standard = Curves.easeOutCubic;
   static const Curve emphasized = Cubic(0.2, 0.8, 0.2, 1);
   static const Curve exit = Curves.easeInCubic;
@@ -141,26 +167,29 @@ class LoomGlassRecipe {
 
 abstract final class LoomGlassRecipes {
   static const LoomGlassRecipe weak = LoomGlassRecipe(
-    blur: 14,
-    lightAlpha: 0.78,
-    darkAlpha: 0.72,
-    borderAlpha: 0.28,
+    blur: 16,
+    lightAlpha: 0.72,
+    darkAlpha: 0.62,
+    borderAlpha: 0.30,
   );
   static const LoomGlassRecipe standard = LoomGlassRecipe(
-    blur: 22,
-    lightAlpha: 0.72,
-    darkAlpha: 0.66,
-    borderAlpha: 0.34,
+    blur: 24,
+    lightAlpha: 0.66,
+    darkAlpha: 0.56,
+    borderAlpha: 0.38,
   );
   static const LoomGlassRecipe strong = LoomGlassRecipe(
-    blur: 30,
-    lightAlpha: 0.82,
-    darkAlpha: 0.76,
-    borderAlpha: 0.42,
+    blur: 32,
+    lightAlpha: 0.80,
+    darkAlpha: 0.70,
+    borderAlpha: 0.46,
   );
 
   static const double reducedBlurFactor = 0.35;
   static const double reducedOpacityBoost = 0.10;
+
+  /// Live blur chrome keeps a readability floor over moving content.
+  static const double liveTintFloor = 0.52;
 }
 
 extension LoomColorAlpha on Color {

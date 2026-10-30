@@ -120,6 +120,22 @@ class LoomPlaybackController extends ChangeNotifier
   int get repeat => _queue.repeat;
   _SystemAudioHandler? _handler;
   AudioSession? _session;
+
+  /// Whether the interruption that just paused us was transient, so playback
+  /// should resume when the OS hands audio back.
+  bool _resumeAfterInterruption = false;
+
+  /// Best-effort OS audio focus claim. Only meaningful once the session is
+  /// configured (mobile); desktops and voice sessions are unaffected.
+  Future<void> _activateAudioSession() async {
+    final session = _session;
+    if (session == null || _voiceSession) return;
+    try {
+      await session.setActive(true);
+    } catch (_) {
+      // Focus denial must not break playback.
+    }
+  }
   Future<void>? _systemSetup;
   final List<StreamSubscription<dynamic>> _sessionSubscriptions = [];
   List<LoomMusicTrack> get queue =>
@@ -353,6 +369,12 @@ class LoomPlaybackController extends ChangeNotifier
       await seek(Duration.zero);
       return;
     }
+    // Voice notes have no queue: restart instead of hopping the stale
+    // music queue (parity with next()'s !music guard).
+    if (!music) {
+      await seek(Duration.zero);
+      return;
+    }
     final id = _queue.previous();
     if (id != null) await playTrack(id);
   }
@@ -398,7 +420,15 @@ class LoomPlaybackController extends ChangeNotifier
     _systemPublisher = LoomMusicSystemPublisher(_handler!);
     _sessionSubscriptions.add(
       _session!.interruptionEventStream.listen((event) {
-        if (event.begin) unawaited(pauseAll());
+        if (event.begin) {
+          _resumeAfterInterruption = playing;
+          unawaited(pauseAll());
+        } else if (_resumeAfterInterruption) {
+          // Transient interruptions (ringtone, Siri) hand audio back; a real
+          // pause by the user never sets the resume flag.
+          _resumeAfterInterruption = false;
+          unawaited(toggle());
+        }
       }),
     );
     _sessionSubscriptions.add(
@@ -620,6 +650,9 @@ class LoomPlaybackController extends ChangeNotifier
           return;
         }
         await player.play();
+        // Claim OS audio focus now that playback actually started; other
+        // apps (and calls) then duck or pause us correctly.
+        unawaited(_activateAudioSession());
         loading = false;
         notifyListeners();
       } catch (_) {
@@ -652,6 +685,7 @@ class LoomPlaybackController extends ChangeNotifier
         return;
       }
       await _player?.playOrPause();
+      unawaited(_activateAudioSession());
     } catch (_) {
       error = 'playback_failed';
       notifyListeners();
@@ -699,6 +733,7 @@ class LoomPlaybackController extends ChangeNotifier
     if (!_voiceSession && !voice.playing) {
       unawaited(_session?.setActive(false) ?? Future<bool>.value(false));
     }
+    _resumeAfterInterruption = false;
     waveform = const [];
     position = Duration.zero;
     _lastSystemPosition = Duration.zero;

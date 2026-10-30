@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import '../../../app/release_metadata.dart';
 import 'package:loom_design/loom_design.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -31,6 +34,7 @@ class LoomSettingsDetailScreen extends StatefulWidget {
     required this.themeMode,
     required this.glassQuality,
     required this.locale,
+    required this.localePreference,
     required this.onThemeChanged,
     required this.onGlassQualityChanged,
     required this.onLocaleChanged,
@@ -41,6 +45,9 @@ class LoomSettingsDetailScreen extends StatefulWidget {
   final LoomThemeMode themeMode;
   final LoomGlassQuality glassQuality;
   final Locale locale;
+
+  /// The persisted choice: 'en', 'fa' or 'sys' (follow the OS).
+  final String localePreference;
   final ValueChanged<LoomThemeMode> onThemeChanged;
   final ValueChanged<LoomGlassQuality> onGlassQualityChanged;
   final ValueChanged<Locale> onLocaleChanged;
@@ -64,6 +71,22 @@ class _LoomSettingsDetailScreenState extends State<LoomSettingsDetailScreen> {
     themeMode = widget.themeMode;
     glassQuality = widget.glassQuality;
     locale = widget.locale;
+  }
+
+  @override
+  void didUpdateWidget(covariant LoomSettingsDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Appearance can also change from Design Lab or onboarding surfaces;
+    // mirror the parent state instead of rendering a stale copy.
+    if (oldWidget.themeMode != widget.themeMode) {
+      themeMode = widget.themeMode;
+    }
+    if (oldWidget.glassQuality != widget.glassQuality) {
+      glassQuality = widget.glassQuality;
+    }
+    if (oldWidget.locale != widget.locale) {
+      locale = widget.locale;
+    }
   }
 
   void onThemeChanged(LoomThemeMode value) {
@@ -259,15 +282,25 @@ class _LoomSettingsDetailScreenState extends State<LoomSettingsDetailScreen> {
 
   List<Widget> _language(BuildContext context) => [
     _ChoiceRow(
+      title: tr(context, 'System default', 'پیش‌فرض سیستم'),
+      subtitle: tr(
+        context,
+        'Follow the device language (Persian or English)',
+        'از زبان دستگاه پیروی کن (فارسی یا انگلیسی)',
+      ),
+      selected: widget.localePreference == 'sys',
+      onTap: () => onLocaleChanged(const Locale('sys')),
+    ),
+    _ChoiceRow(
       title: 'English',
       subtitle: 'Left-to-right',
-      selected: locale.languageCode == 'en',
+      selected: widget.localePreference == 'en',
       onTap: () => onLocaleChanged(const Locale('en')),
     ),
     _ChoiceRow(
       title: 'فارسی',
       subtitle: 'راست‌به‌چپ',
-      selected: locale.languageCode == 'fa',
+      selected: widget.localePreference == 'fa',
       onTap: () => onLocaleChanged(const Locale('fa')),
     ),
   ];
@@ -344,51 +377,7 @@ class _LoomSettingsDetailScreenState extends State<LoomSettingsDetailScreen> {
     if (!kIsWeb &&
         (defaultTargetPlatform == TargetPlatform.android ||
             defaultTargetPlatform == TargetPlatform.windows)) ...[
-      LoomSettingsRow(
-        icon: LoomIcons.notifications_none_rounded,
-        title: tr(
-          context,
-          'Enable message notifications',
-          'فعال‌کردن اعلان پیام',
-        ),
-        subtitle: tr(
-          context,
-          'Encrypted preview; respects muted and open chats',
-          'پیش‌نمایش خصوصی؛ با رعایت سکوت و چت باز',
-        ),
-        onTap: () async {
-          try {
-            final bridge = LoomMessageNotificationBridge();
-            await bridge.enable();
-            if (!context.mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  tr(
-                    context,
-                    'Allow notifications in the system prompt or settings.',
-                    'اعلان‌ها را در درخواست سیستم یا تنظیمات مجاز کنید.',
-                  ),
-                ),
-              ),
-            );
-          } catch (_) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    tr(
-                      context,
-                      'System notifications are unavailable.',
-                      'اعلان سیستم در دسترس نیست.',
-                    ),
-                  ),
-                ),
-              );
-            }
-          }
-        },
-      ),
+      const _MessageNotificationToggle(),
       LoomSettingsRow(
         icon: LoomIcons.settings_outlined,
         title: tr(
@@ -706,4 +695,115 @@ class _ValueRow extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// Status-driven switch for message notifications. The OS is authoritative:
+/// the value is re-queried on start and whenever the app returns to the
+/// foreground (the permission dialog may have changed it).
+class _MessageNotificationToggle extends StatefulWidget {
+  const _MessageNotificationToggle();
+
+  @override
+  State<_MessageNotificationToggle> createState() =>
+      _MessageNotificationToggleState();
+}
+
+class _MessageNotificationToggleState extends State<_MessageNotificationToggle>
+    with WidgetsBindingObserver {
+  final _bridge = LoomMessageNotificationBridge();
+  bool _enabled = false;
+  bool _checking = true;
+  bool _working = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    unawaited(_refresh());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_refresh());
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Future<void> _refresh() async {
+    try {
+      final status = await _bridge.status();
+      if (!mounted) return;
+      setState(() {
+        _enabled = status['enabled'] == true;
+        _checking = false;
+      });
+    } on MissingPluginException {
+      // Test harness or unsupported platform: no OS answer available.
+      if (!mounted) return;
+      setState(() => _checking = false);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _checking = false);
+    }
+  }
+
+  Future<void> _toggle(bool value) async {
+    if (_working) return;
+    setState(() => _working = true);
+    try {
+      if (value) {
+        // Turning on triggers the POST_NOTIFICATIONS prompt on Android 13+.
+        await _bridge.enable();
+      } else {
+        // Revocation is only possible from the OS settings page.
+        await _bridge.settings();
+      }
+    } on MissingPluginException {
+      // Test harness or unsupported platform.
+    } catch (_) {
+      // Channel unavailable; keep the OS answer below.
+    }
+    // Give the OS dialog a beat to settle, then trust the real state.
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+    await _refresh();
+    if (!mounted) return;
+    setState(() => _working = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LoomSettingsRow(
+      icon: LoomIcons.notifications_none_rounded,
+      title: tr(
+        context,
+        'Message notifications',
+        'اعلان پیام‌ها',
+      ),
+      subtitle: _checking
+          ? tr(context, 'Checking system state…', 'بررسی وضعیت سیستم…')
+          : _enabled
+              ? tr(
+                  context,
+                  'On — encrypted preview; muted and open chats stay silent',
+                  'روشن — پیش‌نمایش خصوصی؛ چت‌های بی‌صدا و باز اعلان نمی‌دهند',
+                )
+              : tr(
+                  context,
+                  'Off — enable to hear from new chats',
+                  'خاموش — برای اطلاع از پیام‌های جدید فعال کنید',
+                ),
+      showDivider: true,
+      // Never an indefinite spinner here: unmocked platform channels hang
+      // in widget tests and any infinite animation stalls pumpAndSettle.
+      trailing: Switch(value: _enabled, onChanged: _working ? null : _toggle),
+      onTap: () => _toggle(!_enabled),
+    );
+  }
 }

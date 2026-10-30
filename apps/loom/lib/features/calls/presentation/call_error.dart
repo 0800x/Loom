@@ -117,7 +117,13 @@ String callFailureMessage(BuildContext context, Object error) {
 }
 
 /// Does not depend on a ScaffoldMessenger being present under the caller.
-Future<void> showCallFailure(BuildContext context, Object error) {
+/// [onRetry] re-attempts the last action after the dialog closes; timeouts and
+/// TURN problems are usually transient, so retry belongs in the dialog.
+Future<void> showCallFailure(
+  BuildContext context,
+  Object error, {
+  Future<void> Function()? onRetry,
+}) {
   final glassQuality = LoomGlassScope.qualityOf(context);
   return showDialog<void>(
     context: context,
@@ -137,22 +143,50 @@ Future<void> showCallFailure(BuildContext context, Object error) {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    tr(
-                      dialogContext,
-                      'Call could not connect',
-                      'تماس برقرار نشد',
-                    ),
-                    style: Theme.of(dialogContext).textTheme.titleLarge,
+                  Row(
+                    children: [
+                      Icon(
+                        LoomIcons.error_outline_rounded,
+                        color: context.loom.critical,
+                      ),
+                      const SizedBox(width: LoomSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          tr(
+                            dialogContext,
+                            'Call could not connect',
+                            'تماس برقرار نشد',
+                          ),
+                          style: Theme.of(dialogContext).textTheme.titleLarge,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Text(callFailureMessage(dialogContext, error)),
                   const SizedBox(height: 20),
                   Align(
                     alignment: AlignmentDirectional.centerEnd,
-                    child: TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(),
-                      child: Text(tr(dialogContext, 'Close', 'بستن')),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (onRetry != null)
+                          FilledButton(
+                            onPressed: () {
+                              Navigator.of(dialogContext).pop();
+                              unawaited(onRetry());
+                            },
+                            child: Text(
+                              tr(dialogContext, 'Try again', 'تلاش دوباره'),
+                            ),
+                          ),
+                        if (onRetry != null)
+                          const SizedBox(width: LoomSpacing.sm),
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          child: Text(tr(dialogContext, 'Close', 'بستن')),
+                        ),
+                      ],
                     ),
                   ),
                 ],

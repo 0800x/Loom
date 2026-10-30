@@ -1,0 +1,47 @@
+﻿feat(app): overhaul UX, glass stability, calls, notifications, and i18n
+
+Critical fixes:
+- Mirror only the local participant's video in group calls (remote streams were mirrored)
+- Consume message-notification taps on warm start via MainActivity.onNewIntent
+- Propagate POST_NOTIFICATIONS permission result (code 9042) to Dart and drive the settings switch from the real OS status
+- Null-safe endpoint rendering in group chat (crash on server switch / session expiry)
+- Surface errors from commitAndRegister instead of failing silently
+- Add fallback view for the recovery-verification dead end
+- Restore incoming-call state when accept fails so the offer is not lost
+- Add leave/delete group flow with confirmation dialog and MLS member-list update
+- Guard against double-push of the group call route
+
+Calls & group calls:
+- Floating glass mini bar for group calls (was shoving content down): live timer, mute state, hangup, return-to-call
+- Always-dark stage theme for group calls, call duration in the app bar
+- Stable ValueKeys on video tiles, active-speaker glow, mute/raise-hand badges, 3-column grid on wide screens
+- Replace infinite repeating animations with finite transitions (battery + frame stability)
+- Retry button in the call error dialog
+
+Onboarding:
+- Global animated error slot on the setup scaffold, localized brand name
+- Node selection: selected highlight, animated "server verified" card, list caption
+- Busy indicators respect reduce-motion
+
+Fonts & language:
+- Vazirmatn fontFamilyFallback across all theme styles so Persian text renders consistently inside the English UI
+- Add "follow system" language option (default for new installs); existing en/fa choices preserved
+- Keep settings panels in sync via didUpdateWidget
+
+Media & music player:
+- Shared _SeekSlider: seek on release, no drag fighting with position ticks (mini, expanded, and desktop players)
+- Real audio focus (setActive(true)) with interruption handling and resume
+- Mini player progress hairline, cover tap to expand, hour-capable time formatting
+- Camera permission-denied copy with an open-settings deep link
+
+Chat, folders & recordings:
+- Animated scroll-to-latest FAB, live mic waveform while recording voice messages
+- Unread badges on folder chips, confirmation before folder deletion
+- Local timestamps under group chat bubbles
+
+Glass & design system:
+- Fix _GlassSheen unbounded layout crash inside scroll contexts (SizedBox.expand -> Positioned.fill); root cause of ~40 test failures and random device crashes
+- Static presence dots instead of per-avatar infinite pulses
+
+Validation: flutter analyze clean; 461 app tests + 55 design tests passing.
+Full Persian report: FIXES-REPORT.fa.md

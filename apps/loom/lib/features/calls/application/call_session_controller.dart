@@ -410,8 +410,7 @@ class LoomCallSessionController extends ChangeNotifier
     _incomingTimeout?.cancel();
     incomingCall = null;
     incomingPeer = null;
-    currentPeer =
-        peer ??
+    final resolvedPeer = peer ??
         LoomCallPeer(
           conversationId: pending.conversationId,
           address: '',
@@ -419,12 +418,26 @@ class LoomCallSessionController extends ChangeNotifier
           identityId: pending.callerIdentityId,
           devices: const <LoomDeviceKeyBundle>[],
         );
+    currentPeer = resolvedPeer;
     notifyListeners();
     try {
       await engine.acceptPending(pending);
       _recordStarted(currentPeer!, engine.state);
     } catch (error) {
       errorMessage = _safeError(error);
+      // The offer is still live server-side: restoring the incoming state
+      // lets the user accept again instead of losing the call entirely.
+      if (!_disposed && incomingCall == null) {
+        incomingCall = pending;
+        incomingPeer = peer;
+        currentPeer = null;
+        final remaining =
+            pending.expiresAt.difference(DateTime.now().toUtc());
+        if (remaining > Duration.zero) {
+          _incomingTimeout =
+              Timer(remaining, () => unawaited(_expireIncoming()));
+        }
+      }
       notifyListeners();
       rethrow;
     }

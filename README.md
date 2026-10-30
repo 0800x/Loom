@@ -50,6 +50,35 @@ Group calls require a media service configured by the node operator. Nearby
 requires supported hardware, permissions, compatible peers and trusted device
 keys. Calls require live connectivity.
 
+## Design system
+
+Loom ships its own design language, `loom_design`, shared by every screen and
+platform:
+
+- **Glassmorphism, layered.** Surfaces combine backdrop blur, refraction with
+  chromatic aberration (`liquid_glass_easy`), a specular sheen raking across
+  the pane and bright hairline edges. Chrome that floats over scrolling
+  content — the bottom navigation bar and composer — samples the live
+  backdrop. Quality adapts automatically: when raster frames miss their
+  budget, blur and refraction step down before dropping, and reduced
+  transparency or high-contrast preferences bypass the shader entirely.
+- **A three-mode color system.** Porcelain (light), Midnight (dark) and Void
+  (OLED) palettes are expressed as a single `LoomPalette` theme extension with
+  17 semantic roles, from `background` down to `scrim`, so components never
+  hardcode a hex value. Primary/onPrimary contrast stays at 4.5:1 or better in
+  all three modes, and optional accents re-derive the system through
+  `ColorScheme.fromSeed`.
+- **Motion with manners.** One motion vocabulary — 120 ms micro, 180 ms
+  component, 260 ms route, 340 ms choreography — a critically damped spring
+  for expanding surfaces, container-transform transitions from the tapped row
+  into the conversation, drag-to-dismiss sheets, haptic selection on
+  navigation and staggered reveals on onboarding. Every animation honors the
+  in-app reduce-motion preference as well as the OS signal.
+
+Tokens live in `packages/loom_design/lib/src/loom_tokens.dart`, the theme
+builder in `loom_theme.dart` and the glass engine in `loom_glass.dart`. A
+debug-only **Design Lab** (`/design-lab`) renders the full component gallery.
+
 ## Screenshots
 
 The messenger images render the actual Flutter widgets with fictional contacts

@@ -139,13 +139,20 @@ class _LoomStartupGateState extends State<LoomStartupGate> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const LoomBrandMark(size: 76, glow: false),
+                  const LoomReveal(
+                    order: 1,
+                    child: LoomBrandMark(size: 76, glow: false),
+                  ),
                   const SizedBox(height: 20),
-                  Text(
-                    tr(context, 'Loom', 'لوم'),
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
+                  LoomReveal(
+                    order: 2,
+                    child: Text(
+                      tr(context, 'Loom', 'لوم'),
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
                     ),
                   ),
                   const SizedBox(height: 24),

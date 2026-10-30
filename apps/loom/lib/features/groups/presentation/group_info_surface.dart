@@ -20,6 +20,7 @@ class LoomGroupInfoSurface extends StatefulWidget {
     required this.onInvite,
     required this.onRequests,
     required this.onRename,
+    this.onLeave,
     this.onMedia,
     this.onPhoto,
     this.onNotifications,
@@ -32,6 +33,9 @@ class LoomGroupInfoSurface extends StatefulWidget {
   final void Function(LoomGroupMember, String) onMemberAction;
   final VoidCallback onAddMember, onInvite, onRequests, onRename;
   final VoidCallback? onMedia, onNotifications, onPhoto;
+
+  /// Leave (member) / delete-and-leave (owner) affordance; null hides the row.
+  final VoidCallback? onLeave;
   final bool muted;
 
   @override
@@ -458,6 +462,35 @@ class _LoomGroupInfoSurfaceState extends State<LoomGroupInfoSurface> {
                     },
                   ),
                 ),
+                if (widget.onLeave != null && !groups.busy)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 4, 8, 32),
+                      child: Center(
+                        child: TextButton.icon(
+                          key: const ValueKey('group-leave'),
+                          onPressed: widget.onLeave,
+                          icon: Icon(
+                            LoomIcons.logout_rounded,
+                            size: LoomIconSize.compact,
+                            color: context.loom.critical,
+                          ),
+                          label: Text(
+                            tr(
+                              context,
+                              owner
+                                  ? 'Delete and leave group'
+                                  : 'Leave group',
+                              owner
+                                  ? 'حذف گروه و خروج'
+                                  : 'خروج از گروه',
+                            ),
+                            style: TextStyle(color: context.loom.critical),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),

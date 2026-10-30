@@ -35,11 +35,17 @@ class LoomMessageNotificationPolicy {
 
 class LoomMessageNotificationBridge {
   static const channel = MethodChannel('loom/notifications');
-  Future<void> initialize(void Function(String) onOpen) async {
+  Future<void> initialize(
+    void Function(String) onOpen, {
+    void Function(bool granted)? onPermissionResult,
+  }) async {
     channel.setMethodCallHandler((call) async {
       if (call.method == 'openInbox') onOpen('');
       if (call.method == 'openConversation' && call.arguments is String) {
         onOpen(call.arguments as String);
+      }
+      if (call.method == 'permissionResult') {
+        onPermissionResult?.call(call.arguments == true);
       }
     });
     try {
@@ -86,11 +92,16 @@ class LoomMessageNotifications with WidgetsBindingObserver {
     required this.onOpen,
     LoomMessageNotificationBridge? bridge,
     LoomMessageNotificationPolicy? policy,
+    void Function(bool granted)? onPermissionResult,
   }) : bridge = bridge ?? LoomMessageNotificationBridge(),
        policy = policy ?? LoomMessageNotificationPolicy() {
     WidgetsBinding.instance.addObserver(this);
     messaging.addListener(_changed);
-    unawaited(this.bridge.initialize(onOpen).catchError((Object _) {}));
+    unawaited(
+      this.bridge
+          .initialize(onOpen, onPermissionResult: onPermissionResult)
+          .catchError((Object _) {}),
+    );
   }
   final LoomMessagingSessionController messaging;
   final void Function(String) onOpen;
@@ -135,6 +146,10 @@ class LoomMessageNotifications with WidgetsBindingObserver {
       }
     }
   }
+
+  /// Re-queries the OS state after the permission dialog resolves so the
+  /// settings switch reflects reality instead of an optimistic assumption.
+  Future<Map<String, Object?>> refreshStatus() => bridge.status();
 
   void dispose() {
     _disposed = true;

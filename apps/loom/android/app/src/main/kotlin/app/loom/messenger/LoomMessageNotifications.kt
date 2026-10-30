@@ -25,6 +25,12 @@ class LoomMessageNotifications(private val activity: Activity, private val chann
         manager.cancel(tag(id), 1)
         if (ready) channel.invokeMethod("openConversation", id) else pending = id
     }
+
+    /** Reports the outcome of the POST_NOTIFICATIONS dialog back to Dart. */
+    fun onPermissionResult(granted: Boolean) {
+        if (ready) channel.invokeMethod("permissionResult", granted)
+    }
+
     private fun prepare() {
         if (Build.VERSION.SDK_INT >= 26) manager.createNotificationChannel(
             NotificationChannel(CHANNEL, "Messages", NotificationManager.IMPORTANCE_HIGH).apply {
@@ -42,7 +48,7 @@ class LoomMessageNotifications(private val activity: Activity, private val chann
                 "enable" -> {
                     prepare()
                     if (Build.VERSION.SDK_INT >= 33 && activity.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                        activity.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 9042)
+                        activity.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), PERMISSION_REQUEST_CODE)
                     }
                     result.success(null)
                 }
@@ -84,5 +90,6 @@ class LoomMessageNotifications(private val activity: Activity, private val chann
     companion object {
         const val CHANNEL = "loom_messages_v1"
         const val EXTRA = "loom_message_conversation"
+        const val PERMISSION_REQUEST_CODE = 9042
     }
 }

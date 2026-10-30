@@ -13,6 +13,7 @@ class LoomSetupScaffold extends StatelessWidget {
     this.actions,
     this.step,
     this.canPop = true,
+    this.error,
     super.key,
   });
   final String title, subtitle;
@@ -20,6 +21,10 @@ class LoomSetupScaffold extends StatelessWidget {
   final Widget? actions;
   final int? step;
   final bool canPop;
+
+  /// Persistent inline error rendered above the form card, so screens stop
+  /// improvising their own error rows.
+  final String? error;
 
   @override
   Widget build(BuildContext context) {
@@ -36,12 +41,16 @@ class LoomSetupScaffold extends StatelessWidget {
                   builder: (context, constraints) {
                     final compact = constraints.maxHeight < 680;
                     return Padding(
-                      padding: EdgeInsets.all(compact ? 16 : 24),
+                      padding: EdgeInsets.all(
+                        compact ? LoomSpacing.md : LoomSpacing.lg,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           LoomSetupHeader(step: step, canPop: canPop),
-                          SizedBox(height: compact ? 12 : 20),
+                          SizedBox(
+                            height: compact ? LoomSpacing.sm : LoomSpacing.ml,
+                          ),
                           Text(
                             title,
                             style: Theme.of(context).textTheme.headlineSmall
@@ -54,7 +63,44 @@ class LoomSetupScaffold extends StatelessWidget {
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(color: context.loom.textSecondary),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: LoomSpacing.md),
+                          ],
+                          if (error != null) ...[
+                            AnimatedSize(
+                              duration: LoomMotion.component,
+                              curve: LoomMotion.standard,
+                              alignment: Alignment.topCenter,
+                              child: LoomGlassSurface(
+                                blur: false,
+                                radius: LoomRadii.control,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: LoomSpacing.md,
+                                  vertical: LoomSpacing.sm,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      LoomIcons.error_outline_rounded,
+                                      size: LoomIconSize.compact,
+                                      color: context.loom.critical,
+                                    ),
+                                    const SizedBox(width: LoomSpacing.sm),
+                                    Expanded(
+                                      child: Text(
+                                        error!,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: context.loom.critical,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: LoomSpacing.sm),
                           ],
                           Expanded(
                             child: SingleChildScrollView(
@@ -63,7 +109,9 @@ class LoomSetupScaffold extends StatelessWidget {
                               child: LoomGlassSurface(
                                 blur: false,
                                 radius: LoomRadii.surface,
-                                padding: EdgeInsets.all(compact ? 12 : 20),
+                                padding: EdgeInsets.all(
+                                  compact ? LoomSpacing.sm : LoomSpacing.ml,
+                                ),
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
@@ -73,7 +121,7 @@ class LoomSetupScaffold extends StatelessWidget {
                             ),
                           ),
                           if (actions != null) ...[
-                            const SizedBox(height: 12),
+                            const SizedBox(height: LoomSpacing.sm),
                             SizedBox(width: double.infinity, child: actions!),
                           ],
                         ],
@@ -111,7 +159,7 @@ class LoomSetupHeader extends StatelessWidget {
           children: [
             if (Navigator.of(context).canPop()) ...[
               LoomGlassSurface(
-                radius: 28,
+                radius: LoomRadii.sheet,
                 blur: false,
                 child: SizedBox.square(
                   dimension: 48,
@@ -134,7 +182,7 @@ class LoomSetupHeader extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Loom',
+                LoomStrings.of(context).appName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium,

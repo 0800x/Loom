@@ -39,6 +39,7 @@ LoomSettingsDetailScreen page(
   themeMode: LoomThemeMode.dark,
   glassQuality: LoomGlassQuality.high,
   locale: locale,
+  localePreference: locale.languageCode,
   onThemeChanged: onTheme ?? (_) {},
   onGlassQualityChanged: (_) {},
   onLocaleChanged: (_) {},

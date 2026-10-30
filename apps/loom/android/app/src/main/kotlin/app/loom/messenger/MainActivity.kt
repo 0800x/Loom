@@ -198,6 +198,9 @@ class MainActivity : AudioServiceActivity() {
             }
         }
         deliverAction(intent)
+        // Warm-start taps on message notifications must drain too, otherwise
+        // the conversation never opens while the process is already alive.
+        messageNotifications?.consume(intent)
     }
 
     override fun onRequestPermissionsResult(
@@ -209,6 +212,12 @@ class MainActivity : AudioServiceActivity() {
             if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
                 pendingIncomingNotification?.let { showIncomingCall(it) }
             }
+            return
+        }
+        if (requestCode == LoomMessageNotifications.PERMISSION_REQUEST_CODE) {
+            messageNotifications?.onPermissionResult(
+                grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED,
+            )
             return
         }
         if (bleBridge?.onRequestPermissionsResult(requestCode, permissions, grantResults) == true) return

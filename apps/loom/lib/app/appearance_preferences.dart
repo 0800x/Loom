@@ -9,7 +9,7 @@ class LoomAppearancePreferences {
   const LoomAppearancePreferences({
     required this.theme,
     required this.glass,
-    required this.locale,
+    required this.localePreference,
     this.accent,
     this.motion = LoomMotionPreference.system,
     this.chatDensity = LoomChatDensity.comfortable,
@@ -17,7 +17,9 @@ class LoomAppearancePreferences {
 
   final LoomThemeMode theme;
   final LoomGlassQuality glass;
-  final Locale locale;
+
+  /// 'en', 'fa', or 'sys' — follow the operating system language.
+  final String localePreference;
   final int? accent;
   final LoomMotionPreference motion;
   final LoomChatDensity chatDensity;
@@ -47,15 +49,19 @@ class LoomAppearancePreferencesStore {
           .where((value) => value.name == data['glass'])
           .firstOrNull;
       final language = data['language'];
-      if (theme == null ||
-          glass == null ||
-          (language != 'en' && language != 'fa')) {
+      final languagePreference = switch (language) {
+        'en' || 'fa' => language as String,
+        'sys' => 'sys',
+        // Legacy installs saved a concrete locale; keep honouring it.
+        Object? _ => null,
+      };
+      if (theme == null || glass == null || languagePreference == null) {
         return null;
       }
       return LoomAppearancePreferences(
         theme: theme,
         glass: glass,
-        locale: Locale(language as String),
+        localePreference: languagePreference,
         chatDensity:
             LoomChatDensity.values
                 .where((v) => v.name == data['chatDensity'])
@@ -89,7 +95,7 @@ class LoomAppearancePreferencesStore {
           jsonEncode({
             'theme': value.theme.name,
             'glass': value.glass.name,
-            'language': value.locale.languageCode,
+            'language': value.localePreference,
             'accent': value.accent,
             'motion': value.motion.name,
             'chatDensity': value.chatDensity.name,

@@ -672,25 +672,37 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
             Icon(LoomIcons.mic, size: 18, color: p.critical),
             const SizedBox(width: 4),
             Text(mediaTime(_voice.duration), textDirection: TextDirection.ltr),
-            const SizedBox(width: 6),
+            const SizedBox(width: 10),
+            // Live input level: the already-captured peaks painted as bars,
+            // so the composer shows what is actually being recorded.
             Expanded(
-              child: phase == VoicePhase.locked
-                  ? TextButton.icon(
-                      onPressed: () => unawaited(_voice.stop()),
-                      icon: const Icon(LoomIcons.stop),
-                      label: Text(tr(context, 'Stop', 'توقف')),
-                    )
-                  : Text(
-                      tr(
-                        context,
-                        '‹ Slide to cancel · ↑ Lock',
-                        'لغو با کشیدن · ↑ قفل',
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelSmall,
-                    ),
+              child: _LiveWaveform(
+                peaks: _voice.waveform,
+                color: p.critical,
+              ),
             ),
+            if (phase == VoicePhase.locked) ...[
+              const SizedBox(width: 6),
+              TextButton.icon(
+                onPressed: () => unawaited(_voice.stop()),
+                icon: const Icon(LoomIcons.stop),
+                label: Text(tr(context, 'Stop', 'توقف')),
+              ),
+            ] else ...[
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  tr(
+                    context,
+                    '‹ Slide to cancel · ↑ Lock',
+                    'لغو با کشیدن · ↑ قفل',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ),
+            ],
           ],
         );
       }
@@ -848,4 +860,83 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
       ),
     );
   }
+}
+
+/// Live recording level indicator. Mirrors the playback waveform look so the
+/// recorded voice draft and the draft player read as the same material.
+class _LiveWaveform extends StatelessWidget {
+  const _LiveWaveform({required this.peaks, required this.color});
+
+  final List<double> peaks;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion = LoomAccessibility.fromContext(context).reduceMotion;
+    return CustomPaint(
+      size: const Size(double.infinity, 26),
+      painter: _LiveWaveformPainter(
+        peaks: peaks,
+        color: color,
+        baseline: reduceMotion || peaks.isEmpty,
+      ),
+    );
+  }
+}
+
+class _LiveWaveformPainter extends CustomPainter {
+  _LiveWaveformPainter({
+    required this.peaks,
+    required this.color,
+    required this.baseline,
+  });
+
+  final List<double> peaks;
+  final Color color;
+  final bool baseline;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (baseline) {
+      final track = Paint()
+        ..color = color.withAlphaFraction(.22)
+        ..strokeWidth = 2
+        ..strokeCap = StrokeCap.round;
+      canvas.drawLine(
+        Offset(0, size.height / 2),
+        Offset(size.width, size.height / 2),
+        track,
+      );
+      return;
+    }
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2.4
+      ..strokeCap = StrokeCap.round;
+    const gap = 2.6;
+    final count = (size.width / (2.4 + gap)).floor().clamp(2, 96);
+    final middle = size.height / 2;
+    for (var i = 0; i < count; i++) {
+      // Newest sample at the leading edge (right in LTR, left in RTL).
+      final sourceIndex = peaks.length - 1 - i;
+      if (sourceIndex < 0) break;
+      final peak = peaks[sourceIndex].clamp(0.0, 1.0);
+      final height = (size.height * .92 * peak).clamp(2.5, size.height * .92);
+      final x = size.width - (i * (2.4 + gap)) - 1.2;
+      canvas.drawLine(
+        Offset(x, middle - height / 2),
+        Offset(x, middle + height / 2),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_LiveWaveformPainter old) =>
+      old.baseline != baseline ||
+      old.color != color ||
+      old.peaks.length != peaks.length ||
+      (peaks.isNotEmpty &&
+          old.peaks.isNotEmpty &&
+          old.peaks.last != peaks.last);
 }

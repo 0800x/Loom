@@ -65,6 +65,7 @@ void main() {
               themeMode: LoomThemeMode.dark,
               glassQuality: LoomGlassQuality.disabled,
               locale: const Locale('en'),
+            localePreference: 'en',
               onThemeChanged: (value) => requestedTheme = value,
               onGlassQualityChanged: (_) {},
               onLocaleChanged: (_) {},

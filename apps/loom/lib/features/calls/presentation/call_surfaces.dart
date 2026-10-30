@@ -96,7 +96,11 @@ Future<void> startConversationCallFromUi(
     }
   } catch (error) {
     if (context.mounted) {
-      _showCallError(context, error);
+      _showCallError(
+        context,
+        error,
+        retry: () => startConversationCallFromUi(context, conversation, kind),
+      );
     }
   }
 }
@@ -118,13 +122,21 @@ Future<void> startAddressCallFromUi(
     }
   } catch (error) {
     if (context.mounted) {
-      _showCallError(context, error);
+      _showCallError(
+        context,
+        error,
+        retry: () => startAddressCallFromUi(context, address, kind),
+      );
     }
   }
 }
 
-void _showCallError(BuildContext context, Object error) {
-  unawaited(showCallFailure(context, error));
+void _showCallError(
+  BuildContext context,
+  Object error, {
+  Future<void> Function()? retry,
+}) {
+  unawaited(showCallFailure(context, error, onRetry: retry));
 }
 
 class LoomCallOverlayHost extends StatefulWidget {
@@ -712,9 +724,9 @@ class _IncomingButton extends StatelessWidget {
           style: IconButton.styleFrom(
             minimumSize: const Size.square(64),
             backgroundColor: destructive
-                ? const Color(0xFFBB3342)
-                : const Color(0xFF087E63),
-            foregroundColor: Colors.white,
+                ? context.loom.critical
+                : context.loom.connectivity,
+            foregroundColor: context.loom.onPrimary,
           ),
         ),
       ),

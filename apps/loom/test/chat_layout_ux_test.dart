@@ -78,6 +78,7 @@ void main() {
                 themeMode: LoomThemeMode.light,
                 glassQuality: LoomGlassQuality.high,
                 locale: locale,
+                localePreference: locale.languageCode,
                 onThemeChanged: (_) {},
                 onGlassQualityChanged: (_) {},
                 onLocaleChanged: (_) {},

@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:loom_design/loom_design.dart';
 import 'package:loom_next/app/appearance_preferences.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -32,7 +31,7 @@ void main() {
         await file.writeAsString(jsonEncode({...data, ...options}));
         final saved = (await store.load())!;
         expect(saved.theme, LoomThemeMode.oled);
-        expect(saved.locale, const Locale('fa'));
+        expect(saved.localePreference, 'fa');
         expect(saved.accent, 0xFF009688);
         expect(saved.motion, LoomMotionPreference.system);
         expect(saved.chatDensity, LoomChatDensity.comfortable);
@@ -48,14 +47,14 @@ void main() {
           const LoomAppearancePreferences(
             theme: LoomThemeMode.light,
             glass: LoomGlassQuality.high,
-            locale: Locale('en'),
+            localePreference: 'en',
           ),
         ),
         store.save(
           const LoomAppearancePreferences(
             theme: LoomThemeMode.oled,
             glass: LoomGlassQuality.high,
-            locale: Locale('fa'),
+            localePreference: 'fa',
             accent: 0xFF009688,
             motion: LoomMotionPreference.reduced,
             chatDensity: LoomChatDensity.compact,
@@ -66,7 +65,7 @@ void main() {
         directory: directory,
       ).load())!;
       expect(restored.theme, LoomThemeMode.oled);
-      expect(restored.locale, const Locale('fa'));
+      expect(restored.localePreference, 'fa');
       expect(restored.accent, 0xFF009688);
       expect(restored.motion, LoomMotionPreference.reduced);
       expect(restored.chatDensity, LoomChatDensity.compact);
@@ -86,7 +85,7 @@ void main() {
       const LoomAppearancePreferences(
         theme: LoomThemeMode.dark,
         glass: LoomGlassQuality.high,
-        locale: Locale('en'),
+        localePreference: 'en',
         chatDensity: LoomChatDensity.compact,
       ),
     );

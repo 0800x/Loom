@@ -45,7 +45,7 @@ class LoomSettingsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.loom;
-    final accent = iconColor ?? _settingsIconColor(icon, p.primary);
+    final accent = iconColor ?? _settingsIconColor(icon, p);
     return Semantics(
       button: onTap != null,
       child: InkWell(
@@ -65,16 +65,16 @@ class LoomSettingsRow extends StatelessWidget {
             builder: (context, constraints) => Row(
               children: [
                 Container(
-                  width: 34,
-                  height: 34,
+                  width: LoomSizing.settingsIconSlot,
+                  height: LoomSizing.settingsIconSlot,
                   decoration: BoxDecoration(
-                    color: accent,
-                    borderRadius: BorderRadius.circular(10),
+                    color: accent.withAlphaFraction(LoomOpacity.mutedTint),
+                    borderRadius: BorderRadius.circular(LoomRadii.compact),
                   ),
                   child: Icon(
                     icon,
                     size: LoomIconSize.standard,
-                    color: Colors.white,
+                    color: accent,
                   ),
                 ),
                 const SizedBox(width: LoomSpacing.sm),
@@ -137,31 +137,31 @@ class LoomGlassSheet extends StatelessWidget {
       );
 }
 
-Color _settingsIconColor(IconData icon, Color fallback) {
-  // A restrained warm palette, rather than a single colour for every section.
+Color _settingsIconColor(IconData icon, LoomPalette p) {
+  // Sections map to semantic palette roles, so tints follow the active
+  // accent and theme instead of a fixed set of swatches.
   if (icon == LoomIcons.logout_rounded) {
-    return const Color(0xFFBC4E5C);
-  }
-  if (icon == LoomIcons.person_outline_rounded ||
-      icon == LoomIcons.notifications_none_rounded) {
-    return const Color(0xFFCE6552);
+    return p.critical;
   }
   if (icon == LoomIcons.lock_outline_rounded ||
       icon == LoomIcons.devices_outlined) {
-    return const Color(0xFF9D7893);
+    return p.connectivity;
   }
   if (icon == LoomIcons.storage_outlined ||
       icon == LoomIcons.near_me_outlined) {
-    return const Color(0xFF668B79);
+    return p.connectivity;
   }
   if (icon == LoomIcons.folder_outlined || icon == LoomIcons.language_rounded) {
-    return const Color(0xFFB18A51);
+    return p.warning;
   }
-  if (icon == LoomIcons.palette_outlined ||
-      icon == LoomIcons.info_outline_rounded) {
-    return const Color(0xFFAD806B);
+  if (icon == LoomIcons.palette_outlined) {
+    return p.secondary;
   }
-  return fallback;
+  if (icon == LoomIcons.info_outline_rounded) {
+    return p.info;
+  }
+  // Identity, notifications and anything unlisted keep the primary voice.
+  return p.primary;
 }
 
 /// A calm opaque surface for settings; navigation retains the glass treatment.

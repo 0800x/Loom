@@ -152,6 +152,7 @@ void main() {
             themeMode: selectedTheme,
             glassQuality: selectedGlass,
             locale: const Locale('en'),
+            localePreference: 'en',
             onThemeChanged: (value) => selectedTheme = value,
             onGlassQualityChanged: (value) => selectedGlass = value,
             onLocaleChanged: (_) {},

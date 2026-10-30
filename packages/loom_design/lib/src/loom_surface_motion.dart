@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'loom_accessibility.dart';
+import 'loom_theme.dart';
 
 /// Geometry is captured before focus changes or the source is hidden.
 abstract final class LoomOrigin {
@@ -149,18 +150,21 @@ class LoomSurfaceRoute<T> extends PopupRoute<T> {
     this.fullscreen = false,
     this.reducedMotion = false,
     this.backgroundColor = const Color(0xffFFFFFF),
+    Color? barrierColor,
     super.settings,
-  });
+  }) : _barrierColor = barrierColor;
   final WidgetBuilder builder;
   final Rect? origin;
   final bool fullscreen, reducedMotion;
   final Color backgroundColor;
+  final Color? _barrierColor;
   @override
   final String barrierLabel;
   @override
   bool get barrierDismissible => true;
   @override
-  Color get barrierColor => const Color(0x66000000);
+  Color get barrierColor =>
+      _barrierColor ?? const Color(0x66000000);
   @override
   Duration get transitionDuration =>
       reducedMotion ? Duration.zero : const Duration(milliseconds: 340);
@@ -359,11 +363,14 @@ Future<T?> showLoomSurface<T>({
   final focus = FocusManager.instance.primaryFocus;
   final access = LoomAccessibility.fromContext(context);
   final themes = InheritedTheme.capture(from: context, to: navigator.context);
+  final palette = Theme.of(context).extension<LoomPalette>();
   final route = LoomSurfaceRoute<T>(
     origin: origin,
     reducedMotion: access.reduceMotion,
     fullscreen: fullscreen,
     backgroundColor: Theme.of(context).colorScheme.surface,
+    barrierColor:
+        palette?.scrim ?? Theme.of(context).colorScheme.scrim,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     builder: (context) => themes.wrap(builder(context)),
   );

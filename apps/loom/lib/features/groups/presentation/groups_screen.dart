@@ -156,6 +156,64 @@ class _LoomGroupsScreenState extends State<LoomGroupsScreen>
       ) ==
       true;
 
+  /// Self-removal from the group. MLS models leaving as a member-list
+  /// update without this device; history stays readable (read-only).
+  Future<void> _leaveGroup(
+    LoomGroupsController groups,
+    LoomGroupState group,
+  ) async {
+    if (groups.busy) return;
+    final owner = group.members.any(
+      (m) =>
+          m.deviceId == groups.ownDeviceId && m.role == 'owner',
+    );
+    final confirmed = await _confirm(
+      owner
+          ? tr(context, 'Delete this group?', 'این گروه حذف شود؟')
+          : tr(context, 'Leave this group?', 'از این گروه خارج می‌شوید؟'),
+      owner
+          ? tr(
+              context,
+              'The group continues for other members, but you leave it and lose its history on this device.',
+              'گروه برای بقیه ادامه پیدا می‌کند، اما شما خارج می‌شوید و تاریخچه‌اش روی این دستگاه از دست می‌رود.',
+            )
+          : tr(
+              context,
+              'You will stop receiving group messages. Your existing history remains.',
+              'دیگر پیام‌های گروه را دریافت نمی‌کنید؛ تاریخچهٔ فعلی باقی می‌ماند.',
+            ),
+      owner
+          ? tr(context, 'Delete and leave', 'حذف و خروج')
+          : tr(context, 'Leave', 'خروج'),
+    );
+    if (!confirmed || !mounted) return;
+    final members = group.members
+        .where((m) => m.deviceId != groups.ownDeviceId)
+        .toList();
+    if (members.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            tr(
+              context,
+              'You are the only member. Invite someone before leaving, or export what you need.',
+              'شما تنها عضو هستید. قبل از خروج کسی را دعوت کنید یا اطلاعات لازم را ذخیره کنید.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+    final ok = await groups.update(group.id, group.title, members);
+    if (!mounted) return;
+    if (ok) {
+      // Back to the catalogue; the device now sees the group read-only.
+      groups.setActiveGroup(null);
+      setState(() => _selected = null);
+    }
+  }
+
   Future<void> _memberAction(
     LoomGroupsController groups,
     LoomGroupState shown,
@@ -627,6 +685,9 @@ class _LoomGroupsScreenState extends State<LoomGroupsScreen>
         onOpenMember: (member) => unawaited(_openMember(groups, member)),
         onMemberAction: (member, action) =>
             unawaited(_memberAction(groups, group, member, action)),
+        onLeave: groups.busy
+            ? null
+            : () => unawaited(_leaveGroup(groups, group)),
         onAddMember: () => unawaited(_addMember(groups, group)),
         onInvite: () => unawaited(_invite(groups, group)),
         onRequests: () => unawaited(_requests(groups, group)),
@@ -851,14 +912,39 @@ class _LoomGroupsScreenState extends State<LoomGroupsScreen>
                                           if (message.attachment != null)
                                             LoomGroupAttachment(
                                               media: message.attachment!,
+                                              // The endpoint can be absent
+                                              // while the node is switching
+                                              // or after an expired session;
+                                              // never force-unwrap here.
                                               home: groups
-                                                  .onboarding
-                                                  .nodes
-                                                  .selectedEndpoint!
-                                                  .host,
+                                                      .onboarding
+                                                      .nodes
+                                                      .selectedEndpoint
+                                                      ?.host ??
+                                                  '',
                                             ),
                                           if (message.text.isNotEmpty)
                                             SelectableText(message.text),
+                                          if (message.createdAt != null) ...[
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              MaterialLocalizations.of(context)
+                                                  .formatTimeOfDay(
+                                                    TimeOfDay.fromDateTime(
+                                                      message.createdAt!
+                                                          .toLocal(),
+                                                    ),
+                                                  ),
+                                              textDirection: TextDirection.ltr,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelSmall
+                                                  ?.copyWith(
+                                                    color:
+                                                        context.loom.textMuted,
+                                                  ),
+                                            ),
+                                          ],
                                         ],
                                       ),
                                     ),

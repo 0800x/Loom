@@ -1,5 +1,11 @@
 part of 'messenger_shell.dart';
 
+/// Motion duration honoring the reduced-motion accessibility preference.
+Duration _motionDuration(BuildContext context, int milliseconds) =>
+    LoomAccessibility.fromContext(context).reduceMotion
+    ? Duration.zero
+    : Duration(milliseconds: milliseconds);
+
 class _ConversationPane extends StatefulWidget {
   const _ConversationPane({
     required this.preview,
@@ -1186,7 +1192,16 @@ class _ConversationPaneState extends State<_ConversationPane>
     }
     final conversation = widget.conversation;
     if (conversation?.kind == models.LoomConversationKind.group) {
-      await showLoomGroupCall(context, conversation!.id);
+      // The group branch never set `calling`, so a rapid double-tap pushed
+      // two call routes; mark busy for the duration of the push.
+      setState(() => calling = true);
+      try {
+        await showLoomGroupCall(context, conversation!.id);
+      } finally {
+        if (mounted) {
+          setState(() => calling = false);
+        }
+      }
       return;
     }
     final kind = await _chooseConversationCall(
@@ -1879,41 +1894,63 @@ class _ConversationPaneState extends State<_ConversationPane>
                         bottom: bottomExtent + 12,
                         child: ListenableBuilder(
                           listenable: messageScroll,
-                          builder: (context, _) =>
-                              !messageScroll.hasClients ||
-                                  messageScroll.offset <= 160
-                              ? const SizedBox.shrink()
-                              : LoomGlassSurface(
-                                  liveBackdrop: true,
-                                  radius: 28,
-                                  child: IconButton(
-                                    tooltip: tr(
-                                      context,
-                                      'Latest messages',
-                                      'آخرین پیام‌ها',
-                                    ),
-                                    onPressed: () {
-                                      if (LoomAccessibility.fromContext(
-                                        context,
-                                      ).reduceMotion) {
-                                        messageScroll.jumpTo(0);
-                                      } else {
-                                        unawaited(
-                                          messageScroll.animateTo(
-                                            0,
-                                            duration: const Duration(
-                                              milliseconds: 260,
-                                            ),
-                                            curve: Curves.easeOutCubic,
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    icon: const Icon(
-                                      LoomIcons.keyboard_arrow_down_rounded,
-                                    ),
-                                  ),
+                          builder: (context, _) {
+                            final show =
+                                messageScroll.hasClients &&
+                                messageScroll.offset > 160;
+                            return AnimatedScale(
+                              scale: show ? 1 : 0,
+                              duration: _motionDuration(
+                                context,
+                                LoomMotion.component.inMilliseconds,
+                              ),
+                              curve: show
+                                  ? LoomMotion.emphasized
+                                  : LoomMotion.exit,
+                              alignment: AlignmentDirectional.bottomEnd.resolve(Directionality.of(context)),
+                              child: AnimatedOpacity(
+                                opacity: show ? 1 : 0,
+                                duration: _motionDuration(
+                                  context,
+                                  LoomMotion.component.inMilliseconds,
                                 ),
+                                child: show
+                                    ? LoomGlassSurface(
+                                        liveBackdrop: true,
+                                        radius: 28,
+                                        child: IconButton(
+                                          tooltip: tr(
+                                            context,
+                                            'Latest messages',
+                                            'آخرین پیام‌ها',
+                                          ),
+                                          onPressed: () {
+                                            if (LoomAccessibility.fromContext(
+                                              context,
+                                            ).reduceMotion) {
+                                              messageScroll.jumpTo(0);
+                                            } else {
+                                              unawaited(
+                                                messageScroll.animateTo(
+                                                  0,
+                                                  duration: const Duration(
+                                                    milliseconds: 260,
+                                                  ),
+                                                  curve: Curves.easeOutCubic,
+                                                ),
+                                              );
+                                            }
+                                          },
+                                          icon: const Icon(
+                                            LoomIcons
+                                                .keyboard_arrow_down_rounded,
+                                          ),
+                                        ),
+                                      )
+                                    : const SizedBox(width: 48, height: 48),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],

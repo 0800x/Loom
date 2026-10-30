@@ -171,21 +171,28 @@ class _LoomActiveCallScreenState extends State<LoomActiveCallScreen> {
                     child: Stack(
                       children: [
                         Positioned.fill(
-                          child: showRemote
-                              ? RepaintBoundary(
-                                  child: RTCVideoView(
-                                    remote,
-                                    objectFit: RTCVideoViewObjectFit
-                                        .RTCVideoViewObjectFitCover,
+                          // Crossfade instead of a hard cut when the remote
+                          // camera stream appears or drops mid-call.
+                          child: AnimatedSwitcher(
+                            duration: duration,
+                            child: showRemote
+                                ? RepaintBoundary(
+                                    key: const ValueKey('remote-video'),
+                                    child: RTCVideoView(
+                                      remote,
+                                      objectFit: RTCVideoViewObjectFit
+                                          .RTCVideoViewObjectFitCover,
+                                    ),
+                                  )
+                                : _CallBackdrop(
+                                    key: const ValueKey('call-backdrop'),
+                                    peerLabel: widget.peerLabel,
+                                    peerImage: widget.peerImage,
+                                    state: state,
+                                    bottomInset: controlsHeight + 20,
+                                    compact: constraints.maxHeight < 620,
                                   ),
-                                )
-                              : _CallBackdrop(
-                                  peerLabel: widget.peerLabel,
-                                  peerImage: widget.peerImage,
-                                  state: state,
-                                  bottomInset: controlsHeight + 20,
-                                  compact: constraints.maxHeight < 620,
-                                ),
+                          ),
                         ),
                         if (showRemote)
                           const Positioned(
@@ -255,10 +262,10 @@ class _LoomActiveCallScreenState extends State<LoomActiveCallScreen> {
                                 child: Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: Colors.white38),
-                                    boxShadow: const [
+                                    border: Border.all(color: Colors.white.withAlphaFraction(.24)),
+                                    boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black38,
+                                        color: Colors.black.withAlphaFraction(.24),
                                         blurRadius: 18,
                                       ),
                                     ],
@@ -316,17 +323,23 @@ class _LoomActiveCallScreenState extends State<LoomActiveCallScreen> {
                                 child: AnimatedOpacity(
                                   opacity: visible ? 1 : 0,
                                   duration: duration,
-                                  child: terminal
-                                      ? _EndedControls(
-                                          state: state,
-                                          onClose: () =>
-                                              Navigator.of(context).maybePop(),
-                                        )
-                                      : _LiveControls(
-                                          engine: widget.engine,
-                                          state: state,
-                                          wrapped: wrapped,
-                                        ),
+                                  child: AnimatedSwitcher(
+                                    duration: duration,
+                                    switchInCurve: LoomMotion.emphasized,
+                                    child: terminal
+                                        ? _EndedControls(
+                                            key: const ValueKey('ended'),
+                                            state: state,
+                                            onClose: () =>
+                                                Navigator.of(context).maybePop(),
+                                          )
+                                        : _LiveControls(
+                                            key: const ValueKey('live'),
+                                            engine: widget.engine,
+                                            state: state,
+                                            wrapped: wrapped,
+                                          ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -374,8 +387,8 @@ class _TopChrome extends StatelessWidget {
               peerLabel,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: LoomTheme.darkPalette.textPrimary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -385,7 +398,7 @@ class _TopChrome extends StatelessWidget {
                   : _statusText(context, state),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
+              style: TextStyle(color: LoomTheme.darkPalette.textSecondary, fontSize: 12),
             ),
           ],
         ),
@@ -403,6 +416,7 @@ class _CallBackdrop extends StatelessWidget {
     required this.state,
     required this.bottomInset,
     required this.compact,
+    super.key,
   });
   final String peerLabel;
   final ImageProvider<Object>? peerImage;
@@ -418,6 +432,9 @@ class _CallBackdrop extends StatelessWidget {
       LoomCallLifecycle.connecting,
       LoomCallLifecycle.reconnecting,
     }.contains(state.lifecycle);
+    // The call stage stays intentionally dark in every appearance; colors come
+    // from the shared midnight palette instead of local literals.
+    final stage = LoomTheme.darkPalette;
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: RadialGradient(
@@ -426,10 +443,10 @@ class _CallBackdrop extends StatelessWidget {
           colors: [
             Color.alphaBlend(
               context.loom.primary.withAlphaFraction(.14),
-              const Color(0xFF1B1C21),
+              stage.surfaceElevated,
             ),
-            const Color(0xFF1B1C21),
-            const Color(0xFF111318),
+            stage.surfaceElevated,
+            stage.background,
           ],
         ),
       ),
@@ -461,7 +478,7 @@ class _CallBackdrop extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
+                    color: stage.textPrimary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -570,6 +587,7 @@ class _LiveControls extends StatelessWidget {
     required this.engine,
     required this.state,
     required this.wrapped,
+    super.key,
   });
   final LoomCallEngine engine;
   final LoomCallSnapshot state;
@@ -650,7 +668,7 @@ class _LiveControls extends StatelessWidget {
 }
 
 class _EndedControls extends StatelessWidget {
-  const _EndedControls({required this.state, required this.onClose});
+  const _EndedControls({required this.state, required this.onClose, super.key});
   final LoomCallSnapshot state;
   final VoidCallback onClose;
 
@@ -748,12 +766,12 @@ class _ActionState extends State<_Action> {
               style: IconButton.styleFrom(
                 minimumSize: const Size.square(48),
                 backgroundColor: widget.destructive
-                    ? const Color(0xFFCC343F)
+                    ? LoomTheme.darkPalette.critical
                     : widget.selected
-                    ? Colors.white
+                    ? LoomTheme.darkPalette.textPrimary
                     : Colors.white.withAlphaFraction(.12),
                 foregroundColor: widget.selected && !widget.destructive
-                    ? const Color(0xFF111318)
+                    ? LoomTheme.darkPalette.background
                     : Colors.white,
                 disabledForegroundColor: Colors.white38,
                 disabledBackgroundColor: Colors.white.withAlphaFraction(.06),

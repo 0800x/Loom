@@ -12,6 +12,45 @@ enum LoomGlassStrength { weak, standard, strong }
 
 enum LoomGlassQuality { high, reduced, disabled }
 
+/// Specular sheen painted over a glass pane: a soft highlight raking across
+/// the top edge and a whisper of shade at the bottom sell real thickness.
+/// Purely decorative — it ignores pointers and semantics. Rendered with
+/// Positioned.fill so it never participates in Stack sizing: loose or
+/// unbounded contexts (scroll views) would otherwise explode the expand.
+class _GlassSheen extends StatelessWidget {
+  const _GlassSheen({required this.radius, required this.dark});
+
+  final double radius;
+  final bool dark;
+
+  @override
+  Widget build(BuildContext context) => Positioned.fill(
+        child: IgnorePointer(
+          child: ExcludeSemantics(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(radius),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  stops: const [0, .32, .62, 1],
+                  colors: [
+                    Colors.white.withAlphaFraction(
+                      dark ? LoomOpacity.sheenDark : LoomOpacity.sheenLight,
+                    ),
+                    Colors.white.withAlphaFraction(0),
+                    Colors.black.withAlphaFraction(0),
+                    Colors.black.withAlphaFraction(LoomOpacity.sheenShadow),
+                  ],
+                ),
+              ),
+              child: const SizedBox.expand(),
+            ),
+          ),
+        ),
+      );
+}
+
 /// Automatic quality follows raster performance; accessibility wins in surfaces.
 class LoomGlassScope extends StatefulWidget {
   const LoomGlassScope({required this.quality, required this.child, super.key});
@@ -131,7 +170,7 @@ class LoomGlassSurface extends StatelessWidget {
       LoomGlassStrength.strong => LoomGlassRecipes.strong,
     };
     final alpha = accessibility.highContrast
-        ? .96
+        ? LoomOpacity.highContrastSurface
         : dark
             ? recipe.darkAlpha
             : recipe.lightAlpha;
@@ -158,6 +197,7 @@ class LoomGlassSurface extends StatelessWidget {
     };
     final borderColor = accessibility.highContrast ? p.borderStrong : p.border;
     final content = Padding(padding: padding, child: child);
+    final showSheen = !accessibility.highContrast;
 
     // Reduced transparency and explicitly solid surfaces bypass the shader
     // entirely. This preserves accessibility and avoids unnecessary GPU work.
@@ -190,15 +230,25 @@ class LoomGlassSurface extends StatelessWidget {
 
     if (liveBackdrop) {
       final sigma = quality == LoomGlassQuality.reduced ? 7.0 : 16.0;
-      final tint = accessibility.highContrast ? .96 : effectiveAlpha * .72;
+      final tint = accessibility.highContrast
+          ? LoomOpacity.highContrastSurface
+          : (effectiveAlpha * .72).clamp(
+              LoomGlassRecipes.liveTintFloor,
+              1.0,
+            );
+      final edge = dark
+          ? LoomOpacity.glassEdgeDark
+          : LoomOpacity.glassEdgeLight;
       return DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(radius),
           boxShadow: [
             BoxShadow(
-              color: p.shadow.withAlphaFraction(dark ? .22 : .08),
-              blurRadius: 20,
-              offset: const Offset(0, 5),
+              color: p.shadow.withAlphaFraction(
+                dark ? LoomOpacity.liveShadowDark : LoomOpacity.liveShadowLight,
+              ),
+              blurRadius: LoomElevation.liveBlur,
+              offset: const Offset(0, LoomElevation.liveOffset),
             ),
           ],
         ),
@@ -222,10 +272,15 @@ class LoomGlassSurface extends StatelessWidget {
                 border: Border.all(
                   color: accessibility.highContrast
                       ? p.borderStrong
-                      : Colors.white.withAlphaFraction(dark ? .16 : .7),
+                      : Colors.white.withAlphaFraction(edge),
                 ),
               ),
-              child: content,
+              child: Stack(
+                children: [
+                  if (showSheen) _GlassSheen(radius: radius, dark: dark),
+                  content,
+                ],
+              ),
             ),
           ),
         ),
@@ -245,7 +300,12 @@ class LoomGlassSurface extends StatelessWidget {
               borderRadius: BorderRadius.circular(radius),
               border: Border.all(color: borderColor),
             ),
-            child: content,
+            child: Stack(
+              children: [
+                if (showSheen) _GlassSheen(radius: radius, dark: dark),
+                content,
+              ],
+            ),
           ),
         ),
       );
@@ -296,7 +356,12 @@ class LoomGlassSurface extends StatelessWidget {
             chromaticAberration: dark ? .0015 : .002,
           ),
         ),
-        child: content,
+        child: Stack(
+          children: [
+            if (showSheen) _GlassSheen(radius: radius, dark: dark),
+            content,
+          ],
+        ),
       ),
     );
   }
@@ -325,7 +390,7 @@ class LoomTopGlassFade extends StatelessWidget {
         quality == LoomGlassQuality.disabled
             ? 1
             : access.highContrast
-                ? .96
+                ? LoomOpacity.highContrastSurface
                 : .58,
       ),
     );

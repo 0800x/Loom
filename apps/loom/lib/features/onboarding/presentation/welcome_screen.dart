@@ -38,13 +38,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  FilledButton(
-                    onPressed: () => Navigator.pushNamed(
-                      context,
-                      '/nodes',
-                      arguments: LoomNodeSelectionPurpose.register,
+                  LoomReveal(
+                    order: 1,
+                    child: FilledButton(
+                      onPressed: () => Navigator.pushNamed(
+                        context,
+                        '/nodes',
+                        arguments: LoomNodeSelectionPurpose.register,
+                      ),
+                      child: Text(tr(context, 'Let’s get started', 'بزن بریم')),
                     ),
-                    child: Text(tr(context, 'Let’s get started', 'بزن بریم')),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -171,18 +174,23 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          tr(
-                            context,
-                            'Let’s make a little space for you and your people. We’ll get you settled, one step at a time.',
-                            'اینجا یه جا برای تو و آدم‌های خودته. قدم‌به‌قدم آماده‌اش می‌کنیم؛ بیا شروع کنیم.',
+                        LoomReveal(
+                          order: 2,
+                          child: Text(
+                            tr(
+                              context,
+                              'Let’s make a little space for you and your people. We’ll get you settled, one step at a time.',
+                              'اینجا یه جا برای تو و آدم‌های خودته. قدم‌به‌قدم آماده‌اش می‌کنیم؛ بیا شروع کنیم.',
+                            ),
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(color: palette.textSecondary),
                           ),
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(color: palette.textSecondary),
                         ),
                         const SizedBox(height: 12),
-                        LoomSettingsGroup(
+                        LoomReveal(
+                          order: 3,
+                          child: LoomSettingsGroup(
                           children: [
                             ExpansionTile(
                               title: Text(
@@ -238,6 +246,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               ],
                             ),
                           ],
+                          ),
                         ),
                         const SizedBox(height: 16),
                         if (loomDevelopmentSurfacesEnabled) ...[

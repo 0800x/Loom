@@ -280,7 +280,9 @@ class LoomLiveKitGroupCallMedia extends LoomGroupCallMedia {
     if (_closed || room == null) {
       return null;
     }
-    if (id == room.localParticipant?.identity) {
+    final ownIdentity = room.localParticipant?.identity;
+    final isLocal = id == ownIdentity;
+    if (isLocal) {
       final track = room.localParticipant?.videoTrackPublications
           .where(
             (p) =>
@@ -290,7 +292,13 @@ class LoomLiveKitGroupCallMedia extends LoomGroupCallMedia {
           )
           .firstOrNull
           ?.track;
-      return track != null ? lk.VideoTrackRenderer(track) : null;
+      // Local preview mirrors like a physical mirror; remote tiles must not.
+      return track != null
+          ? lk.VideoTrackRenderer(
+              track,
+              mirrorMode: lk.VideoViewMirrorMode.mirror,
+            )
+          : null;
     }
     final track = room.remoteParticipants[id]?.videoTrackPublications
         .where(
@@ -301,7 +309,12 @@ class LoomLiveKitGroupCallMedia extends LoomGroupCallMedia {
         )
         .firstOrNull
         ?.track;
-    return track != null ? lk.VideoTrackRenderer(track) : null;
+    return track != null
+        ? lk.VideoTrackRenderer(
+            track,
+            mirrorMode: lk.VideoViewMirrorMode.off,
+          )
+        : null;
   }
 
   Future<void> _destroyKeys() async {

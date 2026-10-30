@@ -93,7 +93,13 @@ class LoomOnboardingController extends ChangeNotifier {
     accessToken = null;
     accessTokenExpiresAt = null;
     _identityCore.discardPendingIdentity();
+    final hadPending = pendingIdentity != null;
     pendingIdentity = null;
+    // Locked mid-setup: screens observe this notifier through
+    // InheritedNotifier and must repaint the cleared state after unlock.
+    if (hadPending) {
+      notifyListeners();
+    }
   }
 
   Future<bool> restorePersistedSession() {
@@ -835,6 +841,12 @@ class LoomOnboardingController extends ChangeNotifier {
     final pending = pendingIdentity;
     final endpoint = nodes.selectedEndpoint;
     if (pending == null || endpoint == null) {
+      // A silent `false` dead-ends the recovery-verification screen; the
+      // session was likely cleared by an app lock mid-setup. Surface it.
+      errorMessage = pending == null
+          ? 'Setup state expired while locked. Please start identity setup again.'
+          : 'Choose a Node before finishing setup.';
+      notifyListeners();
       return false;
     }
     final epoch = ++_sessionEpoch;

@@ -45,6 +45,12 @@ class LoomGroupCallController extends ChangeNotifier {
   int _generation = 0;
   Timer? _heartbeat, _watchdog;
   DateTime? _lastAuthorized, _admissionDeadline;
+
+  /// Client-side join instant; powers the in-call duration readout.
+  DateTime? connectedAt;
+  Duration get connectedDuration => connectedAt == null
+      ? Duration.zero
+      : DateTime.now().difference(connectedAt!);
   Uint8List? _connectingKey;
   Future<void>? _leaving;
   Future<void> _mediaTail = Future.value();
@@ -183,6 +189,7 @@ class LoomGroupCallController extends ChangeNotifier {
       key.fillRange(0, key.length, 0);
       _connectingKey = null;
       phase = LoomGroupCallPhase.connected;
+      connectedAt = DateTime.now();
       busy = false;
       await _poll();
       _guard(generation);
@@ -407,6 +414,7 @@ class LoomGroupCallController extends ChangeNotifier {
     _polling = false;
     _mediaTail = Future.value();
     phase = LoomGroupCallPhase.ending;
+    connectedAt = null;
     _heartbeat?.cancel();
     _heartbeat = null;
     _watchdog?.cancel();

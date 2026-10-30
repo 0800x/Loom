@@ -135,8 +135,49 @@ class _LoomChatFoldersSettingsScreenState
                             onEdit: folder.preset
                                 ? null
                                 : () => _editFolder(context, folders, folder),
-                            onRemove: () =>
-                                unawaited(folders.remove(folder.id)),
+                            // Removal is instant in the controller; guard it
+                            // with a confirm so a stray swipe can't delete a
+                            // curated folder.
+                            onRemove: () async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (dialogContext) => AlertDialog(
+                                  title: Text(
+                                    tr(
+                                      dialogContext,
+                                      'Remove folder?',
+                                      'پوشه حذف شود؟',
+                                    ),
+                                  ),
+                                  content: Text(
+                                    tr(
+                                      dialogContext,
+                                      'Chats stay in All Chats — only the folder is removed.',
+                                      'گفتگوها در «همه گفتگوها» می‌مانند — فقط پوشه حذف می‌شود.',
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dialogContext, false),
+                                      child: Text(
+                                        tr(dialogContext, 'Cancel', 'لغو'),
+                                      ),
+                                    ),
+                                    FilledButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dialogContext, true),
+                                      child: Text(
+                                        tr(dialogContext, 'Remove', 'حذف'),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirmed == true) {
+                                unawaited(folders.remove(folder.id));
+                              }
+                            },
                           );
                         },
                       ),

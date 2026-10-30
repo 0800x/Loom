@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../loom_accessibility.dart';
 import '../loom_glass.dart';
@@ -28,7 +29,7 @@ class LoomGlassNavigation extends StatelessWidget {
       child: LoomGlassSurface(
         strength: LoomGlassStrength.standard,
         liveBackdrop: true,
-        radius: 28,
+        radius: LoomRadii.sheet,
         padding: const EdgeInsets.all(LoomSpacing.xxs),
         child: Stack(
           children: [
@@ -57,7 +58,9 @@ class LoomGlassNavigation extends StatelessWidget {
                             p.primary.withAlphaFraction(.055),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(22),
+                        borderRadius: BorderRadius.circular(
+                          LoomRadii.navigation - 2,
+                        ),
                         border: Border.all(
                           color: p.primary.withAlphaFraction(.15),
                         ),
@@ -79,6 +82,9 @@ class LoomGlassNavigation extends StatelessWidget {
                     excludeSemantics: true,
                     onTap: () {
                       if (!selected) {
+                        if (!reduceMotion) {
+                          HapticFeedback.selectionClick();
+                        }
                         onSelected(index);
                       }
                     },
