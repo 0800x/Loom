@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/loom_strings.dart';
 import '../application/onboarding_controller.dart';
-import 'setup_scaffold.dart';
+import 'onboarding_chrome.dart';
 
 class RecoveryVerificationScreen extends StatefulWidget {
   const RecoveryVerificationScreen({super.key});
@@ -72,21 +72,7 @@ class _RecoveryVerificationScreenState
     // An app lock mid-setup discards the pending identity. Without this
     // fallback the words never validate and the user is stuck forever.
     final expired = controller.pendingIdentity == null;
-    return LoomSetupScaffold(
-      actions: expired
-          ? FilledButton(
-              onPressed: () => Navigator.of(context)
-                  .popUntil((route) => route.isFirst),
-              child: Text(
-                tr(context, 'Back to start', 'بازگشت به ابتدا'),
-              ),
-            )
-          : FilledButton(
-              onPressed: busy ? null : _verify,
-              child: busy
-                  ? const LoomBusyIndicator()
-                  : Text(tr(context, 'Finish setup', 'تکمیل راه‌اندازی')),
-            ),
+    return LoomOnboardingShell(
       step: 3,
       canPop: !busy,
       title: expired
@@ -103,71 +89,141 @@ class _RecoveryVerificationScreenState
               'Enter words 4 and 17 from your saved list. This makes sure you have a working backup before we finish.',
               'واژه‌های ۴ و ۱۷ را از یادداشت خود وارد کنید تا قبل از پایان، از پشتیبان مطمئن شویم.',
             ),
-      children: expired
-          ? [
-              Icon(
-                LoomIcons.lock_outline_rounded,
-                size: LoomIconSize.emptyState,
-                color: p.textMuted,
-              ),
-              const SizedBox(height: LoomSpacing.lg),
-            ]
-          : [
-              Directionality(
-                textDirection: TextDirection.ltr,
-                child: TextField(
-                  controller: word4,
-                  enabled: !busy,
-                  maxLength: 16,
-                  textInputAction: TextInputAction.next,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  decoration: InputDecoration(
-                    labelText: tr(context, 'Recovery word #4', 'واژهٔ شمارهٔ ۴'),
-                  ),
+      error: expired ? null : (localError ?? controller.errorMessage),
+      ctaLabel: expired
+          ? tr(context, 'Back to start', 'بازگشت به ابتدا')
+          : tr(context, 'Finish setup', 'تکمیل راه‌اندازی'),
+      onCta: expired
+          ? () => Navigator.of(context).popUntil((route) => route.isFirst)
+          : busy
+          ? null
+          : _verify,
+      ctaBusy: busy,
+      child: expired
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Icon(
+                  LoomIcons.lock_outline_rounded,
+                  size: LoomIconSize.emptyState,
+                  color: p.textMuted,
                 ),
-              ),
-              const SizedBox(height: LoomSpacing.sm),
-              Directionality(
-                textDirection: TextDirection.ltr,
-                child: TextField(
-                  controller: word17,
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _WordSlot(
+                  index: 4,
+                  controller: word4,
+                  label: tr(context, 'Recovery word #4', 'واژهٔ شمارهٔ ۴'),
                   enabled: !busy,
-                  maxLength: 16,
+                  textInputAction: TextInputAction.next,
+                ),
+                const SizedBox(height: LoomSpacing.sm),
+                _WordSlot(
+                  index: 17,
+                  controller: word17,
+                  label: tr(context, 'Recovery word #17', 'واژهٔ شمارهٔ ۱۷'),
+                  enabled: !busy,
                   textInputAction: TextInputAction.done,
                   onSubmitted: (_) => _verify(),
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  decoration: InputDecoration(
-                    labelText:
-                        tr(context, 'Recovery word #17', 'واژهٔ شمارهٔ ۱۷'),
-                  ),
                 ),
-              ),
-              AnimatedSize(
-                duration: LoomMotion.component,
+              ],
+            ),
+    );
+  }
+}
+
+/// A numbered word slot: the round badge fills with a check once a word has
+/// been entered, so the saved/filled state is readable at a glance. The
+/// field itself keeps the theme input style and all validation wiring.
+class _WordSlot extends StatelessWidget {
+  const _WordSlot({
+    required this.index,
+    required this.controller,
+    required this.label,
+    required this.enabled,
+    required this.textInputAction,
+    this.onSubmitted,
+  });
+
+  final int index;
+  final TextEditingController controller;
+  final String label;
+  final bool enabled;
+  final TextInputAction textInputAction;
+  final ValueChanged<String>? onSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    return LoomGlassSurface(
+      strength: LoomGlassStrength.weak,
+      blur: false,
+      radius: LoomRadii.control,
+      padding: const EdgeInsets.symmetric(
+        horizontal: LoomSpacing.sm,
+        vertical: LoomSpacing.xs,
+      ),
+      child: Row(
+        children: [
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: controller,
+            builder: (context, value, _) {
+              final filled = value.text.trim().isNotEmpty;
+              return AnimatedContainer(
+                duration:
+                    LoomAccessibility.fromContext(context).reduceMotion
+                    ? Duration.zero
+                    : LoomMotion.component,
                 curve: LoomMotion.standard,
-                alignment: Alignment.topCenter,
-                child: (localError != null || controller.errorMessage != null)
-                    ? Padding(
-                        padding: const EdgeInsets.only(
-                          top: LoomSpacing.sm,
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: filled ? p.primary : p.surfaceMuted,
+                  border: Border.all(color: filled ? p.primary : p.border),
+                ),
+                child: ExcludeSemantics(
+                  child: filled
+                      ? Icon(
+                          LoomIcons.check_rounded,
+                          size: LoomIconSize.compact,
+                          color: p.onPrimary,
+                        )
+                      : Text(
+                          '$index',
+                          textDirection: TextDirection.ltr,
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: p.textSecondary,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(
-                            localError ?? controller.errorMessage!,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: p.critical),
-                          ),
-                        ),
-                      )
-                    : const SizedBox(width: double.infinity),
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: LoomSpacing.sm),
+          Expanded(
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: TextField(
+                controller: controller,
+                enabled: enabled,
+                maxLength: 16,
+                textInputAction: textInputAction,
+                onSubmitted: onSubmitted,
+                autocorrect: false,
+                enableSuggestions: false,
+                decoration: InputDecoration(labelText: label),
               ),
-              const SizedBox(height: LoomSpacing.lg),
-            ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

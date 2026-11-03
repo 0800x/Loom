@@ -115,6 +115,14 @@ abstract final class LoomIcons {
   static const IconData compare_arrows_rounded =
       Amicons.lucide_arrow_left_right;
   static const IconData contrast_rounded = Amicons.lucide_contrast;
+  // Image-editor glyph set (crop / undo / rotate / mirror / draw / decode
+  // failure). The mirror action maps to the left-right arrows metaphor.
+  static const IconData crop_rounded = Amicons.lucide_crop;
+  static const IconData undo_rounded = Amicons.lucide_undo2;
+  static const IconData rotate_right_rounded = Amicons.lucide_rotate_cw;
+  static const IconData flip_rounded = Amicons.lucide_arrow_left_right;
+  static const IconData draw_rounded = Amicons.lucide_pencil;
+  static const IconData broken_image_rounded = Amicons.lucide_image_off;
   static const IconData copy_rounded = Amicons.lucide_copy;
   static const IconData dark_mode_outlined = Amicons.lucide_moon;
   static const IconData description_outlined = Amicons.lucide_file_text;

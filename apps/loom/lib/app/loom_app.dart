@@ -19,6 +19,8 @@ import '../features/groups/presentation/group_join_screen.dart';
 
 import 'package:loom_models/loom_models.dart' show LoomGroupInviteLink;
 
+import '../features/accounts/application/account_registry.dart';
+import '../features/accounts/presentation/accounts_screen.dart';
 import '../features/notifications/application/message_notifications.dart';
 import 'chat_wallpaper.dart';
 import '../features/media/presentation/playback_host.dart';
@@ -32,6 +34,7 @@ import '../features/chat_folders/application/chat_folder_controller.dart';
 import '../features/chat_folders/presentation/chat_folders_settings_screen.dart';
 import '../features/design_lab/design_lab_screen.dart';
 import '../features/home/presentation/messenger_shell.dart';
+import '../features/home/presentation/global_search_screen.dart';
 import '../features/messaging/application/accepted_send_dtn_mirror.dart';
 import '../features/messaging/application/messaging_session_controller.dart';
 import '../features/messaging/application/nearby_dtn_service_controller.dart';
@@ -52,6 +55,7 @@ import '../features/people/presentation/people_screen.dart';
 import '../features/profile/presentation/profile_qr_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/security/presentation/security_screen.dart';
+import '../features/security/application/db_encryption.dart';
 import '../features/settings/presentation/nearby_diagnostics_screen.dart';
 import '../features/settings/presentation/nearby_mode_screen.dart';
 import '../features/settings/presentation/settings_detail_screen.dart';
@@ -296,7 +300,129 @@ class _LoomAppState extends State<LoomApp>
     _notifications = LoomMessageNotifications(
       messaging: messaging,
       onOpen: _openNotification,
+      onQuickReply: _onQuickReply,
     );
+  }
+
+  /// Quick replies captured while the app is locked or offline. Keys stay in
+  /// the locked vault, so the text waits here and is queued on unlock.
+  final _pendingQuickReplies = <String, List<String>>{};
+
+  /// Stores the just-completed onboarding under the active account slot so
+  /// the Accounts switcher can label it. Legacy installs (no registry file)
+  /// stay unregistered until the user actually adds a second account.
+  Future<void> _stampActiveAccount() async {
+    try {
+      final identity = onboarding.committedIdentity;
+      if (identity == null) return;
+      final state = await LoomAccountRegistry.load();
+      if (state.activeId == null) return;
+      final displayName = onboarding.displayName.trim();
+      final label = displayName.isNotEmpty
+          ? displayName
+          : onboarding.username.trim();
+      if (label.isEmpty) return;
+      await LoomAccountRegistry.updateEntry(
+        state.activeId!,
+        label: label,
+        address: onboarding.receipt?.address,
+      );
+    } catch (_) {
+      // A cosmetic registry update must never surface as a session error.
+    }
+  }
+
+  /// Account switcher: applies the target slot's scope, migrates its
+  /// databases if needed, then tears the current session down IN MEMORY.
+  /// Neither account's vaults are deleted, so the StartupGate restores the
+  /// target account from its own refresh token.
+  Future<void> switchAccount(String slotId) async {
+    final state = await LoomAccountRegistry.load();
+    final matches = state.accounts.where((entry) => entry.id == slotId);
+    if (matches.isEmpty || state.activeId == slotId) return;
+    await LoomAccountRegistry.setActive(slotId);
+    LoomAccountScope.current = matches.first.scope;
+    try {
+      // Migrate the newly active workspace before any store opens it.
+      await LoomDbEncryption.prepareAtStartup();
+    } catch (_) {
+      // Open sites surface a descriptive strict-mode error instead.
+    }
+    onboarding.beginAccountSwitch();
+  }
+
+  /// Registers the running account (so the user can always come back to it),
+  /// creates a fresh slot and hands control to the StartupGate, which offers
+  /// identity creation for the new account.
+  Future<void> startAddAccount() async {
+    final identity = onboarding.committedIdentity;
+    if (identity != null) {
+      final displayName = onboarding.displayName.trim();
+      final label = displayName.isNotEmpty
+          ? displayName
+          : onboarding.username.trim();
+      await LoomAccountRegistry.ensureCurrentRegistered(
+        label: label.isNotEmpty ? label : 'Account',
+        address: onboarding.receipt?.address,
+      );
+    }
+    final entry = await LoomAccountRegistry.addAccount();
+    LoomAccountScope.current = entry.scope;
+    try {
+      await LoomDbEncryption.prepareAtStartup();
+    } catch (_) {}
+    onboarding.beginAccountSwitch();
+  }
+
+  void _onQuickReply(String conversationId, String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+    if (LoomAppLock.instance.locked) {
+      _pendingQuickReplies.putIfAbsent(conversationId, () => []).add(trimmed);
+      return;
+    }
+    unawaited(_sendQuickReply(conversationId, trimmed));
+  }
+
+  Future<void> _sendQuickReply(String conversationId, String text) async {
+    try {
+      if (!mounted ||
+          onboarding.status != LoomOnboardingStatus.complete ||
+          LoomAppLock.instance.locked) {
+        _pendingQuickReplies.putIfAbsent(conversationId, () => []).add(text);
+        return;
+      }
+      if (messaging.status == LoomMessagingSessionStatus.idle) {
+        await messaging.open();
+      }
+      final queued = await messaging.sendText(conversationId, text);
+      if (queued) {
+        _pendingQuickReplies.remove(conversationId);
+        await _notifications?.bridge.clear(conversationId);
+      } else {
+        // Keep the reply for the next unlock/resume drain instead of losing
+        // user-authored text to a transient failure.
+        _pendingQuickReplies.putIfAbsent(conversationId, () => []).add(text);
+      }
+    } catch (_) {
+      _pendingQuickReplies.putIfAbsent(conversationId, () => []).add(text);
+    }
+  }
+
+  /// Queues every buffered quick reply. Called after unlock and on resume.
+  void _drainQuickReplies() {
+    if (_pendingQuickReplies.isEmpty ||
+        LoomAppLock.instance.locked ||
+        onboarding.status != LoomOnboardingStatus.complete) {
+      return;
+    }
+    final entries = Map.of(_pendingQuickReplies);
+    _pendingQuickReplies.clear();
+    for (final entry in entries.entries) {
+      for (final text in entry.value) {
+        unawaited(_sendQuickReply(entry.key, text));
+      }
+    }
   }
 
   void _openNotification(String id) {
@@ -350,6 +476,7 @@ class _LoomAppState extends State<LoomApp>
     if (onboarding.status == LoomOnboardingStatus.complete) {
       if (!_hadCompleteSession) {
         _hadCompleteSession = true;
+        unawaited(_stampActiveAccount());
         unawaited(calls.open());
         unawaited(messaging.open().then((_) => groups?.open()));
         unawaited(_drainNotification());
@@ -503,6 +630,7 @@ class _LoomAppState extends State<LoomApp>
       unawaited(groups?.open());
       await _drainNotification();
       unawaited(_drainGroupLink());
+      _drainQuickReplies();
     } catch (_) {
       // StartupGate owns the user-visible retry/error state. Keep the existing
       // protected data intact and let its restore attempt surface the code.
@@ -643,6 +771,9 @@ class _LoomAppState extends State<LoomApp>
                               const RecoveryVerificationScreen(),
                           '/ready': (_) => const ReadyScreen(),
                           '/messenger': (_) => const MessengerShell(),
+                          '/search': (_) => GlobalSearchScreen(
+                            messaging: messaging,
+                          ),
                           '/people': (_) => const LoomPeopleScreen(),
                           '/profile': (_) =>
                               const ProfileScreen(preview: false),
@@ -653,6 +784,10 @@ class _LoomAppState extends State<LoomApp>
                               const LoomActiveCallRoute(),
                           '/settings/chat-folders': (_) =>
                               const LoomChatFoldersSettingsScreen(),
+                          '/settings/accounts': (_) => LoomAccountsScreen(
+                            onSwitch: switchAccount,
+                            onAddAccount: startAddAccount,
+                          ),
                           '/settings/privacy': (_) =>
                               _settings(LoomSettingsSection.privacy),
                           '/settings/notifications': (_) =>

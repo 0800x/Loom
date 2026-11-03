@@ -1,47 +1,38 @@
-﻿feat(app): overhaul UX, glass stability, calls, notifications, and i18n
+﻿feat: v0.3.0+30 — multi-account, SQLCipher at rest, live typing rows, group search
 
-Critical fixes:
-- Mirror only the local participant's video in group calls (remote streams were mirrored)
-- Consume message-notification taps on warm start via MainActivity.onNewIntent
-- Propagate POST_NOTIFICATIONS permission result (code 9042) to Dart and drive the settings switch from the real OS status
-- Null-safe endpoint rendering in group chat (crash on server switch / session expiry)
-- Surface errors from commitAndRegister instead of failing silently
-- Add fallback view for the recovery-verification dead end
-- Restore incoming-call state when accept fails so the offer is not lost
-- Add leave/delete group flow with confirmation dialog and MLS member-list update
-- Guard against double-push of the group call route
+Priority feature round (1-4) on top of v0.2.0+29.
 
-Calls & group calls:
-- Floating glass mini bar for group calls (was shoving content down): live timer, mute state, hangup, return-to-call
-- Always-dark stage theme for group calls, call duration in the app bar
-- Stable ValueKeys on video tiles, active-speaker glow, mute/raise-hand badges, 3-column grid on wide screens
-- Replace infinite repeating animations with finite transitions (battery + frame stability)
-- Retry button in the call error dialog
+1) Reactions + forward + edit (content layer + UI)
+- loom.content.v1 control ops: react/edit/delete/typing with strict parsing
+- messaging_engine.queueControl; folds aggregate reactions/edited/deleted
+- long-press panel: quick-reaction row, forward picker, edit flow, delete-for-everyone
+- forwarded banner + edited label + reaction chips on bubbles
 
-Onboarding:
-- Global animated error slot on the setup scaffold, localized brand name
-- Node selection: selected highlight, animated "server verified" card, list caption
-- Busy indicators respect reduce-motion
+2) Typing indicator (ephemeral protocol event)
+- typing control op: never persisted, 30s validity, 6s UI sweeper
+- chat list rows now wired to typingPeersFor via LoomChatRow.typing
+- bilingual labels: single/two/crowd variants (typingRowLabel + tests)
 
-Fonts & language:
-- Vazirmatn fontFamilyFallback across all theme styles so Persian text renders consistently inside the English UI
-- Add "follow system" language option (default for new installs); existing en/fa choices preserved
-- Keep settings panels in sync via didUpdateWidget
+3) Global search + block + notification quick reply
+- searchLocalMessages now scans decrypted in-memory group history too,
+  merges with the on-disk direct-message index sorted newest-first
+- blocked_addresses enforcement (inbound/outbound/search/notifications)
+- Android RemoteInput quick reply; locked-app replies queue until unlock
 
-Media & music player:
-- Shared _SeekSlider: seek on release, no drag fighting with position ticks (mini, expanded, and desktop players)
-- Real audio focus (setActive(true)) with interruption handling and resume
-- Mini player progress hairline, cover tap to expand, hour-capable time formatting
-- Camera permission-denied copy with an open-settings deep link
+4) Multi-account + SQLCipher + ratchet v2 + encrypted backup
+- account registry (loom-accounts.v1.json) + per-slot secure-storage scope
+  (LoomAccountScope inside LoomSecretStorage; legacy installs = null scope,
+  zero migration) + per-account workspace dirs for all 15 DB path sites
+- switch keeps each account's refresh token: seamless re-entry without
+  password (onboarding.beginAccountSwitch); add-account registers the
+  current account first; /settings/accounts UI in Privacy settings
+- SQLCipher shipped: sqlcipher_flutter_libs 0.6.5 (+ sqlite3 direct dep,
+  sqlite3_flutter_libs removed per iOS/macOS clash advisory), Android
+  openCipherOnAndroid + A6 workaround, requireCipher strict mode rejects
+  plain-SQLite builds when a key is configured (silent-downgrade guard)
+- ratchet v2 opt-in card (fail-closed, ADR-006) and encrypted recovery
+  backup (Argon2id + AES-GCM) verified in place
 
-Chat, folders & recordings:
-- Animated scroll-to-latest FAB, live mic waveform while recording voice messages
-- Unread badges on folder chips, confirmation before folder deletion
-- Local timestamps under group chat bubbles
-
-Glass & design system:
-- Fix _GlassSheen unbounded layout crash inside scroll contexts (SizedBox.expand -> Positioned.fill); root cause of ~40 test failures and random device crashes
-- Static presence dots instead of per-avatar infinite pulses
-
-Validation: flutter analyze clean; 461 app tests + 55 design tests passing.
-Full Persian report: FIXES-REPORT.fa.md
+Tests: +8 (registry x6, account scope x4 in bridge, typing labels x2)
+Suites: 485 app + 32 bridge + 65 storage + 73 transport + 55 design, all green
+analyze: clean across app + all packages

@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../accounts/application/account_workspace.dart';
 import 'dart:typed_data';
 import 'dart:convert';
 import 'dart:io';
@@ -9,7 +10,6 @@ import 'package:loom_protocol/loom_protocol.dart';
 import 'package:loom_storage/loom_storage.dart';
 import 'package:loom_transport/loom_transport.dart';
 import 'package:flutter/widgets.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../onboarding/application/onboarding_controller.dart';
 import '../../messaging/application/message_content.dart';
@@ -25,11 +25,14 @@ class LoomGroupMessage {
     this.reply,
     this.location,
     this.createdAt,
+    this.control,
+    this.forwarded = false,
   });
   final int sequence;
   final String operationId, senderDeviceId, text;
-  final Map<String, Object?>? attachment, reply, location;
+  final Map<String, Object?>? attachment, reply, location, control;
   final DateTime? createdAt;
+  final bool forwarded;
 }
 
 /// Uses the dedicated MLS inbox/outbox. Never sends through the legacy codec.
@@ -260,7 +263,7 @@ class LoomGroupsController extends ChangeNotifier {
     if (receipt == null || identity == null || endpoint == null) {
       throw StateError('Sign in first');
     }
-    final support = await getApplicationSupportDirectory();
+    final support = await LoomAccountWorkspace.active();
     _guard(epoch);
     final name = base64UrlEncode(
       utf8.encode('${identity.identityId}:${receipt.deviceId}'),
@@ -597,12 +600,26 @@ class LoomGroupsController extends ChangeNotifier {
           }
           continue;
         }
+        // Encrypted control documents (react/edit/delete/typing) ride in the
+        // content map. They are kept in the row list so the merge step can
+        // fold them onto their targets, but they never display directly.
+        Map<String, Object?>? control;
+        if (content['control'] is Map) {
+          control = Map<String, Object?>.from(content['control'] as Map);
+        } else if (LoomMessageControl.tryParse(content) != null) {
+          // Content documents without a text field that parse as pure control
+          // blocks are treated as malformed and skipped.
+          continue;
+        }
+        final forwarded = content['forwarded'];
         rows.add(
           LoomGroupMessage(
             entry.sequence,
             payload['operationId'] as String,
             payload['senderDeviceId'] as String,
-            content['text'] as String? ?? 'Unsupported group content',
+            control != null
+                ? ''
+                : content['text'] as String? ?? 'Unsupported group content',
             location: LoomMessageContent.decode(
               LoomMessageContent(
                 location: content['location'] == null
@@ -630,6 +647,8 @@ class LoomGroupsController extends ChangeNotifier {
                       ),
                     ).encode(),
                   ).attachment,
+            control: control,
+            forwarded: forwarded == true,
           ),
         );
       }
@@ -652,7 +671,10 @@ class LoomGroupsController extends ChangeNotifier {
       final lastRead = _store!.readSequence(group.id);
       unreadCounts[group.id] = projected
           .where(
-            (m) => m.sequence > lastRead && m.senderDeviceId != ownDeviceId,
+            (m) =>
+                m.sequence > lastRead &&
+                m.senderDeviceId != ownDeviceId &&
+                m.control == null,
           )
           .length;
       final newest = projected.lastOrNull?.sequence ?? 0;
@@ -661,7 +683,10 @@ class LoomGroupsController extends ChangeNotifier {
         _store!.markRead(group.id, newest);
         unreadCounts[group.id] = 0;
       } else if (projected.any(
-        (m) => m.sequence > previous && m.senderDeviceId != ownDeviceId,
+        (m) =>
+            m.sequence > previous &&
+            m.senderDeviceId != ownDeviceId &&
+            m.control == null,
       )) {
         onIncoming?.call(group.id, group.title);
       }
@@ -739,20 +764,49 @@ class LoomGroupsController extends ChangeNotifier {
 
   Future<bool> send(String id, String text) =>
       sendContent(id, LoomMessageContent(text: text.trim()));
+
+  /// Durable encrypted control (react/edit/delete-for-everyone). Shares the
+  /// message outbox so it survives restarts exactly like a normal send.
+  Future<bool> sendControl(String id, LoomMessageControl control) =>
+      sendContent(
+        id,
+        LoomMessageContent(control: control),
+      );
+
+  /// Ephemeral typing signal. Fire-and-forget: never queued, never surfaced.
+  Future<void> sendTyping(String id) async {
+    try {
+      if (_session == null) return;
+      await _session!.sendEphemeral(id, {
+        'control': const LoomMessageControl.typing().toMap(),
+      });
+    } catch (_) {
+      // Typing is best-effort by design.
+    }
+  }
+
   Future<bool> sendContent(String id, LoomMessageContent content) =>
       _operation((epoch) async {
-        if ((content.text.trim().isEmpty &&
+        if (content.control == null &&
+            (content.text.trim().isEmpty &&
                 content.attachment == null &&
-                content.location == null) ||
-            utf8.encode(content.encode()).length > 32000) {
+                content.location == null)) {
+          throw ArgumentError('Message must be 1..32000 bytes');
+        }
+        if (utf8.encode(content.encode()).length > 32000) {
           throw ArgumentError('Message must be 1..32000 bytes');
         }
         LoomMessageContent.decode(content.encode());
         final payload = <String, Object?>{
-          'text': content.text,
-          if (content.attachment != null) 'attachment': content.attachment,
-          if (content.reply != null) 'reply': content.reply,
-          if (content.location != null) 'location': content.location,
+          if (content.control != null) ...<String, Object?>{
+            'control': content.control!.toMap(),
+          } else ...<String, Object?>{
+            'text': content.text,
+            if (content.attachment != null) 'attachment': content.attachment,
+            if (content.reply != null) 'reply': content.reply,
+            if (content.location != null) 'location': content.location,
+            if (content.forwarded) 'forwarded': true,
+          },
         };
         await _initialize(epoch);
         final recoveringSame = await _pendingContentMatches(id, payload, epoch);

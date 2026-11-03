@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'account_scope.dart';
+
 // Loom is pre-release: use one explicit namespace/config and avoid plugin
 // migration machinery entirely. App Lock performs its own authenticated
 // wrapping, so flutter_secure_storage remains a stable non-biometric backing
@@ -414,7 +416,7 @@ class LoomSecretStorage {
       if (_lock.locked) {
         throw StateError('Loom is locked');
       }
-      final value = await _storage.read(key: key);
+      final value = await _storage.read(key: LoomAccountScope.scopedKey(key));
       if (_lock.locked) {
         throw StateError('Loom is locked');
       }
@@ -423,7 +425,7 @@ class LoomSecretStorage {
       }
       LoomAppLock._requireSupportedEnvelope(value);
       if (value.startsWith(LoomAppLock._prefix)) {
-        final opened = await _lock._open(key, value);
+        final opened = await _lock._open(LoomAccountScope.scopedKey(key), value);
         if (_lock.locked) {
           throw StateError('Loom is locked');
         }
@@ -440,10 +442,10 @@ class LoomSecretStorage {
         throw StateError('Loom is locked');
       }
       await _storage.write(
-        key: key,
+        key: LoomAccountScope.scopedKey(key),
         value: value == null || !_lock.enabled
             ? value
-            : await _lock._seal(key, value),
+            : await _lock._seal(LoomAccountScope.scopedKey(key), value),
       );
     });
   }
@@ -454,7 +456,7 @@ class LoomSecretStorage {
       if (_lock.locked) {
         throw StateError('Loom is locked');
       }
-      await _storage.delete(key: key);
+      await _storage.delete(key: LoomAccountScope.scopedKey(key));
     });
   }
 }

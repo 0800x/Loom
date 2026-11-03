@@ -12,7 +12,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   media_kit_libs_windows_video
   media_kit_video
   record_windows
-  sqlite3_flutter_libs
+  sqlcipher_flutter_libs
   url_launcher_windows
 )
 

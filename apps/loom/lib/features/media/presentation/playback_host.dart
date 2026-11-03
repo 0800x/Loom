@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 
 import 'package:loom_design/loom_design.dart';
 import 'package:flutter/material.dart';
@@ -121,173 +123,236 @@ class LoomPlaybackHost extends StatelessWidget {
             AnimatedSwitcher(
               duration: LoomAccessibility.fromContext(context).reduceMotion
                   ? Duration.zero
-                  : const Duration(milliseconds: 260),
+                  : const Duration(milliseconds: 300),
               transitionBuilder: (child, animation) => SizeTransition(
                 sizeFactor: animation,
-                child: FadeTransition(opacity: animation, child: child),
+                alignment: Alignment.topCenter,
+                child: FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(
+                    scale: Tween<double>(begin: .96, end: 1).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      ),
+                    ),
+                    child: child,
+                  ),
+                ),
               ),
               child: !playback.visible || !playback.music || playback.expanded
                   ? const SizedBox.shrink()
-                  : LoomGlassSurface(
-                      liveBackdrop: true,
-                      radius: 0,
-                      child: Material(
-                        color: Colors.transparent,
-                        child: SafeArea(
-                          bottom: false,
-                          child: SizedBox(
-                            key: _miniPlayerKey,
-                            height: 60,
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      const SizedBox(width: 8),
-                                      if (playback.music)
-                                        // The artwork is a tap target too;
-                                        // text-only expand hid most of the bar.
-                                        GestureDetector(
-                                          onTap: expand,
-                                          behavior: HitTestBehavior.opaque,
-                                          child: _Cover(
-                                            file: playback.artwork,
-                                            size: 42,
-                                            playing: playback.playing,
-                                          ),
-                                        ),
-                                      IconButton(
-                                        tooltip: tr(
-                                          context,
-                                          playback.playing ? 'Pause' : 'Play',
-                                          playback.playing ? 'مکث' : 'پخش',
-                                        ),
-                                        onPressed: playback.loading
-                                            ? null
-                                            : playback.toggle,
-                                        icon: playback.loading
-                                            ? const SizedBox(
-                                                width: 20,
-                                                height: 20,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                ),
-                                              )
-                                            : Icon(
-                                                playback.playing
-                                                    ? LoomIcons.pause_rounded
-                                                    : LoomIcons
-                                                          .play_arrow_rounded,
+                  : Padding(
+                      key: _miniPlayerKey,
+                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+                      child: LoomGlassSurface(
+                        liveBackdrop: true,
+                        radius: 26,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(26),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: SafeArea(
+                              bottom: false,
+                              child: SizedBox(
+                                height: 64,
+                                child: Column(
+                                  children: [
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          const SizedBox(width: 10),
+                                          if (playback.music)
+                                            // The artwork doubles as the tap
+                                            // target; a live equalizer badge
+                                            // on top makes "playing" glanceable
+                                            // without reading any text.
+                                            GestureDetector(
+                                              onTap: expand,
+                                              behavior: HitTestBehavior.opaque,
+                                              child: Stack(
+                                                clipBehavior: Clip.none,
+                                                children: [
+                                                  _Cover(
+                                                    file: playback.artwork,
+                                                    size: 42,
+                                                    playing: playback.playing,
+                                                  ),
+                                                  if (playback.playing)
+                                                    Positioned(
+                                                      right: -4,
+                                                      bottom: -4,
+                                                      child: _EqualizerBadge(
+                                                        reduceMotion: LoomAccessibility
+                                                            .fromContext(context)
+                                                            .reduceMotion,
+                                                      ),
+                                                    ),
+                                                ],
                                               ),
-                                      ),
-                                      Expanded(
-                                        child: InkWell(
-                                          onTap: expand,
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                playback.title,
-                                                maxLines: 1,
-                                                overflow:
-                                                    TextOverflow.ellipsis,
-                                                style: Theme.of(
-                                                  context,
-                                                ).textTheme.titleSmall,
+                                            ),
+                                          IconButton(
+                                            tooltip: tr(
+                                              context,
+                                              playback.playing ? 'Pause' : 'Play',
+                                              playback.playing ? 'مکث' : 'پخش',
+                                            ),
+                                            onPressed: playback.loading
+                                                ? null
+                                                : playback.toggle,
+                                            icon: playback.loading
+                                                ? const SizedBox(
+                                                    width: 20,
+                                                    height: 20,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
+                                                  )
+                                                : AnimatedSwitcher(
+                                                    duration:
+                                                        LoomAccessibility.fromContext(
+                                                              context,
+                                                            ).reduceMotion
+                                                            ? Duration.zero
+                                                            : const Duration(
+                                                                milliseconds: 180,
+                                                              ),
+                                                    transitionBuilder: (child,
+                                                            animation) =>
+                                                        ScaleTransition(
+                                                      scale: animation,
+                                                      child: child,
+                                                    ),
+                                                    child: Icon(
+                                                      playback.playing
+                                                          ? LoomIcons
+                                                                .pause_rounded
+                                                          : LoomIcons
+                                                                .play_arrow_rounded,
+                                                      key: ValueKey(
+                                                        playback.playing,
+                                                      ),
+                                                    ),
+                                                  ),
+                                          ),
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: expand,
+                                              borderRadius: BorderRadius.circular(
+                                                12,
                                               ),
-                                              ValueListenableBuilder<Duration>(
-                                                valueListenable:
-                                                    playback.timeline,
-                                                builder: (context, _, _) =>
-                                                    Text(
-                                                  playback.error != null
-                                                      ? tr(
-                                                          context,
-                                                          'Format unavailable on this device',
-                                                          'فرمت روی این دستگاه پشتیبانی نمی‌شود',
-                                                        )
-                                                      : '${playback.subtitle} · ${mediaTime(playback.position)} / ${mediaTime(playback.duration)}',
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: Theme.of(
-                                                    context,
-                                                  ).textTheme.bodySmall,
-                                                ),
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    playback.title,
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: Theme.of(
+                                                      context,
+                                                    ).textTheme.titleSmall,
+                                                  ),
+                                                  const SizedBox(height: 1),
+                                                  ValueListenableBuilder<Duration>(
+                                                    valueListenable:
+                                                        playback.timeline,
+                                                    builder: (context, _, _) =>
+                                                        Text(
+                                                      playback.error != null
+                                                          ? tr(
+                                                              context,
+                                                              'Format unavailable on this device',
+                                                              'فرمت روی این دستگاه پشتیبانی نمی‌شود',
+                                                            )
+                                                          : '${playback.subtitle} · ${mediaTime(playback.position)} / ${mediaTime(playback.duration)}',
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow
+                                                          .ellipsis,
+                                                      style: Theme.of(
+                                                        context,
+                                                      ).textTheme.bodySmall,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
+                                            ),
                                           ),
-                                        ),
+                                          if (playback.music)
+                                            IconButton(
+                                              tooltip: tr(
+                                                context,
+                                                'Next track',
+                                                'آهنگ بعدی',
+                                              ),
+                                              onPressed: () => playback.next(),
+                                              icon: const Icon(
+                                                LoomIcons.skip_next_rounded,
+                                              ),
+                                            )
+                                          else
+                                            TextButton(
+                                              onPressed: playback.changeSpeed,
+                                              child: Text('${playback.speed}×'),
+                                            ),
+                                          if (Platform.isWindows &&
+                                              MediaQuery.sizeOf(context).width >=
+                                                  600)
+                                            SizedBox(
+                                              width: 190,
+                                              child: _PlaybackVolumeControl(
+                                                playback: playback,
+                                              ),
+                                            ),
+                                          IconButton(
+                                            tooltip: tr(
+                                              context,
+                                              'Close player',
+                                              'بستن پخش‌کننده',
+                                            ),
+                                            onPressed: playback.close,
+                                            icon: const Icon(
+                                              LoomIcons.close_rounded,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      if (playback.music)
-                                        IconButton(
-                                          tooltip: tr(
-                                            context,
-                                            'Next track',
-                                            'آهنگ بعدی',
-                                          ),
-                                          onPressed: () => playback.next(),
-                                          icon: const Icon(
-                                            LoomIcons.skip_next_rounded,
-                                          ),
-                                        )
-                                      else
-                                        TextButton(
-                                          onPressed: playback.changeSpeed,
-                                          child: Text('${playback.speed}×'),
-                                        ),
-                                      if (Platform.isWindows &&
-                                          MediaQuery.sizeOf(context).width >=
-                                              600)
-                                        SizedBox(
-                                          width: 190,
-                                          child: _PlaybackVolumeControl(
-                                            playback: playback,
-                                          ),
-                                        ),
-                                      IconButton(
-                                        tooltip: tr(
-                                          context,
-                                          'Close player',
-                                          'بستن پخش‌کننده',
-                                        ),
-                                        onPressed: playback.close,
-                                        icon: const Icon(
-                                          LoomIcons.close_rounded,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                    // Rounded progress hairline at the pill's
+                                    // bottom edge — glanceable without
+                                    // expanding. Deliberately NOT animated:
+                                    // position ticks arrive continuously and a
+                                    // per-tick implicit animation would never
+                                    // let the frame pipeline settle.
+                                    ValueListenableBuilder<Duration>(
+                                      valueListenable: playback.timeline,
+                                      builder: (context, position, _) {
+                                        final total = playback
+                                            .duration
+                                            .inMilliseconds;
+                                        final fraction = total <= 0
+                                            ? 0.0
+                                            : (position.inMilliseconds / total)
+                                                  .clamp(0.0, 1.0);
+                                        return LinearProgressIndicator(
+                                          value: fraction,
+                                          minHeight: 3,
+                                          color: context.loom.primary
+                                              .withAlphaFraction(.75),
+                                          backgroundColor: context
+                                              .loom
+                                              .primary
+                                              .withAlphaFraction(.12),
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
-                                // Hairline progress along the bar's bottom
-                                // edge — glanceable without expanding.
-                                // Deliberately NOT animated: position ticks
-                                // arrive continuously while playing and an
-                                // implicit animation per tick would never let
-                                // the frame pipeline settle (tests, battery).
-                                ValueListenableBuilder<Duration>(
-                                  valueListenable: playback.timeline,
-                                  builder: (context, position, _) {
-                                    final total =
-                                        playback.duration.inMilliseconds;
-                                    final fraction = total <= 0
-                                        ? 0.0
-                                        : (position.inMilliseconds / total)
-                                              .clamp(0.0, 1.0);
-                                    return LinearProgressIndicator(
-                                      value: fraction,
-                                      minHeight: 2,
-                                      color: context.loom.primary
-                                          .withAlphaFraction(.55),
-                                      backgroundColor: Colors.transparent,
-                                    );
-                                  },
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -507,7 +572,8 @@ class LoomAudioTile extends StatelessWidget {
           textDirection: TextDirection.ltr,
           style: TextStyle(fontSize: 11, color: color.withValues(alpha: .85)),
         );
-        return AnimatedContainer(
+        // Playback tint animates inside the chat list: own repaint layer.
+        return RepaintBoundary(child: AnimatedContainer(
           duration: _motionDuration(context, 240),
           curve: Curves.easeInOutCubicEmphasized,
           margin: const EdgeInsets.symmetric(vertical: 4),
@@ -618,7 +684,7 @@ class LoomAudioTile extends StatelessWidget {
                 ),
             ],
           ),
-        );
+        ));
       },
     );
   }
@@ -707,6 +773,98 @@ class _Cover extends StatefulWidget {
   State<_Cover> createState() => _CoverState();
 }
 
+/// Tiny live equalizer shown on the mini-player cover while music plays —
+/// the clearest at-a-glance "sound is coming out" signal, including from
+/// inside a busy chat list.
+class _EqualizerBadge extends StatefulWidget {
+  const _EqualizerBadge({required this.reduceMotion});
+  final bool reduceMotion;
+  @override
+  State<_EqualizerBadge> createState() => _EqualizerBadgeState();
+}
+
+class _EqualizerBadgeState extends State<_EqualizerBadge>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _motion = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.reduceMotion) _motion.repeat();
+  }
+
+  @override
+  void didUpdateWidget(covariant _EqualizerBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.reduceMotion) {
+      _motion.stop();
+    } else if (!_motion.isAnimating) {
+      _motion.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _motion.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          color: context.loom.primary,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: context.loom.surfaceElevated,
+            width: 1.5,
+          ),
+        ),
+        child: RepaintBoundary(
+          child: AnimatedBuilder(
+            animation: _motion,
+            builder: (context, _) => CustomPaint(
+              painter: _EqualizerPainter(progress: _motion.value),
+            ),
+          ),
+        ),
+      );
+}
+
+class _EqualizerPainter extends CustomPainter {
+  _EqualizerPainter({required this.progress});
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round;
+    const bars = 3;
+    final midY = size.height / 2;
+    final gap = size.width / (bars + 1);
+    for (var i = 0; i < bars; i++) {
+      final phase = progress * 2 * math.pi + i * .9;
+      final wave = .5 + .5 * math.sin(phase);
+      final half = 1.4 + 3.4 * wave;
+      canvas.drawLine(
+        Offset(gap * (i + 1), midY - half),
+        Offset(gap * (i + 1), midY + half),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_EqualizerPainter oldDelegate) =>
+      oldDelegate.progress != progress;
+}
+
 class _CoverState extends State<_Cover> with SingleTickerProviderStateMixin {
   late final AnimationController _motion = AnimationController(
     vsync: this,
@@ -758,7 +916,8 @@ class _CoverState extends State<_Cover> with SingleTickerProviderStateMixin {
           ? Duration.zero
           : const Duration(milliseconds: 350),
       curve: Curves.easeOutCubic,
-      child: AnimatedContainer(
+      // Playing glow animates in-list; boundary sits inside the scaling chrome.
+      child: RepaintBoundary(child: AnimatedContainer(
         duration: _motionDuration(context, 350),
         width: size,
         height: size,
@@ -796,7 +955,7 @@ class _CoverState extends State<_Cover> with SingleTickerProviderStateMixin {
                       Icon(LoomIcons.music_note_rounded, size: size * .45),
                 ),
         ),
-      ),
+      )),
     ),
   );
 }
@@ -991,7 +1150,51 @@ class _PlaybackDetails extends StatelessWidget {
         appBar: LoomGlassAppBar(
           title: Text(tr(context, 'Now playing', 'در حال پخش')),
         ),
-        body: SafeArea(
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Ambient backdrop: the artwork blurred behind the controls, like
+            // a Now-playing surface. Falls back to a soft tinted gradient
+            // when the track has no embedded cover.
+            if (p.artwork != null)
+              ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
+                child: Transform.scale(
+                  scale: 1.35,
+                  child: Image.file(
+                    p.artwork!,
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,
+                    cacheWidth: 384,
+                  ),
+                ),
+              )
+            else
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      context.loom.primary.withValues(alpha: .22),
+                      context.loom.surface,
+                    ],
+                  ),
+                ),
+              ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    context.loom.surface.withValues(alpha: .25),
+                    context.loom.surface.withValues(alpha: .82),
+                  ],
+                ),
+              ),
+            ),
+            SafeArea(
           child: LayoutBuilder(
             builder: (context, bounds) => SingleChildScrollView(
               child: ConstrainedBox(
@@ -1191,6 +1394,8 @@ class _PlaybackDetails extends StatelessWidget {
             ),
           ),
         ),
+            ],
+          ),
       ),
     );
   }

@@ -7,6 +7,8 @@ import 'dart:typed_data';
 import 'package:geolocator/geolocator.dart';
 
 import 'message_content.dart';
+import 'message_fold.dart';
+import 'search_preferences.dart';
 import '../../groups/application/groups_controller.dart';
 import 'encrypted_media.dart';
 import 'media_preparation.dart';
@@ -23,6 +25,7 @@ import 'package:loom_storage/loom_storage.dart';
 import 'package:loom_transport/loom_transport.dart';
 import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../accounts/application/account_workspace.dart';
 
 import '../../connectivity/application/lan_resilience_controller.dart';
 import '../../onboarding/application/onboarding_controller.dart';
@@ -233,7 +236,9 @@ class LoomMessagingSessionController extends ChangeNotifier
     _clearPendingMedia();
     _cancelLive();
     visibleMessages = const {};
-    _groupViews.clear();
+    messageFolds = const {};
+    _groupFolds.clear();
+    _typing.clear();
     _groupMessageSources.clear();
     notifyListeners();
   }
@@ -278,6 +283,67 @@ class LoomMessagingSessionController extends ChangeNotifier
   final _loadingHistory = <String>{};
   bool hasOlderMessages(String id) => _moreHistory.contains(id);
   bool loadingOlderMessages(String id) => _loadingHistory.contains(id);
+
+  // Control-fold state: reaction/edit/delete mutations and ephemeral typing.
+  Map<String, Map<String, LoomMessageFold>> messageFolds = const {};
+  final _groupFolds = <String, Map<String, LoomMessageFold>>{};
+  final _typing = <String, Map<String, DateTime>>{};
+  Timer? _typingSweeper;
+  final _lastTypingSent = <String, DateTime>{};
+  bool _searchEnabled = true;
+  final LoomSearchPreferencesStore _searchPreferences =
+      LoomSearchPreferencesStore();
+  Set<String> _blockedSenders = const {};
+
+  /// Senders currently typing in a conversation, keyed by display label.
+  Map<String, DateTime> typingPeersFor(String id) {
+    final peers = _typing[id];
+    if (peers == null || peers.isEmpty) return const {};
+    final cutoff = DateTime.now().subtract(const Duration(seconds: 6));
+    final fresh = <String, DateTime>{
+      for (final entry in peers.entries)
+        if (entry.value.isAfter(cutoff)) entry.key: entry.value,
+    };
+    if (fresh.length != peers.length) {
+      peers.removeWhere((_, at) => !at.isAfter(cutoff));
+    }
+    return Map.unmodifiable(fresh);
+  }
+
+  void _absorbTyping(
+    String conversationId,
+    Map<String, DateTime> typing,
+    String Function(String sender) labelFor,
+  ) {
+    if (typing.isEmpty) return;
+    final peers = _typing.putIfAbsent(conversationId, () => {});
+    final now = DateTime.now();
+    for (final entry in typing.entries) {
+      if (now.difference(entry.value) < const Duration(seconds: 30)) {
+        peers[labelFor(entry.key)] = entry.value;
+      }
+    }
+    _scheduleTypingSweeper();
+    notifyListeners();
+  }
+
+  void _scheduleTypingSweeper() {
+    if (_disposed || _typingSweeper != null) return;
+    _typingSweeper = Timer(const Duration(seconds: 2), () {
+      _typingSweeper = null;
+      if (_disposed) return;
+      final cutoff = DateTime.now().subtract(const Duration(seconds: 6));
+      var changed = false;
+      for (final peers in _typing.values) {
+        final before = peers.length;
+        peers.removeWhere((_, at) => !at.isAfter(cutoff));
+        if (peers.length != before) changed = true;
+      }
+      _typing.removeWhere((_, peers) => peers.isEmpty);
+      if (changed) notifyListeners();
+      if (_typing.isNotEmpty) _scheduleTypingSweeper();
+    });
+  }
 
   Future<void> loadOlderMessages(String id) async {
     if (_disposed ||
@@ -371,8 +437,25 @@ class LoomMessagingSessionController extends ChangeNotifier
           );
       if (!sameHistory) {
         _groupMessageSources[group.id] = rows;
+        // Fold group control documents (reactions/edits/deletes/typing) the
+        // same way direct history folds them.
+        final fold = LoomControlFold<LoomGroupMessage>();
+        final displayRows = fold.apply(
+          items: rows,
+          prepare: (m) => m.control == null
+              ? null
+              : _classifyGroupControl(m.control!),
+          keyOf: (m) => m.operationId,
+          senderOf: (m) => m.senderDeviceId,
+          timeOf: (m) =>
+              m.createdAt ??
+              DateTime.fromMillisecondsSinceEpoch(m.sequence, isUtc: true),
+        );
+        _groupFolds[group.id] = Map.of(fold.folds);
+        _absorbTyping(group.id, fold.typing, groups.senderLabel);
+        final blockedNow = _blockedSenders;
         _groupViews[group.id] = List.unmodifiable(
-          rows.reversed.map((m) {
+          displayRows.reversed.map((m) {
             final member = group.members
                 .where((p) => p.deviceId == m.senderDeviceId)
                 .firstOrNull;
@@ -383,6 +466,10 @@ class LoomMessagingSessionController extends ChangeNotifier
                           ? null
                           : _groupIdentityAddress(member.identityId)) ??
                       '@${m.senderDeviceId}:$home';
+            if (m.senderDeviceId != groups.ownDeviceId &&
+                blockedNow.contains(address.toLowerCase())) {
+              return null; // Hide messages from blocked group members.
+            }
             return LoomVisibleMessage(
               record: LoomMessageRecord(
                 id: m.operationId,
@@ -410,11 +497,14 @@ class LoomMessagingSessionController extends ChangeNotifier
                 attachment: m.attachment,
                 reply: m.reply,
                 location: m.location,
+                forwarded: m.forwarded,
               ).encode(),
               readable: true,
             );
-          }),
+          }).whereType<LoomVisibleMessage>(),
         );
+      } else {
+        _groupFolds.putIfAbsent(group.id, () => const {});
       }
       next[group.id] = _groupViews[group.id] ?? const [];
       final last = rows.lastOrNull;
@@ -441,6 +531,21 @@ class LoomMessagingSessionController extends ChangeNotifier
     });
     conversations = List.unmodifiable(catalogue);
     visibleMessages = Map.unmodifiable(next);
+    // Expose group folds next to direct-history folds for the UI layer.
+    final mergedFolds = Map.of(messageFolds)
+      ..removeWhere((id, _) => _groupFolds.containsKey(id));
+    mergedFolds.addAll(_groupFolds);
+    messageFolds = Map.unmodifiable(mergedFolds);
+  }
+
+  LoomFoldClassification<LoomGroupMessage> _classifyGroupControl(
+    Map<String, Object?> control,
+  ) {
+    final parsed = LoomMessageControl.tryParse(control);
+    if (parsed == null) {
+      return const LoomFoldClassification(hidden: true);
+    }
+    return LoomFoldClassification(control: parsed);
   }
 
   bool canSendToGroup(String id) =>
@@ -748,7 +853,9 @@ class LoomMessagingSessionController extends ChangeNotifier
           /* A stale playback cache must not block account opening. */
         }
       }
-      final support = await getApplicationSupportDirectory();
+      // Account-aware workspace: the active account's databases live in its
+      // own directory (legacy installs keep the support root).
+      final support = await LoomAccountWorkspace.active();
       if (_disposed) {
         return;
       }
@@ -1250,6 +1357,14 @@ class LoomMessagingSessionController extends ChangeNotifier
       _setError('Group E2EE requires MLS and is not enabled yet.');
       return false;
     }
+    final peerAddress = conversation.peerAddress;
+    if (peerAddress != null &&
+        (_store?.isAddressBlocked(peerAddress) ?? false)) {
+      _setError(
+        'This contact is blocked. Unblock them before sending messages.',
+      );
+      return false;
+    }
     try {
       final document =
           content ??
@@ -1299,6 +1414,470 @@ class LoomMessagingSessionController extends ChangeNotifier
       notifyListeners();
       return false;
     }
+  }
+
+  // --- Control operations (reactions, edits, delete-for-everyone) ---------
+
+  String? _ownFoldSender(String conversationId) =>
+      _groups?.groups.any((g) => g.id == conversationId) == true
+      ? _groups!.ownDeviceId
+      : onboarding.receipt?.address;
+
+  Future<bool> _sendControl(
+    String conversationId,
+    LoomMessageControl control,
+  ) async {
+    if (_disposed || LoomAppLock.instance.locked) {
+      return false;
+    }
+    try {
+      if (_groups?.groups.any((g) => g.id == conversationId) == true) {
+        final ok = await _groups!.sendControl(conversationId, control);
+        if (ok && !_disposed) {
+          await _refreshLocal();
+          notifyListeners();
+        }
+        return ok;
+      }
+      final engine = _engine;
+      if (engine == null) {
+        return false;
+      }
+      await engine.queueControl(
+        conversationId: conversationId,
+        control: control.toMap(),
+      );
+      if (_disposed) {
+        return false;
+      }
+      await _refreshLocal();
+      errorMessage = null;
+      notifyListeners();
+      _scheduleSendDrain();
+      return true;
+    } catch (error) {
+      if (_disposed) {
+        return false;
+      }
+      errorMessage = _safeError(error);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Toggles the caller's own emoji on `target`. Sending the same emoji again
+  /// removes it; a different emoji replaces it.
+  Future<bool> reactToMessage(
+    String conversationId,
+    LoomVisibleMessage target,
+    String emoji,
+  ) async {
+    final trimmed = emoji.trim();
+    if (trimmed.isEmpty || trimmed.length > 24) {
+      return false;
+    }
+    final own = _ownFoldSender(conversationId);
+    if (own == null) {
+      return false;
+    }
+    final current = messageFolds[conversationId]
+        ?[target.record.clientId]
+        ?.reactionOf(own)
+        ?.emoji;
+    return _sendControl(
+      conversationId,
+      LoomMessageControl.react(
+        target: target.record.clientId,
+        emoji: current == trimmed ? '' : trimmed,
+      ),
+    );
+  }
+
+  Future<bool> editMessage(
+    String conversationId,
+    LoomVisibleMessage target,
+    String newText,
+  ) async {
+    final text = newText.trim();
+    if (text.isEmpty || text.length > 32000 || !target.readable) {
+      return false;
+    }
+    final own = onboarding.receipt?.address;
+    if (own == null ||
+        target.record.senderAddress.toLowerCase() != own.toLowerCase()) {
+      return false;
+    }
+    return _sendControl(
+      conversationId,
+      LoomMessageControl.edit(target: target.record.clientId, text: text),
+    );
+  }
+
+  Future<bool> deleteMessageForEveryone(
+    String conversationId,
+    LoomVisibleMessage target,
+  ) async {
+    final own = onboarding.receipt?.address;
+    if (own == null ||
+        target.record.senderAddress.toLowerCase() != own.toLowerCase()) {
+      return false;
+    }
+    return _sendControl(
+      conversationId,
+      LoomMessageControl.delete(target: target.record.clientId),
+    );
+  }
+
+  /// Re-sends an existing readable message (text, media or location) into
+  /// another conversation with a forwarded marker. Quote context is dropped;
+  /// attachment URLs/keys are reused so the recipient fetches the same blob.
+  Future<bool> forwardContent(
+    String conversationId,
+    LoomVisibleMessage source,
+  ) async {
+    if (_disposed || LoomAppLock.instance.locked || !source.readable) {
+      return false;
+    }
+    final content = source.content;
+    final document = LoomMessageContent(
+      text: content.text,
+      attachment: content.attachment == null
+          ? null
+          : Map<String, Object?>.from(content.attachment!),
+      location: content.location == null
+          ? null
+          : Map<String, Object?>.from(content.location!),
+      forwarded: true,
+    );
+    if (document.text.trim().isEmpty &&
+        document.attachment == null &&
+        document.location == null) {
+      return false;
+    }
+    try {
+      if (_groups?.groups.any((g) => g.id == conversationId) == true) {
+        final ok = await _groups!.sendContent(conversationId, document);
+        if (ok && !_disposed) {
+          await _refreshLocal();
+          notifyListeners();
+        }
+        return ok;
+      }
+      final engine = _engine;
+      if (engine == null) {
+        return false;
+      }
+      await engine.queueContent(
+        conversationId: conversationId,
+        encodedContent: document.encode(),
+      );
+      if (_disposed) {
+        return false;
+      }
+      await _refreshLocal();
+      errorMessage = null;
+      notifyListeners();
+      _scheduleSendDrain();
+      return true;
+    } catch (error) {
+      if (_disposed) {
+        return false;
+      }
+      errorMessage = _safeError(error);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // --- Typing indicator ---------------------------------------------------
+
+  /// Ephemeral best-effort typing signal. Throttled per conversation, never
+  /// persisted, never queued into DTN custody, never surfaces an error.
+  Future<void> notifyTyping(String conversationId) async {
+    if (_disposed || LoomAppLock.instance.locked) {
+      return;
+    }
+    final now = DateTime.now();
+    final last = _lastTypingSent[conversationId];
+    if (last != null &&
+        now.difference(last) < const Duration(seconds: 3)) {
+      return;
+    }
+    _lastTypingSent[conversationId] = now;
+    try {
+      if (_groups?.groups.any((g) => g.id == conversationId) == true) {
+        await _groups!.sendTyping(conversationId);
+        return;
+      }
+      final api = _api;
+      final receipt = onboarding.receipt;
+      final identity = onboarding.committedIdentity;
+      if (api == null || receipt == null || identity == null) {
+        return;
+      }
+      final envelope = await _encodeText(
+        conversationId: conversationId,
+        plaintext: const LoomMessageContent(
+          control: LoomMessageControl.typing(),
+        ).encode(),
+      );
+      await api.sendOpaqueMessage(
+        conversationId: conversationId,
+        clientId:
+            't-${now.microsecondsSinceEpoch.toRadixString(36)}-${now.hashCode & 0xFFFF}',
+        type: LoomMessageType.system,
+        ciphertext: envelope.ciphertext,
+        protocolVersion: envelope.protocolVersion,
+      );
+    } catch (_) {
+      // Typing is fire-and-forget by design.
+    }
+  }
+
+  // --- Blocked contacts ---------------------------------------------------
+
+  Set<String> get blockedPeers => Set.unmodifiable(_blockedSenders);
+
+  bool isPeerBlocked(String? address) =>
+      address != null && _blockedSenders.contains(address.toLowerCase());
+
+  Future<void> blockPeer(String address) async {
+    final normalized = address.trim().toLowerCase();
+    if (normalized.isEmpty || _store == null) {
+      return;
+    }
+    _store!.blockAddress(normalized);
+    _blockedSenders = _store!.blockedAddresses();
+    await refreshLocalMessages();
+  }
+
+  Future<void> unblockPeer(String address) async {
+    if (_store == null) {
+      return;
+    }
+    _store!.unblockAddress(address);
+    _blockedSenders = _store!.blockedAddresses();
+    await refreshLocalMessages();
+  }
+
+  // --- Local search -------------------------------------------------------
+
+  bool get searchEnabled => _searchEnabled;
+
+  /// Literal substring search over the device-local decrypted index plus the
+  /// decrypted in-memory group history. Blocked senders are filtered out.
+  List<({LoomMessageRecord record, String body})> searchLocalMessages(
+    String query, {
+    int limit = 80,
+  }) {
+    if (!_searchEnabled || LoomAppLock.instance.locked) return const [];
+    final needle = query.trim().toLowerCase();
+    if (needle.isEmpty) return const [];
+    final hits = <({LoomMessageRecord record, String body})>[];
+    try {
+      final store = _store;
+      if (store != null) {
+        final blocked = _blockedSenders;
+        hits.addAll(
+          store
+              .searchMessages(query, limit: limit)
+              .where(
+                (hit) =>
+                    !blocked.contains(hit.record.senderAddress.toLowerCase()),
+              ),
+        );
+      }
+    } catch (_) {
+      // An index problem must not take group results down with it.
+    }
+    try {
+      hits.addAll(_searchGroupMessages(needle, limit: limit));
+    } catch (_) {
+      // The in-memory group scan is best-effort by design.
+    }
+    if (hits.length <= 1) return List.unmodifiable(hits);
+    hits.sort((a, b) => b.record.createdAt.compareTo(a.record.createdAt));
+    if (hits.length > limit) hits.removeRange(limit, hits.length);
+    return List.unmodifiable(hits);
+  }
+
+  /// Substring scan over the decrypted group history held in memory. The MLS
+  /// store never receives plaintext, so group bodies cannot join the on-disk
+  /// index; search covers exactly what this session has decrypted.
+  List<({LoomMessageRecord record, String body})> _searchGroupMessages(
+    String needle, {
+    required int limit,
+  }) {
+    final groups = _groups;
+    if (groups == null || needle.isEmpty) return const [];
+    final hits = <({LoomMessageRecord record, String body})>[];
+    for (final group in groups.groups) {
+      final messages = groups.messages[group.id];
+      if (messages == null || messages.isEmpty) continue;
+      for (final message in messages) {
+        final text = message.text;
+        if (text.isEmpty || !text.toLowerCase().contains(needle)) continue;
+        hits.add((
+          record: LoomMessageRecord(
+            id: message.operationId,
+            clientId: message.operationId,
+            conversationId: group.id,
+            senderAddress: message.senderDeviceId,
+            type: LoomMessageType.text,
+            ciphertext: '',
+            protocolVersion: 'loom-group-session-v1',
+            createdOrder: message.sequence,
+            createdAt: message.createdAt ?? DateTime.now(),
+            deliveryState: LoomDeliveryState.read,
+          ),
+          body: text,
+        ));
+        if (hits.length >= limit) return hits;
+      }
+    }
+    return hits;
+  }
+
+  Future<void> setSearchEnabled(bool enabled) async {
+    _searchEnabled = enabled;
+    await _searchPreferences.save(LoomSearchPreferences(enabled: enabled));
+    if (!enabled) {
+      _store?.clearSearchIndex();
+    } else {
+      await buildSearchIndex();
+    }
+  }
+
+  /// Back-fills the device-local search index for conversations whose history
+  /// has not been decrypted on screen yet. Bounded, cancellable and silent.
+  Future<int> buildSearchIndex({int perConversation = 300}) async {
+    final store = _store;
+    final identity = onboarding.committedIdentity;
+    final receipt = onboarding.receipt;
+    if (store == null ||
+        identity == null ||
+        receipt == null ||
+        !_searchEnabled ||
+        LoomAppLock.instance.locked) {
+      return 0;
+    }
+    var indexed = 0;
+    List<String> historicalDeviceIds = const [];
+    try {
+      historicalDeviceIds = await _deviceSecurityCore
+          .historicalAgreementDeviceIds(identityId: identity.identityId);
+    } catch (_) {
+      historicalDeviceIds = const [];
+    }
+    try {
+      for (final conversation in store.listConversations(limit: 500)) {
+        if (_disposed ||
+            LoomAppLock.instance.locked ||
+            (conversation.kind != LoomConversationKind.direct &&
+                conversation.kind != LoomConversationKind.self)) {
+          continue;
+        }
+        LoomMessageRecord? anchor;
+        var highest = store.searchIndexedOrder(conversation.id);
+        var scanned = 0;
+        while (scanned < perConversation) {
+          if (_disposed || LoomAppLock.instance.locked) break;
+          final page = store.listMessages(
+            conversation.id,
+            beforeMessage: anchor,
+            limit: min(100, perConversation - scanned),
+          );
+          if (page.isEmpty) break;
+          anchor = page.last;
+          for (final record in page) {
+            scanned++;
+            if (record.type == LoomMessageType.system ||
+                record.createdOrder <= highest) {
+              continue;
+            }
+            final body = await _decryptRecordPreview(
+              record,
+              conversation,
+              identity,
+              receipt,
+              historicalDeviceIds,
+            );
+            if (body == null || body.trim().isEmpty) continue;
+            try {
+              store.indexSearchableMessage(record, body);
+              indexed++;
+              if (record.createdOrder > highest) {
+                highest = record.createdOrder;
+              }
+            } catch (_) {}
+          }
+          if (page.length < 100) break;
+        }
+        if (highest > 0) {
+          store.setSearchIndexedOrder(conversation.id, highest);
+        }
+      }
+    } catch (_) {
+      // Search back-fill is opportunistic; partial progress is kept.
+    }
+    return indexed;
+  }
+
+  Future<String?> _decryptRecordPreview(
+    LoomMessageRecord record,
+    LoomConversation conversation,
+    LoomIdentityPublic identity,
+    LoomRegistrationReceipt receipt,
+    List<String> historicalDeviceIds,
+  ) async {
+    try {
+      if (conversation.kind == LoomConversationKind.self &&
+          record.protocolVersion == LoomSelfMessageCodec.protocolVersion) {
+        final plaintext = await _selfMessageCodec.decryptText(
+          identityId: identity.identityId,
+          conversationId: conversation.id,
+          envelope: record.ciphertext,
+        );
+        return _searchablePreview(plaintext);
+      }
+      if (conversation.kind == LoomConversationKind.direct &&
+          _directCodec != null &&
+          record.protocolVersion == LoomDirectMessageCodec.protocolVersion) {
+        final header = _directCodec!.inspect(record.ciphertext);
+        var bundle = _knownSenderBundle(
+          header.senderIdentityId,
+          header.senderDeviceId,
+        );
+        bundle ??= (await _resolvePeerSecurity(record.senderAddress))
+            .devices
+            .where((device) => device.deviceId == header.senderDeviceId)
+            .firstOrNull;
+        if (bundle == null) return null;
+        final plaintext = await _decryptDirectTextForLocalHistory(
+          record: record,
+          conversationId: conversation.id,
+          identity: identity,
+          receipt: receipt,
+          senderBundle: bundle,
+          historicalDeviceIds: historicalDeviceIds,
+        );
+        return _searchablePreview(plaintext);
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
+
+  String _searchablePreview(String plaintext) {
+    try {
+      if (plaintext.startsWith(LoomMessageContent.prefix)) {
+        return LoomMessageContent.decode(plaintext).preview;
+      }
+    } catch (_) {
+      return '';
+    }
+    return plaintext;
   }
 
   int get mediaUploadLimit =>
@@ -1803,7 +2382,7 @@ class LoomMessagingSessionController extends ChangeNotifier
     final pin = _peerIdentityStore?.pinForIdentity(member.identityId);
     String? address = pin?.address;
     if (address == null) {
-      final support = await getApplicationSupportDirectory();
+      final support = await LoomAccountWorkspace.active();
       final contacts = LoomContactStore.openFile(
         '${support.path}/loom-contacts-v1.sqlite3',
       );
@@ -1895,12 +2474,17 @@ class LoomMessagingSessionController extends ChangeNotifier
       throw const LoomProtocolException('Home Node endpoint unavailable');
     }
     final proof = await onboarding.deviceRequestProofProvider();
-    final resolved = await _userSecurityClient.resolve(
-      baseUri: endpoint,
-      accessToken: await _accessToken(),
-      address: address,
-      deviceProofProvider: proof,
-    );
+    // One bounded budget for the whole lookup: per-socket timeouts alone let
+    // a cold offline path spin the composer for ~40s before failing. Senders
+    // must get a decisive answer quickly; the drain retries later.
+    final resolved = await _userSecurityClient
+        .resolve(
+          baseUri: endpoint,
+          accessToken: await _accessToken(),
+          address: address,
+          deviceProofProvider: proof,
+        )
+        .timeout(const Duration(seconds: 15));
     if (_disposed ||
         LoomAppLock.instance.locked ||
         epoch != _readableEpoch ||
@@ -2214,6 +2798,7 @@ class LoomMessagingSessionController extends ChangeNotifier
     }
     final readableEpoch = _readableEpoch;
     _rememberStoredConversationTitles();
+    _blockedSenders = _store?.blockedAddresses() ?? const {};
     localConversationStates = _store?.localConversationStates() ?? const {};
     conversations = (_store?.listConversations() ?? const [])
         .map(_decorateConversation)
@@ -2233,6 +2818,7 @@ class LoomMessagingSessionController extends ChangeNotifier
     final freshPeers = <String, LoomResolvedUserSecurity>{};
     List<LoomDeviceKeyBundle>? freshOwnDevices;
     final next = <String, List<LoomVisibleMessage>>{};
+    final nextFolds = <String, Map<String, LoomMessageFold>>{};
     for (final conversation in conversations) {
       if (_disposed) {
         return;
@@ -2244,6 +2830,12 @@ class LoomMessagingSessionController extends ChangeNotifier
             readableEpoch != _readableEpoch ||
             LoomAppLock.instance.locked) {
           return;
+        }
+        // Blocked contacts keep their history but new inbound copies are
+        // neither rendered nor notified. Messages stay in the ciphertext DB.
+        if (conversation.kind == LoomConversationKind.direct &&
+            _blockedSenders.contains(record.senderAddress.toLowerCase())) {
+          continue;
         }
         if (conversation.kind == LoomConversationKind.self &&
             identity != null &&
@@ -2370,8 +2962,47 @@ class LoomMessagingSessionController extends ChangeNotifier
       if (readableEpoch != _readableEpoch || LoomAppLock.instance.locked) {
         return;
       }
+      // Fold encrypted control documents (reactions/edits/deletes/typing).
+      // Control rows are consumed here; ordinary rows keep their mutations in
+      // `folds` for the UI layer.
+      final fold = LoomControlFold<LoomVisibleMessage>();
+      final ephemeralRows = <String>[];
+      final folded = fold.apply(
+        items: messages,
+        prepare: (m) => _classifyForFold(m, ephemeralRows),
+        keyOf: (m) => m.record.clientId,
+        senderOf: (m) => m.record.senderAddress,
+        timeOf: (m) => m.record.createdAt,
+      );
+      for (final clientId in ephemeralRows) {
+        _store?.purgeEphemeralMessage(clientId);
+      }
+      _absorbTyping(
+        conversation.id,
+        fold.typing,
+        (sender) => conversation.title?.trim().isNotEmpty == true
+            ? conversation.title!
+            : sender,
+      );
+      if (_searchEnabled && conversation.kind != LoomConversationKind.group) {
+        final watermark = _store?.searchIndexedOrder(conversation.id) ?? 0;
+        var highest = watermark;
+        for (final m in folded) {
+          if (!m.readable || m.record.createdOrder <= highest) continue;
+          try {
+            _store?.indexSearchableMessage(m.record, m.content.preview);
+            highest = m.record.createdOrder;
+          } catch (_) {
+            // A malformed document never blocks the conversation snapshot.
+          }
+        }
+        if (highest > watermark) {
+          _store?.setSearchIndexedOrder(conversation.id, highest);
+        }
+      }
+      nextFolds[conversation.id] = Map.of(fold.folds);
       final ordinary = projectLoomLiveLocations<LoomVisibleMessage>(
-        messages,
+        folded,
         location: (m) => m.readable ? m.content.location : null,
         sender: (m) => m.record.senderAddress.toLowerCase(),
         compare: (a, b) {
@@ -2410,8 +3041,36 @@ class LoomMessagingSessionController extends ChangeNotifier
       return;
     }
     visibleMessages = Map.unmodifiable(next);
+    messageFolds = Map.unmodifiable(nextFolds);
     _mergeGroups();
     _scheduleDisplayNameHydration();
+  }
+
+  /// Classifies a decrypted row for the fold. Ordinary rows return null;
+  /// system/control rows return their validated control; malformed or foreign
+  /// system rows are hidden entirely. Typing rows are collected for purge.
+  LoomFoldClassification<LoomVisibleMessage>? _classifyForFold(
+    LoomVisibleMessage message,
+    List<String> ephemeralRows,
+  ) {
+    if (message.record.type != LoomMessageType.system) {
+      return message.readable ? null : const LoomFoldClassification(hidden: true);
+    }
+    if (!message.readable) {
+      return const LoomFoldClassification(hidden: true);
+    }
+    try {
+      final control = message.content.control;
+      if (control == null) {
+        return const LoomFoldClassification(hidden: true);
+      }
+      if (control.op == LoomMessageControlOp.typing) {
+        ephemeralRows.add(message.record.clientId);
+      }
+      return LoomFoldClassification(control: control);
+    } catch (_) {
+      return const LoomFoldClassification(hidden: true);
+    }
   }
 
   void _rememberStoredConversationTitles() {
