@@ -67,7 +67,7 @@ case "$command_name" in
     deploy_dir="$LOOM_NODE_HOME/deploy"
     env_file="$deploy_dir/.env"
     compose_file="$deploy_dir/docker-compose.production.yml"
-    loom_require_root_owned "$env_file" && loom_require_root_owned "$compose_file" || { echo 'Loom configuration is missing or unsafe.' >&2; exit 1; }
+    loom_require_root_owned "$deploy_dir" && loom_require_root_owned "$env_file" && loom_require_root_owned "$compose_file" || { echo 'Loom configuration is missing or unsafe.' >&2; exit 1; }
     compose=(docker compose --project-directory "$deploy_dir" --env-file "$env_file" -f "$compose_file")
     for overlay in storage-legacy turn group-calls; do
       overlay_file="$deploy_dir/docker-compose.$overlay.yml"

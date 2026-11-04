@@ -77,6 +77,8 @@ class SetupTests(unittest.TestCase):
         self.assertIn('"${compose[@]}" stop', cli)
         self.assertIn('"${compose[@]}" up -d --wait --wait-timeout 180', cli)
         self.assertIn('loom_require_install_owner "$LOOM_NODE_HOME"', cli)
+        self.assertIn('loom_require_root_owned "$deploy_dir"', cli)
+        self.assertLess(cli.index('[[ -f "$helper"'), cli.index('source "$helper"'))
         self.assertNotIn('down -v', cli)
         self.assertNotIn('volume rm', cli)
     def test_interactive_questions_and_invalid_answer_retry(self):
