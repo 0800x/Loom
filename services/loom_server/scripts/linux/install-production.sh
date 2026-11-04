@@ -396,18 +396,12 @@ select_proxy_mode() {
 download_release_asset() {
   local url="$1" output="$2" attempt status
   for attempt in 1 2 3 4; do
-    if [[ -s "$output" ]]; then
-      if curl --proto '=https' --tlsv1.2 -fLsS --connect-timeout 20 --max-time 300 -C - "$url" -o "$output"; then
-        return 0
-      else
-        status=$?
-      fi
+    local -a resume=()
+    [[ -s "$output" ]] && resume=(-C -)
+    if curl --proto '=https' --tlsv1.2 -fLsS --connect-timeout 20 --max-time 300 "${resume[@]}" "$url" -o "$output"; then
+      return 0
     else
-      if curl --proto '=https' --tlsv1.2 -fLsS --connect-timeout 20 --max-time 300 "$url" -o "$output"; then
-        return 0
-      else
-        status=$?
-      fi
+      status=$?
     fi
     if (( attempt < 4 )); then
       ui_warn "Release asset transfer interrupted (curl exit $status); preserving the partial file and retrying/resuming (attempt $attempt/4)."

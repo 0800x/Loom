@@ -57,7 +57,7 @@ class SetupTests(unittest.TestCase):
         downloader = installer[start:end]
         self.assertIn('--connect-timeout 20', downloader)
         self.assertIn('--max-time 300', downloader)
-        self.assertIn('resume=(-C -)', downloader)
+        self.assertIn('-C - "$url" -o "$output"', downloader)
         self.assertIn('for attempt in 1 2 3 4', downloader)
 
         with tempfile.TemporaryDirectory(prefix='loom-download-resume-') as temp:
