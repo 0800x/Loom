@@ -51,9 +51,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final identityId = LoomOnboardingScope.of(context)
-        .committedIdentity
-        ?.identityId;
+    final identityId = LoomOnboardingScope.of(
+      context,
+    ).committedIdentity?.identityId;
     if (_backupIdentityId != identityId) {
       _exportEpoch++;
       _clearExportBytes();
@@ -406,8 +406,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
                       'MLS group encryption is not active in this build. The native RFC 9420 boundary is defined, but no unvalidated engine is presented as working security.',
                       'رمزنگاری گروهی MLS در این نسخه فعال نیست. مرز بومی RFC 9420 تعریف شده است، اما هیچ موتور تأییدنشده‌ای به‌عنوان امنیت فعال نمایش داده نمی‌شود.',
                     ),
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: palette.textSecondary),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: palette.textSecondary,
+                    ),
                   ),
                 ],
               ),

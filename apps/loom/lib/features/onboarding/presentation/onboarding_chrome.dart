@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:loom_design/loom_design.dart';
 
-import '../../../app/loom_strings.dart';
 import 'setup_scaffold.dart';
 
 /// Shared onboarding frame for welcome, registration, recovery and sign-in.
@@ -61,9 +60,7 @@ class LoomOnboardingShell extends StatelessWidget {
                       canPop: canPop,
                       trailing: headerTrailing,
                     ),
-                    SizedBox(
-                      height: compact ? LoomSpacing.sm : LoomSpacing.ml,
-                    ),
+                    SizedBox(height: compact ? LoomSpacing.sm : LoomSpacing.ml),
                     Text(
                       title,
                       style: Theme.of(context).textTheme.headlineSmall
@@ -73,8 +70,9 @@ class LoomOnboardingShell extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         subtitle,
-                        style: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(color: context.loom.textSecondary),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: context.loom.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: LoomSpacing.md),
                     ],
@@ -101,12 +99,8 @@ class LoomOnboardingShell extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   error!,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(
-                                        color: context.loom.critical,
-                                      ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(color: context.loom.critical),
                                 ),
                               ),
                             ],
@@ -221,7 +215,6 @@ class LoomOnboardingCta extends StatelessWidget {
     );
   }
 }
-
 
 /// Quiet frame used around QR codes in pairing and recovery screens.
 class LoomOnboardingQrFrame extends StatelessWidget {

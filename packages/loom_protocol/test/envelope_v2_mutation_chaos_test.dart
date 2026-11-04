@@ -5,9 +5,7 @@ import 'package:loom_protocol/loom_protocol.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test(
-      'mutated OuterEnvelope corpus either decodes safely or fails with FormatException',
-      () {
+  test('mutated OuterEnvelope corpus either decodes safely or fails with FormatException', () {
     final valid = LoomEnvelopeV2Codec.encodeOuter(
       LoomOuterEnvelopeV2(
         packetId: 'packet-mutation-0001',

@@ -58,14 +58,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             icon: const Icon(LoomIcons.language_rounded),
             onSelected: widget.onLocaleChanged,
             itemBuilder: (_) => const [
-              PopupMenuItem(
-                value: Locale('en'),
-                child: Text('English'),
-              ),
-              PopupMenuItem(
-                value: Locale('fa'),
-                child: Text('فارسی'),
-              ),
+              PopupMenuItem(value: Locale('en'), child: Text('English')),
+              PopupMenuItem(value: Locale('fa'), child: Text('فارسی')),
             ],
           ),
         ],
@@ -94,9 +88,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               Expanded(
                 child: TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/restore'),
-                  child: Text(
-                    tr(context, 'Use recovery kit', 'بازیابی حساب'),
-                  ),
+                  child: Text(tr(context, 'Use recovery kit', 'بازیابی حساب')),
                 ),
               ),
             ],
@@ -116,13 +108,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           LoomSettingsGroup(
             children: [
               ExpansionTile(
-                title: Text(
-                  tr(
-                    context,
-                    'How setup works',
-                    'مراحل راه‌اندازی',
-                  ),
-                ),
+                title: Text(tr(context, 'How setup works', 'مراحل راه‌اندازی')),
                 childrenPadding: const EdgeInsets.all(12),
                 children: [
                   _WelcomeStep(
@@ -141,11 +127,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   const SizedBox(height: 16),
                   _WelcomeStep(
                     icon: LoomIcons.person_outline_rounded,
-                    title: tr(
-                      context,
-                      'Make your profile',
-                      'خودت را معرفی کن',
-                    ),
+                    title: tr(context, 'Make your profile', 'خودت را معرفی کن'),
                     detail: tr(
                       context,
                       'A name your friends will recognize.',

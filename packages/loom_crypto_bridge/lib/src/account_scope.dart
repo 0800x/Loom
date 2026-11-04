@@ -19,6 +19,6 @@ final class LoomAccountScope {
     if (!RegExp(r'^[A-Za-z0-9_-]{8,64}$').hasMatch(normalizedId)) {
       throw StateError('Invalid active account scope');
     }
-    return 'loom.account.' + normalizedId + '.' + key;
+    return 'loom.account.$normalizedId.$key';
   }
 }

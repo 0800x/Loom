@@ -144,7 +144,10 @@ class _LoomAppearancePanelState extends State<LoomAppearancePanel>
     );
   }
 
-  Widget _accentSwatches(BuildContext context, LoomAppearanceScope? appearance) {
+  Widget _accentSwatches(
+    BuildContext context,
+    LoomAppearanceScope? appearance,
+  ) {
     final p = context.loom;
     return Wrap(
       spacing: LoomSpacing.xs,
@@ -177,11 +180,7 @@ class _LoomAppearancePanelState extends State<LoomAppearancePanel>
       _entranceWrap(0, _previewColumn(context)),
       _entranceWrap(
         1,
-        _section(
-          context,
-          tr(context, 'Theme', 'تم'),
-          _themeCards(context),
-        ),
+        _section(context, tr(context, 'Theme', 'تم'), _themeCards(context)),
       ),
       _entranceWrap(
         2,

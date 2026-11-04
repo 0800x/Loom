@@ -1279,7 +1279,8 @@ class _ConversationPaneState extends State<_ConversationPane>
         ownAddress != null &&
         message.record.senderAddress.toLowerCase() == ownAddress.toLowerCase();
     final fold = messaging.messageFolds[id]?[message.record.clientId];
-    final editableText = message.readable &&
+    final editableText =
+        message.readable &&
         message.content.text.trim().isNotEmpty &&
         (fold == null || !fold.deletedForEveryone);
     final action = await _chooseMessageAction(
@@ -1348,9 +1349,7 @@ class _ConversationPaneState extends State<_ConversationPane>
       });
       composer.value = TextEditingValue(
         text: message.content.text,
-        selection: TextSelection.collapsed(
-          offset: message.content.text.length,
-        ),
+        selection: TextSelection.collapsed(offset: message.content.text.length),
       );
       composerFocus.requestFocus();
     } else if (action == 'forward') {
@@ -1933,11 +1932,12 @@ class _ConversationPaneState extends State<_ConversationPane>
                                                 _messageActions(message),
                                             fold: conversation == null
                                                 ? null
-                                                : messaging.messageFolds[
-                                                        conversation.id]?[
-                                                    message.record.clientId],
-                                            onReactionTap:
-                                                conversation == null
+                                                : messaging
+                                                      .messageFolds[conversation
+                                                      .id]?[message
+                                                      .record
+                                                      .clientId],
+                                            onReactionTap: conversation == null
                                                 ? null
                                                 : (emoji) => unawaited(
                                                     messaging.reactToMessage(
@@ -2018,58 +2018,61 @@ class _ConversationPaneState extends State<_ConversationPane>
                                 messageScroll.hasClients &&
                                 messageScroll.offset > 160;
                             // FAB fades/scales while the list scrolls below.
-                            return RepaintBoundary(child: AnimatedScale(
-                              scale: show ? 1 : 0,
-                              duration: _motionDuration(
-                                context,
-                                LoomMotion.component.inMilliseconds,
-                              ),
-                              curve: show
-                                  ? LoomMotion.emphasized
-                                  : LoomMotion.exit,
-                              alignment: AlignmentDirectional.bottomEnd.resolve(Directionality.of(context)),
-                              child: AnimatedOpacity(
-                                opacity: show ? 1 : 0,
+                            return RepaintBoundary(
+                              child: AnimatedScale(
+                                scale: show ? 1 : 0,
                                 duration: _motionDuration(
                                   context,
                                   LoomMotion.component.inMilliseconds,
                                 ),
-                                child: show
-                                    ? LoomGlassSurface(
-                                        liveBackdrop: true,
-                                        radius: 28,
-                                        child: IconButton(
-                                          tooltip: tr(
-                                            context,
-                                            'Latest messages',
-                                            'آخرین پیام‌ها',
-                                          ),
-                                          onPressed: () {
-                                            if (LoomAccessibility.fromContext(
+                                curve: show
+                                    ? LoomMotion.emphasized
+                                    : LoomMotion.exit,
+                                alignment: AlignmentDirectional.bottomEnd
+                                    .resolve(Directionality.of(context)),
+                                child: AnimatedOpacity(
+                                  opacity: show ? 1 : 0,
+                                  duration: _motionDuration(
+                                    context,
+                                    LoomMotion.component.inMilliseconds,
+                                  ),
+                                  child: show
+                                      ? LoomGlassSurface(
+                                          liveBackdrop: true,
+                                          radius: 28,
+                                          child: IconButton(
+                                            tooltip: tr(
                                               context,
-                                            ).reduceMotion) {
-                                              messageScroll.jumpTo(0);
-                                            } else {
-                                              unawaited(
-                                                messageScroll.animateTo(
-                                                  0,
-                                                  duration: const Duration(
-                                                    milliseconds: 260,
+                                              'Latest messages',
+                                              'آخرین پیام‌ها',
+                                            ),
+                                            onPressed: () {
+                                              if (LoomAccessibility.fromContext(
+                                                context,
+                                              ).reduceMotion) {
+                                                messageScroll.jumpTo(0);
+                                              } else {
+                                                unawaited(
+                                                  messageScroll.animateTo(
+                                                    0,
+                                                    duration: const Duration(
+                                                      milliseconds: 260,
+                                                    ),
+                                                    curve: Curves.easeOutCubic,
                                                   ),
-                                                  curve: Curves.easeOutCubic,
-                                                ),
-                                              );
-                                            }
-                                          },
-                                          icon: const Icon(
-                                            LoomIcons
-                                                .keyboard_arrow_down_rounded,
+                                                );
+                                              }
+                                            },
+                                            icon: const Icon(
+                                              LoomIcons
+                                                  .keyboard_arrow_down_rounded,
+                                            ),
                                           ),
-                                        ),
-                                      )
-                                    : const SizedBox(width: 48, height: 48),
+                                        )
+                                      : const SizedBox(width: 48, height: 48),
+                                ),
                               ),
-                            ));
+                            );
                           },
                         ),
                       ),
@@ -2267,11 +2270,10 @@ class _ConversationPaneState extends State<_ConversationPane>
                                             ),
                                             Text(
                                               widget
-                                                      .drafts
-                                                      .editing[
-                                                        conversation!.id]!
-                                                      .content
-                                                      .text,
+                                                  .drafts
+                                                  .editing[conversation!.id]!
+                                                  .content
+                                                  .text,
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
                                               style: Theme.of(

@@ -12,9 +12,7 @@ Future<File?> showLoomImageEditor(
   required File source,
 }) {
   return Navigator.of(context).push<File>(
-    MaterialPageRoute<File>(
-      builder: (_) => _LoomImageEditor(source: source),
-    ),
+    MaterialPageRoute<File>(builder: (_) => _LoomImageEditor(source: source)),
   );
 }
 
@@ -134,19 +132,19 @@ class _LoomImageEditorState extends State<_LoomImageEditor> {
                 child: _loading
                     ? const CircularProgressIndicator()
                     : image == null
-                        ? Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(_error ?? 'Image unavailable'),
-                          )
-                        : InteractiveViewer(
-                            minScale: .5,
-                            maxScale: 5,
-                            child: Image.memory(
-                              img.encodePng(image),
-                              fit: BoxFit.contain,
-                              gaplessPlayback: true,
-                            ),
-                          ),
+                    ? Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(_error ?? 'Image unavailable'),
+                      )
+                    : InteractiveViewer(
+                        minScale: .5,
+                        maxScale: 5,
+                        child: Image.memory(
+                          img.encodePng(image),
+                          fit: BoxFit.contain,
+                          gaplessPlayback: true,
+                        ),
+                      ),
               ),
             ),
             if (_error != null && image != null)
@@ -154,9 +152,7 @@ class _LoomImageEditorState extends State<_LoomImageEditor> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   _error!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
             Padding(

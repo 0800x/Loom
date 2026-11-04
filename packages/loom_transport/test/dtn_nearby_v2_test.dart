@@ -100,20 +100,21 @@ void main() {
       };
       final receiver = LoomNearbyDtnTransferReceiver(
         connection: connection,
-        durablyAccept: ({
-          required transmissionId,
-          required exactOuterEnvelopeBytes,
-        }) async {
-          expect(transmissionId, transfer.transmissionId);
-          expect(exactOuterEnvelopeBytes, transfer.wireBytes);
-          durable = true;
-          return LoomDtnHopAck(
-            transmissionId: transmissionId,
-            packetId: transfer.packetId,
-            acceptedAt: now.add(const Duration(seconds: 2)),
-            duplicate: true,
-          );
-        },
+        durablyAccept:
+            ({
+              required transmissionId,
+              required exactOuterEnvelopeBytes,
+            }) async {
+              expect(transmissionId, transfer.transmissionId);
+              expect(exactOuterEnvelopeBytes, transfer.wireBytes);
+              durable = true;
+              return LoomDtnHopAck(
+                transmissionId: transmissionId,
+                packetId: transfer.packetId,
+                acceptedAt: now.add(const Duration(seconds: 2)),
+                duplicate: true,
+              );
+            },
       );
 
       final ack = await receiver.receiveAndAcknowledge();
@@ -152,26 +153,27 @@ void main() {
     };
     final receiver = LoomNearbyDtnTransferReceiver(
       connection: connection,
-      durablyAccept: (
-          {required transmissionId, required exactOuterEnvelopeBytes}) {
-        fail('route-aware runtime must use the routed durable callback');
-      },
-      durablyAcceptRouted: ({
-        required transmissionId,
-        required exactOuterEnvelopeBytes,
-        required destinationNodeDomain,
-      }) async {
-        expect(transmissionId, transfer.transmissionId);
-        expect(exactOuterEnvelopeBytes, transfer.wireBytes);
-        expect(destinationNodeDomain, 'recipient.example');
-        routedDurable = true;
-        return LoomDtnHopAck(
-          transmissionId: transmissionId,
-          packetId: transfer.packetId,
-          acceptedAt: now.add(const Duration(seconds: 2)),
-          duplicate: false,
-        );
-      },
+      durablyAccept:
+          ({required transmissionId, required exactOuterEnvelopeBytes}) {
+            fail('route-aware runtime must use the routed durable callback');
+          },
+      durablyAcceptRouted:
+          ({
+            required transmissionId,
+            required exactOuterEnvelopeBytes,
+            required destinationNodeDomain,
+          }) async {
+            expect(transmissionId, transfer.transmissionId);
+            expect(exactOuterEnvelopeBytes, transfer.wireBytes);
+            expect(destinationNodeDomain, 'recipient.example');
+            routedDurable = true;
+            return LoomDtnHopAck(
+              transmissionId: transmissionId,
+              packetId: transfer.packetId,
+              acceptedAt: now.add(const Duration(seconds: 2)),
+              duplicate: false,
+            );
+          },
     );
 
     final ack = await receiver.receiveAndAcknowledge();
@@ -193,10 +195,10 @@ void main() {
     );
     final receiver = LoomNearbyDtnTransferReceiver(
       connection: connection,
-      durablyAccept: (
-          {required transmissionId, required exactOuterEnvelopeBytes}) {
-        throw const LoomReplicaConflict('packet conflict');
-      },
+      durablyAccept:
+          ({required transmissionId, required exactOuterEnvelopeBytes}) {
+            throw const LoomReplicaConflict('packet conflict');
+          },
     );
 
     await expectLater(
@@ -220,14 +222,14 @@ void main() {
     );
     final receiver = LoomNearbyDtnTransferReceiver(
       connection: connection,
-      durablyAccept: (
-              {required transmissionId, required exactOuterEnvelopeBytes}) =>
-          LoomDtnHopAck(
-        transmissionId: 'transmission-nearby-wrong',
-        packetId: transfer.packetId,
-        acceptedAt: now,
-        duplicate: false,
-      ),
+      durablyAccept:
+          ({required transmissionId, required exactOuterEnvelopeBytes}) =>
+              LoomDtnHopAck(
+                transmissionId: 'transmission-nearby-wrong',
+                packetId: transfer.packetId,
+                acceptedAt: now,
+                duplicate: false,
+              ),
     );
 
     await expectLater(receiver.receiveAndAcknowledge(), throwsFormatException);

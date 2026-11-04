@@ -92,9 +92,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     subtitle: Text(
-                      record.senderAddress.toString() +
-                          ' · ' +
-                          record.createdAt.toLocal().toString(),
+                      '${record.senderAddress} · ${record.createdAt.toLocal()}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

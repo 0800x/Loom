@@ -478,12 +478,8 @@ class _LoomGroupInfoSurfaceState extends State<LoomGroupInfoSurface> {
                           label: Text(
                             tr(
                               context,
-                              owner
-                                  ? 'Delete and leave group'
-                                  : 'Leave group',
-                              owner
-                                  ? 'حذف گروه و خروج'
-                                  : 'خروج از گروه',
+                              owner ? 'Delete and leave group' : 'Leave group',
+                              owner ? 'حذف گروه و خروج' : 'خروج از گروه',
                             ),
                             style: TextStyle(color: context.loom.critical),
                           ),

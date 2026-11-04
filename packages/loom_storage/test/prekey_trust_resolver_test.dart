@@ -31,9 +31,8 @@ void main() {
   LoomSecurityStoreDeviceSigningKeyResolver resolver() =>
       LoomSecurityStoreDeviceSigningKeyResolver(
         securityStore: store,
-        resolveIdentityId:
-            (requestedAccountId) async =>
-                requestedAccountId == accountId ? identityId : null,
+        resolveIdentityId: (requestedAccountId) async =>
+            requestedAccountId == accountId ? identityId : null,
       );
 
   setUp(() {

@@ -12,11 +12,10 @@ class _PersistenceEncoder implements LoomOutgoingEnvelopeEncoder {
     required String conversationId,
     required String plaintext,
     String? replyToMessageId,
-  }) async =>
-      LoomOpaqueEnvelope(
-        ciphertext: 'opaque:$plaintext',
-        protocolVersion: 'Loom-TestEnvelope-v1',
-      );
+  }) async => LoomOpaqueEnvelope(
+    ciphertext: 'opaque:$plaintext',
+    protocolVersion: 'Loom-TestEnvelope-v1',
+  );
 }
 
 class _PersistenceApi implements LoomMessagingApi {
@@ -63,12 +62,11 @@ class _PersistenceApi implements LoomMessagingApi {
     required String conversationId,
     required File encryptedFile,
     required String contentType,
-  }) async =>
-      LoomAttachmentReceipt(
-        attachmentId: 'att-1',
-        sizeBytes: await encryptedFile.length(),
-        contentType: contentType,
-      );
+  }) async => LoomAttachmentReceipt(
+    attachmentId: 'att-1',
+    sizeBytes: await encryptedFile.length(),
+    contentType: contentType,
+  );
 
   @override
   Future<LoomSyncPage> sync({String? cursor, int limit = 200}) async =>
@@ -119,8 +117,9 @@ void main() {
       );
       addTearDown(engine.dispose);
       await engine.flushDue();
-      final pending =
-          store.dueOperations(now.add(const Duration(minutes: 1))).single;
+      final pending = store
+          .dueOperations(now.add(const Duration(minutes: 1)))
+          .single;
       expect(pending.kind, LoomPendingOperationKind.markRead);
       expect(pending.attemptCount, 1);
       api.readOffline = false;

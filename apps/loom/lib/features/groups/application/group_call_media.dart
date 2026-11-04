@@ -310,10 +310,7 @@ class LoomLiveKitGroupCallMedia extends LoomGroupCallMedia {
         .firstOrNull
         ?.track;
     return track != null
-        ? lk.VideoTrackRenderer(
-            track,
-            mirrorMode: lk.VideoViewMirrorMode.off,
-          )
+        ? lk.VideoTrackRenderer(track, mirrorMode: lk.VideoViewMirrorMode.off)
         : null;
   }
 

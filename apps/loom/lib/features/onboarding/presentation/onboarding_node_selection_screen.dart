@@ -377,220 +377,226 @@ class _LoomOnboardingNodeSelectionScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-        LoomGlassSurface(
-          blur: false,
-          radius: LoomRadii.surface,
-          strength: LoomGlassStrength.standard,
-          padding: const EdgeInsets.all(LoomSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              FilledButton.icon(
-                onPressed: loading ? null : _scan,
-                icon: const Icon(LoomIcons.qr_code_scanner_rounded),
-                label: Text(tr(context, 'Scan server QR', 'اسکن QR سرور')),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                tr(
-                  context,
-                  'Got a QR from your server? Point your camera at it.',
-                  'سرورت QR دارد؟ دوربین را روبه‌روی آن بگیر.',
-                ),
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                tr(context, 'Have a server address?', 'نشانی سرور را دارید؟'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: LoomSpacing.sm),
-              Directionality(
-                textDirection: TextDirection.ltr,
-                child: TextField(
-                  controller: manualDomain,
-                  keyboardType: TextInputType.url,
-                  textInputAction: TextInputAction.done,
-                  enabled: !loading,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  onSubmitted: loading ? null : (_) => _discoverManual(),
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(LoomIcons.dns_outlined),
-                    labelText: tr(context, 'Server address', 'نشانی سرور'),
-                    hintText: 'chat.example.org',
-                    errorText: domainError,
-                  ),
-                ),
-              ),
-              const SizedBox(height: LoomSpacing.sm),
-              FilledButton.icon(
-                onPressed: loading ? null : _discoverManual,
-                icon: selecting
-                    ? const LoomBusyIndicator()
-                    : const Icon(LoomIcons.verified_user_outlined),
-                label: Text(tr(context, 'Check this server', 'بررسی این سرور')),
-              ),
-            ],
-          ),
-        ),
-        TextButton.icon(
-          onPressed: loading ? null : _trustLocalCertificate,
-          icon: const Icon(LoomIcons.verified_user_outlined),
-          label: Text(
-            tr(
-              context,
-              'Import local HTTPS certificate',
-              'واردکردن گواهی HTTPS محلی',
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: loading ? null : _manageLocalCertificates,
-          child: Text(
-            tr(
-              context,
-              'Manage local HTTPS trust',
-              'مدیریت اعتماد به HTTPS محلی',
-            ),
-          ),
-        ),
-        if (verifiedHere && controller.selectedNodeVerified) ...[
-          const SizedBox(height: LoomSpacing.md),
-          AnimatedSize(
-            duration: LoomMotion.component,
-            curve: LoomMotion.emphasized,
-            alignment: Alignment.topCenter,
-            child: LoomReveal(
-              order: 1,
-              child: LoomGlassSurface(
-                blur: false,
-                radius: LoomRadii.navigation,
-                padding: const EdgeInsets.all(LoomSpacing.ml),
-                child: Column(
+          LoomGlassSurface(
+            blur: false,
+            radius: LoomRadii.surface,
+            strength: LoomGlassStrength.standard,
+            padding: const EdgeInsets.all(LoomSpacing.md),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      LoomIcons.verified_user_outlined,
-                      color: palette.primary,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        tr(
-                          context,
-                          'Server identity verified',
-                          'هویت سرور تأیید شد',
-                        ),
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
-                  ],
+                FilledButton.icon(
+                  onPressed: loading ? null : _scan,
+                  icon: const Icon(LoomIcons.qr_code_scanner_rounded),
+                  label: Text(tr(context, 'Scan server QR', 'اسکن QR سرور')),
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  controller.selectedEndpoint!.authority,
-                  textDirection: TextDirection.ltr,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _registration(
+                  tr(
                     context,
-                    controller.selectedLiveInfo!.registration,
+                    'Got a QR from your server? Point your camera at it.',
+                    'سرورت QR دارد؟ دوربین را روبه‌روی آن بگیر.',
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  tr(context, 'Have a server address?', 'نشانی سرور را دارید؟'),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: LoomSpacing.sm),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: TextField(
+                    controller: manualDomain,
+                    keyboardType: TextInputType.url,
+                    textInputAction: TextInputAction.done,
+                    enabled: !loading,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    onSubmitted: loading ? null : (_) => _discoverManual(),
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(LoomIcons.dns_outlined),
+                      labelText: tr(context, 'Server address', 'نشانی سرور'),
+                      hintText: 'chat.example.org',
+                      errorText: domainError,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
-
-                if (!signingIn &&
-                    controller.selectedLiveInfo!.registration != 'open') ...[
-                  const SizedBox(height: LoomSpacing.sm),
-                  Text(
-                    tr(
-                      context,
-                      'This server is not accepting open sign-ups. Choose another server or sign in to an existing account.',
-                      'ثبت‌نام آزاد روی این سرور ممکن نیست. سرور دیگری انتخاب کن یا وارد حساب قبلی شو.',
-                    ),
+                const SizedBox(height: LoomSpacing.sm),
+                FilledButton.icon(
+                  onPressed: loading ? null : _discoverManual,
+                  icon: selecting
+                      ? const LoomBusyIndicator()
+                      : const Icon(LoomIcons.verified_user_outlined),
+                  label: Text(
+                    tr(context, 'Check this server', 'بررسی این سرور'),
                   ),
-                  TextButton(
-                    onPressed: loading
-                        ? null
-                        : () => Navigator.pushNamed(context, '/sign-in'),
-                    child: Text(
-                      tr(context, 'I have an account here', 'اینجا حساب دارم'),
-                    ),
-                  ),
-                ],
+                ),
               ],
             ),
+          ),
+          TextButton.icon(
+            onPressed: loading ? null : _trustLocalCertificate,
+            icon: const Icon(LoomIcons.verified_user_outlined),
+            label: Text(
+              tr(
+                context,
+                'Import local HTTPS certificate',
+                'واردکردن گواهی HTTPS محلی',
+              ),
             ),
           ),
+          TextButton(
+            onPressed: loading ? null : _manageLocalCertificates,
+            child: Text(
+              tr(
+                context,
+                'Manage local HTTPS trust',
+                'مدیریت اعتماد به HTTPS محلی',
+              ),
+            ),
           ),
-        ],
-        const SizedBox(height: LoomSpacing.xl),
-        Row(
-          children: [
-            Expanded(
+          if (verifiedHere && controller.selectedNodeVerified) ...[
+            const SizedBox(height: LoomSpacing.md),
+            AnimatedSize(
+              duration: LoomMotion.component,
+              curve: LoomMotion.emphasized,
+              alignment: Alignment.topCenter,
+              child: LoomReveal(
+                order: 1,
+                child: LoomGlassSurface(
+                  blur: false,
+                  radius: LoomRadii.navigation,
+                  padding: const EdgeInsets.all(LoomSpacing.ml),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            LoomIcons.verified_user_outlined,
+                            color: palette.primary,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              tr(
+                                context,
+                                'Server identity verified',
+                                'هویت سرور تأیید شد',
+                              ),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        controller.selectedEndpoint!.authority,
+                        textDirection: TextDirection.ltr,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _registration(
+                          context,
+                          controller.selectedLiveInfo!.registration,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      if (!signingIn &&
+                          controller.selectedLiveInfo!.registration !=
+                              'open') ...[
+                        const SizedBox(height: LoomSpacing.sm),
+                        Text(
+                          tr(
+                            context,
+                            'This server is not accepting open sign-ups. Choose another server or sign in to an existing account.',
+                            'ثبت‌نام آزاد روی این سرور ممکن نیست. سرور دیگری انتخاب کن یا وارد حساب قبلی شو.',
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: loading
+                              ? null
+                              : () => Navigator.pushNamed(context, '/sign-in'),
+                          child: Text(
+                            tr(
+                              context,
+                              'I have an account here',
+                              'اینجا حساب دارم',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: LoomSpacing.xl),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  tr(context, 'Available servers', 'سرورهای موجود'),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              if (loading)
+                const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                IconButton(
+                  onPressed: controller.refreshRegistry,
+                  icon: const Icon(LoomIcons.refresh_rounded),
+                  tooltip: tr(context, 'Refresh', 'به‌روزرسانی'),
+                ),
+            ],
+          ),
+          const SizedBox(height: LoomSpacing.xs),
+          if (controller.nodes.isEmpty && !loading)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: LoomSpacing.lg),
               child: Text(
-                tr(context, 'Available servers', 'سرورهای موجود'),
-                style: Theme.of(context).textTheme.titleMedium,
+                tr(
+                  context,
+                  'The server list is empty. Enter your server address above or try refreshing.',
+                  'فهرست سرورها خالی است. نشانی سرور را در بالا وارد کنید یا فهرست را دوباره دریافت کنید.',
+                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: palette.textMuted),
+              ),
+            )
+          else
+            for (final node in controller.nodes.take(30)) ...[
+              _NodeChoice(
+                node: node,
+                selected: controller.selectedNode?.domain == node.domain,
+                onTap: loading ? null : () => _selectNode(node),
+              ),
+              const SizedBox(height: LoomSpacing.xs),
+            ],
+          if (controller.nodes.length > 30)
+            Padding(
+              padding: const EdgeInsets.only(top: LoomSpacing.xxs),
+              child: Text(
+                tr(
+                  context,
+                  'Showing the first 30 servers — search by entering an address.',
+                  '۳۰ سرور اول نمایش داده شده — برای جستجو نشانی را وارد کنید.',
+                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: palette.textMuted),
+                textAlign: TextAlign.center,
               ),
             ),
-            if (loading)
-              const SizedBox.square(
-                dimension: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            else
-              IconButton(
-                onPressed: controller.refreshRegistry,
-                icon: const Icon(LoomIcons.refresh_rounded),
-                tooltip: tr(context, 'Refresh', 'به‌روزرسانی'),
-              ),
-          ],
-        ),
-        const SizedBox(height: LoomSpacing.xs),
-        if (controller.nodes.isEmpty && !loading)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: LoomSpacing.lg),
-            child: Text(
-              tr(
-                context,
-                'The server list is empty. Enter your server address above or try refreshing.',
-                'فهرست سرورها خالی است. نشانی سرور را در بالا وارد کنید یا فهرست را دوباره دریافت کنید.',
-              ),
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: palette.textMuted),
-            ),
-          )
-        else
-          for (final node in controller.nodes.take(30)) ...[
-            _NodeChoice(
-              node: node,
-              selected:
-                  controller.selectedNode?.domain == node.domain,
-              onTap: loading ? null : () => _selectNode(node),
-            ),
-            const SizedBox(height: LoomSpacing.xs),
-          ],
-        if (controller.nodes.length > 30)
-          Padding(
-            padding: const EdgeInsets.only(top: LoomSpacing.xxs),
-            child: Text(
-              tr(
-                context,
-                'Showing the first 30 servers — search by entering an address.',
-                '۳۰ سرور اول نمایش داده شده — برای جستجو نشانی را وارد کنید.',
-              ),
-              style: Theme.of(
-                context,
-              ).textTheme.labelSmall?.copyWith(color: palette.textMuted),
-              textAlign: TextAlign.center,
-            ),
-          ),
         ],
       ),
     );
@@ -631,7 +637,9 @@ class _NodeChoice extends StatelessWidget {
                 borderRadius: BorderRadius.circular(LoomRadii.control),
               ),
               child: Icon(
-                selected ? LoomIcons.check_circle_rounded : LoomIcons.hub_outlined,
+                selected
+                    ? LoomIcons.check_circle_rounded
+                    : LoomIcons.hub_outlined,
                 color: selected ? palette.primary : null,
               ),
             ),

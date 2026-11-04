@@ -1049,8 +1049,9 @@ class _ChatListState extends State<_ChatList> {
     LoomChatFolderDefinition folder,
   ) {
     var total = 0;
-    for (final item in widget.messaging?.conversations ??
-        const <models.LoomConversation>[]) {
+    for (final item
+        in widget.messaging?.conversations ??
+            const <models.LoomConversation>[]) {
       final archived = widget.messaging?.isArchived(item.id) ?? false;
       if (archived != _showArchived) continue;
       if (folder.matches(item)) {
@@ -1294,9 +1295,7 @@ class _ChatListState extends State<_ChatList> {
                         label: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              loomChatFolderDisplayName(context, folder),
-                            ),
+                            Text(loomChatFolderDisplayName(context, folder)),
                             if (unread > 0) ...[
                               const SizedBox(width: 5),
                               Container(
@@ -1304,14 +1303,11 @@ class _ChatListState extends State<_ChatList> {
                                   horizontal: 6,
                                   vertical: 1,
                                 ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 17,
-                                ),
+                                constraints: const BoxConstraints(minWidth: 17),
                                 decoration: BoxDecoration(
                                   color: selected
                                       ? palette.primary
-                                      : palette.primary
-                                            .withAlphaFraction(.16),
+                                      : palette.primary.withAlphaFraction(.16),
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                                 child: Text(
@@ -1336,8 +1332,7 @@ class _ChatListState extends State<_ChatList> {
                         onSelected: (_) => _selectFolder(folders, index),
                         side: BorderSide.none,
                         backgroundColor: Colors.transparent,
-                        selectedColor:
-                            palette.primary.withAlphaFraction(.13),
+                        selectedColor: palette.primary.withAlphaFraction(.13),
                         labelStyle: TextStyle(
                           color: selected
                               ? palette.primary
@@ -1870,8 +1865,8 @@ class _LiveMessageBubble extends StatelessWidget {
                 Text(
                   tr(context, 'Forwarded', 'فوروارد شده'),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: context.loom.textMuted,
-                      ),
+                    color: context.loom.textMuted,
+                  ),
                 ),
               ],
             )

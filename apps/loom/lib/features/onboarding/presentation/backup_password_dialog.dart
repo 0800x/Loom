@@ -117,7 +117,6 @@ Future<LoomBackupExportPasswordChoice?> showLoomBackupExportPasswordDialog(
   }
 }
 
-
 /// Prompts for the password protecting an imported recovery file.
 ///
 /// Returning null means the user cancelled. The caller owns the returned
@@ -162,7 +161,9 @@ Future<String?> showLoomBackupImportPasswordDialog(
                     tooltip: visible ? 'Hide password' : 'Show password',
                     onPressed: () => setState(() => visible = !visible),
                     icon: Icon(
-                      visible ? LoomIcons.visibility_off_rounded : LoomIcons.visibility_rounded,
+                      visible
+                          ? LoomIcons.visibility_off_rounded
+                          : LoomIcons.visibility_rounded,
                     ),
                   ),
                 ),

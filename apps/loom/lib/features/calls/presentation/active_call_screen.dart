@@ -262,10 +262,16 @@ class _LoomActiveCallScreenState extends State<LoomActiveCallScreen> {
                                 child: Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: Colors.white.withAlphaFraction(.24)),
+                                    border: Border.all(
+                                      color: Colors.white.withAlphaFraction(
+                                        .24,
+                                      ),
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withAlphaFraction(.24),
+                                        color: Colors.black.withAlphaFraction(
+                                          .24,
+                                        ),
                                         blurRadius: 18,
                                       ),
                                     ],
@@ -330,8 +336,9 @@ class _LoomActiveCallScreenState extends State<LoomActiveCallScreen> {
                                         ? _EndedControls(
                                             key: const ValueKey('ended'),
                                             state: state,
-                                            onClose: () =>
-                                                Navigator.of(context).maybePop(),
+                                            onClose: () => Navigator.of(
+                                              context,
+                                            ).maybePop(),
                                           )
                                         : _LiveControls(
                                             key: const ValueKey('live'),
@@ -398,7 +405,10 @@ class _TopChrome extends StatelessWidget {
                   : _statusText(context, state),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: LoomTheme.darkPalette.textSecondary, fontSize: 12),
+              style: TextStyle(
+                color: LoomTheme.darkPalette.textSecondary,
+                fontSize: 12,
+              ),
             ),
           ],
         ),

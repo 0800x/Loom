@@ -20,11 +20,7 @@ abstract final class LoomAccountWorkspace {
     }
 
     final directory = Directory(
-      support.path +
-          Platform.pathSeparator +
-          'accounts' +
-          Platform.pathSeparator +
-          id,
+      '${support.path}${Platform.pathSeparator}accounts${Platform.pathSeparator}$id',
     );
     await directory.create(recursive: true);
     return directory;

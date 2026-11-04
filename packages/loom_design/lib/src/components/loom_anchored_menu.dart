@@ -81,7 +81,6 @@ class LoomAnchoredMenu<T> extends StatelessWidget {
   }
 }
 
-
 /// Displays a menu at an explicit overlay position while preserving Material's
 /// keyboard, focus, semantics and dismissal behavior.
 Future<T?> showLoomAnchoredMenu<T>({
@@ -99,7 +98,8 @@ Future<T?> showLoomAnchoredMenu<T>({
     items: items,
     elevation: elevation,
     color: color ?? Theme.of(context).colorScheme.surfaceContainer,
-    shape: shape ??
+    shape:
+        shape ??
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
     useRootNavigator: useRootNavigator,
   );

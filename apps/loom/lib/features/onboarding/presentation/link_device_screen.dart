@@ -166,9 +166,7 @@ class _LinkDeviceScreenState extends State<LinkDeviceScreen> {
         'روی دستگاه جدید اول با نام کاربری و رمز عبور وارد شوید و بعد این QR کوتاه‌عمر را اسکن کنید. Home Node فقط یک بسته رمزگذاری‌شده و یک‌بارمصرف را منتقل می‌کند.',
       ),
       error: _error,
-      ctaLabel: created == null
-          ? tr(context, 'Generate QR', 'ساخت QR')
-          : null,
+      ctaLabel: created == null ? tr(context, 'Generate QR', 'ساخت QR') : null,
       onCta: created == null ? (_working ? null : _createInvitation) : null,
       children: [
         LoomGlassSurface(

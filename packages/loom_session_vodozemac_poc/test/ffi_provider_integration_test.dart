@@ -145,8 +145,9 @@ void main() {
           ),
         );
 
-        final aliceRevisionAfterCommit =
-            aliceStore.readSession(sessionId)!.revision;
+        final aliceRevisionAfterCommit = aliceStore
+            .readSession(sessionId)!
+            .revision;
         final retried = await aliceStore.runDurably(
           (transaction) => aliceProvider.encryptAndStage(
             transaction: transaction,
@@ -165,8 +166,9 @@ void main() {
           aliceRevisionAfterCommit,
         );
 
-        final bobAccountBefore =
-            bobStore.readProviderState('vodozemac-poc-account-v1')!.revision;
+        final bobAccountBefore = bobStore
+            .readProviderState('vodozemac-poc-account-v1')!
+            .revision;
         await expectLater(
           bobStore.runDurably<void>((transaction) async {
             final opened = await bobProvider.decryptInitialPrekey(
@@ -414,18 +416,17 @@ Future<LoomCryptoOutboxRecord> _stage({
   required String packet,
   required String text,
   required DateTime now,
-}) =>
-    store.runDurably(
-      (transaction) => provider.encryptAndStage(
-        transaction: transaction,
-        sessionId: sessionId,
-        operationId: operation,
-        messageId: message,
-        packetId: packet,
-        innerEnvelope: Uint8List.fromList(utf8.encode(text)),
-        now: now,
-      ),
-    );
+}) => store.runDurably(
+  (transaction) => provider.encryptAndStage(
+    transaction: transaction,
+    sessionId: sessionId,
+    operationId: operation,
+    messageId: message,
+    packetId: packet,
+    innerEnvelope: Uint8List.fromList(utf8.encode(text)),
+    now: now,
+  ),
+);
 
 Future<Uint8List> _open(
   LoomCryptoStateStore store,
@@ -433,14 +434,13 @@ Future<Uint8List> _open(
   LoomCryptoOutboxRecord record,
   DateTime origin,
   int minute,
-) =>
-    store.runDurably(
-      (transaction) => provider.decryptAndAdvance(
-        transaction: transaction,
-        ciphertext: record.ciphertext,
-        now: origin.add(Duration(minutes: minute)),
-      ),
-    );
+) => store.runDurably(
+  (transaction) => provider.decryptAndAdvance(
+    transaction: transaction,
+    ciphertext: record.ciphertext,
+    now: origin.add(Duration(minutes: minute)),
+  ),
+);
 
 /// Test-only protector that authenticates the context/revision binding without
 /// pretending to provide production confidentiality.

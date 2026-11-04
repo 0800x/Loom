@@ -173,8 +173,7 @@ class _WordSlot extends StatelessWidget {
             builder: (context, value, _) {
               final filled = value.text.trim().isNotEmpty;
               return AnimatedContainer(
-                duration:
-                    LoomAccessibility.fromContext(context).reduceMotion
+                duration: LoomAccessibility.fromContext(context).reduceMotion
                     ? Duration.zero
                     : LoomMotion.component,
                 curve: LoomMotion.standard,

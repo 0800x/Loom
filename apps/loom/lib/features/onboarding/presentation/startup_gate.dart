@@ -149,8 +149,8 @@ class _LoomStartupGateState extends State<LoomStartupGate> {
                     order: 2,
                     child: Text(
                       tr(context, 'Loom', 'لوم'),
-                      style:
-                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.5,
                           ),

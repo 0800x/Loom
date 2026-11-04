@@ -319,196 +319,198 @@ class _RecoveryScreenState extends State<RecoveryScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-        LoomGlassSurface(
-          strength: LoomGlassStrength.weak,
-          blur: false,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(
-                    tr(context, 'Recovery words', 'واژه‌های بازیابی'),
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  TextButton.icon(
-                    onPressed: exporting
-                        ? null
-                        : () => setState(() {
-                            revealed = !revealed;
-                            hasRevealed = true;
-                          }),
-                    icon: Icon(
-                      revealed
-                          ? LoomIcons.visibility_off_outlined
-                          : LoomIcons.visibility_outlined,
+          LoomGlassSurface(
+            strength: LoomGlassStrength.weak,
+            blur: false,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      tr(context, 'Recovery words', 'واژه‌های بازیابی'),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    label: Text(
-                      revealed
-                          ? tr(context, 'Hide', 'پنهان')
-                          : tr(context, 'Reveal', 'نمایش'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Never animate an outgoing secret: hiding removes the words now.
-              if (!revealed)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 36),
-                  child: Column(
-                    children: [
-                      Icon(
-                        LoomIcons.lock_outline_rounded,
-                        color: p.primary,
-                        size: 32,
+                    TextButton.icon(
+                      onPressed: exporting
+                          ? null
+                          : () => setState(() {
+                              revealed = !revealed;
+                              hasRevealed = true;
+                            }),
+                      icon: Icon(
+                        revealed
+                            ? LoomIcons.visibility_off_outlined
+                            : LoomIcons.visibility_outlined,
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        tr(
-                          context,
-                          'Only reveal when you’re ready to save them.',
-                          'وقتی آمادهٔ یادداشت هستید، «نمایش» را بزنید.',
+                      label: Text(
+                        revealed
+                            ? tr(context, 'Hide', 'پنهان')
+                            : tr(context, 'Reveal', 'نمایش'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Never animate an outgoing secret: hiding removes the words now.
+                if (!revealed)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 36),
+                    child: Column(
+                      children: [
+                        Icon(
+                          LoomIcons.lock_outline_rounded,
+                          color: p.primary,
+                          size: 32,
                         ),
-                        textAlign: TextAlign.center,
+                        const SizedBox(height: 12),
+                        Text(
+                          tr(
+                            context,
+                            'Only reveal when you’re ready to save them.',
+                            'وقتی آمادهٔ یادداشت هستید، «نمایش» را بزنید.',
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  _RecoveryWordGrid(words: words),
+              ],
+            ),
+          ),
+          if (revealed) ...[
+            const SizedBox(height: LoomSpacing.md),
+            Center(
+              child: LoomOnboardingQrFrame(
+                child: Container(
+                  padding: const EdgeInsets.all(LoomSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(LoomRadii.control),
+                  ),
+                  child: ExcludeSemantics(
+                    child: QrImageView(
+                      data: LoomRecoveryBackup(words: words).encoded,
+                      size: 232,
+                      backgroundColor: Colors.white,
+                      errorCorrectionLevel: QrErrorCorrectLevel.M,
+                      eyeStyle: const QrEyeStyle(
+                        eyeShape: QrEyeShape.square,
+                        color: Colors.black,
                       ),
-                    ],
-                  ),
-                )
-              else
-                _RecoveryWordGrid(words: words),
-            ],
-          ),
-        ),
-        if (revealed) ...[
-          const SizedBox(height: LoomSpacing.md),
-          Center(
-            child: LoomOnboardingQrFrame(
-              child: Container(
-                padding: const EdgeInsets.all(LoomSpacing.sm),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(LoomRadii.control),
-                ),
-                child: ExcludeSemantics(
-                  child: QrImageView(
-                    data: LoomRecoveryBackup(words: words).encoded,
-                    size: 232,
-                    backgroundColor: Colors.white,
-                    errorCorrectionLevel: QrErrorCorrectLevel.M,
-                    eyeStyle: const QrEyeStyle(
-                      eyeShape: QrEyeShape.square,
-                      color: Colors.black,
-                    ),
-                    dataModuleStyle: const QrDataModuleStyle(
-                      dataModuleShape: QrDataModuleShape.square,
-                      color: Colors.black,
+                      dataModuleStyle: const QrDataModuleStyle(
+                        dataModuleShape: QrDataModuleShape.square,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
-        const SizedBox(height: 16),
-        OutlinedButton.icon(
-          onPressed: !submitting && !exporting ? () => _export(false) : null,
-          icon: const Icon(LoomIcons.download_rounded),
-          label: Text(tr(context, 'Save recovery file', 'ذخیرهٔ فایل پشتیبان')),
-        ),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: !submitting && !exporting ? () => _export(true) : null,
-          icon: const Icon(LoomIcons.description_outlined),
-          label: Text(
-            tr(context, 'Save printable PDF + QR', 'ذخیرهٔ PDF چاپی + QR'),
-          ),
-        ),
-        if (exporting)
-          const Padding(
-            padding: EdgeInsets.all(12),
-            child: Center(child: LoomBusyIndicator()),
-          ),
-        if (exportMessage != null) ...[
-          const SizedBox(height: LoomSpacing.xs),
-          Semantics(
-            liveRegion: true,
-            child: LoomGlassSurface(
-              blur: false,
-              radius: LoomRadii.control,
-              padding: const EdgeInsets.symmetric(
-                horizontal: LoomSpacing.md,
-                vertical: LoomSpacing.sm,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    LoomIcons.info_outline_rounded,
-                    size: LoomIconSize.compact,
-                    color: p.info,
-                  ),
-                  const SizedBox(width: LoomSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      exportMessage!,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                ],
-              ),
+          ],
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: !submitting && !exporting ? () => _export(false) : null,
+            icon: const Icon(LoomIcons.download_rounded),
+            label: Text(
+              tr(context, 'Save recovery file', 'ذخیرهٔ فایل پشتیبان'),
             ),
           ),
-        ],
-        const SizedBox(height: 20),
-        Text(
-          tr(
-            context,
-            'Anyone with these words can access your identity. Loom cannot recover them for you.',
-            'هرکس این واژه‌ها را داشته باشد می‌تواند به هویت شما دسترسی پیدا کند. لوم نمی‌تواند آن‌ها را برای شما بازیابی کند.',
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: !submitting && !exporting ? () => _export(true) : null,
+            icon: const Icon(LoomIcons.description_outlined),
+            label: Text(
+              tr(context, 'Save printable PDF + QR', 'ذخیرهٔ PDF چاپی + QR'),
+            ),
           ),
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        const SizedBox(height: 12),
-        CheckboxListTile(
-          contentPadding: EdgeInsets.zero,
-          controlAffinity: ListTileControlAffinity.leading,
-          value: acknowledged,
-          onChanged: hasRevealed && !exporting && !submitting
-              ? (value) => setState(() => acknowledged = value ?? false)
-              : null,
-          title: Text(
+          if (exporting)
+            const Padding(
+              padding: EdgeInsets.all(12),
+              child: Center(child: LoomBusyIndicator()),
+            ),
+          if (exportMessage != null) ...[
+            const SizedBox(height: LoomSpacing.xs),
+            Semantics(
+              liveRegion: true,
+              child: LoomGlassSurface(
+                blur: false,
+                radius: LoomRadii.control,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: LoomSpacing.md,
+                  vertical: LoomSpacing.sm,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      LoomIcons.info_outline_rounded,
+                      size: LoomIconSize.compact,
+                      color: p.info,
+                    ),
+                    const SizedBox(width: LoomSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        exportMessage!,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
+          Text(
             tr(
               context,
-              'I saved all 24 words in a safe place.',
-              'هر ۲۴ واژه را در جای امن ذخیره کردم.',
+              'Anyone with these words can access your identity. Loom cannot recover them for you.',
+              'هرکس این واژه‌ها را داشته باشد می‌تواند به هویت شما دسترسی پیدا کند. لوم نمی‌تواند آن‌ها را برای شما بازیابی کند.',
             ),
+            style: Theme.of(context).textTheme.bodySmall,
           ),
-        ),
-        const SizedBox(height: 16),
-
-        if (!backupSaved)
-          TextButton(
-            onPressed: exporting || submitting
-                ? null
-                : () => _finish(defer: true),
-            child: Text(tr(context, 'Back up later', 'پشتیبان‌گیری بعداً')),
-          ),
-        if (hasRevealed)
-          TextButton(
-            onPressed: exporting || submitting
-                ? null
-                : () => Navigator.pushNamed(context, '/recovery-verify'),
-            child: Text(
+          const SizedBox(height: 12),
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            value: acknowledged,
+            onChanged: hasRevealed && !exporting && !submitting
+                ? (value) => setState(() => acknowledged = value ?? false)
+                : null,
+            title: Text(
               tr(
                 context,
-                'Check words manually (optional)',
-                'بررسی دستی واژه‌ها (اختیاری)',
+                'I saved all 24 words in a safe place.',
+                'هر ۲۴ واژه را در جای امن ذخیره کردم.',
               ),
             ),
           ),
+          const SizedBox(height: 16),
+
+          if (!backupSaved)
+            TextButton(
+              onPressed: exporting || submitting
+                  ? null
+                  : () => _finish(defer: true),
+              child: Text(tr(context, 'Back up later', 'پشتیبان‌گیری بعداً')),
+            ),
+          if (hasRevealed)
+            TextButton(
+              onPressed: exporting || submitting
+                  ? null
+                  : () => Navigator.pushNamed(context, '/recovery-verify'),
+              child: Text(
+                tr(
+                  context,
+                  'Check words manually (optional)',
+                  'بررسی دستی واژه‌ها (اختیاری)',
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -531,10 +533,14 @@ class _RecoveryWordGrid extends StatelessWidget {
         builder: (context, constraints) {
           final width = constraints.maxWidth;
           final largeText = MediaQuery.textScalerOf(context).scale(14) > 22;
-          final columns =
-              largeText ? 1 : width >= 380 ? 4 : width >= 320 ? 3 : 2;
-          final cardWidth =
-              (width - LoomSpacing.xs * (columns - 1)) / columns;
+          final columns = largeText
+              ? 1
+              : width >= 380
+              ? 4
+              : width >= 320
+              ? 3
+              : 2;
+          final cardWidth = (width - LoomSpacing.xs * (columns - 1)) / columns;
           return Wrap(
             spacing: LoomSpacing.xs,
             runSpacing: LoomSpacing.xs,

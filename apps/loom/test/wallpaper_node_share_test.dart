@@ -149,7 +149,7 @@ void main() {
           themeMode: LoomThemeMode.light,
           glassQuality: LoomGlassQuality.high,
           locale: const Locale('en'),
-            localePreference: 'en',
+          localePreference: 'en',
           onThemeChanged: (v) => selected = v,
           onGlassQualityChanged: (_) {},
           onLocaleChanged: (_) {},

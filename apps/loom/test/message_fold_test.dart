@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import '../lib/features/messaging/application/message_content.dart';
-import '../lib/features/messaging/application/message_fold.dart';
+import 'package:loom_next/features/messaging/application/message_content.dart';
+import 'package:loom_next/features/messaging/application/message_fold.dart';
 
 void main() {
   final base = DateTime.utc(2026, 11, 4, 10);

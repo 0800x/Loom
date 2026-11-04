@@ -797,24 +797,20 @@ class _MessageNotificationToggleState extends State<_MessageNotificationToggle>
   Widget build(BuildContext context) {
     return LoomSettingsRow(
       icon: LoomIcons.notifications_none_rounded,
-      title: tr(
-        context,
-        'Message notifications',
-        'اعلان پیام‌ها',
-      ),
+      title: tr(context, 'Message notifications', 'اعلان پیام‌ها'),
       subtitle: _checking
           ? tr(context, 'Checking system state…', 'بررسی وضعیت سیستم…')
           : _enabled
-              ? tr(
-                  context,
-                  'On — encrypted preview; muted and open chats stay silent',
-                  'روشن — پیش‌نمایش خصوصی؛ چت‌های بی‌صدا و باز اعلان نمی‌دهند',
-                )
-              : tr(
-                  context,
-                  'Off — enable to hear from new chats',
-                  'خاموش — برای اطلاع از پیام‌های جدید فعال کنید',
-                ),
+          ? tr(
+              context,
+              'On — encrypted preview; muted and open chats stay silent',
+              'روشن — پیش‌نمایش خصوصی؛ چت‌های بی‌صدا و باز اعلان نمی‌دهند',
+            )
+          : tr(
+              context,
+              'Off — enable to hear from new chats',
+              'خاموش — برای اطلاع از پیام‌های جدید فعال کنید',
+            ),
       showDivider: true,
       // Never an indefinite spinner here: unmocked platform channels hang
       // in widget tests and any infinite animation stalls pumpAndSettle.
@@ -823,7 +819,6 @@ class _MessageNotificationToggleState extends State<_MessageNotificationToggle>
     );
   }
 }
-
 
 /// Device-local search index consent. Turning it off wipes the decrypted
 /// preview index immediately; turning it on starts a bounded back-fill.
@@ -869,9 +864,7 @@ class _LocalSearchToggleState extends State<_LocalSearchToggle> {
       color: Theme.of(context).cardColor,
       child: SwitchListTile.adaptive(
         secondary: const Icon(LoomIcons.search_rounded),
-        title: Text(
-          tr(context, 'Local message search', 'جستجوی محلی پیام‌ها'),
-        ),
+        title: Text(tr(context, 'Local message search', 'جستجوی محلی پیام‌ها')),
         subtitle: Text(
           tr(
             context,
@@ -916,8 +909,7 @@ class _BlockedContactsCard extends StatelessWidget {
               leading: const Icon(LoomIcons.shield_outlined),
               title: Text(address, textDirection: TextDirection.ltr),
               trailing: TextButton(
-                onPressed: () =>
-                    unawaited(messaging.unblockPeer(address)),
+                onPressed: () => unawaited(messaging.unblockPeer(address)),
                 child: Text(tr(context, 'Unblock', 'رفع مسدودی')),
               ),
             ),

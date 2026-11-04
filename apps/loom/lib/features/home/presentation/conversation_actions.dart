@@ -337,9 +337,7 @@ Future<String?> _chooseMessageAction(
         LoomPressable(
           child: ListTile(
             leading: const Icon(LoomIcons.delete_outline_rounded),
-            title: Text(
-              tr(context, 'Delete for everyone', 'حذف برای همه'),
-            ),
+            title: Text(tr(context, 'Delete for everyone', 'حذف برای همه')),
             onTap: () => Navigator.pop(context, 'deleteEveryone'),
           ),
         ),
@@ -569,10 +567,7 @@ class _MessageReactionChips extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               onTap: onTap == null ? null : () => onTap!(entry.key),
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 3,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: entry.key == ownEmoji
                       ? context.loom.primary.withValues(alpha: .18)
@@ -618,13 +613,13 @@ class _TypingIndicator extends StatelessWidget {
     }
     final names = peers.keys.toList(growable: false);
     final label = names.length == 1
-        ? tr(context, '${names.first} is typing…', '${names.first} در حال نوشتن…')
-        : names.length == 2
         ? tr(
             context,
-            'Two people are typing…',
-            'دو نفر در حال نوشتن…',
+            '${names.first} is typing…',
+            '${names.first} در حال نوشتن…',
           )
+        : names.length == 2
+        ? tr(context, 'Two people are typing…', 'دو نفر در حال نوشتن…')
         : tr(context, 'Several people are typing…', 'چند نفر در حال نوشتن…');
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),

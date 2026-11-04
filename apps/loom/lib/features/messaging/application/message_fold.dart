@@ -110,8 +110,7 @@ class LoomControlFold<T> {
       final isMutation =
           control.op == LoomMessageControlOp.edit ||
           control.op == LoomMessageControlOp.delete;
-      if (isMutation &&
-          sender.toLowerCase() != originalSender.toLowerCase()) {
+      if (isMutation && sender.toLowerCase() != originalSender.toLowerCase()) {
         continue;
       }
 

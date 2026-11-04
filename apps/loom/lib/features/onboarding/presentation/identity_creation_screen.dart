@@ -73,119 +73,123 @@ class _IdentityCreationScreenState extends State<IdentityCreationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-        Form(
-          key: _form,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: AutofillGroup(
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: displayName,
-                  enabled: !busy,
-                  maxLength: 80,
-                  textCapitalization: TextCapitalization.words,
-                  textInputAction: TextInputAction.next,
-                  autofillHints: const [AutofillHints.nickname],
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? tr(
-                          context,
-                          'Enter the name people will see.',
-                          'نامی که دیگران می‌بینند را وارد کنید.',
-                        )
-                      : null,
-                  decoration: InputDecoration(
-                    labelText: tr(context, 'Your name', 'نام شما'),
-                    prefixIcon: const Icon(LoomIcons.person_outline_rounded),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: username,
-                  enabled: !busy,
-                  maxLength: 32,
-                  textDirection: TextDirection.ltr,
-                  textInputAction: TextInputAction.next,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  autofillHints: const [AutofillHints.newUsername],
-                  validator: (value) =>
-                      RegExp(
-                        r'^[a-z0-9_][a-z0-9_.-]{2,31}$',
-                      ).hasMatch((value ?? '').trim().toLowerCase())
-                      ? null
-                      : tr(
-                          context,
-                          'Use 3–32 English letters, numbers, _ . or -. Start with a letter, number or _.',
-                          '۳ تا ۳۲ حرف انگلیسی، عدد یا _ . - ؛ با حرف، عدد یا _ شروع کنید.',
-                        ),
-                  decoration: InputDecoration(
-                    labelText: tr(context, 'Username', 'نام کاربری'),
-                    prefixText: '@',
-                  ),
-                ),
-                ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: username,
-                  builder: (context, value, _) => Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Text(
-                      '@${value.text.trim().toLowerCase().isEmpty ? 'username' : value.text.trim().toLowerCase()}:${node?.domain ?? '…'}',
-                      textDirection: TextDirection.ltr,
-                      style: Theme.of(context).textTheme.bodySmall,
+          Form(
+            key: _form,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: AutofillGroup(
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: displayName,
+                    enabled: !busy,
+                    maxLength: 80,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.nickname],
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? tr(
+                            context,
+                            'Enter the name people will see.',
+                            'نامی که دیگران می‌بینند را وارد کنید.',
+                          )
+                        : null,
+                    decoration: InputDecoration(
+                      labelText: tr(context, 'Your name', 'نام شما'),
+                      prefixIcon: const Icon(LoomIcons.person_outline_rounded),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: password,
-                  enabled: !busy,
-                  obscureText: obscure,
-                  textDirection: TextDirection.ltr,
-                  textInputAction: TextInputAction.done,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  autofillHints: const [AutofillHints.newPassword],
-                  onFieldSubmitted: (_) => _continue(),
-                  validator: (value) =>
-                      value == null || value.length < 12 || value.length > 256
-                      ? tr(
-                          context,
-                          'Use a password with 12–256 characters.',
-                          'گذرواژه باید ۱۲ تا ۲۵۶ نویسه داشته باشد.',
-                        )
-                      : null,
-                  decoration: InputDecoration(
-                    labelText: tr(context, 'Password', 'گذرواژه'),
-                    helperText: tr(
-                      context,
-                      'At least 12 characters. You’ll use this to sign in.',
-                      'حداقل ۱۲ نویسه؛ برای ورود به حساب استفاده می‌شود.',
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: username,
+                    enabled: !busy,
+                    maxLength: 32,
+                    textDirection: TextDirection.ltr,
+                    textInputAction: TextInputAction.next,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    autofillHints: const [AutofillHints.newUsername],
+                    validator: (value) =>
+                        RegExp(
+                          r'^[a-z0-9_][a-z0-9_.-]{2,31}$',
+                        ).hasMatch((value ?? '').trim().toLowerCase())
+                        ? null
+                        : tr(
+                            context,
+                            'Use 3–32 English letters, numbers, _ . or -. Start with a letter, number or _.',
+                            '۳ تا ۳۲ حرف انگلیسی، عدد یا _ . - ؛ با حرف، عدد یا _ شروع کنید.',
+                          ),
+                    decoration: InputDecoration(
+                      labelText: tr(context, 'Username', 'نام کاربری'),
+                      prefixText: '@',
                     ),
-                    suffixIcon: IconButton(
-                      onPressed: () => setState(() => obscure = !obscure),
-                      tooltip: obscure
-                          ? tr(context, 'Show password', 'نمایش گذرواژه')
-                          : tr(context, 'Hide password', 'پنهان کردن گذرواژه'),
-                      icon: Icon(
-                        obscure
-                            ? LoomIcons.visibility_outlined
-                            : LoomIcons.visibility_off_outlined,
+                  ),
+                  ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: username,
+                    builder: (context, value, _) => Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        '@${value.text.trim().toLowerCase().isEmpty ? 'username' : value.text.trim().toLowerCase()}:${node?.domain ?? '…'}',
+                        textDirection: TextDirection.ltr,
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: password,
+                    enabled: !busy,
+                    obscureText: obscure,
+                    textDirection: TextDirection.ltr,
+                    textInputAction: TextInputAction.done,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    autofillHints: const [AutofillHints.newPassword],
+                    onFieldSubmitted: (_) => _continue(),
+                    validator: (value) =>
+                        value == null || value.length < 12 || value.length > 256
+                        ? tr(
+                            context,
+                            'Use a password with 12–256 characters.',
+                            'گذرواژه باید ۱۲ تا ۲۵۶ نویسه داشته باشد.',
+                          )
+                        : null,
+                    decoration: InputDecoration(
+                      labelText: tr(context, 'Password', 'گذرواژه'),
+                      helperText: tr(
+                        context,
+                        'At least 12 characters. You’ll use this to sign in.',
+                        'حداقل ۱۲ نویسه؛ برای ورود به حساب استفاده می‌شود.',
+                      ),
+                      suffixIcon: IconButton(
+                        onPressed: () => setState(() => obscure = !obscure),
+                        tooltip: obscure
+                            ? tr(context, 'Show password', 'نمایش گذرواژه')
+                            : tr(
+                                context,
+                                'Hide password',
+                                'پنهان کردن گذرواژه',
+                              ),
+                        icon: Icon(
+                          obscure
+                              ? LoomIcons.visibility_outlined
+                              : LoomIcons.visibility_off_outlined,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: LoomSpacing.md),
-        Text(
-          tr(
-            context,
-            'Your account will be hosted by ${node?.name ?? '…'}.',
-            'حساب شما روی ${node?.name ?? '…'} میزبانی می‌شود.',
+          const SizedBox(height: LoomSpacing.md),
+          Text(
+            tr(
+              context,
+              'Your account will be hosted by ${node?.name ?? '…'}.',
+              'حساب شما روی ${node?.name ?? '…'} میزبانی می‌شود.',
+            ),
+            style: Theme.of(context).textTheme.bodySmall,
           ),
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
         ],
       ),
     );
