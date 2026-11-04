@@ -367,8 +367,8 @@ choice_description() {
     'HTTPS mode:public') echo 'Public certificate for an internet domain' ;;
     'HTTPS mode:local') echo 'Offline certificate; import and verify it on clients' ;;
     'Download sources:official') echo 'Upstream registries and configured OS repositories' ;;
-    'Download sources:liara') echo 'Iran: Liara Docker, Go, npm and package mirrors' ;;
-    'Download sources:arvan') echo 'Arvan Docker/Ubuntu/Alpine; Liara npm and Go' ;;
+    'Download sources:liara') echo 'Iran: Liara Docker, npm and host package mirrors' ;;
+    'Download sources:arvan') echo 'Arvan Docker/Ubuntu/Alpine; Liara npm and Debian' ;;
     'Go modules:profile') echo 'Follow the package source selection' ;;
     'Go modules:official') echo 'Go official module proxy' ;;
     'Go modules:liara') echo 'Liara · Iran' ;;
@@ -504,10 +504,6 @@ if [[ $interactive -eq 1 ]]; then
     loom_go_mirror "$GO_MIRROR"
   fi
 
-  printf '\nChoose a Go mirror for module downloads.\n'
-  prompt_choice_into GO_MIRROR "Go modules" "$GO_MIRROR" 'profile official liara parspack runflare goproxy-cn'
-  loom_go_mirror "$GO_MIRROR"
-
   if [[ $TLS_SET -eq 0 ]]; then
     prompt_choice_into TLS_MODE "HTTPS mode" "$TLS_MODE" 'public local'
   fi
@@ -559,8 +555,6 @@ if [[ "$TLS_MODE" == local ]]; then
 fi
 printf '\n%bReview · ready to %s%b\n' "$BOLD" "$([[ $EXISTING_INSTALL -eq 1 ]] && echo reconfigure || echo install)" "$RESET"
 printf '  %-18s %s\n' 'Download sources' "$DOWNLOAD_PROFILE"
-printf '  %-18s %s\n' 'Go mirror' "$GO_MIRROR"
-printf '  %-18s %s\n' 'Go proxy' "$LOOM_GO_PROXY"
 printf '  %-18s %s\n' 'Domain' "$DOMAIN"
 printf '  %-18s %s\n' 'Operator' "$OPERATOR_NAME"
 printf '  %-18s %s\n' 'Jurisdiction' "$JURISDICTION"
