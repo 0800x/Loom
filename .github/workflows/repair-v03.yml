@@ -43,8 +43,9 @@ jobs:
       - name: Resolve the patched OpenMLS provider and build native libraries for Flutter tests
         run: |
           cargo update --manifest-path native/loom_mls/Cargo.toml
-          cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i crypto-bigint
-          cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i ctutils
+          cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i crypto-bigint@0.5.5 || true
+          cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i crypto-bigint@0.7.10 || true
+          cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i ctutils@0.4.8 || true
           cargo build --locked --manifest-path native/loom_mls/Cargo.toml
           cargo build --locked --manifest-path native/loom_vodozemac_poc/Cargo.toml
 
