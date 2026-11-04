@@ -21,7 +21,7 @@ services:
   minio:
     labels:
       org.loom.installation: /opt/loom-node
-    image: ghcr.io/0800x/loom-minio:${LOOM_IMAGE_TAG:?set LOOM_IMAGE_TAG}
+    image: ghcr.io/0800x/loom-minio:${LOOM_IMAGE_TAG:?set_LOOM_IMAGE_TAG}
     pull_policy: always
     command: server /data --console-address ":9001"
     restart: unless-stopped
@@ -34,7 +34,7 @@ services:
   minio-init:
     labels:
       org.loom.installation: /opt/loom-node
-    image: ghcr.io/0800x/loom-node:${LOOM_IMAGE_TAG:?set LOOM_IMAGE_TAG}
+    image: ghcr.io/0800x/loom-node:${LOOM_IMAGE_TAG:?set_LOOM_IMAGE_TAG}
     pull_policy: always
     restart: "no"
     depends_on:
@@ -49,7 +49,7 @@ services:
     entrypoint: ["node", "--experimental-strip-types", "src/attachments/initialize_bucket.ts"]
 
   loom-node:
-    image: ghcr.io/0800x/loom-node:${LOOM_IMAGE_TAG:?set LOOM_IMAGE_TAG}
+    image: ghcr.io/0800x/loom-node:${LOOM_IMAGE_TAG:?set_LOOM_IMAGE_TAG}
     pull_policy: always
     labels:
       org.loom.installation: /opt/loom-node
