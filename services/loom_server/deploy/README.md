@@ -79,7 +79,7 @@ Windows production continues to use the bundled Caddy profile. From the reposito
   -NetworkJurisdiction "Example jurisdiction"
 ```
 
-The setup tool generates strong random PostgreSQL, MinIO, and admin credentials in `deploy/.env`, validates Compose, builds the Node image, and starts the Caddy profile.
+The setup tool generates strong random PostgreSQL, MinIO, and admin credentials in `deploy/.env`, validates Compose, pulls the prebuilt Node and MinIO images for the exact release commit from GHCR, and starts the Caddy profile. GitHub Actions builds and publishes those images; the Home Node does not build them.
 
 Do not commit `deploy/.env` or share it. It contains administrative and storage credentials.
 
@@ -116,13 +116,15 @@ For Caddy mode, include the profile:
 cd services/loom_server/deploy
 docker compose --env-file .env -f docker-compose.production.yml --profile caddy ps
 docker compose --env-file .env -f docker-compose.production.yml --profile caddy logs -f
-docker compose --env-file .env -f docker-compose.production.yml --profile caddy up -d --build
+docker compose --env-file .env -f docker-compose.production.yml --profile caddy pull
+docker compose --env-file .env -f docker-compose.production.yml --profile caddy up -d --wait --wait-timeout 180
 ```
 
 For host-Nginx mode, omit `--profile caddy` so the Caddy service remains disabled:
 
 ```bash
-docker compose --env-file .env -f docker-compose.production.yml up -d --build
+docker compose --env-file .env -f docker-compose.production.yml pull
+docker compose --env-file .env -f docker-compose.production.yml up -d --wait --wait-timeout 180
 ```
 
 Use `down` without `-v` unless you intentionally want to destroy persistent Node data.
