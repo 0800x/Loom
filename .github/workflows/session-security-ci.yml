@@ -45,7 +45,7 @@ permissions:
   contents: read
 
 env:
-  DART_VERSION: 3.13.0
+  DART_VERSION: 3.13.2
   NODE_VERSION: 22.16.0
 
 jobs:
