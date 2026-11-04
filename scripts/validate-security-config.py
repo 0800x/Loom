@@ -42,5 +42,5 @@ for relative in ['services/loom_server/deploy/Dockerfile', 'services/loom_server
             else:
                 assert re.search(r'@sha256:[0-9a-f]{64}
 print('Production security configuration checks passed')
-,image), (relative, image)
+, image), (relative, image)
 print('Production security configuration checks passed')
