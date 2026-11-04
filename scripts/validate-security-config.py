@@ -21,7 +21,18 @@ for relative in ['services/loom_server/deploy/Dockerfile', 'services/loom_server
     for index,line in enumerate(lines):
         match=re.match(r'\s*(?:FROM|image:)\s+(\S+)',line)
         if match:
-            if relative.endswith('.yml') and match[1].startswith(('loom-minio-source:', 'loom-node-init-source:', 'loom-node-source:')):
+            image = match[1]
+            if relative.endswith('.yml') and image.startswith('ghcr.io/0800x/loom-'):
+                # First-party images are addressed by the exact verified source
+                # commit selected by the bootstrap, never by a floating tag.
+                assert image in (
+                    'ghcr.io/0800x/loom-node:${LOOM_IMAGE_TAG:?set LOOM_IMAGE_TAG}',
+                    'ghcr.io/0800x/loom-minio:${LOOM_IMAGE_TAG:?set LOOM_IMAGE_TAG}',
+                ), (relative, image)
+                installer = (root/'services/loom_server/scripts/linux/install-production.sh').read_text()
+                assert 'LOOM_IMAGE_TAG=$INSTALL_COMMIT' in installer, relative
+                assert 'set_env_value "$EXISTING_ENV" LOOM_IMAGE_TAG "$INSTALL_COMMIT"' in installer, relative
+            elif relative.endswith('.yml') and image.startswith(('loom-minio-source:', 'loom-node-init-source:', 'loom-node-source:')):
                 assert lines[index+1].strip()=='pull_policy: build', relative
                 block=[]
                 for following in lines[index+1:]:
@@ -29,5 +40,7 @@ for relative in ['services/loom_server/deploy/Dockerfile', 'services/loom_server
                     block.append(following)
                 assert '    build:' in block, relative
             else:
-                assert re.search(r'@sha256:[0-9a-f]{64}$',match[1]), (relative, match[1])
+                assert re.search(r'@sha256:[0-9a-f]{64}
+print('Production security configuration checks passed')
+,image), (relative, image)
 print('Production security configuration checks passed')
