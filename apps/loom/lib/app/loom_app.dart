@@ -504,6 +504,9 @@ class _LoomAppState extends State<LoomApp> with SingleTickerProviderStateMixin {
   /// No controller that opens a local database may run before this completes.
   Future<void> _activateUnlockedSession() async {
     try {
+      // Resolve the selected account's secure-storage namespace before reading
+      // App Lock, ratchet or database-encryption preferences.
+      LoomAccountScope.current = await LoomAccountRegistry.activeScope();
       await LoomExperimentalRatchet.load();
       await LoomDbEncryption.prepareAtStartup();
       if (!mounted ||
