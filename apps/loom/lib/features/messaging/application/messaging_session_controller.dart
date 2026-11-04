@@ -1,4 +1,5 @@
 import 'live_location_projection.dart';
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
@@ -25,6 +26,7 @@ import 'package:loom_storage/loom_storage.dart';
 import 'package:loom_transport/loom_transport.dart';
 import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
+
 import '../../accounts/application/account_workspace.dart';
 
 import '../../connectivity/application/lan_resilience_controller.dart';
@@ -32,30 +34,28 @@ import '../../onboarding/application/onboarding_controller.dart';
 import 'legacy_dtn_mailbox.dart';
 import 'offline_device_directory_cache.dart';
 
-typedef LoomNearbyOpaqueMessageSender =
-    Future<void> Function({
-      required String destinationNodeDomain,
-      required String senderAddress,
-      required List<LoomDeviceKeyBundle> recipientDevices,
-      required String conversationId,
-      required String clientId,
-      required LoomMessageType type,
-      required String ciphertext,
-      required String protocolVersion,
-      String? replyToMessageId,
-      Map<String, Object?> metadata,
-    });
+typedef LoomNearbyOpaqueMessageSender = Future<void> Function({
+  required String destinationNodeDomain,
+  required String senderAddress,
+  required List<LoomDeviceKeyBundle> recipientDevices,
+  required String conversationId,
+  required String clientId,
+  required LoomMessageType type,
+  required String ciphertext,
+  required String protocolVersion,
+  String? replyToMessageId,
+  Map<String, Object?> metadata,
+});
 
-typedef _LoomDtnFallbackCommitter =
-    Future<void> Function({
-      required String conversationId,
-      required String clientId,
-      required LoomMessageType type,
-      required String ciphertext,
-      required String protocolVersion,
-      String? replyToMessageId,
-      Map<String, Object?> metadata,
-    });
+typedef _LoomDtnFallbackCommitter = Future<void> Function({
+  required String conversationId,
+  required String clientId,
+  required LoomMessageType type,
+  required String ciphertext,
+  required String protocolVersion,
+  String? replyToMessageId,
+  Map<String, Object?> metadata,
+});
 
 final class LoomDtnCustodyPending implements Exception {
   const LoomDtnCustodyPending(this.clientId);
@@ -442,9 +442,8 @@ class LoomMessagingSessionController extends ChangeNotifier
         final fold = LoomControlFold<LoomGroupMessage>();
         final displayRows = fold.apply(
           items: rows,
-          prepare: (m) => m.control == null
-              ? null
-              : _classifyGroupControl(m.control!),
+          prepare: (m) =>
+              m.control == null ? null : _classifyGroupControl(m.control!),
           keyOf: (m) => m.operationId,
           senderOf: (m) => m.senderDeviceId,
           timeOf: (m) =>
@@ -684,9 +683,8 @@ class LoomMessagingSessionController extends ChangeNotifier
         _peerPresence[id] = LoomPeerPresence(
           online: value['online'] == true,
           observedAt: DateTime.now().toUtc(),
-          lastSeenAt: DateTime.tryParse(
-            value['lastSeenAt'] as String? ?? '',
-          )?.toUtc(),
+          lastSeenAt: DateTime.tryParse(value['lastSeenAt'] as String? ?? '')
+              ?.toUtc(),
         );
         notifyListeners();
       }
@@ -740,9 +738,8 @@ class LoomMessagingSessionController extends ChangeNotifier
       _refreshConversationPreferences();
       return;
     }
-    final readable = visibleMessagesFor(
-      conversationId,
-    ).where((m) => m.readable);
+    final readable = visibleMessagesFor(conversationId)
+        .where((m) => m.readable);
     _store!.setConversationMarkedUnread(conversationId, false);
     _store!.markMessagesRead(
       conversationId,
@@ -950,8 +947,7 @@ class LoomMessagingSessionController extends ChangeNotifier
         await _refreshLocal();
         status = LoomMessagingSessionStatus.offline;
         connectivity = LoomConnectivityState.nodeUnreachable;
-        errorMessage =
-            'Encrypted messages are available offline. Reconnect the Home Node to refresh this session.';
+        errorMessage = 'Encrypted messages are available offline. Reconnect the Home Node to refresh this session.';
         notifyListeners();
         return;
       }
@@ -1111,12 +1107,11 @@ class LoomMessagingSessionController extends ChangeNotifier
     if (_disposed || _engine == null) {
       return Future<void>.value();
     }
-    return _syncFuture ??= Future<void>.microtask(_synchronize).whenComplete(
-      () {
-        _syncFuture = null;
-        notifyListeners();
-      },
-    );
+    return _syncFuture ??= Future<void>.microtask(_synchronize)
+        .whenComplete(() {
+          _syncFuture = null;
+          notifyListeners();
+        });
   }
 
   Future<void> _synchronize() async {
@@ -1490,8 +1485,7 @@ class LoomMessagingSessionController extends ChangeNotifier
     if (own == null) {
       return false;
     }
-    final current = messageFolds[conversationId]
-        ?[target.record.clientId]
+    final current = messageFolds[conversationId]?[target.record.clientId]
         ?.reactionOf(own)
         ?.emoji;
     return _sendControl(
@@ -1609,8 +1603,7 @@ class LoomMessagingSessionController extends ChangeNotifier
     }
     final now = DateTime.now();
     final last = _lastTypingSent[conversationId];
-    if (last != null &&
-        now.difference(last) < const Duration(seconds: 3)) {
+    if (last != null && now.difference(last) < const Duration(seconds: 3)) {
       return;
     }
     _lastTypingSent[conversationId] = now;
@@ -1858,8 +1851,7 @@ class LoomMessagingSessionController extends ChangeNotifier
           header.senderIdentityId,
           header.senderDeviceId,
         );
-        bundle ??= (await _resolvePeerSecurity(record.senderAddress))
-            .devices
+        bundle ??= (await _resolvePeerSecurity(record.senderAddress)).devices
             .where((device) => device.deviceId == header.senderDeviceId)
             .firstOrNull;
         if (bundle == null) return null;
@@ -1958,9 +1950,8 @@ class LoomMessagingSessionController extends ChangeNotifier
       clear.fillRange(0, clear.length, 0);
       clear = null;
       final temp = await getTemporaryDirectory();
-      final folder = await Directory(
-        '${temp.path}/loom_upload',
-      ).create(recursive: true);
+      final folder = await Directory('${temp.path}/loom_upload')
+          .create(recursive: true);
       final nonce = base64UrlEncode(
         List.generate(24, (_) => Random.secure().nextInt(256)),
       );
@@ -2039,8 +2030,7 @@ class LoomMessagingSessionController extends ChangeNotifier
       );
     } catch (_) {
       if (!_disposed) {
-        errorMessage =
-            'Media could not be sent. Check the 32 MB limit and Home Node version, then retry.';
+        errorMessage = 'Media could not be sent. Check the 32 MB limit and Home Node version, then retry.';
         notifyListeners();
       }
       return false;
@@ -2385,9 +2375,8 @@ class LoomMessagingSessionController extends ChangeNotifier
       if (member.accountId != onboarding.receipt?.accountId) {
         throw StateError('Own MLS account mismatch');
       }
-      return (await _ownDevices(
-        force: true,
-      )).singleWhere((d) => d.deviceId == member.deviceId);
+      return (await _ownDevices(force: true))
+          .singleWhere((d) => d.deviceId == member.deviceId);
     }
     final pin = _peerIdentityStore?.pinForIdentity(member.identityId);
     String? address = pin?.address;
@@ -3064,7 +3053,9 @@ class LoomMessagingSessionController extends ChangeNotifier
     List<String> ephemeralRows,
   ) {
     if (message.record.type != LoomMessageType.system) {
-      return message.readable ? null : const LoomFoldClassification(hidden: true);
+      return message.readable
+          ? null
+          : const LoomFoldClassification(hidden: true);
     }
     if (!message.readable) {
       return const LoomFoldClassification(hidden: true);

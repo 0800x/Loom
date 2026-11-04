@@ -77,9 +77,7 @@ class LoomOnboardingShell extends StatelessWidget {
                             Text(
                               subtitle,
                               style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: context.loom.textSecondary,
-                                  ),
+                                  ?.copyWith(color: context.loom.textSecondary),
                             ),
                             const SizedBox(height: LoomSpacing.md),
                           ],

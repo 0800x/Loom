@@ -36,7 +36,10 @@ abstract final class LoomDbEncryption {
 
       var key = await _secrets.read(key: _databaseKey);
       if (key == null) {
-        final bytes = List<int>.generate(32, (_) => Random.secure().nextInt(256));
+        final bytes = List<int>.generate(
+          32,
+          (_) => Random.secure().nextInt(256),
+        );
         try {
           key = base64UrlEncode(bytes);
           await _secrets.write(key: _databaseKey, value: key);
@@ -129,10 +132,10 @@ abstract final class LoomDbEncryption {
       final escapedKey = ("x'" + keyHex + "'").replaceAll("'", "''");
       plain.execute(
         'ATTACH DATABASE ' +
-        escapedPath +
-        " AS loom_encrypted KEY '" +
-        escapedKey +
-        "'",
+            escapedPath +
+            " AS loom_encrypted KEY '" +
+            escapedKey +
+            "'",
       );
       try {
         plain.select("SELECT sqlcipher_export('loom_encrypted')");

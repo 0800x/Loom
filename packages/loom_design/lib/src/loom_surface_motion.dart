@@ -51,47 +51,47 @@ class LoomContainerTransform extends StatelessWidget {
   final bool curvedStretch;
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
-        animation: animation,
-        child: RepaintBoundary(child: child),
-        builder: (context, child) {
-          final reduced = LoomAccessibility.fromContext(context).reduceMotion;
-          final t = reduced
-              ? 1.0
-              : linear
-                  ? animation.value
-                  : const LoomSpringCurve().transform(animation.value);
-          final rect = Rect.lerp(origin, destination, t)!;
-          final sx = rect.width / destination.width;
-          final sy = rect.height / destination.height;
-          return Positioned.fromRect(
-            rect: destination,
-            child: Transform(
-              alignment: Alignment.topLeft,
-              transform: Matrix4.identity()
-                ..translateByDouble(
-                  rect.left - destination.left,
-                  rect.top - destination.top,
-                  0,
-                  1,
-                )
-                ..scaleByDouble(sx, sy, 1, 1),
-              child: ClipPath(
-                clipper: LoomSurfaceClipper(
-                  progress: t,
-                  curvedStretch: curvedStretch,
-                  radius: Radius.elliptical(
-                    (sourceRadius + (radius - sourceRadius) * t) /
-                        math.max(sx, .001),
-                    (sourceRadius + (radius - sourceRadius) * t) /
-                        math.max(sy, .001),
-                  ),
-                ),
-                child: child,
+    animation: animation,
+    child: RepaintBoundary(child: child),
+    builder: (context, child) {
+      final reduced = LoomAccessibility.fromContext(context).reduceMotion;
+      final t = reduced
+          ? 1.0
+          : linear
+          ? animation.value
+          : const LoomSpringCurve().transform(animation.value);
+      final rect = Rect.lerp(origin, destination, t)!;
+      final sx = rect.width / destination.width;
+      final sy = rect.height / destination.height;
+      return Positioned.fromRect(
+        rect: destination,
+        child: Transform(
+          alignment: Alignment.topLeft,
+          transform: Matrix4.identity()
+            ..translateByDouble(
+              rect.left - destination.left,
+              rect.top - destination.top,
+              0,
+              1,
+            )
+            ..scaleByDouble(sx, sy, 1, 1),
+          child: ClipPath(
+            clipper: LoomSurfaceClipper(
+              progress: t,
+              curvedStretch: curvedStretch,
+              radius: Radius.elliptical(
+                (sourceRadius + (radius - sourceRadius) * t) /
+                    math.max(sx, .001),
+                (sourceRadius + (radius - sourceRadius) * t) /
+                    math.max(sy, .001),
               ),
             ),
-          );
-        },
+            child: child,
+          ),
+        ),
       );
+    },
+  );
 }
 
 /// Keeps the cached child intact while the outline stretches and settles.
@@ -163,8 +163,7 @@ class LoomSurfaceRoute<T> extends PopupRoute<T> {
   @override
   bool get barrierDismissible => true;
   @override
-  Color get barrierColor =>
-      _barrierColor ?? const Color(0x66000000);
+  Color get barrierColor => _barrierColor ?? const Color(0x66000000);
   @override
   Duration get transitionDuration =>
       reducedMotion ? Duration.zero : const Duration(milliseconds: 280);
@@ -249,8 +248,8 @@ class LoomSurfaceRoute<T> extends PopupRoute<T> {
                 width,
                 height,
               );
-        final overlayBox =
-            Navigator.of(context).overlay?.context.findRenderObject();
+        final overlayBox = Navigator.of(context).overlay?.context
+            .findRenderObject();
         final source = origin == null
             ? Rect.fromCenter(
                 center: destination.bottomCenter,
@@ -258,8 +257,8 @@ class LoomSurfaceRoute<T> extends PopupRoute<T> {
                 height: 48,
               )
             : overlayBox is RenderBox
-                ? overlayBox.globalToLocal(origin!.topLeft) & origin!.size
-                : origin!;
+            ? overlayBox.globalToLocal(origin!.topLeft) & origin!.size
+            : origin!;
         return Stack(
           children: [
             ValueListenableBuilder<bool>(
@@ -325,9 +324,7 @@ class LoomSurfaceRoute<T> extends PopupRoute<T> {
                           child: Center(
                             child: DecoratedBox(
                               decoration: BoxDecoration(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
+                                color: Theme.of(context).colorScheme.onSurface
                                     .withValues(alpha: .35),
                                 borderRadius: BorderRadius.circular(4),
                               ),
@@ -369,8 +366,7 @@ Future<T?> showLoomSurface<T>({
     reducedMotion: access.reduceMotion,
     fullscreen: fullscreen,
     backgroundColor: Theme.of(context).colorScheme.surface,
-    barrierColor:
-        palette?.scrim ?? Theme.of(context).colorScheme.scrim,
+    barrierColor: palette?.scrim ?? Theme.of(context).colorScheme.scrim,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     builder: (context) => themes.wrap(builder(context)),
   );

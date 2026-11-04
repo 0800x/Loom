@@ -31,10 +31,11 @@ class _LoomAccountsScreenState extends State<LoomAccountsScreen> {
   Future<void> _load() async {
     try {
       final state = await LoomAccountRegistry.load();
-      if (mounted) setState(() {
-        _state = state;
-        _error = null;
-      });
+      if (mounted)
+        setState(() {
+          _state = state;
+          _error = null;
+        });
     } catch (error) {
       if (mounted) setState(() => _error = error);
     }
@@ -84,44 +85,45 @@ class _LoomAccountsScreenState extends State<LoomAccountsScreen> {
               ),
             )
           : state == null
-              ? const Center(child: CircularProgressIndicator())
-              : state.accounts.isEmpty
-                  ? const Center(
-                      child: Text('Your current account will appear here.'),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-                      itemCount: state.accounts.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final entry = state.accounts[index];
-                        final active = entry.id == state.activeId;
-                        final working = _workingId == entry.id;
-                        return Card(
-                          child: ListTile(
-                            leading: Icon(
-                              active ? Icons.account_circle : Icons.person_outline,
-                            ),
-                            title: Text(entry.label),
-                            subtitle: Text(entry.address ?? (active ? 'Current account' : 'On this device')),
-                            trailing: active
-                                ? const Icon(Icons.check_circle)
-                                : working
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      )
-                                    : TextButton(
-                                        onPressed: _workingId != null || _adding
-                                            ? null
-                                            : () => _switch(entry.id),
-                                        child: const Text('Switch'),
-                                      ),
-                          ),
-                        );
-                      },
+          ? const Center(child: CircularProgressIndicator())
+          : state.accounts.isEmpty
+          ? const Center(child: Text('Your current account will appear here.'))
+          : ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+              itemCount: state.accounts.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final entry = state.accounts[index];
+                final active = entry.id == state.activeId;
+                final working = _workingId == entry.id;
+                return Card(
+                  child: ListTile(
+                    leading: Icon(
+                      active ? Icons.account_circle : Icons.person_outline,
                     ),
+                    title: Text(entry.label),
+                    subtitle: Text(
+                      entry.address ??
+                          (active ? 'Current account' : 'On this device'),
+                    ),
+                    trailing: active
+                        ? const Icon(Icons.check_circle)
+                        : working
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : TextButton(
+                            onPressed: _workingId != null || _adding
+                                ? null
+                                : () => _switch(entry.id),
+                            child: const Text('Switch'),
+                          ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }

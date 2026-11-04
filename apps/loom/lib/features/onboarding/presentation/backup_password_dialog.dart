@@ -65,7 +65,9 @@ Future<LoomBackupExportPasswordChoice?> showLoomBackupExportPasswordDialog(
                   padding: const EdgeInsets.only(top: 12),
                   child: Text(
                     error!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ),
             ],

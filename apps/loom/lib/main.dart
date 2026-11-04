@@ -8,6 +8,7 @@ import 'package:loom_crypto_bridge/loom_crypto_bridge.dart';
 
 import 'package:media_kit/media_kit.dart';
 import 'package:video_player_media_kit/video_player_media_kit.dart';
+
 import 'app/loom_app.dart';
 import 'features/accounts/application/account_registry.dart';
 import 'features/connectivity/application/default_network_generation_monitor.dart';

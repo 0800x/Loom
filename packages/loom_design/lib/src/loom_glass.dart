@@ -25,30 +25,30 @@ class _GlassSheen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Positioned.fill(
-        child: IgnorePointer(
-          child: ExcludeSemantics(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(radius),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  stops: const [0, .32, .62, 1],
-                  colors: [
-                    Colors.white.withAlphaFraction(
-                      dark ? LoomOpacity.sheenDark : LoomOpacity.sheenLight,
-                    ),
-                    Colors.white.withAlphaFraction(0),
-                    Colors.black.withAlphaFraction(0),
-                    Colors.black.withAlphaFraction(LoomOpacity.sheenShadow),
-                  ],
+    child: IgnorePointer(
+      child: ExcludeSemantics(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(radius),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              stops: const [0, .32, .62, 1],
+              colors: [
+                Colors.white.withAlphaFraction(
+                  dark ? LoomOpacity.sheenDark : LoomOpacity.sheenLight,
                 ),
-              ),
-              child: const SizedBox.expand(),
+                Colors.white.withAlphaFraction(0),
+                Colors.black.withAlphaFraction(0),
+                Colors.black.withAlphaFraction(LoomOpacity.sheenShadow),
+              ],
             ),
           ),
+          child: const SizedBox.expand(),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 /// Automatic quality follows raster performance; accessibility wins in surfaces.
@@ -122,10 +122,11 @@ class _GlassScopeState extends State<LoomGlassScope>
 
   @override
   Widget build(BuildContext context) => _AutomaticGlassQuality(
-        quality:
-            widget.quality == LoomGlassQuality.high ? _quality : widget.quality,
-        child: widget.child,
-      );
+    quality: widget.quality == LoomGlassQuality.high
+        ? _quality
+        : widget.quality,
+    child: widget.child,
+  );
 }
 
 class _AutomaticGlassQuality extends InheritedWidget {
@@ -172,8 +173,8 @@ class LoomGlassSurface extends StatelessWidget {
     final alpha = accessibility.highContrast
         ? LoomOpacity.highContrastSurface
         : dark
-            ? recipe.darkAlpha
-            : recipe.lightAlpha;
+        ? recipe.darkAlpha
+        : recipe.lightAlpha;
     final effectiveAlpha = switch (quality) {
       LoomGlassQuality.high => alpha,
       LoomGlassQuality.reduced =>
@@ -186,8 +187,9 @@ class LoomGlassSurface extends StatelessWidget {
         recipe.blur * LoomGlassRecipes.reducedBlurFactor,
       LoomGlassQuality.disabled => 0.0,
     };
-    final surfaceColor =
-        strength == LoomGlassStrength.strong ? p.surfaceElevated : p.surface;
+    final surfaceColor = strength == LoomGlassStrength.strong
+        ? p.surfaceElevated
+        : p.surface;
     final shadowOpacity = switch (strength) {
       LoomGlassStrength.weak => 0.0,
       LoomGlassStrength.standard =>
@@ -232,10 +234,7 @@ class LoomGlassSurface extends StatelessWidget {
       final sigma = quality == LoomGlassQuality.reduced ? 7.0 : 16.0;
       final tint = accessibility.highContrast
           ? LoomOpacity.highContrastSurface
-          : (effectiveAlpha * .72).clamp(
-              LoomGlassRecipes.liveTintFloor,
-              1.0,
-            );
+          : (effectiveAlpha * .72).clamp(LoomGlassRecipes.liveTintFloor, 1.0);
       final edge = dark
           ? LoomOpacity.glassEdgeDark
           : LoomOpacity.glassEdgeLight;
@@ -390,8 +389,8 @@ class LoomTopGlassFade extends StatelessWidget {
         quality == LoomGlassQuality.disabled
             ? 1
             : access.highContrast
-                ? LoomOpacity.highContrastSurface
-                : .58,
+            ? LoomOpacity.highContrastSurface
+            : .58,
       ),
     );
     return IgnorePointer(

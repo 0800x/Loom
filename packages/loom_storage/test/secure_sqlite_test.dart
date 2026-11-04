@@ -11,7 +11,10 @@ void main() {
 
     expect(LoomSqliteEncryption.configured, isFalse);
     expect(LoomSqliteEncryption.requireCipher, isFalse);
-    expect(() => LoomSqliteEncryption.assertOpenable('legacy.sqlite3'), returnsNormally);
+    expect(
+      () => LoomSqliteEncryption.assertOpenable('legacy.sqlite3'),
+      returnsNormally,
+    );
   });
 
   test('configured key requires SQLCipher and a secure key', () {
@@ -22,7 +25,10 @@ void main() {
     expect(LoomSqliteEncryption.configured, isTrue);
     expect(LoomSqliteEncryption.requireCipher, isTrue);
     expect(LoomSqliteEncryption.keyHex, hasLength(64));
-    expect(() => LoomSqliteEncryption.assertOpenable('messages.sqlite3'), returnsNormally);
+    expect(
+      () => LoomSqliteEncryption.assertOpenable('messages.sqlite3'),
+      returnsNormally,
+    );
   });
 
   test('rejects keys that are not exactly 256 bits', () {

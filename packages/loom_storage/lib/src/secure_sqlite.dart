@@ -19,10 +19,7 @@ abstract final class LoomSqliteEncryption {
     _required = false;
   }
 
-  static void configureKey(
-    String encodedKey, {
-    required bool requireCipher,
-  }) {
+  static void configureKey(String encodedKey, {required bool requireCipher}) {
     final normalized = base64Url.normalize(encodedKey);
     final bytes = base64Url.decode(normalized);
     if (bytes.length != 32) {

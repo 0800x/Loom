@@ -5,10 +5,7 @@ import 'package:loom_crypto_bridge/loom_crypto_bridge.dart';
 import '../../messaging/application/messaging_session_controller.dart';
 
 class GlobalSearchScreen extends StatefulWidget {
-  const GlobalSearchScreen({
-    super.key,
-    required this.messaging,
-  });
+  const GlobalSearchScreen({super.key, required this.messaging});
 
   final LoomMessagingSessionController messaging;
 
@@ -35,9 +32,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         : widget.messaging.searchLocalMessages(_value);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Search messages'),
-      ),
+      appBar: AppBar(title: const Text('Search messages')),
       body: Column(
         children: [
           Padding(
@@ -78,13 +73,12 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               child: Text('Search decrypted messages stored on this device.'),
             )
           else if (results.isEmpty)
-            const Expanded(
-              child: Center(child: Text('No matching messages')),
-            )
+            const Expanded(child: Center(child: Text('No matching messages')))
           else
             Expanded(
               child: ListView.separated(
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 itemCount: results.length,
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, index) {
@@ -98,8 +92,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                     ),
                     subtitle: Text(
                       record.senderAddress.toString() +
-                      ' · ' +
-                      record.createdAt.toLocal().toString(),
+                          ' · ' +
+                          record.createdAt.toLocal().toString(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

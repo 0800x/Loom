@@ -2,10 +2,7 @@ import 'message_content.dart';
 
 /// One sender's active reaction on a message.
 class LoomReactionEntry {
-  const LoomReactionEntry({
-    required this.emoji,
-    required this.sender,
-  });
+  const LoomReactionEntry({required this.emoji, required this.sender});
 
   final String emoji;
   final String sender;
@@ -22,10 +19,7 @@ class LoomMessageFold {
   List<LoomReactionEntry> get reactions =>
       List<LoomReactionEntry>.unmodifiable(_reactions.values);
 
-  void toggleReaction({
-    required String emoji,
-    required String sender,
-  }) {
+  void toggleReaction({required String emoji, required String sender}) {
     if (deletedForEveryone) return;
     final key = sender.toLowerCase();
     final current = _reactions[key];
@@ -51,10 +45,7 @@ class LoomMessageFold {
 
 /// Result of classifying one decrypted history row before rendering.
 class LoomFoldClassification<T> {
-  const LoomFoldClassification({
-    this.hidden = false,
-    this.control,
-  });
+  const LoomFoldClassification({this.hidden = false, this.control});
 
   final bool hidden;
   final LoomMessageControl? control;

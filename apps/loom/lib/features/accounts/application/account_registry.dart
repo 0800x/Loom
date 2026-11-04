@@ -145,10 +145,9 @@ abstract final class LoomAccountRegistry {
     if (!state.accounts.any((entry) => entry.id == id)) {
       throw StateError('The selected Loom account does not exist');
     }
-    await _save(LoomAccountRegistryState(
-      accounts: state.accounts,
-      activeId: id,
-    ));
+    await _save(
+      LoomAccountRegistryState(accounts: state.accounts, activeId: id),
+    );
   }
 
   static Future<void> updateEntry(
@@ -158,23 +157,27 @@ abstract final class LoomAccountRegistry {
   }) async {
     final state = await load();
     var found = false;
-    final accounts = state.accounts.map((entry) {
-      if (entry.id != id) return entry;
-      found = true;
-      return LoomAccountEntry(
-        id: entry.id,
-        label: (label == null || label.trim().isEmpty)
-            ? entry.label
-            : label.trim().substring(0, label.trim().length.clamp(1, 80).toInt()),
-        address: address ?? entry.address,
-        legacy: entry.legacy,
-      );
-    }).toList(growable: false);
+    final accounts = state.accounts
+        .map((entry) {
+          if (entry.id != id) return entry;
+          found = true;
+          return LoomAccountEntry(
+            id: entry.id,
+            label: (label == null || label.trim().isEmpty)
+                ? entry.label
+                : label.trim().substring(
+                    0,
+                    label.trim().length.clamp(1, 80).toInt(),
+                  ),
+            address: address ?? entry.address,
+            legacy: entry.legacy,
+          );
+        })
+        .toList(growable: false);
     if (!found) throw StateError('The Loom account does not exist');
-    await _save(LoomAccountRegistryState(
-      accounts: accounts,
-      activeId: state.activeId,
-    ));
+    await _save(
+      LoomAccountRegistryState(accounts: accounts, activeId: state.activeId),
+    );
   }
 
   static Future<void> ensureCurrentRegistered({
@@ -194,10 +197,12 @@ abstract final class LoomAccountRegistry {
       address: address,
       legacy: true,
     );
-    await _save(LoomAccountRegistryState(
-      accounts: <LoomAccountEntry>[...state.accounts, entry],
-      activeId: entry.id,
-    ));
+    await _save(
+      LoomAccountRegistryState(
+        accounts: <LoomAccountEntry>[...state.accounts, entry],
+        activeId: entry.id,
+      ),
+    );
     LoomAccountScope.current = entry.scope;
   }
 
@@ -207,10 +212,12 @@ abstract final class LoomAccountRegistry {
       id: _newId(),
       label: 'Account ' + (state.accounts.length + 1).toString(),
     );
-    await _save(LoomAccountRegistryState(
-      accounts: <LoomAccountEntry>[...state.accounts, entry],
-      activeId: entry.id,
-    ));
+    await _save(
+      LoomAccountRegistryState(
+        accounts: <LoomAccountEntry>[...state.accounts, entry],
+        activeId: entry.id,
+      ),
+    );
     return entry;
   }
 

@@ -1,7 +1,8 @@
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:loom_crypto_bridge/loom_crypto_bridge.dart' show LoomAccountScope;
+import 'package:loom_crypto_bridge/loom_crypto_bridge.dart'
+    show LoomAccountScope;
 
 /// Resolves the durable directory for the currently selected account.
 ///
@@ -19,8 +20,11 @@ abstract final class LoomAccountWorkspace {
     }
 
     final directory = Directory(
-      support.path + Platform.pathSeparator + 'accounts' +
-      Platform.pathSeparator + id,
+      support.path +
+          Platform.pathSeparator +
+          'accounts' +
+          Platform.pathSeparator +
+          id,
     );
     await directory.create(recursive: true);
     return directory;

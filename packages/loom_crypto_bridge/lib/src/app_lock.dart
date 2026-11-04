@@ -37,8 +37,7 @@ class LoomAppLock extends ChangeNotifier {
         !value.startsWith(_prefix)) {
       throw PlatformException(
         code: 'unsupported_vault_format',
-        message:
-            'This protected store uses an incompatible format. Export it with the original application before upgrading.',
+        message: 'This protected store uses an incompatible format. Export it with the original application before upgrading.',
       );
     }
   }
@@ -87,12 +86,12 @@ class LoomAppLock extends ChangeNotifier {
   }
 
   Future<void> initialize() => _initializing ??= _initialize().catchError((
-        Object error,
-        StackTrace stack,
-      ) {
-        _initializing = null;
-        Error.throwWithStackTrace(error, stack);
-      });
+    Object error,
+    StackTrace stack,
+  ) {
+    _initializing = null;
+    Error.throwWithStackTrace(error, stack);
+  });
   Future<void> _initialize() async {
     if (Platform.isAndroid) {
       if (_tracing) {
@@ -147,7 +146,8 @@ class LoomAppLock extends ChangeNotifier {
   Future<bool> _authenticateNative(String method, String title) async {
     bool accepted;
     try {
-      accepted = await _atStage(
+      accepted =
+          await _atStage(
             '${method}_native_start',
             () => _channel.invokeMethod<bool>(method, {'title': title}),
           ) ==
@@ -406,7 +406,7 @@ class LoomAppLock extends ChangeNotifier {
 /// identity, device and session stores use this boundary in the shipping app.
 class LoomSecretStorage {
   LoomSecretStorage([FlutterSecureStorage? storage])
-      : _storage = storage ?? _loomPlatformStorage;
+    : _storage = storage ?? _loomPlatformStorage;
   final FlutterSecureStorage _storage;
   final _lock = LoomAppLock.instance;
 
@@ -425,7 +425,10 @@ class LoomSecretStorage {
       }
       LoomAppLock._requireSupportedEnvelope(value);
       if (value.startsWith(LoomAppLock._prefix)) {
-        final opened = await _lock._open(LoomAccountScope.scopedKey(key), value);
+        final opened = await _lock._open(
+          LoomAccountScope.scopedKey(key),
+          value,
+        );
         if (_lock.locked) {
           throw StateError('Loom is locked');
         }

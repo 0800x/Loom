@@ -1,4 +1,5 @@
 import 'dev_surface_policy.dart';
+
 import 'dart:async';
 
 import 'package:loom_crypto_bridge/loom_crypto_bridge.dart';
@@ -68,13 +69,13 @@ class LoomApp extends StatefulWidget {
   State<LoomApp> createState() => _LoomAppState();
 }
 
-class _LoomAppState extends State<LoomApp>
-    with SingleTickerProviderStateMixin {
+class _LoomAppState extends State<LoomApp> with SingleTickerProviderStateMixin {
   LoomThemeMode mode = LoomThemeMode.dark;
   LoomGlassQuality glassQuality = LoomGlassQuality.high;
   int? accent;
   LoomMotionPreference motion = LoomMotionPreference.system;
   LoomChatDensity chatDensity = LoomChatDensity.comfortable;
+
   /// The persisted language choice: 'en', 'fa', or 'sys' (follow the OS).
   /// New installs follow the system language; Persian users get FA out of
   /// the box instead of hunting through settings.
@@ -217,8 +218,9 @@ class _LoomAppState extends State<LoomApp>
   void _setLocale(Locale value) {
     // Settings may hand back the resolved locale or the 'sys' sentinel.
     _mutateWithThemeTransition(
-      () => localePreference =
-          value.languageCode == _systemLocaleCode ? 'sys' : value.languageCode,
+      () => localePreference = value.languageCode == _systemLocaleCode
+          ? 'sys'
+          : value.languageCode,
     );
     _saveAppearance();
   }
@@ -568,7 +570,9 @@ class _LoomAppState extends State<LoomApp>
         return const Locale('en');
     }
     final system = WidgetsBinding.instance.platformDispatcher.locale;
-    return system.languageCode == 'fa' ? const Locale('fa') : const Locale('en');
+    return system.languageCode == 'fa'
+        ? const Locale('fa')
+        : const Locale('en');
   }
 
   String? get _localeFontFamily =>
@@ -794,9 +798,8 @@ class _LoomAppState extends State<LoomApp>
                               const RecoveryVerificationScreen(),
                           '/ready': (_) => const ReadyScreen(),
                           '/messenger': (_) => const MessengerShell(),
-                          '/search': (_) => GlobalSearchScreen(
-                            messaging: messaging,
-                          ),
+                          '/search': (_) =>
+                              GlobalSearchScreen(messaging: messaging),
                           '/people': (_) => const LoomPeopleScreen(),
                           '/profile': (_) =>
                               const ProfileScreen(preview: false),
