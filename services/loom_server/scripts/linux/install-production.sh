@@ -407,7 +407,7 @@ build_or_install_manager() {
   manager_asset="Loom-$release_version-manager-linux-$goarch"
   manifest_asset="Loom-node-linux-$goarch-build-manifest.json"
   work="$(mktemp -d)"
-  trap 'rm -rf "$work"' RETURN
+  trap 'rm -rf -- "$work"; trap - RETURN' RETURN
   ui_info "Downloading the prebuilt Node Manager for linux/$goarch"
   curl --proto '=https' --tlsv1.2 -fLsS --retry 3 --max-time 90 "https://github.com/0800x/Loom/releases/download/$release_tag/$manager_asset" -o "$work/manager"
   curl --proto '=https' --tlsv1.2 -fLsS --retry 3 --max-time 30 "https://github.com/0800x/Loom/releases/download/$release_tag/$manifest_asset" -o "$work/manifest.json"
