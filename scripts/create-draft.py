@@ -65,3 +65,38 @@ if not is_tag:
     if tags_after != tags_before:
         raise ValueError('Unexpected tag change while creating an unpublished draft')
 print(('Published prerelease: ' if is_tag else 'Draft prepared for owner review: ') + draft['html_url'])
+# Publish the host-side Node Manager separately from the unpublished client preview.
+# Home Node installation consumes this public prerelease by immutable source revision.
+version = release.version()["version"]
+manager_tag = "node-manager-" + version + "-" + revision[:12]
+manager_names = [
+    f"Loom-{version}-manager-linux-amd64",
+    f"Loom-{version}-manager-linux-arm64",
+    "Loom-node-linux-amd64-build-manifest.json",
+    "Loom-node-linux-arm64-build-manifest.json",
+    "node-channel.json",
+]
+manager_assets = [directory / name for name in manager_names]
+missing = [path.name for path in manager_assets if not path.is_file()]
+if missing:
+    raise ValueError("Missing prebuilt Node Manager release assets: " + ", ".join(missing))
+manager_notes = (
+    "Public prebuilt Loom Node Manager binaries for source revision `" + revision + "`.\\n\\n"
+    "The Home Node installer downloads these verified binaries and pulls prebuilt Node and MinIO images from GHCR.\\n"
+    "It does not compile Go or build Docker images on the target server."
+)
+subprocess.run([
+    "gh", "release", "create", manager_tag, *map(str, manager_assets),
+    "--repo", REPOSITORY, "--target", revision, "--prerelease",
+    "--title", "Loom Node Manager " + version + " (" + revision[:12] + ")",
+    "--notes", manager_notes,
+], check=True)
+manager_release = json.loads(gh(
+    "api", "repos/" + REPOSITORY + "/releases/tags/" + manager_tag
+))
+if manager_release["draft"] or not manager_release["prerelease"]:
+    raise ValueError("Node Manager distribution must be a public prerelease")
+published_names = {asset["name"] for asset in manager_release["assets"]}
+if set(manager_names) != published_names:
+    raise ValueError("Node Manager prerelease is missing or has unexpected assets")
+print("Published public Node Manager distribution: " + manager_release["html_url"])
