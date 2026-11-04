@@ -148,6 +148,7 @@ Future<String?> showLoomBackupImportPasswordDialog(
                 obscureText: !visible,
                 autocorrect: false,
                 enableSuggestions: false,
+                onChanged: (_) => setState(() {}),
                 onSubmitted: (_) {
                   if (password.text.isNotEmpty) {
                     Navigator.pop(dialogContext, password.text);
