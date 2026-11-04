@@ -101,7 +101,7 @@ class _LoomAccountsScreenState extends State<LoomAccountsScreen> {
                 return Card(
                   child: ListTile(
                     leading: Icon(
-                      active ? LoomLoomIcons.person_outline_rounded_rounded : LoomIcons.person_outline_rounded,
+                      active ? LoomIcons.person_outline_rounded : LoomIcons.person_outline_rounded,
                     ),
                     title: Text(entry.label),
                     subtitle: Text(
