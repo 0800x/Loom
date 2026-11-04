@@ -829,6 +829,16 @@ class LoomMessagingSessionController extends ChangeNotifier
     errorMessage = null;
     notifyListeners();
     try {
+      // Load the account-scoped local search preference only after the
+      // identity vault is available. If the vault cannot be read, fail closed
+      // and do not create a decrypted search index.
+      _searchEnabled = false;
+      try {
+        _searchEnabled = (await _searchPreferences.load()).enabled;
+      } catch (_) {
+        _searchEnabled = false;
+      }
+
       if (!_cleanedPlaybackCache) {
         _cleanedPlaybackCache = true;
         try {
