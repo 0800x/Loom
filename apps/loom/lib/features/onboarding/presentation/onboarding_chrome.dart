@@ -49,8 +49,11 @@ class LoomOnboardingShell extends StatelessWidget {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final compact = constraints.maxHeight < 680;
+                final scrollWholePage = compact && !keyboardOpen;
                 final content = Column(
-                  mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
+                  mainAxisSize: scrollWholePage
+                      ? MainAxisSize.min
+                      : MainAxisSize.max,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     LoomSetupHeader(
@@ -112,7 +115,7 @@ class LoomOnboardingShell extends StatelessWidget {
                       ),
                       const SizedBox(height: LoomSpacing.sm),
                     ],
-                    if (compact)
+                    if (scrollWholePage)
                       child
                     else
                       Expanded(
@@ -142,7 +145,7 @@ class LoomOnboardingShell extends StatelessWidget {
                   padding: EdgeInsets.all(
                     compact ? LoomSpacing.md : LoomSpacing.lg,
                   ),
-                  child: compact
+                  child: scrollWholePage
                       ? SingleChildScrollView(
                           keyboardDismissBehavior:
                               ScrollViewKeyboardDismissBehavior.onDrag,
