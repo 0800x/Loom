@@ -24,7 +24,7 @@ need typing. Use `--text` for line prompts on a basic terminal. The menus offer 
 
 | Question | Choices |
 | --- | --- |
-| Download sources | `official`, `liara` (Iran mirrors), or `arvan` (Arvan Docker/Ubuntu/Alpine, Liara npm/Debian) |
+| Download sources | `official`, `liara` (Liara Docker Hub and supported host packages), or `arvan` (Arvan Docker Hub/Ubuntu/Alpine and Liara Debian) |
 | HTTPS mode | `public` for a public CA certificate; `local` for an explicitly trusted local certificate |
 | Server address | Your hostname or IPv4 address, without a scheme, port or path |
 | Registration | `approval` to review requests, `open` to allow sign-ups, `closed` to stop new registrations |
