@@ -198,3 +198,33 @@ class LoomOnboardingCta extends StatelessWidget {
     );
   }
 }
+
+
+/// Quiet frame used around QR codes in pairing and recovery screens.
+class LoomOnboardingQrFrame extends StatelessWidget {
+  const LoomOnboardingQrFrame({
+    required this.child,
+    this.padding = const EdgeInsets.all(12),
+    super.key,
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      color: context.loom.surfaceElevated,
+      borderRadius: BorderRadius.circular(LoomRadii.surface),
+      border: Border.all(color: context.loom.borderStrong),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: .08),
+          blurRadius: 20,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    ),
+    child: Padding(padding: padding, child: child),
+  );
+}
