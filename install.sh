@@ -24,8 +24,10 @@ or root is required. Existing data and identity are preserved.
   bash install.sh
   bash install.sh --plan
   bash install.sh --downloads liara
-  bash install.sh --downloads liara --go-mirror runflare
   bash install.sh --downloads arvan
+
+Go module mirrors are not part of the prebuilt Home Node installation. The
+--go-mirror option is reserved for maintainer source-build workflows.
   bash install.sh --tls local --domain 192.0.2.24
   bash install.sh --diagnose
   bash install.sh --yes --domain chat.example.org --turn off --group-calls off
