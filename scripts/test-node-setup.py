@@ -98,7 +98,7 @@ class SetupTests(unittest.TestCase):
                        (b'Video calls  (', b'\x1b[B\n'),
                        (b'Group calls (', b'\x1b[B\n')]
             if cancel:
-                prompts = prompts[:7]
+                prompts = prompts[:6]
             index, deadline = 0, time.monotonic() + 15
             try:
                 while time.monotonic() < deadline:
@@ -224,14 +224,14 @@ install_docker_debian_like ubuntu
             self.assertEqual(result.stdout.splitlines(),['docker.arvancloud.ir/',proxy,'https://package-mirror.liara.ir/repository/npm/'])
             preview=subprocess.run(['bash',str(SETUP),'--plan','--yes','--domain','chat.example.org','--go-mirror',mirror],capture_output=True,text=True)
             self.assertEqual(preview.returncode,0,preview.stderr)
-            self.assertIn(proxy,preview.stdout)
+            self.assertNotIn(proxy,preview.stdout, 'prebuilt Home Node images must not request host-side Go builds')
         result=subprocess.run(['bash',str(SETUP),'--plan','--yes','--domain','chat.example.org','--go-mirror','http://unapproved.example'],capture_output=True)
         self.assertNotEqual(result.returncode,0)
         with tempfile.TemporaryDirectory() as temp:
             env=Path(temp)/'deploy/.env';env.parent.mkdir();env.write_text('LOOM_GO_MIRROR=runflare\nLOOM_PUBLIC_DOMAIN=chat.example.org\n')
             preview=subprocess.run(['bash',str(SETUP),'--plan','--yes','--turn','off','--group-calls','off'],env={**os.environ,'LOOM_NODE_HOME':temp},capture_output=True,text=True)
             self.assertEqual(preview.returncode,0,preview.stderr)
-            self.assertIn('https://mirror-go.runflare.com',preview.stdout)
+            self.assertNotIn('https://mirror-go.runflare.com',preview.stdout, 'Go module mirrors are not used by the pull-only installer')
             self.assertEqual(env.read_text(),'LOOM_GO_MIRROR=runflare\nLOOM_PUBLIC_DOMAIN=chat.example.org\n')
 
     def test_mirror_apt_uses_temporary_signed_sources(self):
