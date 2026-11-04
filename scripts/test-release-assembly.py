@@ -55,7 +55,7 @@ class ReleaseAssembly(unittest.TestCase):
     def test_successful_main_build_is_published_not_left_as_a_draft(self):
         publisher = (release.ROOT / 'scripts/create-draft.py').read_text()
         self.assertIn("'--prerelease'", publisher)
-        self.assertIn("if release_info['draft'] or not release_info['prerelease']:", publisher)
+        self.assertIn("if info['tag_name'] != tag or info['draft'] or not info['prerelease']:", publisher)
         self.assertNotIn("'--draft'", publisher)
         workflow = (release.ROOT / '.github/workflows/loom-alpha.yml').read_text()
         self.assertIn('cancel-in-progress: false', workflow)

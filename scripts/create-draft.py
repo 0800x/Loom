@@ -56,7 +56,7 @@ def verify_release(info, tag, assets):
 
 
 def publish_or_verify(tag, title, assets, notes, extra):
-    releases = api_json('--paginate', 'repos/' + REPOSITORY + '/releases?per_page=100')
+    releases = api_json('repos/' + REPOSITORY + '/releases?per_page=100')
     existing = next((item for item in releases if item['tag_name'] == tag), None)
     if existing is None:
         with tempfile.TemporaryDirectory() as folder:
@@ -66,7 +66,7 @@ def publish_or_verify(tag, title, assets, notes, extra):
                 'gh', 'release', 'create', tag, *map(str, assets), '--repo', REPOSITORY,
                 '--prerelease', '--title', title, '--notes-file', str(note_file), *extra,
             ], check=True)
-        releases = api_json('--paginate', 'repos/' + REPOSITORY + '/releases?per_page=100')
+        releases = api_json('repos/' + REPOSITORY + '/releases?per_page=100')
         existing = next((item for item in releases if item['tag_name'] == tag), None)
         if existing is None:
             raise ValueError('GitHub did not return the newly created release: ' + tag)
