@@ -53,8 +53,8 @@ test('installer refuses mutable revisions and validates an optional archive chec
     assert.notEqual(result.status,0); assert.match(result.stderr,/immutable/);
   }
   const source = readFileSync(script, 'utf8');
-  assert.match(source,/if \\?\\[\\[ -n \\"\\$EXPECTED_SHA256\\" \\]\\]/);
-  assert.match(source,/actual_sha256.*EXPECTED_SHA256/s);
+  assert.ok(source.includes('if [[ -n "$EXPECTED_SHA256" ]]'));
+  assert.ok(source.includes('actual_sha256="${actual%% *}"'));
   const result=spawnSync('/bin/bash',[script],{env:{PATH:'/usr/bin:/bin',LOOM_REF:'a'.repeat(40),LOOM_SOURCE_SHA256:'not-a-sha256'},encoding:'utf8'});
   assert.notEqual(result.status,0);assert.match(result.stderr,/SHA256/);
 });
