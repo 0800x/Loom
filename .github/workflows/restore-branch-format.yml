@@ -30,7 +30,6 @@ jobs:
             apps/loom/lib/features/accounts/application/account_workspace.dart \
             apps/loom/lib/features/accounts/presentation/accounts_screen.dart \
             apps/loom/lib/features/home/presentation/global_search_screen.dart \
-            apps/loom/lib/features/messaging/application/db_encryption.dart \
             apps/loom/lib/features/messaging/application/message_fold.dart \
             apps/loom/lib/features/messaging/application/messaging_session_controller.dart \
             apps/loom/lib/features/messaging/application/search_preferences.dart \
@@ -41,6 +40,7 @@ jobs:
             apps/loom/lib/features/security/application/sqlcipher_loader.dart \
             apps/loom/lib/features/security/presentation/security_screen.dart \
             apps/loom/lib/main.dart \
+            apps/loom/test/message_fold_test.dart \
             packages/loom_crypto_bridge/lib/src/account_scope.dart \
             packages/loom_crypto_bridge/lib/src/app_lock.dart \
             packages/loom_crypto_bridge/test/account_scope_test.dart \
