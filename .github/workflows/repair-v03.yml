@@ -43,9 +43,40 @@ jobs:
       - name: Resolve the patched OpenMLS provider and build native libraries for Flutter tests
         run: |
           cargo update --manifest-path native/loom_mls/Cargo.toml
-          cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i crypto-bigint@0.5.5 || true
-          cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i crypto-bigint@0.7.10 || true
-          cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i ctutils@0.4.8 || true
+
+          # The affected release lines must not appear anywhere in the resolved
+          # lockfile. Do not suppress cargo-audit findings or allow a partial fix.
+          python - <<'PY'
+          import tomllib
+          from pathlib import Path
+
+          lock = tomllib.loads(Path("native/loom_mls/Cargo.lock").read_text())
+          packages = lock["package"]
+          versions = {}
+          for package in packages:
+              versions.setdefault(package["name"], []).append(package["version"])
+
+          def at_least(version, minimum):
+              return tuple(map(int, version.split("."))) >= tuple(map(int, minimum.split(".")))
+
+          for name, minimum in (("crypto-bigint", "0.7.6"), ("ctutils", "0.4.4")):
+              found = versions.get(name, [])
+              assert found, f"{name} is absent from Cargo.lock"
+              vulnerable = [version for version in found if not at_least(version, minimum)]
+              assert not vulnerable, f"{name} still has vulnerable versions: {vulnerable}"
+              print(f"{name}: {', '.join(found)}")
+          PY
+
+          if cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i crypto-bigint@0.5.5; then
+            echo "::error::Vulnerable crypto-bigint 0.5.5 is still in the resolved graph."
+            exit 1
+          fi
+          if cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i ctutils@0.4.3; then
+            echo "::error::Vulnerable ctutils 0.4.3 is still in the resolved graph."
+            exit 1
+          fi
+          cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i crypto-bigint
+          cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i ctutils
           cargo build --locked --manifest-path native/loom_mls/Cargo.toml
           cargo build --locked --manifest-path native/loom_vodozemac_poc/Cargo.toml
 
