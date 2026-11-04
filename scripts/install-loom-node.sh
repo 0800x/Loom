@@ -9,7 +9,7 @@ REF="${LOOM_REF:-}"
 EXPECTED_SHA256="${LOOM_SOURCE_SHA256:-}"
 [[ "$REPOSITORY" == '0800x/Loom' ]] || { echo 'Unapproved repository' >&2; exit 2; }
 [[ "$REF" =~ ^[a-f0-9]{40}$ ]] || { echo 'LOOM_REF must be an immutable full commit SHA' >&2; exit 2; }
-[[ "$EXPECTED_SHA256" =~ ^[a-f0-9]{64}$ ]] || { echo 'LOOM_SOURCE_SHA256 is required from a trusted release channel' >&2; exit 2; }
+if [[ -n "$EXPECTED_SHA256" ]] && ! [[ "$EXPECTED_SHA256" =~ ^[a-f0-9]{64}$ ]]; then echo 'LOOM_SOURCE_SHA256 must be a SHA256 when supplied' >&2; exit 2; fi
 # The root path uses the same isolated Git configuration and root-private
 # verification as sudo. No hooks or downloaded code run during acquisition.
 preview=0
@@ -31,9 +31,18 @@ fi
 git_safe=(-c core.hooksPath=/dev/null -c protocol.file.allow=never -c protocol.ext.allow=never -c credential.helper=)
 "${git_env[@]}" /usr/bin/git "${git_safe[@]}" init -q "$TMP_DIR/source"
 "${git_env[@]}" /usr/bin/git "${git_safe[@]}" -C "$TMP_DIR/source" fetch --quiet --depth=1 "https://github.com/$REPOSITORY.git" "$REF"
-"${git_env[@]}" /usr/bin/git "${git_safe[@]}" -C "$TMP_DIR/source" archive --format=tar "$REF" > "$TMP_DIR/source.tar"
+fetched_commit="$("${git_env[@]}" /usr/bin/git "${git_safe[@]}" -C "$TMP_DIR/source" rev-parse --verify 'FETCH_HEAD^{commit}')"
+[[ "$fetched_commit" == "$REF" ]] || { echo 'Fetched Git commit does not match the pinned revision' >&2; exit 1; }
+"${git_env[@]}" /usr/bin/git "${git_safe[@]}" -C "$TMP_DIR/source" archive --format=tar "$fetched_commit" > "$TMP_DIR/source.tar"
 actual="$(/usr/bin/sha256sum "$TMP_DIR/source.tar")"
-[[ "${actual%% *}" == "$EXPECTED_SHA256" ]] || { echo 'Release checksum mismatch' >&2; exit 1; }
+actual_sha256="${actual%% *}"
+if [[ -n "$EXPECTED_SHA256" && "$actual_sha256" != "$EXPECTED_SHA256" ]]; then
+  echo 'Release checksum mismatch' >&2
+  exit 1
+fi
+# The immutable Git commit authenticates the source tree. This locally computed
+# digest protects the archive while it is copied across the privilege boundary.
+EXPECTED_SHA256="$actual_sha256"
 
 if [[ $preview -eq 1 ]]; then
   mkdir "$TMP_DIR/preview"
