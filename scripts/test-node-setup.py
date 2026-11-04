@@ -69,6 +69,16 @@ class SetupTests(unittest.TestCase):
         self.assertIn('set_env_value "$EXISTING_ENV" LOOM_BUILD_COMMIT "$PREBUILT_RELEASE_COMMIT"', installer)
         self.assertIn('Using verified prebuilt Node/MinIO images for commit $PREBUILT_RELEASE_COMMIT', installer)
         self.assertNotIn('LOOM_IMAGE_TAG=$INSTALL_COMMIT', installer)
+    def test_easy_stop_and_start_cover_the_complete_stack_without_deleting_data(self):
+        cli = SETUP.with_name('loom-cli.sh').read_text()
+        self.assertIn('start|stop)', cli)
+        self.assertIn('docker-compose.$overlay.yml', cli)
+        self.assertIn('compose+=(--profile caddy)', cli)
+        self.assertIn('"${compose[@]}" stop', cli)
+        self.assertIn('"${compose[@]}" up -d --wait --wait-timeout 180', cli)
+        self.assertIn('loom_require_install_owner "$LOOM_NODE_HOME"', cli)
+        self.assertNotIn('down -v', cli)
+        self.assertNotIn('volume rm', cli)
     def test_interactive_questions_and_invalid_answer_retry(self):
         pid, fd = pty.fork()
         if pid == 0:

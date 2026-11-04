@@ -395,50 +395,9 @@ Caddy, and refuses to take over unrelated listeners. For advanced source
 approval, Windows and offline preparation, see the
 [deployment reference](services/loom_server/deploy/README.md).
 
-### Easy Mode (local development)
-
-Easy Mode runs the Node directly on the host with Node.js, SQLite and filesystem
-attachments. It is intended for local development and single-machine testing,
-not as the public Home Node deployment.
-
-**Requirements:** Node.js 22.16 or newer and npm.
-
-From the repository root, run:
-
-```bash
-cd services/loom_server
-npm ci
-LOOM_MODE=easy npm start
-```
-
-On Windows PowerShell, use:
-
-```powershell
-Set-Location services/loom_server
-npm ci
-$env:LOOM_MODE = "easy"
-npm start
-```
-
-By default, Easy Mode listens only on `127.0.0.1:7483`. Check that it is ready:
-
-```bash
-curl --fail http://127.0.0.1:7483/readyz
-```
-
-**Stop:** press **Ctrl+C** in the terminal running Loom. The process handles the
-shutdown signal and closes cleanly. Starting it again reuses the existing data;
-stopping does not remove anything.
-
-SQLite data, the Node identity, generated configuration and attachments are kept
-under `services/loom_server/data/` by default. The generated
-`data/loom-node.json` contains a private admin token: keep this directory
-private and include it in your backups. Do not delete it to stop or restart Loom.
-
-The default HTTP endpoint is loopback-only. Do not expose port 7483 to the
-Internet or use cleartext HTTP from another LAN device. LAN access requires
-authenticated HTTPS. For a public Home Node, use the production installer
-above instead.
+**Easy Mode** uses host Node.js, SQLite and filesystem attachments for local
+development. Public Home Nodes use the installation above; client connections
+need trusted HTTPS.
 
 ### Operate with Node Manager
 
@@ -446,6 +405,18 @@ Run `loom` after installation (`loom-node` is also an alias). Navigate with arro
 keys, use **Tab** to switch between the sidebar, table and actions, and **Enter**
 to select. **?** opens help; **r** refreshes; **q** exits. Destructive actions ask
 for confirmation.
+
+### Easy Stop
+
+For a planned stop, run `loom stop`. This stops the running Loom Compose stack,
+including the configured Caddy, TURN and group-call services. It does **not**
+remove containers, Docker volumes, PostgreSQL data, MinIO attachments, Node
+identity, `.env` secrets or TLS state. The command verifies the installation
+ownership and uses the Compose overlays belonging to this Home Node.
+
+Run `loom start` to bring the same stack back up. Both commands request
+privileges through `sudo` when needed. Pressing `q` in Node Manager only exits
+the terminal interface; it does not stop the Home Node.
 
 | Page | What to do |
 | --- | --- |
@@ -455,6 +426,7 @@ for confirmation.
 | Calls | Configure TURN, voice/video and optional group-call media |
 | Groups / Public page | Inspect groups and manage the public connection page |
 | Network & TLS / Logs | Diagnose DNS, certificates, connectivity and service errors |
+| Maintenance | Use `loom stop` / `loom start` for a safe planned shutdown and resume |
 | Backup / Updates | Review backup operations and install an approved source update |
 
 Use `loom setup` to change the wizard choices later.

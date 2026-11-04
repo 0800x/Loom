@@ -13,11 +13,15 @@ Usage:
   loom manager [args]   Open the Node Manager explicitly
   loom doctor           Diagnose startup without modifying services
   loom setup [options]  Open the guided Node setup wizard
+  loom stop             Stop the Home Node without removing data or volumes
+  loom start            Start the Home Node again
   loom uninstall [...]  Uninstall Loom Node
   loom help             Show this help
 
 Examples:
   loom
+  loom stop
+  loom start
   loom setup
   loom uninstall
   loom uninstall --purge-data
@@ -48,6 +52,42 @@ case "$command_name" in
       exec /usr/bin/sudo /usr/bin/env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/root /bin/bash /opt/loom-node/scripts/linux/diagnose-node.sh "$@"
     fi
     exec /bin/bash /opt/loom-node/scripts/linux/diagnose-node.sh "$@"
+    ;;
+  start|stop)
+    [[ $# -eq 1 ]] || { usage; exit 2; }
+    if [[ $EUID -ne 0 ]]; then
+      exec /usr/bin/sudo /usr/bin/env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/root TERM="${TERM:-xterm}" /bin/bash --noprofile --norc /opt/loom-node/scripts/linux/loom-cli.sh "$command_name"
+    fi
+    loom_require_install_path "$LOOM_NODE_HOME"
+    loom_require_root_owned "$LOOM_NODE_HOME/scripts/linux/install-safety.sh" || { echo 'Unsafe installation safety helper.' >&2; exit 1; }
+    source "$LOOM_NODE_HOME/scripts/linux/install-safety.sh"
+    loom_require_install_owner "$LOOM_NODE_HOME" || { echo 'Loom installation ownership check failed.' >&2; exit 1; }
+    deploy_dir="$LOOM_NODE_HOME/deploy"
+    env_file="$deploy_dir/.env"
+    compose_file="$deploy_dir/docker-compose.production.yml"
+    loom_require_root_owned "$env_file" && loom_require_root_owned "$compose_file" || { echo 'Loom configuration is missing or unsafe.' >&2; exit 1; }
+    compose=(docker compose --project-directory "$deploy_dir" --env-file "$env_file" -f "$compose_file")
+    for overlay in storage-legacy turn group-calls; do
+      overlay_file="$deploy_dir/docker-compose.$overlay.yml"
+      if [[ -e "$overlay_file" ]]; then
+        loom_require_root_owned "$overlay_file" || { echo "Unsafe Compose overlay: $overlay_file" >&2; exit 1; }
+        compose+=(-f "$overlay_file")
+      fi
+    done
+    proxy_mode="$(awk -F= '$1 == "LOOM_PROXY_MODE" { sub(/^[^=]*=/, ""); print; exit }' "$env_file")"
+    if [[ "$proxy_mode" == caddy ]]; then compose+=(--profile caddy); fi
+    command -v docker >/dev/null 2>&1 || { echo 'Docker is not installed.' >&2; exit 1; }
+    docker info >/dev/null
+    docker compose version >/dev/null
+    if [[ "$command_name" == stop ]]; then
+      printf 'Stopping Loom services. Persistent volumes and configuration will be kept.\\n'
+      "${compose[@]}" stop
+      printf 'Loom services stopped. Run "loom start" to bring them back.\\n'
+    else
+      printf 'Starting Loom services...\\n'
+      "${compose[@]}" up -d --wait --wait-timeout 180
+      printf 'Loom services are running.\\n'
+    fi
     ;;
   setup|configure)
     [[ $# -gt 0 ]] && shift || true
