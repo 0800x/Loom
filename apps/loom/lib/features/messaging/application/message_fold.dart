@@ -19,11 +19,14 @@ class LoomMessageFold {
   List<LoomReactionEntry> get reactions =>
       List<LoomReactionEntry>.unmodifiable(_reactions.values);
 
+  LoomReactionEntry? reactionOf(String sender) =>
+      _reactions[sender.toLowerCase()];
+
   void toggleReaction({required String emoji, required String sender}) {
     if (deletedForEveryone) return;
     final key = sender.toLowerCase();
     final current = _reactions[key];
-    if (current?.emoji == emoji) {
+    if (emoji.isEmpty || current?.emoji == emoji) {
       _reactions.remove(key);
     } else {
       _reactions[key] = LoomReactionEntry(emoji: emoji, sender: sender);
