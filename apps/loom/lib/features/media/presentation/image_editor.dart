@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
+import 'package:loom_design/loom_design.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// Opens Loom's local image editor and returns a new edited file on Save.
@@ -110,7 +111,7 @@ class _LoomImageEditorState extends State<_LoomImageEditor> {
         leading: IconButton(
           tooltip: 'Cancel editing',
           onPressed: _saving ? null : () => Navigator.maybePop(context),
-          icon: const Icon(Icons.close),
+          icon: const Icon(LoomIcons.close),
         ),
         actions: [
           TextButton.icon(
@@ -120,7 +121,7 @@ class _LoomImageEditorState extends State<_LoomImageEditor> {
                     dimension: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.check),
+                : const Icon(LoomIcons.check),
             label: const Text('Save'),
           ),
         ],
@@ -165,13 +166,13 @@ class _LoomImageEditorState extends State<_LoomImageEditor> {
                 children: [
                   OutlinedButton.icon(
                     onPressed: image == null || _saving ? null : _rotate,
-                    icon: const Icon(Icons.rotate_right),
+                    icon: const Icon(LoomIcons.rotate_right_rounded),
                     label: const Text('Rotate'),
                   ),
                   const SizedBox(width: 12),
                   OutlinedButton.icon(
                     onPressed: image == null || _saving ? null : _flip,
-                    icon: const Icon(Icons.flip),
+                    icon: const Icon(LoomIcons.flip_rounded),
                     label: const Text('Flip'),
                   ),
                 ],
