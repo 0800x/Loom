@@ -117,14 +117,17 @@ class LoomControlFold<T> {
       switch (control.op) {
         case LoomMessageControlOp.react:
           fold.toggleReaction(emoji: control.emoji, sender: sender);
+          break;
         case LoomMessageControlOp.edit:
           if (sender.toLowerCase() == originalSender.toLowerCase()) {
             fold.applyEdit(control.text);
           }
+          break;
         case LoomMessageControlOp.delete:
           if (sender.toLowerCase() == originalSender.toLowerCase()) {
             fold.deleteForEveryone();
           }
+          break;
         case LoomMessageControlOp.typing:
           // Typing frames are handled before target lookup.
           break;
