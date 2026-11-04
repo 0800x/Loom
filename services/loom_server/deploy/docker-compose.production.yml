@@ -21,15 +21,8 @@ services:
   minio:
     labels:
       org.loom.installation: /opt/loom-node
-    image: loom-minio-source:7aac2a2c5b7c
-    pull_policy: build
-    build:
-      context: ..
-      dockerfile: deploy/Dockerfile.storage
-      args:
-        LOOM_DOCKER_PREFIX: ${LOOM_DOCKER_PREFIX:-}
-        LOOM_GO_PROXY: ${LOOM_GO_PROXY:-https://proxy.golang.org,direct}
-        LOOM_ALPINE_MIRROR: ${LOOM_ALPINE_MIRROR:-}
+    image: ghcr.io/0800x/loom-minio:${LOOM_IMAGE_TAG:?set LOOM_IMAGE_TAG}
+    pull_policy: always
     command: server /data --console-address ":9001"
     restart: unless-stopped
     environment:
@@ -41,16 +34,8 @@ services:
   minio-init:
     labels:
       org.loom.installation: /opt/loom-node
-    # Independent exporters must never publish to the same image tag.
-    image: loom-node-init-source:${LOOM_BUILD_COMMIT:-engineering}
-    pull_policy: build
-    build:
-      context: ..
-      dockerfile: deploy/Dockerfile
-      args:
-        LOOM_BUILD_COMMIT: ${LOOM_BUILD_COMMIT:-unknown}
-        LOOM_DOCKER_PREFIX: ${LOOM_DOCKER_PREFIX:-}
-        LOOM_NPM_REGISTRY: ${LOOM_NPM_REGISTRY:-https://registry.npmjs.org/}
+    image: ghcr.io/0800x/loom-node:${LOOM_IMAGE_TAG:?set LOOM_IMAGE_TAG}
+    pull_policy: always
     restart: "no"
     depends_on:
       - minio
@@ -64,17 +49,10 @@ services:
     entrypoint: ["node", "--experimental-strip-types", "src/attachments/initialize_bucket.ts"]
 
   loom-node:
-    image: loom-node-source:${LOOM_BUILD_COMMIT:-engineering}
-    pull_policy: build
+    image: ghcr.io/0800x/loom-node:${LOOM_IMAGE_TAG:?set LOOM_IMAGE_TAG}
+    pull_policy: always
     labels:
       org.loom.installation: /opt/loom-node
-    build:
-      context: ..
-      dockerfile: deploy/Dockerfile
-      args:
-        LOOM_BUILD_COMMIT: ${LOOM_BUILD_COMMIT:-unknown}
-        LOOM_DOCKER_PREFIX: ${LOOM_DOCKER_PREFIX:-}
-        LOOM_NPM_REGISTRY: ${LOOM_NPM_REGISTRY:-https://registry.npmjs.org/}
     restart: unless-stopped
     env_file: .env
     depends_on:

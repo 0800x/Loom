@@ -19,7 +19,7 @@ class ReleaseSafety(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'only in 0800x/Loom'): release.preflight()
 
     def test_exact_tag_requires_revision_approval(self):
-        with patch.dict(os.environ, {'GITHUB_REF_TYPE': 'tag', 'GITHUB_REPOSITORY': '0800x/Loom', 'GITHUB_REF_NAME': 'v0.1.0-alpha.1'}, clear=True):
+        with patch.dict(os.environ, {'GITHUB_REF_TYPE': 'tag', 'GITHUB_REPOSITORY': '0800x/Loom', 'GITHUB_REF_NAME': 'v0.2.0-alpha.1'}, clear=True):
             with self.assertRaisesRegex(ValueError, 'explicit approval'): release.preflight()
 
     def test_audit_accepts_feature_home_imports(self):

@@ -28,7 +28,10 @@ ENV LOOM_CONFIG=/tmp/loom-node.json
 VOLUME ["/app/data"]
 EXPOSE 7483
 ARG LOOM_BUILD_COMMIT=unknown
-LABEL org.opencontainers.image.revision=$LOOM_BUILD_COMMIT
+ARG LOOM_RELEASE_VERSION=unknown
+LABEL org.opencontainers.image.source=https://github.com/0800x/Loom \
+      org.opencontainers.image.revision=$LOOM_BUILD_COMMIT \
+      org.opencontainers.image.version=$LOOM_RELEASE_VERSION
 RUN printf '%s\n' "$LOOM_BUILD_COMMIT" > /app/.loom-build-commit
 USER node
 CMD ["node", "--experimental-strip-types", "src/index.ts"]

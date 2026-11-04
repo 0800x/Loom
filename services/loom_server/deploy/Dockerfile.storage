@@ -1,4 +1,5 @@
 ARG LOOM_DOCKER_PREFIX=
+ARG LOOM_DOCKER_PREFIX=
 FROM ${LOOM_DOCKER_PREFIX}golang:1.25.14-alpine3.23@sha256:27b3069b25647beacd3745b0b2c83e2f9b8d3935455a32cd4531236ee1c960e0 AS build
 ARG LOOM_GO_PROXY=https://proxy.golang.org,direct
 ARG LOOM_ALPINE_MIRROR=
@@ -38,6 +39,8 @@ RUN --mount=type=cache,id=loom-minio-gomod,target=/go/pkg/mod,sharing=locked \
     -o /out/minio .
 
 FROM ${LOOM_DOCKER_PREFIX}alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8
+ARG LOOM_BUILD_COMMIT=unknown
+ARG LOOM_RELEASE_VERSION=unknown
 ARG LOOM_ALPINE_MIRROR=
 RUN if [ -n "$LOOM_ALPINE_MIRROR" ]; then \
       v=$(cut -d. -f1,2 /etc/alpine-release); \
