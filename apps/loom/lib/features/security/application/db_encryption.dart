@@ -7,6 +7,7 @@ import 'package:loom_storage/loom_storage.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 import '../../accounts/application/account_workspace.dart';
+import 'sqlcipher_loader.dart';
 
 /// One-way opt-in SQLCipher protection for the local messaging database.
 ///
@@ -58,12 +59,13 @@ abstract final class LoomDbEncryption {
   /// Loads the active account key and migrates its messaging database before
   /// any messaging/call controller opens a database connection.
   static Future<void> prepareAtStartup() async {
+    // Never let a previous account's process-global SQLCipher key leak into
+    // the next account when preferences or secure storage reads fail.
+    LoomSqliteEncryption.disable();
     final enabled = await preferenceEnabled();
-    if (!enabled) {
-      LoomSqliteEncryption.disable();
-      return;
-    }
+    if (!enabled) return;
 
+    await LoomSqlCipherLoader.prepare();
     final encodedKey = await _secrets.read(key: _databaseKey);
     if (encodedKey == null) {
       throw StateError(
