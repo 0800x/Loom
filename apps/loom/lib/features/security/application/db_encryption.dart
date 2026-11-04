@@ -133,11 +133,7 @@ abstract final class LoomDbEncryption {
       final escapedPath = LoomSqliteEncryption.quoteLiteral(temporaryPath);
       final escapedKey = ("x'" + keyHex + "'").replaceAll("'", "''");
       plain.execute(
-        'ATTACH DATABASE ' +
-            escapedPath +
-            " AS loom_encrypted KEY '" +
-            escapedKey +
-            "'",
+        'ATTACH DATABASE $escapedPath AS loom_encrypted KEY \'$escapedKey\'',
       );
       try {
         plain.select("SELECT sqlcipher_export('loom_encrypted')");
