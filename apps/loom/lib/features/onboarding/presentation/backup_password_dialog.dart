@@ -162,7 +162,7 @@ Future<String?> showLoomBackupImportPasswordDialog(
                     tooltip: visible ? 'Hide password' : 'Show password',
                     onPressed: () => setState(() => visible = !visible),
                     icon: Icon(
-                      visible ? LoomLoomIcons.visibility_rounded_off_rounded : LoomIcons.visibility_rounded,
+                      visible ? LoomIcons.visibility_off_rounded : LoomIcons.visibility_rounded,
                     ),
                   ),
                 ),
