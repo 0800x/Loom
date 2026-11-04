@@ -1,0 +1,87 @@
+name: Publish saved Loom build
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Completed Loom release-build run whose verified artifacts should be published
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: loom-saved-build-publisher
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == '0800x/Loom' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: loom-alpha-publishing
+    steps:
+      - name: Resolve and validate the source build
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_RUN_ID" =~ ^[0-9]+$ ]] || { echo "Invalid Actions run ID" >&2; exit 1; }
+          run_json="$(gh api "repos/0800x/Loom/actions/runs/$SOURCE_RUN_ID")"
+          [[ "$(jq -r '.workflow_id' <<< "$run_json")" == "385961443" ]] || { echo "This is not a Loom release-build run" >&2; exit 1; }
+          [[ "$(jq -r '.head_branch' <<< "$run_json")" == "main" ]] || { echo "Source build was not created from main" >&2; exit 1; }
+          [[ "$(jq -r '.event' <<< "$run_json")" == "push" ]] || { echo "Expected a main push build" >&2; exit 1; }
+          [[ "$(jq -r '.status' <<< "$run_json")" == "completed" ]] || { echo "Source build is not complete" >&2; exit 1; }
+          bad_jobs="$(gh api "repos/0800x/Loom/actions/runs/$SOURCE_RUN_ID/jobs?per_page=100" --jq '[.jobs[] | select(.name != "draft") | select(.conclusion != "success") | .name] | join(", ")')"
+          [[ -z "$bad_jobs" ]] || { echo "Build jobs did not all succeed: $bad_jobs" >&2; exit 1; }
+          revision="$(jq -r '.head_sha' <<< "$run_json")"
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid source revision" >&2; exit 1; }
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+          echo "Reusing verified artifacts from run $SOURCE_RUN_ID at $revision"
+
+      - name: Checkout the exact built source
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.source.outputs.revision }}
+          path: source
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout the current publisher
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          path: publisher
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download the original build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: Loom-0.3.0-alpha.1-*
+          path: source/candidate
+          merge-multiple: false
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.source_run_id }}
+
+      - name: Verify the original candidate
+        working-directory: source
+        run: python scripts/verify-candidate.py candidate --engineering
+
+      - name: Reassemble the release without rebuilding
+        working-directory: source
+        run: |
+          python scripts/assemble-release.py candidate release-assets
+          python scripts/create-bootstrap.py release-assets
+
+      - name: Publish the saved build
+        working-directory: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LOOM_BUILD_REVISION: ${{ steps.source.outputs.revision }}
+        run: python ../publisher/scripts/create-draft.py release-assets
