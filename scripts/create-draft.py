@@ -1,4 +1,4 @@
-"""Publish approved version tags; keep branch previews as drafts."""
+"""Publish version tags and successful main builds as public prereleases."""
 import json
 import os
 from pathlib import Path
@@ -40,7 +40,7 @@ else:
 existing = gh('api', '--paginate', 'repos/' + REPOSITORY + '/releases?per_page=100', '--jq', '.[].tag_name')
 if tag in existing.splitlines():
     raise ValueError('A release or draft already exists; refusing replacement')
-tags_before = gh('api', 'repos/' + REPOSITORY + '/git/matching-refs/tags/', '--jq', '.[].ref')
+tags_before = set(gh('api', '--paginate', 'repos/' + REPOSITORY + '/git/matching-refs/tags/', '--jq', '.[].ref').splitlines())
 notes = (release.ROOT / 'release/DRAFT.md').read_text()
 if not is_tag:
     notes = ('Alpha preview for revision `' + revision + '`.\n\n'
@@ -54,19 +54,19 @@ with tempfile.TemporaryDirectory() as folder:
     if not assets:
         raise ValueError('No release assets')
     subprocess.run(['gh', 'release', 'create', tag, *assets, '--repo', REPOSITORY,
-                    *(['--draft'] if not is_tag else []), '--prerelease', '--title', title,
+                    '--prerelease', '--title', title,
                     '--notes-file', str(note_file), *extra], check=True)
-draft = json.loads(gh('api', '--paginate', 'repos/' + REPOSITORY + '/releases?per_page=100',
-                     '--jq', '.[] | select(.tag_name == "' + tag + '")'))
-if draft['draft'] != (not is_tag) or not draft['prerelease']:
-    raise ValueError('Release state does not match the approved trigger')
+release_info = json.loads(gh('api', '--paginate', 'repos/' + REPOSITORY + '/releases?per_page=100',
+                             '--jq', '.[] | select(.tag_name == "' + tag + '")'))
+if release_info['draft'] or not release_info['prerelease']:
+    raise ValueError('Build release must be a published prerelease')
 if not is_tag:
-    tags_after = gh('api', 'repos/' + REPOSITORY + '/git/matching-refs/tags/', '--jq', '.[].ref')
-    if tags_after != tags_before:
-        raise ValueError('Unexpected tag change while creating an unpublished draft')
-print(('Published prerelease: ' if is_tag else 'Draft prepared for owner review: ') + draft['html_url'])
-# Publish the host-side Node Manager separately from the unpublished client preview.
-# Home Node installation consumes this public prerelease by immutable source revision.
+    tags_after_primary = set(gh('api', '--paginate', 'repos/' + REPOSITORY + '/git/matching-refs/tags/', '--jq', '.[].ref').splitlines())
+    if tags_after_primary - tags_before != {'refs/tags/' + tag}:
+        raise ValueError('Unexpected Git tag change while publishing the main-build prerelease')
+print('Published build prerelease: ' + release_info['html_url'])
+# Publish the host-side Node Manager separately so Home Node can fetch only
+# the minimal verified Linux binaries and channel metadata by immutable revision.
 version = release.version()["version"]
 manager_tag = "node-manager-" + version + "-" + revision[:12]
 manager_names = [
@@ -100,3 +100,9 @@ published_names = {asset["name"] for asset in manager_release["assets"]}
 if set(manager_names) != published_names:
     raise ValueError("Node Manager prerelease is missing or has unexpected assets")
 print("Published public Node Manager distribution: " + manager_release["html_url"])
+manager_tags_after = set(gh("api", "--paginate", "repos/" + REPOSITORY + "/git/matching-refs/tags/", "--jq", ".[].ref").splitlines())
+expected_added = {"refs/tags/" + manager_tag}
+if not is_tag:
+    expected_added.add("refs/tags/" + tag)
+if manager_tags_after - tags_before != expected_added:
+    raise ValueError("Unexpected Git tag changes during release publication")

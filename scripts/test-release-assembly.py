@@ -52,6 +52,14 @@ class ReleaseAssembly(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'checksum mismatch'):
                     runpy.run_path(str(release.ROOT / 'scripts/assemble-release.py'))
 
+    def test_successful_main_build_is_published_not_left_as_a_draft(self):
+        publisher = (release.ROOT / 'scripts/create-draft.py').read_text()
+        self.assertIn("'--prerelease'", publisher)
+        self.assertIn("if release_info['draft'] or not release_info['prerelease']:", publisher)
+        self.assertNotIn("'--draft'", publisher)
+        workflow = (release.ROOT / '.github/workflows/loom-alpha.yml').read_text()
+        self.assertIn('cancel-in-progress: false', workflow)
+
     def test_draft_refuses_another_repository_before_any_api_call(self):
         with patch.dict(os.environ, {'GITHUB_REPOSITORY': 'example/fork'}, clear=True):
             with patch('subprocess.check_output', side_effect=AssertionError('Unexpected API call')):
