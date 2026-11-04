@@ -1,8 +1,8 @@
 import 'dart:convert';
-import '../../accounts/application/account_workspace.dart';
 import 'dart:io';
 
 import 'package:cryptography/cryptography.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'recovery_file_export.dart';
 
@@ -22,7 +22,7 @@ class LoomRecoveryBackupReminderStore {
     final key = digest.bytes
         .map((b) => b.toRadixString(16).padLeft(2, '0'))
         .join();
-    final root = directory ?? await LoomAccountWorkspace.active();
+    final root = directory ?? await getApplicationSupportDirectory();
     return File('${root.path}/loom-recovery-reminders/$key.json');
   }
 

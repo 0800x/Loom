@@ -1,5 +1,4 @@
 import 'dart:async';
-import '../../accounts/application/account_workspace.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -7,6 +6,7 @@ import 'package:loom_dtn/loom_dtn.dart';
 import 'package:loom_protocol/loom_protocol.dart';
 import 'package:loom_storage/loom_storage.dart';
 import 'package:loom_transport/loom_transport.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'authorized_device_direct_transport_signer.dart';
 import 'proximity_gateway_delivery_sink.dart';
@@ -109,7 +109,7 @@ final class LoomProximityGatewaySessionRunner {
     Duration idleTimeout = const Duration(seconds: 20),
   }) async {
     LoomRecipientGatewaySession? session;
-    final support = await LoomAccountWorkspace.active();
+    final support = await getApplicationSupportDirectory();
     final messageStore = LoomMessagingStore.openFile(
       '${support.path}/loom-messages-v1.sqlite3',
     );

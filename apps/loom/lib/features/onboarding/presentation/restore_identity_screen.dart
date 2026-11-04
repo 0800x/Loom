@@ -5,9 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:file_selector/file_selector.dart';
 
 import '../../../app/loom_strings.dart';
-import 'backup_password_dialog.dart';
 import '../application/onboarding_controller.dart';
-import 'onboarding_chrome.dart';
+import 'setup_scaffold.dart';
 import 'recovery_qr_scanner.dart';
 import '../application/recovery_backup.dart';
 
@@ -79,44 +78,7 @@ class _RestoreIdentityScreenState extends State<RestoreIdentityScreen>
         }
         final bytes = await file.readAsBytes();
         try {
-          final raw = utf8.decode(bytes);
-          if (LoomRecoveryBackup.looksEncrypted(raw)) {
-            // Argon2id + AES-GCM envelope. Wrong passwords re-prompt instead
-            // of failing the whole import.
-            if (!mounted) return;
-            String? password = await showLoomBackupImportPasswordDialog(
-              context,
-            );
-            LoomRecoveryBackup? backup;
-            var attempts = 0;
-            while (backup == null &&
-                password != null &&
-                attempts < 5 &&
-                mounted) {
-              attempts++;
-              try {
-                backup = await LoomRecoveryBackup.parseEncrypted(
-                  bytes,
-                  password,
-                );
-              } on FormatException {
-                if (!mounted) break;
-                password = await showLoomBackupImportPasswordDialog(
-                  context,
-                  errorText: tr(
-                    context,
-                    'That password did not unlock the file. Try again.',
-                    'این رمز فایل را باز نکرد؛ دوباره تلاش کن.',
-                  ),
-                );
-              }
-            }
-            if (backup != null) {
-              sentence = backup.sentence;
-            }
-          } else {
-            sentence = LoomRecoveryBackup.parse(raw).sentence;
-          }
+          sentence = LoomRecoveryBackup.parse(utf8.decode(bytes)).sentence;
         } finally {
           bytes.fillRange(0, bytes.length, 0);
         }
@@ -180,7 +142,16 @@ class _RestoreIdentityScreenState extends State<RestoreIdentityScreen>
         importing ||
         submitting ||
         controller.status == LoomOnboardingStatus.creatingIdentity;
-    return LoomOnboardingShell(
+    return LoomSetupScaffold(
+      actions: LoomPressable(
+        enabled: !busy,
+        child: FilledButton(
+          onPressed: busy ? null : _restore,
+          child: busy
+              ? const LoomBusyIndicator()
+              : Text(tr(context, 'Restore account', 'بازیابی حساب')),
+        ),
+      ),
       canPop: !busy,
       title: tr(context, 'Bring your account back', 'حسابت را برگردان'),
       subtitle: tr(
@@ -188,76 +159,81 @@ class _RestoreIdentityScreenState extends State<RestoreIdentityScreen>
         'Import your recovery file or scan the QR on your printed PDF. You can also enter the words. Then sign in to your original home server.',
         'فایل بازیابی را وارد کن یا QR برگهٔ PDF را اسکن کن. وارد کردن واژه‌ها هم ممکن است. سپس وارد حساب سرور اصلی خودت شو.',
       ),
-      error: controller.errorMessage,
-      ctaLabel: tr(context, 'Restore account', 'بازیابی حساب'),
-      onCta: busy ? null : _restore,
-      ctaBusy: busy,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (controller.committedIdentity != null) ...[
-            Text(
-              tr(
-                context,
-                'This device already has an identity. Recovery can repair that same identity; replacing it with another account is not supported here. Your current identity and saved data are kept.',
-                'این دستگاه از قبل هویت دارد. بازیابی می‌تواند همان هویت را ترمیم کند؛ جایگزینی آن با حساب دیگری در این دستگاه پشتیبانی نمی‌شود. هویت فعلی و اطلاعات ذخیره‌شده حفظ می‌شوند.',
-              ),
-            ),
-            const SizedBox(height: LoomSpacing.md),
-          ],
-          OutlinedButton.icon(
-            onPressed: busy ? null : () => _import(qr: false),
-            icon: const Icon(LoomIcons.folder_open),
-            label: Text(
-              tr(context, 'Import recovery file', 'وارد کردن فایل پشتیبان'),
-            ),
-          ),
-          const SizedBox(height: LoomSpacing.xs),
-          OutlinedButton.icon(
-            onPressed: busy ? null : () => _import(qr: true),
-            icon: const Icon(LoomIcons.qr_code_scanner_rounded),
-            label: Text(
-              tr(context, 'Scan printed recovery QR', 'اسکن QR برگهٔ بازیابی'),
-            ),
-          ),
-          const SizedBox(height: LoomSpacing.ml),
-          Text(
-            tr(context, 'Or enter your words', 'یا واژه‌ها را وارد کن'),
-            style: Theme.of(context).textTheme.labelLarge,
-          ),
-          const SizedBox(height: LoomSpacing.sm),
-          if (foreground)
-            TextField(
-              controller: words,
-              enabled: !busy,
-              minLines: 5,
-              maxLines: 8,
-              maxLength: 1024,
-              textDirection: TextDirection.ltr,
-              autocorrect: false,
-              enableSuggestions: false,
-              onChanged: (_) => setState(() => localError = null),
-              decoration: InputDecoration(
-                labelText: tr(context, '24 recovery words', '۲۴ واژه بازیابی'),
-                counterText: tr(
-                  context,
-                  '$wordCount / 24 words',
-                  '$wordCount از ۲۴ واژه',
-                ),
-                errorText: localError,
-              ),
-            ),
-          const SizedBox(height: LoomSpacing.md),
+      children: [
+        if (controller.committedIdentity != null) ...[
           Text(
             tr(
               context,
-              'Your recovery words stay on this device. They are never sent to the server.',
-              'واژه‌های بازیابی روی همین دستگاه پردازش می‌شوند و به سرور فرستاده نمی‌شوند.',
+              'This device already has an identity. Recovery can repair that same identity; replacing it with another account is not supported here. Your current identity and saved data are kept.',
+              'این دستگاه از قبل هویت دارد. بازیابی می‌تواند همان هویت را ترمیم کند؛ جایگزینی آن با حساب دیگری در این دستگاه پشتیبانی نمی‌شود. هویت فعلی و اطلاعات ذخیره‌شده حفظ می‌شوند.',
             ),
-            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 16),
+        ],
+        OutlinedButton.icon(
+          onPressed: busy ? null : () => _import(qr: false),
+          icon: const Icon(LoomIcons.folder_open),
+          label: Text(
+            tr(context, 'Import recovery file', 'وارد کردن فایل پشتیبان'),
+          ),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: busy ? null : () => _import(qr: true),
+          icon: const Icon(LoomIcons.qr_code_scanner_rounded),
+          label: Text(
+            tr(context, 'Scan printed recovery QR', 'اسکن QR برگهٔ بازیابی'),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          tr(context, 'Or enter your words', 'یا واژه‌ها را وارد کن'),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: 12),
+        if (foreground)
+          TextField(
+            controller: words,
+            enabled: !busy,
+            minLines: 5,
+            maxLines: 8,
+            maxLength: 1024,
+            textDirection: TextDirection.ltr,
+            autocorrect: false,
+            enableSuggestions: false,
+            onChanged: (_) => setState(() => localError = null),
+            decoration: InputDecoration(
+              labelText: tr(context, '24 recovery words', '۲۴ واژه بازیابی'),
+              counterText: tr(
+                context,
+                '$wordCount / 24 words',
+                '$wordCount از ۲۴ واژه',
+              ),
+              errorText: localError,
+            ),
+          ),
+        if (controller.errorMessage != null) ...[
+          const SizedBox(height: 16),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              controller.errorMessage!,
+              style: TextStyle(color: context.loom.critical),
+            ),
           ),
         ],
-      ),
+        const SizedBox(height: 24),
+
+        const SizedBox(height: 16),
+        Text(
+          tr(
+            context,
+            'Your recovery words stay on this device. They are never sent to the server.',
+            'واژه‌های بازیابی روی همین دستگاه پردازش می‌شوند و به سرور فرستاده نمی‌شوند.',
+          ),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
     );
   }
 }

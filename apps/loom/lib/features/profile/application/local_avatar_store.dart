@@ -1,8 +1,8 @@
 import 'dart:convert';
-import '../../accounts/application/account_workspace.dart';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 import 'avatar_photo.dart';
 
 /// Durable per-identity profile cache and outbox. Network writes are explicit.
@@ -11,7 +11,7 @@ class LoomLocalAvatarStore extends ChangeNotifier {
   LoomLocalAvatarStore(
     this.identityId, {
     Future<Directory> Function()? directory,
-  }) : _directory = directory ?? LoomAccountWorkspace.active;
+  }) : _directory = directory ?? getApplicationSupportDirectory;
 
   static final _accounts = <String, LoomLocalAvatarStore>{};
   static LoomLocalAvatarStore forIdentity(String identityId) =>

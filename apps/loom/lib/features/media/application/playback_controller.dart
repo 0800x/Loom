@@ -13,7 +13,6 @@ import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:loom_crypto_bridge/loom_crypto_bridge.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:path_provider/path_provider.dart';
@@ -398,25 +397,6 @@ class LoomPlaybackController extends ChangeNotifier
 
   Future<void> _setupSystem() => _systemSetup ??= _initializeSystem();
 
-  bool _permissionNudged = false;
-
-  /// Asks the native bridge for POST_NOTIFICATIONS once per process when
-  /// music starts with system notifications disabled, so the media card can
-  /// actually appear. Fire-and-forget: playback never waits for it.
-  Future<void> _requestNotificationPermission() async {
-    if (!Platform.isAndroid || _permissionNudged) return;
-    _permissionNudged = true;
-    try {
-      const channel = MethodChannel('loom/notifications');
-      final status =
-          await channel.invokeMethod<Map<Object?, Object?>>('status');
-      if (status?['enabled'] == true) return;
-      await channel.invokeMethod<void>('enable');
-    } catch (_) {
-      _permissionNudged = false;
-    }
-  }
-
   Future<void> _initializeSystem() async {
     if (_voiceSession || (!Platform.isAndroid && !Platform.isIOS)) return;
     _session = await AudioSession.instance;
@@ -607,14 +587,9 @@ class LoomPlaybackController extends ChangeNotifier
           try {
             await _setupSystem();
           } catch (_) {
-            // The media session is a bonus, not a precondition: when the
-            // platform session cannot start (missing notification resource,
-            // OEM quirk) the in-app player must still work. Retry next open.
             _systemSetup = null;
+            rethrow;
           }
-          // Android 13+ hides the media card (lockscreen player, headset
-          // controls) while POST_NOTIFICATIONS is denied — ask once.
-          unawaited(_requestNotificationPermission());
         }
         await LoomMediaAudioRoute.prepare();
         MediaKit.ensureInitialized();

@@ -36,15 +36,6 @@ class MediaBatchController<T> extends MediaDraftNotifier {
     }
   }
 
-  /// Swaps the payload of a pending id in place, keeping the selection order.
-  /// Used when an editor replaces the backing file of a picked item.
-  void replace(String id, T item) {
-    if (!sending && !_disposed && _pending.containsKey(id)) {
-      _pending[id] = item;
-      _notify();
-    }
-  }
-
   Future<void> send(
     Future<bool> Function(T, bool withCaption) upload, {
     required bool Function() authorized,

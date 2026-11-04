@@ -186,18 +186,12 @@ class _LoomMenuButton extends StatefulWidget {
   State<_LoomMenuButton> createState() => _LoomMenuButtonState();
 }
 
-class _LoomMenuButtonState extends State<_LoomMenuButton>
-    with SingleTickerProviderStateMixin {
+class _LoomMenuButtonState extends State<_LoomMenuButton> {
   final _controller = MenuController();
   final _anchorFocus = FocusNode();
   final _firstFocus = FocusNode();
-
-  /// Drives the staggered row entrance; one clock for the whole menu.
-  late final AnimationController _reveal = AnimationController(vsync: this);
-
   @override
   void dispose() {
-    _reveal.dispose();
     _anchorFocus.dispose();
     _firstFocus.dispose();
     super.dispose();
@@ -225,16 +219,9 @@ class _LoomMenuButtonState extends State<_LoomMenuButton>
     return MenuAnchor(
       controller: _controller,
       childFocusNode: _anchorFocus,
-      onOpen: () {
-        _reveal
-          ..duration = LoomAccessibility.fromContext(context).reduceMotion
-              ? Duration.zero
-              : const Duration(milliseconds: 220)
-          ..forward(from: 0);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && _controller.isOpen) _firstFocus.requestFocus();
-        });
-      },
+      onOpen: () => WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _controller.isOpen) _firstFocus.requestFocus();
+      }),
       onClose: () {
         if (mounted) _anchorFocus.requestFocus();
       },
@@ -255,34 +242,24 @@ class _LoomMenuButtonState extends State<_LoomMenuButton>
       ),
       menuChildren: [
         if (heading.isNotEmpty)
-          LoomMenuStagger(
-            index: 0,
-            animation: _reveal,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(
-                heading,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelMedium,
-              ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              heading,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelMedium,
             ),
           ),
         for (final (index, item) in items.indexed)
-          LoomMenuStagger(
-            index: heading.isNotEmpty ? index + 1 : index,
-            animation: _reveal,
-            child: LoomPressable(
-              child: MenuItemButton(
-                focusNode: index == 0 ? _firstFocus : null,
-                onPressed: () => onSelected(item.$1),
-                style: const ButtonStyle(
-                  minimumSize: WidgetStatePropertyAll(Size(0, LoomSizing.minTouch)),
-                ),
-                leadingIcon: Icon(item.$2, size: LoomIconSize.standard),
-                child: Text(item.$3, softWrap: true),
-              ),
+          MenuItemButton(
+            focusNode: index == 0 ? _firstFocus : null,
+            onPressed: () => onSelected(item.$1),
+            style: const ButtonStyle(
+              minimumSize: WidgetStatePropertyAll(Size(0, LoomSizing.minTouch)),
             ),
+            leadingIcon: Icon(item.$2, size: LoomIconSize.standard),
+            child: Text(item.$3, softWrap: true),
           ),
       ],
       builder: (context, controller, _) => IconButton(

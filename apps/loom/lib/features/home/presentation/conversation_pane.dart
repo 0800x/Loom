@@ -66,7 +66,6 @@ class _ConversationPaneState extends State<_ConversationPane>
     messageScroll.addListener(_saveScroll);
     composer.value = widget.drafts[_draftId] ?? TextEditingValue.empty;
     composer.addListener(_saveDraft);
-    composer.addListener(_notifyTyping);
     _observeMessages(initial: true);
   }
 
@@ -309,7 +308,6 @@ class _ConversationPaneState extends State<_ConversationPane>
     final conversation = widget.conversation;
     final submitted = composer.value;
     final reply = widget.drafts.replies[conversation?.id];
-    final editing = widget.drafts.editing[conversation?.id];
     if (messaging == null ||
         conversation == null ||
         submitted.text.trim().isEmpty ||
@@ -318,36 +316,21 @@ class _ConversationPaneState extends State<_ConversationPane>
     }
     setState(() => sending = true);
     try {
-      var queued = false;
-      if (editing != null) {
-        queued = await messaging.editMessage(
-          conversation.id,
-          editing,
-          submitted.text,
-        );
-        if (queued && widget.drafts.editing[conversation.id] == editing) {
-          setState(() => widget.drafts.editing.remove(conversation.id));
-        }
-        if (queued && widget.drafts[conversation.id]?.text == submitted.text) {
-          widget.drafts.remove(conversation.id);
-        }
-      } else {
-        queued = await messaging.sendText(
-          conversation.id,
-          submitted.text,
-          replyToMessageId: reply?.record.id.startsWith('local:') == false
-              ? reply!.record.id
-              : null,
-          reply: reply,
-        );
-        if (queued && widget.drafts.replies[conversation.id] == reply) {
-          widget.drafts.replies.remove(conversation.id);
-        }
-        // A slow key lookup must never erase text typed since Send, or a draft
-        // belonging to a different conversation opened while queueing.
-        if (queued && widget.drafts[conversation.id]?.text == submitted.text) {
-          widget.drafts.remove(conversation.id);
-        }
+      final queued = await messaging.sendText(
+        conversation.id,
+        submitted.text,
+        replyToMessageId: reply?.record.id.startsWith('local:') == false
+            ? reply!.record.id
+            : null,
+        reply: reply,
+      );
+      if (queued && widget.drafts.replies[conversation.id] == reply) {
+        widget.drafts.replies.remove(conversation.id);
+      }
+      // A slow key lookup must never erase text typed since Send, or a draft
+      // belonging to a different conversation opened while queueing.
+      if (queued && widget.drafts[conversation.id]?.text == submitted.text) {
+        widget.drafts.remove(conversation.id);
       }
       if (!mounted) {
         return;
@@ -388,20 +371,6 @@ class _ConversationPaneState extends State<_ConversationPane>
         setState(() => sending = false);
       }
     }
-  }
-
-  /// Throttled upstream; the controller coalesces to at most one ephemeral
-  /// frame every few seconds.
-  void _notifyTyping() {
-    final messaging = widget.messaging;
-    final conversation = widget.conversation;
-    if (messaging == null ||
-        conversation == null ||
-        widget.preview ||
-        composer.value.text.trim().isEmpty) {
-      return;
-    }
-    unawaited(messaging.notifyTyping(conversation.id));
   }
 
   Future<void> _insertKeyboardMedia(KeyboardInsertedContent content) async {
@@ -1270,34 +1239,17 @@ class _ConversationPaneState extends State<_ConversationPane>
 
   Future<void> _messageActions(LoomVisibleMessage message) async {
     final id = widget.conversation?.id;
-    final messaging = widget.messaging;
-    if (id == null || messaging == null) {
-      return;
-    }
-    final ownAddress = messaging.onboarding.receipt?.address;
-    final mine =
-        ownAddress != null &&
-        message.record.senderAddress.toLowerCase() == ownAddress.toLowerCase();
-    final fold = messaging.messageFolds[id]?[message.record.clientId];
-    final editableText = message.readable &&
-        message.content.text.trim().isNotEmpty &&
-        (fold == null || !fold.deletedForEveryone);
     final action = await _chooseMessageAction(
       context,
       message,
       origin: LoomOrigin.of(
         _messageKeys[message.record.clientId]?.currentContext,
       ),
-      canDeleteForEveryone: mine && editableText,
-      canEdit: mine && editableText,
     );
     if (!mounted || id != widget.conversation?.id) {
       return;
     }
-    if (action != null && action.startsWith('react:')) {
-      final emoji = action.substring('react:'.length);
-      await messaging.reactToMessage(id, message, emoji);
-    } else if (action == 'delete' && widget.messaging != null) {
+    if (action == 'delete' && id != null && widget.messaging != null) {
       if (!await _confirmLocalDeletion(context) ||
           !mounted ||
           id != widget.conversation?.id) {
@@ -1311,68 +1263,11 @@ class _ConversationPaneState extends State<_ConversationPane>
           widget.drafts.replies.remove(id);
         }
       });
-    } else if (action == 'deleteEveryone') {
-      if (!mounted || id != widget.conversation?.id) return;
-      final confirmed = await showLoomActionSheet<bool>(
-        context: context,
-        title: tr(context, 'Delete for everyone?', 'حذف برای همه؟'),
-        subtitle: tr(
-          context,
-          'The message is replaced with a deletion note for everyone in this chat. This cannot be undone.',
-          'پیام برای همهٔ اعضای این گفتگو با یادداشت حذف جایگزین می‌شود. این کار بازگشت‌پذیر نیست.',
-        ),
-        builder: (context) => Row(
-          children: [
-            Expanded(
-              child: TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(tr(context, 'Cancel', 'انصراف')),
-              ),
-            ),
-            Expanded(
-              child: FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(tr(context, 'Delete', 'حذف')),
-              ),
-            ),
-          ],
-        ),
-      );
-      if (confirmed == true && mounted && id == widget.conversation?.id) {
-        await widget.messaging!.deleteMessageForEveryone(id, message);
-      }
-    } else if (action == 'edit') {
-      setState(() {
-        widget.drafts.replies.remove(id);
-        widget.drafts.editing[id] = message;
-      });
-      composer.value = TextEditingValue(
-        text: message.content.text,
-        selection: TextSelection.collapsed(
-          offset: message.content.text.length,
-        ),
-      );
-      composerFocus.requestFocus();
-    } else if (action == 'forward') {
-      final target = await _forwardMessagePicker(context, widget.messaging!);
-      if (!mounted || target == null || id != widget.conversation?.id) {
-        return;
-      }
-      final ok = await widget.messaging!.forwardContent(target, message);
-      if (!mounted) return;
-      _showComingSoon(
-        context,
-        ok
-            ? tr(context, 'Message forwarded', 'پیام فوروارد شد')
-            : tr(
-                context,
-                'Forwarding failed. Check the details above.',
-                'فوروارد انجام نشد؛ جزئیات را در بالای صفحه بررسی کنید.',
-              ),
-      );
-    } else if (action == 'reply') {
+    }
+    if (action == 'reply') {
       _reply(message);
-    } else if (action == 'select') {
+    }
+    if (action == 'select') {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
@@ -1386,7 +1281,8 @@ class _ConversationPaneState extends State<_ConversationPane>
           ],
         ),
       );
-    } else if (action == 'copy') {
+    }
+    if (action == 'copy') {
       try {
         await Clipboard.setData(ClipboardData(text: message.text));
         if (mounted) {
@@ -1931,21 +1827,6 @@ class _ConversationPaneState extends State<_ConversationPane>
                                                   ),
                                             onActions: () =>
                                                 _messageActions(message),
-                                            fold: conversation == null
-                                                ? null
-                                                : messaging.messageFolds[
-                                                        conversation.id]?[
-                                                    message.record.clientId],
-                                            onReactionTap:
-                                                conversation == null
-                                                ? null
-                                                : (emoji) => unawaited(
-                                                    messaging.reactToMessage(
-                                                      conversation.id,
-                                                      message,
-                                                      emoji,
-                                                    ),
-                                                  ),
                                             onReply: message.readable
                                                 ? () => _reply(message)
                                                 : null,
@@ -2017,8 +1898,7 @@ class _ConversationPaneState extends State<_ConversationPane>
                             final show =
                                 messageScroll.hasClients &&
                                 messageScroll.offset > 160;
-                            // FAB fades/scales while the list scrolls below.
-                            return RepaintBoundary(child: AnimatedScale(
+                            return AnimatedScale(
                               scale: show ? 1 : 0,
                               duration: _motionDuration(
                                 context,
@@ -2069,7 +1949,7 @@ class _ConversationPaneState extends State<_ConversationPane>
                                       )
                                     : const SizedBox(width: 48, height: 48),
                               ),
-                            ));
+                            );
                           },
                         ),
                       ),
@@ -2209,110 +2089,6 @@ class _ConversationPaneState extends State<_ConversationPane>
                                   ),
                                 ),
                               ),
-                      ),
-                      AnimatedSize(
-                        duration:
-                            LoomAccessibility.fromContext(context).reduceMotion
-                            ? Duration.zero
-                            : LoomMotion.component,
-                        alignment: Alignment.bottomCenter,
-                        child: widget.drafts.editing[conversation?.id] == null
-                            ? const SizedBox.shrink()
-                            : Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  10,
-                                  4,
-                                  10,
-                                  0,
-                                ),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: context.loom.surfaceElevated,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: BorderDirectional(
-                                      start: BorderSide(
-                                        color: context.loom.info,
-                                        width: 3,
-                                      ),
-                                    ),
-                                  ),
-                                  padding: const EdgeInsetsDirectional.only(
-                                    start: 12,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        LoomIcons.edit_outlined,
-                                        color: context.loom.info,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              tr(
-                                                context,
-                                                'Editing message',
-                                                'در حال ویرایش پیام',
-                                              ),
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .labelMedium
-                                                  ?.copyWith(
-                                                    color: context.loom.info,
-                                                  ),
-                                            ),
-                                            Text(
-                                              widget
-                                                      .drafts
-                                                      .editing[
-                                                        conversation!.id]!
-                                                      .content
-                                                      .text,
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(
-                                                context,
-                                              ).textTheme.bodySmall,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      IconButton(
-                                        tooltip: tr(
-                                          context,
-                                          'Cancel editing',
-                                          'لغو ویرایش',
-                                        ),
-                                        onPressed: () => setState(
-                                          () => widget.drafts.editing.remove(
-                                            conversation.id,
-                                          ),
-                                        ),
-                                        icon: const Icon(
-                                          LoomIcons.close_rounded,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                      ),
-                      AnimatedSize(
-                        duration:
-                            LoomAccessibility.fromContext(context).reduceMotion
-                            ? Duration.zero
-                            : LoomMotion.component,
-                        alignment: Alignment.bottomCenter,
-                        child: _TypingIndicator(
-                          peers: preview || conversation == null
-                              ? const {}
-                              : messaging?.typingPeersFor(conversation.id) ??
-                                    const {},
-                        ),
                       ),
                       if (_uploading)
                         Padding(

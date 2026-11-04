@@ -9,7 +9,6 @@ import '../../home/presentation/messenger_shell.dart';
 import '../../../app/loom_strings.dart';
 import '../application/onboarding_controller.dart';
 import 'welcome_screen.dart';
-import 'onboarding_chrome.dart';
 import 'setup_scaffold.dart';
 import 'sign_in_screen.dart';
 
@@ -180,50 +179,24 @@ class _LoomStartupGateState extends State<LoomStartupGate> {
                       ),
                     ),
                   ] else ...[
-                    LoomGlassSurface(
-                      blur: false,
-                      radius: LoomRadii.control,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: LoomSpacing.md,
-                        vertical: LoomSpacing.sm,
+                    Text(
+                      tr(
+                        context,
+                        'Your saved account could not be opened. Unlock your device and retry. Do not create another account or clear app data.',
+                        'حساب ذخیره‌شده باز نشد. قفل دستگاه را باز کنید و دوباره تلاش کنید. حساب جدید نسازید و داده‌های برنامه را پاک نکنید.',
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            LoomIcons.error_outline_rounded,
-                            size: LoomIconSize.compact,
-                            color: context.loom.critical,
-                          ),
-                          const SizedBox(width: LoomSpacing.sm),
-                          Expanded(
-                            child: Text(
-                              tr(
-                                context,
-                                'Your saved account could not be opened. Unlock your device and retry. Do not create another account or clear app data.',
-                                'حساب ذخیره‌شده باز نشد. قفل دستگاه را باز کنید و دوباره تلاش کنید. حساب جدید نسازید و داده‌های برنامه را پاک نکنید.',
-                              ),
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: context.loom.critical),
-                            ),
-                          ),
-                        ],
-                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: LoomSpacing.md),
-                    if (failureCode != null) ...[
+                    const SizedBox(height: 16),
+                    if (failureCode != null)
                       SelectableText(
                         '${tr(context, 'Support code', 'کد پشتیبانی')}: $failureCode',
                         textDirection: TextDirection.ltr,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
-                      const SizedBox(height: LoomSpacing.md),
-                    ],
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 320),
-                      child: LoomOnboardingCta(
-                        label: tr(context, 'Try again', 'تلاش دوباره'),
-                        onPressed: _restore,
-                      ),
+                    FilledButton(
+                      onPressed: _restore,
+                      child: Text(tr(context, 'Try again', 'تلاش دوباره')),
                     ),
                   ],
                 ],

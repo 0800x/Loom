@@ -1,7 +1,7 @@
 name: loom_next
 description: Loom privacy-first resilient communication client.
 publish_to: "none"
-version: 0.3.0+30
+version: 0.1.0+28
 environment:
   sdk: ">=3.12.0 <4.0.0"
   flutter: ">=3.44.0"
@@ -35,11 +35,8 @@ dependencies:
     path: ../../packages/loom_messaging
   loom_transport:
     path: ../../packages/loom_transport
-  loom_session_vodozemac_poc:
-    path: ../../packages/loom_session_vodozemac_poc
   loom_calls:
     path: ../../packages/loom_calls
-  flutter_secure_storage: ^10.3.1
   cryptography: ^2.9.0
   bip39_mnemonic: ^4.1.0
   camera: ^0.12.1
@@ -68,16 +65,13 @@ dependencies:
   file_selector_android: ^0.5.2+11
   path_provider: ^2.1.5
   package_info_plus: 10.2.1
-  # SQLCipher for the encrypted messaging database. sqlite3_flutter_libs must
-  # NOT also be present: on iOS/macOS the SQLCipher pod replaces the system
-  # sqlite3 symbols and a second plain build would clash with it.
-  sqlite3: ^2.9.4
-  sqlcipher_flutter_libs: ^0.6.5
+  sqlite3_flutter_libs: ^0.5.42
 dependency_overrides:
   # Native source forks use the same AGP 9 / built-in Kotlin as Loom.
   record_android:
     path: ../../packages/loom_record_android
 dev_dependencies:
+  flutter_secure_storage: ^10.3.1
   file_selector_platform_interface: ^2.7.0
   integration_test:
     sdk: flutter

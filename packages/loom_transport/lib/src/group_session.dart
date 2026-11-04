@@ -498,36 +498,6 @@ class LoomGroupSession {
   }
 
   Future<void> drain() => _serialized(_drain);
-
-  /// Ephemeral control frame (typing). Best-effort by contract: never staged
-  /// in the outbox, never sealed into local history, never retried, and a
-  /// delivery failure is returned to the caller instead of being escalated.
-  /// The sender's own echo is consumed as a hidden control row on the next
-  /// history reload.
-  Future<void> sendEphemeral(
-    String groupId,
-    Map<String, Object?> content,
-  ) async {
-    final normalized =
-        Map<String, Object?>.from(jsonDecode(jsonEncode(content)) as Map);
-    final group = store.groups.singleWhere((g) => g.id == groupId);
-    if (!group.members.any((m) => m.deviceId == deviceId)) {
-      throw StateError('No longer a group member');
-    }
-    final result = await _run(
-      'encrypt',
-      groupId: groupId,
-      arguments: {'bytes': utf8.encode(jsonEncode(normalized))},
-    );
-    await client.request('POST', '${_path(groupId)}/messages', {
-      'operationId': _id(),
-      'epoch': result.result['epoch'],
-      'ciphertext': base64Encode(
-        (result.result['bytes'] as List).cast<int>(),
-      ),
-    });
-  }
-
   Future<void> _drain() async {
     for (final pending in store.outbox) {
       _guard();

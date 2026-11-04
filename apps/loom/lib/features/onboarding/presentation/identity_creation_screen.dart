@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../app/loom_strings.dart';
 import '../../nodes/application/node_directory_controller.dart';
 import '../application/onboarding_controller.dart';
-import 'onboarding_chrome.dart';
+import 'setup_scaffold.dart';
 
 class IdentityCreationScreen extends StatefulWidget {
   const IdentityCreationScreen({super.key});
@@ -57,7 +57,16 @@ class _IdentityCreationScreenState extends State<IdentityCreationScreen> {
     final busy =
         submitting ||
         controller.status == LoomOnboardingStatus.creatingIdentity;
-    return LoomOnboardingShell(
+    return LoomSetupScaffold(
+      actions: LoomPressable(
+        enabled: !busy,
+        child: FilledButton(
+          onPressed: busy ? null : _continue,
+          child: busy
+              ? const LoomBusyIndicator()
+              : Text(tr(context, 'Continue', 'ادامه')),
+        ),
+      ),
       step: 2,
       canPop: !busy,
       title: tr(context, 'Make it yours', 'اینجا، خودت باش'),
@@ -66,13 +75,7 @@ class _IdentityCreationScreenState extends State<IdentityCreationScreen> {
         'Choose how people find you. Next, we’ll help you back up your account.',
         'نامی انتخاب کنید که دوستانتان شما را با آن پیدا کنند. مرحلهٔ بعد، پشتیبان‌گیری حساب است.',
       ),
-      error: controller.errorMessage,
-      ctaLabel: tr(context, 'Continue', 'ادامه'),
-      onCta: busy ? null : _continue,
-      ctaBusy: busy,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      children: [
         Form(
           key: _form,
           autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -177,7 +180,19 @@ class _IdentityCreationScreenState extends State<IdentityCreationScreen> {
             ),
           ),
         ),
-        const SizedBox(height: LoomSpacing.md),
+        if (controller.errorMessage != null) ...[
+          const SizedBox(height: 16),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              controller.errorMessage!,
+              style: TextStyle(color: context.loom.critical),
+            ),
+          ),
+        ],
+        const SizedBox(height: 24),
+
+        const SizedBox(height: 16),
         Text(
           tr(
             context,
@@ -186,8 +201,7 @@ class _IdentityCreationScreenState extends State<IdentityCreationScreen> {
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
-        ],
-      ),
+      ],
     );
   }
 }

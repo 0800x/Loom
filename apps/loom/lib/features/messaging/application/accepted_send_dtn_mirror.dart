@@ -1,11 +1,11 @@
 import 'dart:async';
-import '../../accounts/application/account_workspace.dart';
 
 import 'package:loom_models/loom_models.dart';
 import 'package:loom_protocol/loom_protocol.dart';
 import 'package:loom_storage/loom_storage.dart';
 import 'package:loom_transport/loom_transport.dart';
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../onboarding/application/onboarding_controller.dart';
 import 'offline_device_directory_cache.dart';
@@ -118,7 +118,7 @@ final class LoomAcceptedSendDtnMirror {
   DateTime? lastUpdatedAt;
 
   static Future<String> _defaultApplicationSupportPath() async =>
-      (await LoomAccountWorkspace.active()).path;
+      (await getApplicationSupportDirectory()).path;
 
   void _requestDrain() {
     if (_disposed) return;

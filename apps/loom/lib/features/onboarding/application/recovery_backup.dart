@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:loom_crypto_bridge/loom_crypto_bridge.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 /// Portable Identity v1 recovery, deliberately local-only. No passwords,
@@ -24,41 +23,6 @@ class LoomRecoveryBackup {
     'words': words,
   });
   Uint8List get fileBytes => Uint8List.fromList(utf8.encode(encoded));
-
-  /// Argon2id + AES-256-GCM envelope (`Loom-Recovery-v1`). The words only
-  /// exist in memory until the envelope is serialized; the caller supplies
-  /// the passphrase and owns its lifetime.
-  Future<Uint8List> encryptedFileBytes(String password) async {
-    final sealed = await LoomRecoveryFileCodec().encryptWords(
-      words: words,
-      password: password,
-    );
-    return sealed;
-  }
-
-  /// True when `raw` carries the encrypted envelope marker instead of words.
-  static bool looksEncrypted(String raw) {
-    try {
-      final value = jsonDecode(raw);
-      return value is Map<String, dynamic> &&
-          value['format'] == LoomRecoveryFileCodec.format;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// Decrypts a `Loom-Recovery-v1` envelope. Wrong passwords surface as
-  /// FormatException from the codec.
-  static Future<LoomRecoveryBackup> parseEncrypted(
-    Uint8List fileBytes,
-    String password,
-  ) async {
-    final words = await LoomRecoveryFileCodec().decryptWords(
-      fileBytes: fileBytes,
-      password: password,
-    );
-    return LoomRecoveryBackup(words: words);
-  }
 
   /// Structural parsing only. IdentityCore remains responsible for mnemonic
   /// checksum/word-list validation before any identity is committed.

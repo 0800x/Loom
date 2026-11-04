@@ -126,8 +126,6 @@ class LoomPeerProfileScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                if (messaging != null)
-                  _BlockContactCard(address: address, messaging: messaging!),
                 const SizedBox(height: 32),
                 if (conversationId != null &&
                     messaging != null &&
@@ -307,105 +305,6 @@ class _PeerAction extends StatelessWidget {
           ),
         ),
       ),
-    ),
-  );
-}
-
-/// Block / unblock control. Blocking hides future inbound messages from this
-/// address, suppresses notifications and refuses outgoing sends; existing
-/// history stays on the device.
-class _BlockContactCard extends StatefulWidget {
-  const _BlockContactCard({required this.address, required this.messaging});
-
-  final String address;
-  final LoomMessagingSessionController messaging;
-
-  @override
-  State<_BlockContactCard> createState() => _BlockContactCardState();
-}
-
-class _BlockContactCardState extends State<_BlockContactCard> {
-  late bool _blocked = widget.messaging.isPeerBlocked(widget.address);
-  bool _working = false;
-
-  Future<void> _toggle() async {
-    if (_working) return;
-    if (!_blocked) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (dialog) => AlertDialog(
-          title: Text(tr(context, 'Block contact?', 'مسدود کردن مخاطب؟')),
-          content: Text(
-            tr(
-              context,
-              'New messages from this address will not be shown or notified, and you cannot send to them until you unblock.',
-              'پیام‌های جدید این نشانی نمایش داده نمی‌شوند و اعلانی نمی‌آید؛ تا زمان رفع مسدودی نمی‌توانید به او پیام دهید.',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialog, false),
-              child: Text(tr(context, 'Cancel', 'انصراف')),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialog, true),
-              child: Text(tr(context, 'Block', 'مسدود کردن')),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true || !mounted) return;
-    }
-    setState(() => _working = true);
-    try {
-      if (_blocked) {
-        await widget.messaging.unblockPeer(widget.address);
-      } else {
-        await widget.messaging.blockPeer(widget.address);
-      }
-      if (mounted) setState(() => _blocked = !_blocked);
-    } catch (_) {
-      // The list re-renders from the store; a failure keeps prior state.
-    } finally {
-      if (mounted) setState(() => _working = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => Card(
-    elevation: 0,
-    color: context.loom.surface,
-    child: ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-      leading: Icon(
-        _blocked ? LoomIcons.check : LoomIcons.shield_outlined,
-        color: _blocked ? context.loom.primary : context.loom.critical,
-      ),
-      title: Text(
-        _blocked
-            ? tr(context, 'Unblock contact', 'رفع مسدودی مخاطب')
-            : tr(context, 'Block contact', 'مسدود کردن مخاطب'),
-      ),
-      subtitle: Text(
-        _blocked
-            ? tr(
-                context,
-                'Messages from this address are hidden. Unblock to resume.',
-                'پیام‌های این نشانی پنهان است؛ برای ادامه گفتگو رفع مسدودی کنید.',
-              )
-            : tr(
-                context,
-                'Hide future messages and stop notifications.',
-                'پیام‌های بعدی پنهان و اعلان‌ها قطع می‌شود.',
-              ),
-      ),
-      trailing: _working
-          ? const SizedBox.square(
-              dimension: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : null,
-      onTap: _toggle,
     ),
   );
 }

@@ -1,19 +1,15 @@
 import 'dart:async';
-import '../../accounts/application/account_workspace.dart';
 
 import 'package:loom_crypto_bridge/loom_crypto_bridge.dart';
 import 'package:loom_models/loom_models.dart';
 import 'package:loom_protocol/loom_protocol.dart';
-import 'package:loom_session_vodozemac_poc/loom_session_vodozemac_poc.dart';
-import 'package:loom_sessions/loom_sessions.dart';
 import 'package:loom_storage/loom_storage.dart';
 import 'package:loom_transport/loom_transport.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../onboarding/application/onboarding_controller.dart';
-import '../../security/application/experimental_ratchet.dart';
-import 'android_state_protector.dart';
 import 'authorized_device_direct_transport_signer.dart';
 import 'legacy_dtn_custody.dart';
 import 'legacy_dtn_delivery_intake.dart';
@@ -837,34 +833,12 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
   }
 
   static Future<String> _defaultSupportPath() async =>
-      (await LoomAccountWorkspace.active()).path;
+      (await getApplicationSupportDirectory()).path;
 
-  static LoomNearbyDtnRuntimePort _defaultRuntimeFactory(String path) {
-    // Ratchet v2 stays fail-closed unless the user explicitly opted in AND the
-    // platform supplies the native provider library + a state protector.
-    LoomSessionCryptoProvider? reviewedSessionProvider;
-    LoomSessionStateProtector? stateProtector;
-    if (LoomExperimentalRatchet.ratchetV2Enabled) {
-      try {
-        stateProtector = LoomAndroidKeystoreStateProtector();
-        reviewedSessionProvider = LoomVodozemacPocSessionProvider(
-          engine: LoomVodozemacPocFfiEngine.openFromEnvironment(),
-          stateProtector: stateProtector,
-        );
-      } catch (_) {
-        // Library unavailable on this platform: keep the gate closed.
-        reviewedSessionProvider = null;
-        stateProtector = null;
-      }
-    }
-    return _V2NearbyDtnRuntimePort(
-      LoomV2MessagingRuntime.open(
-        applicationSupportPath: path,
-        reviewedSessionProvider: reviewedSessionProvider,
-        stateProtector: stateProtector,
-      ),
-    );
-  }
+  static LoomNearbyDtnRuntimePort _defaultRuntimeFactory(String path) =>
+      _V2NearbyDtnRuntimePort(
+        LoomV2MessagingRuntime.open(applicationSupportPath: path),
+      );
 
   static Future<LoomDirectTransportSigner> _defaultSignerFactory(
     String identityId,

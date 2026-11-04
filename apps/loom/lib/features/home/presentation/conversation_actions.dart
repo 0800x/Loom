@@ -11,7 +11,6 @@ class _ConversationDrafts {
   }
 
   final replies = <String, LoomVisibleMessage>{};
-  final editing = <String, LoomVisibleMessage>{};
   TextEditingValue? operator [](String? id) => _text[id];
   void operator []=(String id, TextEditingValue value) => _text[id] = value;
   TextEditingValue? remove(String id) => _text.remove(id);
@@ -79,12 +78,14 @@ Future<String?> _conversationContextMenu(
       Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
   final origin = LoomOrigin.of(context) ?? const Rect.fromLTWH(16, 16, 1, 1);
   final point = overlay.globalToLocal(position ?? origin.topRight);
-  return showLoomAnchoredMenu<String>(
+  return showMenu<String>(
     context: context,
     position: RelativeRect.fromRect(
       point & const Size(1, 1),
       Offset.zero & overlay.size,
     ),
+    color: context.loom.surfaceElevated,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     items: [
       for (final item in [
         (
@@ -263,14 +264,10 @@ Future<models.LoomCallKind?> _chooseConversationCall(
   ),
 );
 
-const _quickReactions = <String>['👍', '👎', '❤️', '😂', '😮', '😢', '🙏'];
-
 Future<String?> _chooseMessageAction(
   BuildContext context,
   LoomVisibleMessage message, {
   Rect? origin,
-  required bool canDeleteForEveryone,
-  required bool canEdit,
 }) => showLoomActionSheet<String>(
   context: context,
   title: tr(context, 'Message', 'پیام'),
@@ -290,83 +287,30 @@ Future<String?> _chooseMessageAction(
         child: Text(message.text, maxLines: 3, overflow: TextOverflow.ellipsis),
       ),
       const SizedBox(height: 8),
-      if (message.readable && !canEdit)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            for (final emoji in _quickReactions)
-              InkWell(
-                borderRadius: BorderRadius.circular(24),
-                onTap: () => Navigator.pop(context, 'react:$emoji'),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 6,
-                  ),
-                  child: Text(emoji, style: const TextStyle(fontSize: 24)),
-                ),
-              ),
-          ],
-        ),
-      const SizedBox(height: 4),
-      if (message.readable) ...[
-        LoomPressable(
-          child: ListTile(
-            leading: const Icon(LoomIcons.reply_rounded),
-            title: Text(tr(context, 'Reply', 'پاسخ')),
-            onTap: () => Navigator.pop(context, 'reply'),
-          ),
-        ),
-        LoomPressable(
-          child: ListTile(
-            leading: const Icon(LoomIcons.ios_share_rounded),
-            title: Text(tr(context, 'Forward', 'فوروارد')),
-            onTap: () => Navigator.pop(context, 'forward'),
-          ),
-        ),
-      ],
-      if (canEdit)
-        LoomPressable(
-          child: ListTile(
-            leading: const Icon(LoomIcons.edit_outlined),
-            title: Text(tr(context, 'Edit', 'ویرایش')),
-            onTap: () => Navigator.pop(context, 'edit'),
-          ),
-        ),
-      if (canDeleteForEveryone)
-        LoomPressable(
-          child: ListTile(
-            leading: const Icon(LoomIcons.delete_outline_rounded),
-            title: Text(
-              tr(context, 'Delete for everyone', 'حذف برای همه'),
-            ),
-            onTap: () => Navigator.pop(context, 'deleteEveryone'),
-          ),
+      if (message.readable)
+        ListTile(
+          leading: const Icon(LoomIcons.reply_rounded),
+          title: Text(tr(context, 'Reply', 'پاسخ')),
+          onTap: () => Navigator.pop(context, 'reply'),
         ),
       if (message.record.protocolVersion != models.loomGroupProtocol)
-        LoomPressable(
-          child: ListTile(
-            leading: const Icon(LoomIcons.delete_outline_rounded),
-            title: Text(
-              tr(context, 'Delete from this device', 'حذف از این دستگاه'),
-            ),
-            onTap: () => Navigator.pop(context, 'delete'),
+        ListTile(
+          leading: const Icon(LoomIcons.delete_outline_rounded),
+          title: Text(
+            tr(context, 'Delete from this device', 'حذف از این دستگاه'),
           ),
+          onTap: () => Navigator.pop(context, 'delete'),
         ),
       if (message.readable && message.content.text.isNotEmpty) ...[
-        LoomPressable(
-          child: ListTile(
-            leading: const Icon(LoomIcons.copy_outlined),
-            title: Text(tr(context, 'Copy', 'کپی')),
-            onTap: () => Navigator.pop(context, 'copy'),
-          ),
+        ListTile(
+          leading: const Icon(LoomIcons.copy_outlined),
+          title: Text(tr(context, 'Copy', 'کپی')),
+          onTap: () => Navigator.pop(context, 'copy'),
         ),
-        LoomPressable(
-          child: ListTile(
-            leading: const Icon(LoomIcons.text_fields),
-            title: Text(tr(context, 'Select text', 'انتخاب متن')),
-            onTap: () => Navigator.pop(context, 'select'),
-          ),
+        ListTile(
+          leading: const Icon(LoomIcons.text_fields),
+          title: Text(tr(context, 'Select text', 'انتخاب متن')),
+          onTap: () => Navigator.pop(context, 'select'),
         ),
       ],
     ],
@@ -457,199 +401,3 @@ Future<bool> _confirmLocalDeletion(
       ),
     ) ??
     false;
-
-/// Conversation picker for forwarding. Returns the target conversation id or
-/// null when cancelled. Includes Saved Messages, direct chats and groups.
-Future<String?> _forwardMessagePicker(
-  BuildContext context,
-  LoomMessagingSessionController messaging,
-) {
-  final queryFocus = FocusNode();
-  var filter = '';
-  return showLoomActionSheet<String>(
-    context: context,
-    title: tr(context, 'Forward to', 'فوروارد به'),
-    builder: (sheetContext) => StatefulBuilder(
-      builder: (sheetContext, setSheetState) {
-        final query = filter.trim().toLowerCase();
-        final targets = messaging.conversations
-            .where(
-              (conversation) =>
-                  !messaging.isPeerBlocked(conversation.peerAddress) &&
-                  (query.isEmpty ||
-                      (conversation.title ?? '').toLowerCase().contains(query)),
-            )
-            .toList(growable: false);
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              autofocus: true,
-              focusNode: queryFocus,
-              onChanged: (value) => setSheetState(() => filter = value),
-              decoration: InputDecoration(
-                prefixIcon: const Icon(LoomIcons.search_rounded),
-                hintText: tr(context, 'Search', 'جستجو'),
-                isDense: true,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Flexible(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.heightOf(sheetContext) * 0.42,
-                ),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: targets.length,
-                  itemBuilder: (itemContext, index) {
-                    final conversation = targets[index];
-                    return ListTile(
-                      leading: Icon(
-                        conversation.kind == models.LoomConversationKind.group
-                            ? LoomIcons.groups_outlined
-                            : conversation.kind ==
-                                  models.LoomConversationKind.self
-                            ? LoomIcons.bookmark_border_rounded
-                            : LoomIcons.person_outline,
-                      ),
-                      title: Text(
-                        conversation.title ??
-                            tr(context, 'Conversation', 'گفتگو'),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      onTap: () => Navigator.pop(sheetContext, conversation.id),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    ),
-  ).whenComplete(queryFocus.dispose);
-}
-
-/// Compact reaction chips under a bubble. Each chip shows the emoji and the
-/// number of senders; the caller's own reaction is highlighted.
-class _MessageReactionChips extends StatelessWidget {
-  const _MessageReactionChips({
-    required this.reactions,
-    required this.ownAddress,
-    this.onTap,
-  });
-
-  final List<LoomReactionEntry> reactions;
-  final String? ownAddress;
-  final ValueChanged<String>? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final own = ownAddress?.toLowerCase();
-    final grouped = <String, int>{};
-    var ownEmoji = '';
-    for (final reaction in reactions) {
-      grouped[reaction.emoji] = (grouped[reaction.emoji] ?? 0) + 1;
-      if (own != null && reaction.sender.toLowerCase() == own) {
-        ownEmoji = reaction.emoji;
-      }
-    }
-    final entries = grouped.entries.toList(growable: false);
-    return Padding(
-      padding: const EdgeInsets.only(top: 3, bottom: 2),
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 4,
-        children: [
-          for (final entry in entries)
-            InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: onTap == null ? null : () => onTap!(entry.key),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 3,
-                ),
-                decoration: BoxDecoration(
-                  color: entry.key == ownEmoji
-                      ? context.loom.primary.withValues(alpha: .18)
-                      : context.loom.surfaceElevated,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: entry.key == ownEmoji
-                        ? context.loom.primary
-                        : context.loom.surfaceMuted,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(entry.key, style: const TextStyle(fontSize: 14)),
-                    if (entry.value > 1) ...[
-                      const SizedBox(width: 3),
-                      Text(
-                        '${entry.value}',
-                        style: Theme.of(context).textTheme.labelSmall,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Typing row shown above the composer while peers are actively typing.
-class _TypingIndicator extends StatelessWidget {
-  const _TypingIndicator({required this.peers});
-
-  final Map<String, DateTime> peers;
-
-  @override
-  Widget build(BuildContext context) {
-    if (peers.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    final names = peers.keys.toList(growable: false);
-    final label = names.length == 1
-        ? tr(context, '${names.first} is typing…', '${names.first} در حال نوشتن…')
-        : names.length == 2
-        ? tr(
-            context,
-            'Two people are typing…',
-            'دو نفر در حال نوشتن…',
-          )
-        : tr(context, 'Several people are typing…', 'چند نفر در حال نوشتن…');
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
-      child: Row(
-        children: [
-          SizedBox.square(
-            dimension: 14,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: context.loom.primary,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.labelSmall?.copyWith(color: context.loom.textMuted),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

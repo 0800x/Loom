@@ -449,7 +449,7 @@ packages:
     source: hosted
     version: "2.0.35"
   flutter_secure_storage:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: flutter_secure_storage
       sha256: "7686b1d6a29985dcbb808c59518226e603e3bfa7c0ddfd1a0d00e4cda77c868e"
@@ -891,13 +891,6 @@ packages:
       relative: true
     source: path
     version: "0.8.0"
-  loom_session_vodozemac_poc:
-    dependency: "direct main"
-    description:
-      path: "../../packages/loom_session_vodozemac_poc"
-      relative: true
-    source: path
-    version: "0.1.0"
   loom_sessions:
     dependency: "direct main"
     description:
@@ -1379,22 +1372,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.2"
-  sqlcipher_flutter_libs:
-    dependency: "direct main"
-    description:
-      name: sqlcipher_flutter_libs
-      sha256: dd1fcc74d5baf3c36ad53e2652b2d06c9f8747494a3ccde0076e88b159dfe622
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.6.8"
   sqlite3:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: sqlite3
       sha256: "3145bd74dcdb4fd6f5c6dda4d4e4490a8087d7f286a14dee5d37087290f0f8a2"
       url: "https://pub.dev"
     source: hosted
     version: "2.9.4"
+  sqlite3_flutter_libs:
+    dependency: "direct main"
+    description:
+      name: sqlite3_flutter_libs
+      sha256: eeb9e3a45207649076b808f8a5a74d68770d0b7f26ccef6d5f43106eee5375ad
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.42"
   stack_trace:
     dependency: transitive
     description:

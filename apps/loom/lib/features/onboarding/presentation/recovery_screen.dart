@@ -6,9 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../app/loom_strings.dart';
-import 'backup_password_dialog.dart';
 import '../application/onboarding_controller.dart';
-import 'onboarding_chrome.dart';
+import 'setup_scaffold.dart';
 import '../application/recovery_backup.dart';
 import '../application/recovery_file_export.dart';
 import '../application/recovery_backup_reminder.dart';
@@ -118,28 +117,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     Uint8List? bytes;
     try {
       final backup = LoomRecoveryBackup(words: pending.recovery.mnemonicWords);
-      var payload = pdf ? backup.printablePdf() : backup.fileBytes;
-      if (!pdf) {
-        // The portable file is encrypted by default; the user may still opt
-        // into a paper-style plain export explicitly.
-        if (!mounted) return;
-        final choice = await showLoomBackupExportPasswordDialog(context);
-        if (!isCurrent()) return;
-        if (choice == null || choice.cancelled) {
-          setState(() {
-            exportMessage = tr(
-              context,
-              'Saving was cancelled. You can try again or write the words down.',
-              'ذخیره لغو شد. دوباره امتحان کن یا واژه‌ها را یادداشت کن.',
-            );
-          });
-          return;
-        }
-        if (choice.isProtected) {
-          payload = await backup.encryptedFileBytes(choice.password!);
-        }
-      }
-      bytes = payload;
+      bytes = pdf ? backup.printablePdf() : backup.fileBytes;
       _activeExportBytes = bytes;
       final saved = await saveLoomRecoveryFile(
         bytes,
@@ -279,11 +257,10 @@ class _RecoveryScreenState extends State<RecoveryScreen>
 
   @override
   Widget build(BuildContext context) {
-    final onboarding = LoomOnboardingScope.of(context);
-    final pending = onboarding.pendingIdentity;
+    final pending = LoomOnboardingScope.of(context).pendingIdentity;
     final p = context.loom;
     if (pending == null) {
-      return LoomOnboardingShell(
+      return LoomSetupScaffold(
         step: 3,
         title: tr(
           context,
@@ -295,13 +272,25 @@ class _RecoveryScreenState extends State<RecoveryScreen>
           'Your backup will be created in the next step.',
           'پشتیبان در مرحلهٔ بعد ساخته می‌شود.',
         ),
-        ctaLabel: tr(context, 'Create profile', 'ساخت پروفایل'),
-        onCta: () => Navigator.pushReplacementNamed(context, '/identity'),
-        child: const SizedBox.shrink(),
+        children: [
+          FilledButton(
+            onPressed: () =>
+                Navigator.pushReplacementNamed(context, '/identity'),
+            child: Text(tr(context, 'Create profile', 'ساخت پروفایل')),
+          ),
+        ],
       );
     }
     final words = pending.recovery.mnemonicWords;
-    return LoomOnboardingShell(
+    return LoomSetupScaffold(
+      actions: FilledButton(
+        onPressed: exporting || submitting
+            ? null
+            : () => _finish(defer: !(backupSaved || acknowledged)),
+        child: submitting
+            ? const LoomBusyIndicator()
+            : Text(tr(context, 'Finish setup', 'تکمیل راه‌اندازی')),
+      ),
       step: 3,
       canPop: !exporting && !submitting,
       title: tr(context, 'Keep a way back', 'راه برگشت را نگه دار'),
@@ -310,15 +299,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
         'Save a recovery file or printable QR. You can also keep the words as a manual backup.',
         'فایل پشتیبان یا QR چاپی ذخیره کن. یادداشت واژه‌ها هم به‌عنوان روش دستی در دسترس است.',
       ),
-      error: onboarding.errorMessage,
-      ctaLabel: tr(context, 'Finish setup', 'تکمیل راه‌اندازی'),
-      ctaBusy: submitting,
-      onCta: exporting || submitting
-          ? null
-          : () => _finish(defer: !(backupSaved || acknowledged)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      children: [
         LoomGlassSurface(
           strength: LoomGlassStrength.weak,
           blur: false,
@@ -379,35 +360,68 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                   ),
                 )
               else
-                _RecoveryWordGrid(words: words),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final columns =
+                          MediaQuery.textScalerOf(context).scale(14) > 22
+                          ? 1
+                          : constraints.maxWidth >= 420
+                          ? 3
+                          : 2;
+                      final width =
+                          (constraints.maxWidth - 8 * (columns - 1)) / columns;
+                      return Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (var i = 0; i < words.length; i++)
+                            Container(
+                              width: width,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: p.surfaceMuted,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '${i + 1}. ${words[i]}',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
             ],
           ),
         ),
         if (revealed) ...[
-          const SizedBox(height: LoomSpacing.md),
-          Center(
-            child: LoomOnboardingQrFrame(
-              child: Container(
-                padding: const EdgeInsets.all(LoomSpacing.sm),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(LoomRadii.control),
+          const SizedBox(height: 16),
+          Container(
+            alignment: Alignment.center,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: ExcludeSemantics(
+              child: QrImageView(
+                data: LoomRecoveryBackup(words: words).encoded,
+                size: 232,
+                backgroundColor: Colors.white,
+                errorCorrectionLevel: QrErrorCorrectLevel.M,
+                eyeStyle: const QrEyeStyle(
+                  eyeShape: QrEyeShape.square,
+                  color: Colors.black,
                 ),
-                child: ExcludeSemantics(
-                  child: QrImageView(
-                    data: LoomRecoveryBackup(words: words).encoded,
-                    size: 232,
-                    backgroundColor: Colors.white,
-                    errorCorrectionLevel: QrErrorCorrectLevel.M,
-                    eyeStyle: const QrEyeStyle(
-                      eyeShape: QrEyeShape.square,
-                      color: Colors.black,
-                    ),
-                    dataModuleStyle: const QrDataModuleStyle(
-                      dataModuleShape: QrDataModuleShape.square,
-                      color: Colors.black,
-                    ),
-                  ),
+                dataModuleStyle: const QrDataModuleStyle(
+                  dataModuleShape: QrDataModuleShape.square,
+                  color: Colors.black,
                 ),
               ),
             ),
@@ -432,36 +446,11 @@ class _RecoveryScreenState extends State<RecoveryScreen>
             padding: EdgeInsets.all(12),
             child: Center(child: LoomBusyIndicator()),
           ),
-        if (exportMessage != null) ...[
-          const SizedBox(height: LoomSpacing.xs),
-          Semantics(
-            liveRegion: true,
-            child: LoomGlassSurface(
-              blur: false,
-              radius: LoomRadii.control,
-              padding: const EdgeInsets.symmetric(
-                horizontal: LoomSpacing.md,
-                vertical: LoomSpacing.sm,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    LoomIcons.info_outline_rounded,
-                    size: LoomIconSize.compact,
-                    color: p.info,
-                  ),
-                  const SizedBox(width: LoomSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      exportMessage!,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        if (exportMessage != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Semantics(liveRegion: true, child: Text(exportMessage!)),
           ),
-        ],
         const SizedBox(height: 20),
         Text(
           tr(
@@ -509,77 +498,12 @@ class _RecoveryScreenState extends State<RecoveryScreen>
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Numbered word cards in a responsive grid (one column under large text,
-/// 2–4 columns by width) so every word stays legible while transcribing.
-class _RecoveryWordGrid extends StatelessWidget {
-  const _RecoveryWordGrid({required this.words});
-
-  final List<String> words;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.loom;
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth;
-          final largeText = MediaQuery.textScalerOf(context).scale(14) > 22;
-          final columns =
-              largeText ? 1 : width >= 380 ? 4 : width >= 320 ? 3 : 2;
-          final cardWidth =
-              (width - LoomSpacing.xs * (columns - 1)) / columns;
-          return Wrap(
-            spacing: LoomSpacing.xs,
-            runSpacing: LoomSpacing.xs,
-            children: [
-              for (var i = 0; i < words.length; i++)
-                SizedBox(
-                  width: cardWidth,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: p.surfaceMuted,
-                      borderRadius: BorderRadius.circular(LoomRadii.compact),
-                      border: Border.all(color: p.border),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          '${i + 1}.',
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: p.primary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            words[i],
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          );
-        },
-      ),
+        if (LoomOnboardingScope.of(context).errorMessage != null)
+          Text(
+            LoomOnboardingScope.of(context).errorMessage!,
+            style: TextStyle(color: p.critical),
+          ),
+      ],
     );
   }
 }

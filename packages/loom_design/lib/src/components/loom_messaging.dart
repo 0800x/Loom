@@ -71,8 +71,7 @@ class LoomChatRow extends StatelessWidget {
                     onTapWithOrigin!(LoomOrigin.of(avatarKey.currentContext))
                 : onTap,
             borderRadius: radius,
-            // Selection surface animates per row: repaint scoped to the row.
-            child: RepaintBoundary(child: AnimatedContainer(
+            child: AnimatedContainer(
               duration: LoomAccessibility.fromContext(context).reduceMotion
                   ? Duration.zero
                   : LoomMotion.component,
@@ -91,126 +90,124 @@ class LoomChatRow extends StatelessWidget {
                   width: LoomBorders.hairline,
                 ),
               ),
-              child: RepaintBoundary(
-                child: Row(
-                  children: [
-                    KeyedSubtree(
-                      key: avatarKey,
-                      child:
-                          avatar ?? LoomAvatar(label: name, presence: presence),
-                    ),
-                    const SizedBox(width: LoomSpacing.sm),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                ),
-                              ),
-                              if (pinned) ...[
-                                Icon(
-                                  LoomIcons.push_pin_outlined,
-                                  size: LoomIconSize.micro,
-                                  color: p.textMuted,
-                                ),
-                                const SizedBox(width: LoomSpacing.xxs),
-                              ],
-                              Text(
-                                time,
+              child: Row(
+                children: [
+                  KeyedSubtree(
+                    key: avatarKey,
+                    child:
+                        avatar ?? LoomAvatar(label: name, presence: presence),
+                  ),
+                  const SizedBox(width: LoomSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context)
                                     .textTheme
-                                    .labelSmall
-                                    ?.copyWith(color: p.textMuted),
+                                    .bodyMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
                               ),
+                            ),
+                            if (pinned) ...[
+                              Icon(
+                                LoomIcons.push_pin_outlined,
+                                size: LoomIconSize.micro,
+                                color: p.textMuted,
+                              ),
+                              const SizedBox(width: LoomSpacing.xxs),
                             ],
-                          ),
-                          const SizedBox(height: LoomSpacing.xxs),
-                          Row(
-                            children: [
-                              if (delivery != LoomDeliveryState.none) ...[
-                                _DeliveryIcon(state: delivery),
-                                const SizedBox(width: LoomSpacing.xxs),
-                              ],
-                              if (draft) ...[
-                                Text(
-                                  draftLabel,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(
-                                        color: p.critical,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                ),
-                                const SizedBox(width: LoomSpacing.xxs),
-                              ],
-                              Expanded(
-                                child: Text(
-                                  typing ? typingLabel : preview,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(color: previewColor),
-                                ),
-                              ),
-                              if (muted) ...[
-                                const SizedBox(width: LoomSpacing.xs),
-                                Icon(
-                                  LoomIcons.volume_off_outlined,
-                                  size: LoomIconSize.compact,
-                                  color: p.textMuted,
-                                ),
-                              ],
-                              if (unread > 0) ...[
-                                const SizedBox(width: LoomSpacing.xs),
-                                Container(
-                                  constraints: const BoxConstraints(
-                                    minWidth: LoomIconSize.standard,
-                                    minHeight: LoomIconSize.standard,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: LoomSpacing.xs,
-                                  ),
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: muted ? p.surfaceMuted : p.primary,
-                                    borderRadius: BorderRadius.circular(
-                                      LoomRadii.pill,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    unread > 99 ? '99+' : '$unread',
-                                    style: TextStyle(
-                                      color:
-                                          muted ? p.textSecondary : p.onPrimary,
-                                      fontSize: LoomTypeScale.labelSmall,
+                            Text(
+                              time,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(color: p.textMuted),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: LoomSpacing.xxs),
+                        Row(
+                          children: [
+                            if (delivery != LoomDeliveryState.none) ...[
+                              _DeliveryIcon(state: delivery),
+                              const SizedBox(width: LoomSpacing.xxs),
+                            ],
+                            if (draft) ...[
+                              Text(
+                                draftLabel,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: p.critical,
                                       fontWeight: FontWeight.w700,
                                     ),
+                              ),
+                              const SizedBox(width: LoomSpacing.xxs),
+                            ],
+                            Expanded(
+                              child: Text(
+                                typing ? typingLabel : preview,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: previewColor),
+                              ),
+                            ),
+                            if (muted) ...[
+                              const SizedBox(width: LoomSpacing.xs),
+                              Icon(
+                                LoomIcons.volume_off_outlined,
+                                size: LoomIconSize.compact,
+                                color: p.textMuted,
+                              ),
+                            ],
+                            if (unread > 0) ...[
+                              const SizedBox(width: LoomSpacing.xs),
+                              Container(
+                                constraints: const BoxConstraints(
+                                  minWidth: LoomIconSize.standard,
+                                  minHeight: LoomIconSize.standard,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: LoomSpacing.xs,
+                                ),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: muted ? p.surfaceMuted : p.primary,
+                                  borderRadius: BorderRadius.circular(
+                                    LoomRadii.pill,
                                   ),
                                 ),
-                              ],
+                                child: Text(
+                                  unread > 99 ? '99+' : '$unread',
+                                  style: TextStyle(
+                                    color:
+                                        muted ? p.textSecondary : p.onPrimary,
+                                    fontSize: LoomTypeScale.labelSmall,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
                             ],
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            )),
+            ),
           ),
         ),
       ),
@@ -276,9 +273,6 @@ class LoomMessageBubble extends StatelessWidget {
     this.onLinkTap,
     this.grouped = false,
     this.highlighted = false,
-    this.banner,
-    this.footer,
-    this.editedLabel,
     super.key,
   });
 
@@ -298,16 +292,6 @@ class LoomMessageBubble extends StatelessWidget {
   final String? quotedAuthor;
   final Widget? content;
   final LoomMessagePresentation presentation;
-
-  /// Optional line rendered above the quote/text (e.g. a forwarded marker).
-  final Widget? banner;
-
-  /// Optional row rendered BELOW the bubble (e.g. reaction chips), aligned
-  /// with the bubble side.
-  final Widget? footer;
-
-  /// Localized "edited" marker shown next to the timestamp.
-  final String? editedLabel;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -365,14 +349,6 @@ class LoomMessageBubble extends StatelessWidget {
                     size: 12,
                     color: secondary,
                   ),
-                ),
-              if (editedLabel != null)
-                Text(
-                  editedLabel!,
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelSmall
-                      ?.copyWith(color: secondary),
                 ),
               Text(
                 receipt?.time ?? time,
@@ -472,7 +448,6 @@ class LoomMessageBubble extends StatelessWidget {
               spacing: 8,
               runSpacing: 4,
               children: [
-                if (banner != null) banner!,
                 if (quote != null) quote,
                 if (text.isNotEmpty) messageText,
                 metadata,
@@ -495,14 +470,6 @@ class LoomMessageBubble extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (banner != null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
-                      child: DefaultTextStyle.merge(
-                        style: Theme.of(context).textTheme.labelSmall,
-                        child: banner!,
-                      ),
-                    ),
                   if (quote != null)
                     Padding(padding: const EdgeInsets.all(8), child: quote),
                   if (overlay)
@@ -551,19 +518,13 @@ class LoomMessageBubble extends StatelessWidget {
           }
           return Align(
             alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: mine
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
-              children: [
-                Semantics(
-                  customSemanticsActions: onReply == null
-                      ? null
-                      : {CustomSemanticsAction(label: replyLabel): onReply!},
-                  child: LoomSwipeToReply(
-                    onReply: onReply,
-                    child: GestureDetector(
+            child: Semantics(
+              customSemanticsActions: onReply == null
+                  ? null
+                  : {CustomSemanticsAction(label: replyLabel): onReply!},
+              child: LoomSwipeToReply(
+                onReply: onReply,
+                child: GestureDetector(
                   onLongPress: onActions,
                   onSecondaryTap: onActions,
                   child: Container(
@@ -612,9 +573,6 @@ class LoomMessageBubble extends StatelessWidget {
                   ),
                 ),
               ),
-                ),
-                if (footer != null) footer!,
-              ],
             ),
           );
         },
@@ -734,7 +692,7 @@ class _LoomSwipeToReplyState extends State<LoomSwipeToReply> {
                   : const Duration(milliseconds: 160),
               curve: Curves.easeOut,
               transform: Matrix4.translationValues(_offset * _direction, 0, 0),
-              child: RepaintBoundary(child: widget.child),
+              child: widget.child,
             ),
           ],
         ),

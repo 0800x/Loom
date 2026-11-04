@@ -167,10 +167,10 @@ class LoomSurfaceRoute<T> extends PopupRoute<T> {
       _barrierColor ?? const Color(0x66000000);
   @override
   Duration get transitionDuration =>
-      reducedMotion ? Duration.zero : const Duration(milliseconds: 280);
+      reducedMotion ? Duration.zero : const Duration(milliseconds: 340);
   @override
   Duration get reverseTransitionDuration =>
-      reducedMotion ? Duration.zero : const Duration(milliseconds: 180);
+      reducedMotion ? Duration.zero : const Duration(milliseconds: 260);
   double _dragStart = 1;
   final _interactive = ValueNotifier(false);
   void _start(DragStartDetails _) {

@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import '../../../app/loom_strings.dart';
 import '../application/device_link_service.dart';
 import '../application/onboarding_controller.dart';
-import 'onboarding_chrome.dart';
 import 'onboarding_flow.dart';
+import 'setup_scaffold.dart';
 
 class LoomSignInScreen extends StatefulWidget {
   const LoomSignInScreen({this.localIdentityProbe, super.key});
@@ -178,13 +178,15 @@ class _LoomSignInScreenState extends State<LoomSignInScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = LoomOnboardingScope.of(context);
+    final palette = context.loom;
     final busy =
         submitting || controller.status == LoomOnboardingStatus.registering;
     final lockedNode =
         controller.nodes.selectedNodeVerified &&
         controller.nodes.selectedNode != null;
 
-    return LoomOnboardingShell(
+    return LoomSetupScaffold(
+      step: null,
       canPop: !busy,
       title: tr(context, 'Welcome back', 'خوش برگشتی'),
       subtitle: checkingIdentity
@@ -200,20 +202,27 @@ class _LoomSignInScreenState extends State<LoomSignInScreen> {
               'Sign in, then securely link this device or restore your recovery words.',
               'وارد شوید و دستگاه را امن متصل کنید یا از واژه‌های بازیابی استفاده کنید.',
             ),
-      error: localError ?? controller.errorMessage,
-      ctaLabel: !hasLocalIdentity && !checkingIdentity
-          ? tr(context, 'Sign in and link device', 'ورود و اتصال دستگاه')
-          : tr(context, 'Sign in', 'ورود'),
-      ctaIcon: busy
-          ? null
-          : (hasLocalIdentity
-          ? LoomIcons.arrow_forward_rounded
-          : LoomIcons.qr_code_rounded),
-      onCta: busy || checkingIdentity || identityCheckFailed ? null : _signIn,
-      ctaBusy: busy,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      actions: FilledButton.icon(
+        onPressed: busy || checkingIdentity || identityCheckFailed
+            ? null
+            : _signIn,
+        icon: busy
+            ? const SizedBox.square(
+                dimension: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(
+                hasLocalIdentity
+                    ? LoomIcons.arrow_forward_rounded
+                    : LoomIcons.qr_code_rounded,
+              ),
+        label: Text(
+          !hasLocalIdentity && !checkingIdentity
+              ? tr(context, 'Sign in and link device', 'ورود و اتصال دستگاه')
+              : tr(context, 'Sign in', 'ورود'),
+        ),
+      ),
+      children: [
         LoomGlassSurface(
           blur: false,
           radius: LoomRadii.surface,
@@ -321,6 +330,15 @@ class _LoomSignInScreenState extends State<LoomSignInScreen> {
             ),
           ),
         ),
+        if ((localError ?? controller.errorMessage) != null) ...[
+          const SizedBox(height: LoomSpacing.sm),
+          Text(
+            localError ?? controller.errorMessage!,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: palette.critical),
+          ),
+        ],
         if (identityCheckFailed)
           TextButton.icon(
             onPressed: busy || checkingIdentity
@@ -331,6 +349,8 @@ class _LoomSignInScreenState extends State<LoomSignInScreen> {
               tr(context, 'Retry device check', 'بررسی دوبارهٔ دستگاه'),
             ),
           ),
+        const SizedBox(height: LoomSpacing.lg),
+
         const SizedBox(height: LoomSpacing.sm),
         OutlinedButton.icon(
           onPressed: busy
@@ -358,8 +378,7 @@ class _LoomSignInScreenState extends State<LoomSignInScreen> {
             ),
           ),
         ],
-        ],
-      ),
+      ],
     );
   }
 }
