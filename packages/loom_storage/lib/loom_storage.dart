@@ -1,5 +1,6 @@
 export 'src/contact_store.dart';
 export 'src/messaging_store.dart';
+export 'src/secure_sqlite.dart';
 export 'src/local_messaging_cleanup.dart';
 export 'src/security_store.dart';
 export 'src/prekey_trust_resolver.dart';

@@ -7,7 +7,7 @@
 
 Encrypted messaging · Self-hosted nodes · Android Nearby
 
-`0.1.0-alpha.1`
+`0.3.0-alpha.1`
 
 <details>
 <summary>Builds and project activity</summary>
@@ -33,7 +33,7 @@ identity, and keep your conversations in one app. Messages can travel through
 verified nodes, a local network, or compatible Android devices encountered along
 the way.
 
-Loom 0.2.0 is an alpha release for testing. Native media, background behavior and Nearby
+Loom 0.3.0 is an alpha release for testing. Native media, background behavior and Nearby
 still need device testing. Keep a recovery backup; the project has not received
 an independent security audit.
 
@@ -142,8 +142,8 @@ The Home Node downloads and verifies those prebuilt outputs; it does not compile
 them locally.
 
 ```bash
-curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh https://github.com/0800x/Loom/releases/download/v0.2.0-alpha.1/loom-install.sh &&
-curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh.sha256 https://github.com/0800x/Loom/releases/download/v0.2.0-alpha.1/loom-install.sh.sha256 &&
+curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh https://github.com/0800x/Loom/releases/download/v0.3.0-alpha.1/loom-install.sh &&
+curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh.sha256 https://github.com/0800x/Loom/releases/download/v0.3.0-alpha.1/loom-install.sh.sha256 &&
 (cd /tmp && sha256sum --check loom-install.sh.sha256) &&
 bash /tmp/loom-install.sh --wizard
 ```

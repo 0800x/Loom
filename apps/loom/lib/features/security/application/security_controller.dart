@@ -1,10 +1,10 @@
 import 'dart:io';
+import '../../accounts/application/account_workspace.dart';
 
 import 'package:loom_crypto_bridge/loom_crypto_bridge.dart';
 import 'package:loom_models/loom_models.dart';
 import 'package:loom_storage/loom_storage.dart';
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
 
 class LoomSecurityController extends ChangeNotifier {
   LoomSecurityController({
@@ -43,7 +43,7 @@ class LoomSecurityController extends ChangeNotifier {
         recentEvents = const <LoomSecurityEvent>[];
         return;
       }
-      final directory = await getApplicationSupportDirectory();
+      final directory = await LoomAccountWorkspace.active();
       _store ??= LoomSecurityStore.openFile(
         '${directory.path}${Platform.pathSeparator}loom_security.sqlite3',
       );

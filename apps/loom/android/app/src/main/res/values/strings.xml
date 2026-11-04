@@ -1,2 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources><string name="app_name">Loom</string></resources>
+<resources>
+    <string name="app_name">Loom</string>
+    <string name="loom_quick_reply">Reply</string>
+</resources>

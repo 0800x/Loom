@@ -1,4 +1,5 @@
 export 'loom_brand.dart';
+export 'loom_anchored_menu.dart';
 export 'loom_action_sheet.dart';
 export 'loom_buttons.dart';
 export 'loom_chat_backdrop.dart';

@@ -38,6 +38,7 @@ class LoomMessageNotificationBridge {
   Future<void> initialize(
     void Function(String) onOpen, {
     void Function(bool granted)? onPermissionResult,
+    void Function(String conversationId, String text)? onQuickReply,
   }) async {
     channel.setMethodCallHandler((call) async {
       if (call.method == 'openInbox') onOpen('');
@@ -46,6 +47,14 @@ class LoomMessageNotificationBridge {
       }
       if (call.method == 'permissionResult') {
         onPermissionResult?.call(call.arguments == true);
+      }
+      if (call.method == 'quickReply' && call.arguments is Map) {
+        final args = call.arguments as Map;
+        final conversationId = args['conversationId'];
+        final text = args['text'];
+        if (conversationId is String && text is String) {
+          onQuickReply?.call(conversationId, text);
+        }
       }
     });
     try {
@@ -93,13 +102,18 @@ class LoomMessageNotifications with WidgetsBindingObserver {
     LoomMessageNotificationBridge? bridge,
     LoomMessageNotificationPolicy? policy,
     void Function(bool granted)? onPermissionResult,
+    void Function(String conversationId, String text)? onQuickReply,
   }) : bridge = bridge ?? LoomMessageNotificationBridge(),
        policy = policy ?? LoomMessageNotificationPolicy() {
     WidgetsBinding.instance.addObserver(this);
     messaging.addListener(_changed);
     unawaited(
       this.bridge
-          .initialize(onOpen, onPermissionResult: onPermissionResult)
+          .initialize(
+            onOpen,
+            onPermissionResult: onPermissionResult,
+            onQuickReply: onQuickReply,
+          )
           .catchError((Object _) {}),
     );
   }

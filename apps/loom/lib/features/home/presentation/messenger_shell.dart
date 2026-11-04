@@ -27,6 +27,7 @@ import '../../media/presentation/hold_record_action.dart';
 import '../../media/application/playback_controller.dart';
 import '../../media/presentation/camera_screen.dart';
 import '../../media/presentation/circular_video_preview.dart';
+import '../../media/presentation/image_editor.dart';
 
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -52,6 +53,7 @@ import '../../calls/presentation/calls_screen.dart';
 import '../../chat_folders/application/chat_folder_controller.dart';
 import '../../chat_folders/presentation/chat_folder_labels.dart';
 import '../../messaging/application/messaging_session_controller.dart';
+import '../../messaging/application/message_fold.dart';
 import '../../onboarding/application/logout_service.dart';
 import '../../onboarding/application/onboarding_controller.dart';
 import '../../people/presentation/people_screen.dart';
@@ -1214,12 +1216,22 @@ class _ChatListState extends State<_ChatList> {
                       heading: 'Loom',
                       onSelected: (value) =>
                           Navigator.pushNamed(context, switch (value) {
+                            'search' => '/search',
                             'appearance' => '/settings/appearance',
                             'folders' => '/settings/chat-folders',
                             'server' => '/node-detail',
                             _ => '/profile',
                           }),
                       items: [
+                        (
+                          'search',
+                          LoomIcons.search_rounded,
+                          tr(
+                            context,
+                            'Search in conversations',
+                            'جستجو در گفتگوها',
+                          ),
+                        ),
                         (
                           'appearance',
                           LoomIcons.palette_outlined,
@@ -1505,6 +1517,11 @@ class _FolderConversationPage extends StatelessWidget {
             latest != null &&
             messaging?.onboarding.receipt?.address.toLowerCase() ==
                 latest.record.senderAddress.toLowerCase();
+        // Live typing state from the ephemeral protocol events; the row falls
+        // back to its preview as soon as the last peer goes quiet.
+        final typingPeers =
+            messaging?.typingPeersFor(conversation.id) ??
+            const <String, DateTime>{};
         return Builder(
           builder: (rowContext) => GestureDetector(
             onSecondaryTapDown: messaging == null
@@ -1583,7 +1600,8 @@ class _FolderConversationPage extends StatelessWidget {
             child: LoomChatRow(
               key: ValueKey(conversation.id),
               draftLabel: tr(context, 'Draft', 'پیش‌نویس'),
-              typingLabel: tr(context, 'typing…', 'در حال نوشتن…'),
+              typingLabel: typingRowLabel(context, typingPeers.keys),
+              typing: typingPeers.isNotEmpty,
               name: _conversationTitle(context, conversation),
               avatar: conversation.kind == models.LoomConversationKind.group
                   ? LoomGroupAvatar(
@@ -1738,6 +1756,8 @@ class _LiveMessageBubble extends StatelessWidget {
     this.onQuoteTap,
     this.grouped = false,
     this.highlighted = false,
+    this.fold,
+    this.onReactionTap,
   });
 
   final LoomVisibleMessage message;
@@ -1749,6 +1769,8 @@ class _LiveMessageBubble extends StatelessWidget {
   final Widget? content;
   final VoidCallback? onQuoteTap;
   final bool grouped, highlighted;
+  final LoomMessageFold? fold;
+  final ValueChanged<String>? onReactionTap;
 
   @override
   Widget build(BuildContext context) {
@@ -1771,6 +1793,28 @@ class _LiveMessageBubble extends StatelessWidget {
           ? LoomMessagePresentation.liveLocation
           : LoomMessagePresentation.location;
     }
+    final deleted = fold?.deletedForEveryone ?? false;
+    final edited = fold?.edited ?? false;
+    final editedText = fold?.editedText;
+    final displayText = deleted
+        ? ''
+        : (editedText != null && editedText.trim().isNotEmpty
+              ? editedText
+              : message.readable
+              ? message.content.text
+              : tr(
+                  context,
+                  'Security verification/decryption failed',
+                  'تأیید امنیتی/رمزگشایی ناموفق بود',
+                ));
+    final foldData = fold;
+    final footer = foldData == null || foldData.reactions.isEmpty
+        ? null
+        : _MessageReactionChips(
+            reactions: foldData.reactions,
+            ownAddress: ownAddress,
+            onTap: onReactionTap,
+          );
     return LoomMessageBubble(
       presentation: presentation,
       onLinkTap: (uri) async {
@@ -1806,18 +1850,39 @@ class _LiveMessageBubble extends StatelessWidget {
           }
         }
       },
-      text: message.readable
-          ? message.content.text
-          : tr(
-              context,
-              'Security verification/decryption failed',
-              'تأیید امنیتی/رمزگشایی ناموفق بود',
-            ),
+      text: deleted
+          ? tr(context, 'This message was deleted', 'این پیام حذف شد')
+          : displayText,
       onActions: onActions,
       onReply: onReply,
       quotedText: quotedText,
       quotedAuthor: quotedAuthor,
-      content: message.record.metadata['groupSenderLabel'] != null && !mine
+      banner: message.content.forwarded && message.readable
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  LoomIcons.ios_share_rounded,
+                  size: 12,
+                  color: context.loom.textMuted,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  tr(context, 'Forwarded', 'فوروارد شده'),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: context.loom.textMuted,
+                      ),
+                ),
+              ],
+            )
+          : null,
+      footer: footer,
+      editedLabel: edited && !deleted
+          ? tr(context, 'edited', 'ویرایش شده')
+          : null,
+      content: deleted
+          ? null
+          : message.record.metadata['groupSenderLabel'] != null && !mine
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -2504,6 +2569,32 @@ String _deliveryLabel(BuildContext context, models.LoomDeliveryState state) =>
 String _shortTime(DateTime value) {
   final local = value.toLocal();
   return '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+}
+
+/// Chat-list label for the ephemeral typing events. Names come straight from
+/// the typing map keys, which are already display labels.
+String typingRowLabel(BuildContext context, Iterable<String> peers) {
+  final all = peers.toList(growable: false);
+  if (all.isEmpty) return tr(context, 'typing…', 'در حال نوشتن…');
+  if (all.length == 1) {
+    return tr(
+      context,
+      '${all.first} is typing…',
+      '${all.first} در حال نوشتن است…',
+    );
+  }
+  if (all.length == 2) {
+    return tr(
+      context,
+      '${all.first} and ${all[1]} are typing…',
+      '${all.first} و ${all[1]} در حال نوشتن هستند…',
+    );
+  }
+  return tr(
+    context,
+    'Several people are typing…',
+    'چند نفر در حال نوشتن هستند…',
+  );
 }
 
 void _showComingSoon(BuildContext context, String message) {

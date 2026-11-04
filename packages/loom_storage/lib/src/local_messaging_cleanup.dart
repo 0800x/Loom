@@ -1,5 +1,7 @@
 import 'package:sqlite3/sqlite3.dart';
 
+import 'secure_sqlite.dart';
+
 /// Local-only maintenance helpers for the encrypted messaging database.
 ///
 /// These operations never contact a Home Node and therefore do not mean
@@ -15,7 +17,9 @@ abstract final class LoomLocalMessagingCleanup {
     if (clientId.trim().isEmpty) {
       throw ArgumentError.value(clientId, 'clientId');
     }
+    LoomSqliteEncryption.assertOpenable(databasePath);
     final db = sqlite3.open(databasePath);
+    LoomSqliteEncryption.attachKey(db);
     try {
       db.execute('PRAGMA foreign_keys = ON');
       db.execute('PRAGMA busy_timeout = 5000');
@@ -47,7 +51,9 @@ abstract final class LoomLocalMessagingCleanup {
     if (conversationId.trim().isEmpty) {
       throw ArgumentError.value(conversationId, 'conversationId');
     }
+    LoomSqliteEncryption.assertOpenable(databasePath);
     final db = sqlite3.open(databasePath);
+    LoomSqliteEncryption.attachKey(db);
     try {
       db.execute('PRAGMA foreign_keys = ON');
       db.execute('PRAGMA busy_timeout = 5000');

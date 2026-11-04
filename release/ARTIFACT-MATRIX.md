@@ -1,6 +1,6 @@
 # Artifacts and signing
 
-Artifacts use the public label `0.2.0-alpha.1`. Check the exact revision and
+Artifacts use the public label `0.3.0-alpha.1`. Check the exact revision and
 signing status in each generated build manifest and the corresponding
 [Actions run](https://github.com/0800x/Loom/actions/workflows/loom-alpha.yml).
 

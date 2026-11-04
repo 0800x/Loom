@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:loom_models/loom_models.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import 'secure_sqlite.dart';
+
 class LoomLocalConversationState {
   const LoomLocalConversationState({
     this.archived = false,
@@ -25,11 +27,15 @@ class LoomMessagingStore {
   bool _closed = false;
 
   static LoomMessagingStore openFile(String path) {
+    LoomSqliteEncryption.assertOpenable(path);
     final file = File(path);
     file.parent.createSync(recursive: true);
     final db = sqlite3.open(path);
+    // The key must be applied before WAL/other pragmas touch pages.
+    LoomSqliteEncryption.attachKey(db);
     final store = LoomMessagingStore._(db);
     store._configure();
+    LoomSqliteEncryption.verify(db);
     store._migrate();
     return store;
   }
@@ -51,9 +57,9 @@ class LoomMessagingStore {
   void _migrate() {
     final versionRow = _db.select('PRAGMA user_version').first;
     final version = versionRow.values.first as int;
-    if (version > 6) {
+    if (version > 7) {
       throw StateError(
-        'Loom database schema $version is newer than supported schema 6',
+        'Loom database schema $version is newer than supported schema 7',
       );
     }
     if (version == 0) {
@@ -205,6 +211,34 @@ class LoomMessagingStore {
         _db.execute('PRAGMA user_version = 6');
       });
     }
+    if (version < 7) {
+      transaction(() {
+        // IF NOT EXISTS keeps the step idempotent for downgraded test
+        // fixtures and legacy files that already carry partial v7 tables.
+        _db.execute(
+          'CREATE TABLE IF NOT EXISTS blocked_addresses (address TEXT PRIMARY KEY, blocked_at TEXT NOT NULL)',
+        );
+        // Device-local search index over DECRYPTED message previews. Its
+        // contents are a deliberate convenience/copy trade-off and are wiped
+        // whenever the user turns local search off.
+        _db.execute('''
+          CREATE TABLE IF NOT EXISTS message_search (
+            client_id TEXT PRIMARY KEY,
+            conversation_id TEXT NOT NULL,
+            sender_address TEXT NOT NULL,
+            body TEXT NOT NULL,
+            created_at TEXT NOT NULL
+          )
+        ''');
+        _db.execute(
+          'CREATE INDEX IF NOT EXISTS idx_message_search_body ON message_search(conversation_id, lower(body))',
+        );
+        _db.execute(
+          'CREATE TABLE IF NOT EXISTS message_search_state (conversation_id TEXT PRIMARY KEY, indexed_order INTEGER NOT NULL)',
+        );
+        _db.execute('PRAGMA user_version = 7');
+      });
+    }
   }
 
   Map<String, LoomLocalConversationState> localConversationStates() {
@@ -316,6 +350,143 @@ class LoomMessagingStore {
       _db.select('SELECT 1 FROM local_deleted_messages WHERE client_id = ?', [
         clientId,
       ]).isNotEmpty;
+
+  /// Removes an ephemeral control row (typing) WITHOUT a tombstone: replay is
+  /// already prevented by the event-id dedupe, and a later identical ephemeral
+  /// event must stay deliverable. Never use this for user-visible messages.
+  void purgeEphemeralMessage(String clientId) {
+    transaction(() {
+      _db.execute(
+        "DELETE FROM messages WHERE client_id = ? AND type = 'system'",
+        [clientId],
+      );
+    });
+  }
+
+  // --- Blocked addresses -------------------------------------------------
+
+  void blockAddress(String address) {
+    _requireOpen();
+    final normalized = address.trim().toLowerCase();
+    if (normalized.isEmpty) return;
+    _db.execute(
+      'INSERT OR IGNORE INTO blocked_addresses VALUES (?, ?)',
+      [normalized, DateTime.now().toUtc().toIso8601String()],
+    );
+  }
+
+  void unblockAddress(String address) {
+    _requireOpen();
+    _db.execute('DELETE FROM blocked_addresses WHERE address = ?', [
+      address.trim().toLowerCase(),
+    ]);
+  }
+
+  Set<String> blockedAddresses() {
+    _requireOpen();
+    return {
+      for (final row in _db.select('SELECT address FROM blocked_addresses'))
+        (row['address'] as String),
+    };
+  }
+
+  bool isAddressBlocked(String address) {
+    _requireOpen();
+    return _db
+        .select('SELECT 1 FROM blocked_addresses WHERE address = ?', [
+          address.trim().toLowerCase(),
+        ])
+        .isNotEmpty;
+  }
+
+  // --- Device-local search index -----------------------------------------
+
+  /// Stores one decrypted preview row. Body length is bounded so a hostile
+  /// document cannot bloat the index.
+  void indexSearchableMessage(
+    LoomMessageRecord record,
+    String body,
+  ) {
+    _requireOpen();
+    final text = body.trim();
+    if (text.isEmpty) return;
+    _db.execute(
+      'INSERT OR REPLACE INTO message_search VALUES (?, ?, ?, ?, ?)',
+      [
+        record.clientId,
+        record.conversationId,
+        record.senderAddress.toLowerCase(),
+        text.substring(0, text.length.clamp(0, 2000)),
+        record.createdAt.toUtc().toIso8601String(),
+      ],
+    );
+  }
+
+  /// Highest indexed message order for a conversation (0 when never indexed).
+  int searchIndexedOrder(String conversationId) {
+    _requireOpen();
+    final rows = _db.select(
+      'SELECT indexed_order FROM message_search_state WHERE conversation_id = ?',
+      [conversationId],
+    );
+    return rows.isEmpty ? 0 : rows.first['indexed_order'] as int;
+  }
+
+  void setSearchIndexedOrder(String conversationId, int order) {
+    _requireOpen();
+    _db.execute(
+      'INSERT INTO message_search_state VALUES (?, ?) '
+      'ON CONFLICT(conversation_id) DO UPDATE SET indexed_order = excluded.indexed_order '
+      'WHERE excluded.indexed_order > message_search_state.indexed_order',
+      [conversationId, order],
+    );
+  }
+
+  void clearSearchIndex() {
+    _requireOpen();
+    transaction(() {
+      _db.execute('DELETE FROM message_search');
+      _db.execute('DELETE FROM message_search_state');
+    });
+  }
+
+  /// Bounded substring search over the decrypted index. Matches are returned
+  /// newest first. The query is a literal, never a pattern.
+  List<({LoomMessageRecord record, String body})> searchMessages(
+    String query, {
+    int limit = 120,
+  }) {
+    _requireOpen();
+    final needle = query.trim().toLowerCase();
+    if (needle.isEmpty) return const [];
+    final rows = _db.select(
+      '''SELECT m.* FROM messages m
+         JOIN message_search s ON s.client_id = m.client_id
+         WHERE s.conversation_id = m.conversation_id
+           AND lower(s.body) LIKE ? ESCAPE '\\'
+         ORDER BY m.created_at DESC, m.created_order DESC LIMIT ?''',
+      ['%${_escapeLike(needle)}%', limit.clamp(1, 500)],
+    );
+    final bodies = {
+      for (final row in _db.select(
+        "SELECT client_id, body FROM message_search WHERE lower(body) LIKE ? ESCAPE '\\'",
+        ['%${_escapeLike(needle)}%'],
+      ))
+        row['client_id'] as String: row['body'] as String,
+    };
+    return rows
+        .map((row) {
+          final record = _messageFromRow(row);
+          final body = bodies[record.clientId];
+          if (body == null) return null;
+          return (record: record, body: body);
+        })
+        .whereType<({LoomMessageRecord record, String body})>()
+        .toList(growable: false);
+  }
+
+  String _escapeLike(String input) =>
+      input.replaceAll('\x5C', '\x5C\x5C').replaceAll('%', '\x5C%').replaceAll('_', '\x5C_');
 
   /// Device-only tombstones survive replay and server ID reconciliation.
   /// An already in-flight network send cannot be recalled by local deletion.
@@ -432,6 +603,7 @@ class LoomMessagingStore {
         CASE WHEN rs.conversation_id IS NULL THEN c.unread_count ELSE (
           SELECT COUNT(*) FROM messages m
           WHERE m.conversation_id = c.id AND lower(m.sender_address) != rs.own_address
+            AND m.type != 'system'
             AND NOT EXISTS (SELECT 1 FROM local_read_messages r WHERE r.client_id = m.client_id)
         ) END AS visible_unread_count
       FROM conversations c LEFT JOIN local_read_state rs ON rs.conversation_id = c.id

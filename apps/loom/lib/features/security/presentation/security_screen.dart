@@ -6,6 +6,10 @@ import 'package:loom_design/loom_design.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/loom_strings.dart';
+import '../../onboarding/presentation/backup_password_dialog.dart';
+import '../application/experimental_ratchet.dart';
+import '../application/db_encryption.dart';
+import 'package:loom_session_vodozemac_poc/loom_session_vodozemac_poc.dart';
 import '../../onboarding/application/onboarding_controller.dart';
 import '../../onboarding/application/committed_recovery_backup.dart';
 import '../../onboarding/application/recovery_backup_reminder.dart';
@@ -146,7 +150,19 @@ class _SecurityScreenState extends State<SecurityScreen> {
         expectedIdentityId: identityId,
       );
       if (!_isCurrentExport(epoch, identityId)) return;
-      _exportBytes = pdf ? backup.printablePdf() : backup.fileBytes;
+      var payload = pdf ? backup.printablePdf() : backup.fileBytes;
+      if (!pdf) {
+        // Same encrypted-by-default file export as onboarding. The PDF stays
+        // plaintext on purpose (it is printed and physically guarded).
+        if (!mounted) return;
+        final choice = await showLoomBackupExportPasswordDialog(context);
+        if (!_isCurrentExport(epoch, identityId) || choice == null) return;
+        if (choice.cancelled) return;
+        if (choice.isProtected) {
+          payload = await backup.encryptedFileBytes(choice.password!);
+        }
+      }
+      _exportBytes = payload;
       final result = await saveLoomRecoveryFile(
         _exportBytes!,
         pdf: pdf,
@@ -242,6 +258,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
       if (_exporting) const Center(child: LoomBusyIndicator()),
       if (_backupMessage != null)
         Semantics(liveRegion: true, child: Text(_backupMessage!)),
+      const SizedBox(height: LoomSpacing.lg),
+      const _RatchetV2Card(),
+      const _DbEncryptionCard(),
       const SizedBox(height: LoomSpacing.lg),
     ],
   );
@@ -474,6 +493,176 @@ class _SecurityValue extends StatelessWidget {
                   )
                 : valueText,
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Explicit opt-in for the dormant Double-Ratchet (Olm) provider described in
+/// ADR-006. Default OFF. Turning it on only unlocks the architecture-v2 DTN
+/// send path when the native `loom_vodozemac` library and the Android
+/// Keystore state protector are both available; otherwise the gate stays
+/// closed and this card says so.
+class _RatchetV2Card extends StatefulWidget {
+  const _RatchetV2Card();
+
+  @override
+  State<_RatchetV2Card> createState() => _RatchetV2CardState();
+}
+
+class _RatchetV2CardState extends State<_RatchetV2Card> {
+  late bool _enabled = LoomExperimentalRatchet.ratchetV2Enabled;
+  bool _working = false;
+  bool? _libraryAvailable;
+
+  @override
+  void initState() {
+    super.initState();
+    _probeLibrary();
+  }
+
+  Future<void> _probeLibrary() async {
+    bool available;
+    try {
+      LoomVodozemacPocFfiEngine.openFromEnvironment();
+      available = true;
+    } catch (_) {
+      available = false;
+    }
+    if (mounted) setState(() => _libraryAvailable = available);
+  }
+
+  Future<void> _toggle(bool value) async {
+    if (_working) return;
+    setState(() => _working = true);
+    try {
+      await LoomExperimentalRatchet.setRatchetV2(value);
+      if (mounted) setState(() => _enabled = value);
+    } finally {
+      if (mounted) setState(() => _working = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final available = _libraryAvailable;
+    return Card(
+      elevation: 0,
+      color: Theme.of(context).cardColor,
+      child: SwitchListTile.adaptive(
+        secondary: Icon(
+          LoomIcons.shield_outlined,
+          color: _enabled ? Theme.of(context).colorScheme.primary : null,
+        ),
+        title: Text(
+          tr(context, 'Ratchet v2 (experimental)', 'رچت نسخهٔ ۲ (آزمایشی)'),
+        ),
+        subtitle: Text(
+          available == false
+              ? tr(
+                  context,
+                  'The native ratchet library is not bundled with this build; the toggle stays inactive until it ships.',
+                  'کتابخانهٔ بومی رچت در کتابخانهٔ بومی رچت در این ساخت وجود ندارد؛ تا افزودن آن، این گزینه بی‌اثر می‌ماند.',
+                )
+              : tr(
+                  context,
+                  'Turns on the Double-Ratchet direct-message path (ADR-006) on the next start. Reviewers have not signed it off yet; use at your own risk.',
+                  'مسیر پیام مستقیم با رچت دوتایی (ADR-006) از اجرای بعدی فعال می‌شود. بازبینی امنیتی آن کامل نشده؛ با مسئولیت خودت فعال کن.',
+                ),
+        ),
+        value: _enabled,
+        onChanged: _working ? null : _toggle,
+      ),
+    );
+  }
+}
+
+
+/// Opt-in SQLCipher-at-rest protection for the local messaging database.
+/// The toggle only records consent + materializes the key; the one-time
+/// migration runs at the next cold start so no live connection is present.
+class _DbEncryptionCard extends StatefulWidget {
+  const _DbEncryptionCard();
+
+  @override
+  State<_DbEncryptionCard> createState() => _DbEncryptionCardState();
+}
+
+class _DbEncryptionCardState extends State<_DbEncryptionCard> {
+  bool? _enabled;
+  bool _working = false;
+  String? _message;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+  }
+
+  Future<void> _load() async {
+    final value = await LoomDbEncryption.preferenceEnabled();
+    if (mounted) setState(() => _enabled = value);
+  }
+
+  Future<void> _toggle(bool value) async {
+    if (_working) return;
+    setState(() => _working = true);
+    try {
+      final error = await LoomDbEncryption.setEnabled(value);
+      final effectiveValue = error == null
+          ? value
+          : await LoomDbEncryption.preferenceEnabled();
+      if (mounted) {
+        setState(() {
+          _enabled = effectiveValue;
+          _message = error ??
+              (value
+                  ? tr(
+                      context,
+                      'Encryption is scheduled. It applies after the next app start.',
+                      'رمزگذاری برنامه‌ریزی شد؛ پس از اجرای بعدی برنامه اعمال می‌شود.',
+                    )
+                  : null);
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _working = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = _enabled ?? false;
+    return Card(
+      elevation: 0,
+      color: Theme.of(context).cardColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SwitchListTile.adaptive(
+            secondary: const Icon(LoomIcons.lock_outline_rounded),
+            title: Text(
+              tr(context, 'Encrypt local database', 'رمزگذاری پایگاه دادهٔ محلی'),
+            ),
+            subtitle: Text(
+              tr(
+                context,
+                'Encrypts the on-device message database with SQLCipher (AES-256). Keep the app updated; one-way opt-in.',
+                'پایگاه دادهٔ پیام روی دستگاه با SQLCipher (AES-256) رمزگذاری می‌شود. فعال‌سازی یک‌طرفه است.',
+              ),
+            ),
+            value: enabled,
+            onChanged: _working ? null : _toggle,
+          ),
+          if (_message != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+              child: Text(
+                _message!,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
         ],
       ),
     );

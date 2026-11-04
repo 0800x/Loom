@@ -11,8 +11,8 @@ exists, its IPv6 address must also reach this server.
 Connect over SSH and paste:
 
 ```bash
-curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh https://github.com/0800x/Loom/releases/download/v0.2.0-alpha.1/loom-install.sh &&
-curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh.sha256 https://github.com/0800x/Loom/releases/download/v0.2.0-alpha.1/loom-install.sh.sha256 &&
+curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh https://github.com/0800x/Loom/releases/download/v0.3.0-alpha.1/loom-install.sh &&
+curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh.sha256 https://github.com/0800x/Loom/releases/download/v0.3.0-alpha.1/loom-install.sh.sha256 &&
 (cd /tmp && sha256sum --check loom-install.sh.sha256) &&
 bash /tmp/loom-install.sh --wizard
 ```

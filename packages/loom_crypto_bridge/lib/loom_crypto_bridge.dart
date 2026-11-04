@@ -18,6 +18,7 @@ export 'src/self_message_codec.dart';
 export 'src/direct_message_codec.dart';
 
 export 'src/app_lock.dart';
+export 'src/account_scope.dart';
 
 export 'src/native_mls_core.dart';
 
