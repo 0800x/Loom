@@ -135,16 +135,17 @@ a browser capture of a running local server.
 [Capture details and image hashes](docs/screenshots/loom-current/provenance.json).
 Messenger widget renders do not establish native playback, device or radio support.
 
-## Install your own Home Node
+## Install or update your own Home Node
 
 GitHub Actions builds the Node Manager and multi-architecture Node/MinIO images.
 The Home Node downloads and verifies those prebuilt outputs; it does not compile
 them locally.
 
 ```bash
-curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/0800x/Loom/main/install.sh -o /tmp/loom-install.sh &&
-bash /tmp/loom-install.sh
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/0800x/Loom/main/install.sh -o /tmp/loom-install.sh && bash /tmp/loom-install.sh
 ```
+
+Use this same command for a first installation or to rerun the Home Node installer on an existing server. It opens the setup wizard, detects the existing installation, and preserves the saved operator configuration, identity and persistent data.
 
 The bootstrap is the only file you need to download. It verifies its pinned
 source and then runs the Home Node setup wizard. Do not download the release

@@ -6,16 +6,12 @@ capacity as participants increase. For public HTTPS, point a domain's **A record
 server's public IPv4. Disable a CDN proxy for this hostname. If an AAAA record
 exists, its IPv6 address must also reach this server.
 
-## Install
+## Install or update
 
-Connect over SSH and paste:
+Connect over SSH and paste this command for a first installation or to rerun the installer on an existing Home Node:
 
 ```bash
-tmp="$(mktemp -d)" &&
-curl --proto '=https' --tlsv1.2 -fsSLo "$tmp/loom-install.sh" https://github.com/0800x/Loom/releases/download/v0.3.0-alpha.1/loom-install.sh &&
-curl --proto '=https' --tlsv1.2 -fsSLo "$tmp/loom-install.sh.sha256" https://github.com/0800x/Loom/releases/download/v0.3.0-alpha.1/loom-install.sh.sha256 &&
-(cd "$tmp" && sha256sum --check loom-install.sh.sha256) &&
-bash "$tmp/loom-install.sh" --wizard; result=$?; rm -rf "$tmp"; exit "$result"
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/0800x/Loom/main/install.sh -o /tmp/loom-install.sh && bash /tmp/loom-install.sh
 ```
 
 The domain is the only required free-text answer. Use **Up/Down and Enter**
@@ -40,7 +36,9 @@ PostgreSQL, attachment storage, HTTPS, the terminal manager and the selected
 media services are provisioned for you. Credentials are generated privately;
 there are no database passwords or TURN secrets to copy into a form.
 
-The bootstrap contains a fixed source revision and two SHA256 pins. It verifies
+The same bootstrap is used for installation and installer-driven reconfiguration or refresh. On an existing Home Node, it detects the current setup and preserves the existing `.env`, service secrets, identity, database volumes and attachments. It does not turn a failed image pull into a local build.
+
+The bootstrap contains a fixed source revision and a SHA256 pin. It verifies
 the helper and complete source archive before privileged application setup.
 Obtain this initial script through the project's trusted GitHub URL. For
 independent source approval and offline preparation, see the
@@ -160,6 +158,8 @@ to verify and approve peers. Group-call media is independent of MLS group
 membership; keep **Group calls** off if you only want text/media groups.
 
 ## Change settings and update
+
+Use the same one-line `curl ... install.sh` command from the Install section when you need to rerun the verified installer on an existing Home Node. Existing configuration, secrets, identity and persistent data are preserved. For a routine application/source update, open Node Manager → **Updates** → **Install update**; the manager verifies the publisher channel and selected immutable revision before applying it.
 
 ```bash
 loom setup
