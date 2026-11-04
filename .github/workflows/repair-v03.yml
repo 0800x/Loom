@@ -37,8 +37,17 @@ jobs:
           (cd apps/loom && flutter pub get && dart fix --apply)
           (cd packages/loom_crypto_bridge && flutter pub get && dart fix --apply)
 
-          dart format apps/loom apps/loom_node_ui packages
-          dart format --output=none --set-exit-if-changed apps/loom apps/loom_node_ui packages
+          # Run the formatter from each package root so its local
+          # analysis_options.yaml formatter settings are honored, exactly as
+          # in the per-package CI matrix.
+          for project in apps/loom apps/loom_node_ui packages/*; do
+            [[ -f "$project/pubspec.yaml" ]] || continue
+            (cd "$project" && dart format .)
+          done
+          for project in apps/loom apps/loom_node_ui packages/*; do
+            [[ -f "$project/pubspec.yaml" ]] || continue
+            (cd "$project" && dart format --output=none --set-exit-if-changed .)
+          done
 
       - uses: actions/setup-node@v4
         with:
