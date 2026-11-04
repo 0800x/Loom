@@ -1,0 +1,37 @@
+name: Temporary Loom restore-branch formatter
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'restore/v0.3.0-alpha.1-final'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.0'
+          channel: stable
+          cache: true
+      - name: Format all Flutter and Dart sources
+        run: dart format apps/loom apps/loom_node_ui packages
+      - name: Commit formatting changes
+        run: |
+          if git diff --quiet; then
+            echo "No formatting changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/loom apps/loom_node_ui packages
+          git commit -m "style: format restored Loom 0.3 sources"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"

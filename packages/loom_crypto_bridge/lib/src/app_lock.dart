@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'account_scope.dart';
+
 // Loom is pre-release: use one explicit namespace/config and avoid plugin
 // migration machinery entirely. App Lock performs its own authenticated
 // wrapping, so flutter_secure_storage remains a stable non-biometric backing
@@ -35,8 +37,7 @@ class LoomAppLock extends ChangeNotifier {
         !value.startsWith(_prefix)) {
       throw PlatformException(
         code: 'unsupported_vault_format',
-        message:
-            'This protected store uses an incompatible format. Export it with the original application before upgrading.',
+        message: 'This protected store uses an incompatible format. Export it with the original application before upgrading.',
       );
     }
   }
@@ -85,12 +86,12 @@ class LoomAppLock extends ChangeNotifier {
   }
 
   Future<void> initialize() => _initializing ??= _initialize().catchError((
-        Object error,
-        StackTrace stack,
-      ) {
-        _initializing = null;
-        Error.throwWithStackTrace(error, stack);
-      });
+    Object error,
+    StackTrace stack,
+  ) {
+    _initializing = null;
+    Error.throwWithStackTrace(error, stack);
+  });
   Future<void> _initialize() async {
     if (Platform.isAndroid) {
       if (_tracing) {
@@ -145,7 +146,8 @@ class LoomAppLock extends ChangeNotifier {
   Future<bool> _authenticateNative(String method, String title) async {
     bool accepted;
     try {
-      accepted = await _atStage(
+      accepted =
+          await _atStage(
             '${method}_native_start',
             () => _channel.invokeMethod<bool>(method, {'title': title}),
           ) ==
@@ -404,7 +406,7 @@ class LoomAppLock extends ChangeNotifier {
 /// identity, device and session stores use this boundary in the shipping app.
 class LoomSecretStorage {
   LoomSecretStorage([FlutterSecureStorage? storage])
-      : _storage = storage ?? _loomPlatformStorage;
+    : _storage = storage ?? _loomPlatformStorage;
   final FlutterSecureStorage _storage;
   final _lock = LoomAppLock.instance;
 
@@ -414,7 +416,7 @@ class LoomSecretStorage {
       if (_lock.locked) {
         throw StateError('Loom is locked');
       }
-      final value = await _storage.read(key: key);
+      final value = await _storage.read(key: LoomAccountScope.scopedKey(key));
       if (_lock.locked) {
         throw StateError('Loom is locked');
       }
@@ -423,7 +425,10 @@ class LoomSecretStorage {
       }
       LoomAppLock._requireSupportedEnvelope(value);
       if (value.startsWith(LoomAppLock._prefix)) {
-        final opened = await _lock._open(key, value);
+        final opened = await _lock._open(
+          LoomAccountScope.scopedKey(key),
+          value,
+        );
         if (_lock.locked) {
           throw StateError('Loom is locked');
         }
@@ -440,10 +445,10 @@ class LoomSecretStorage {
         throw StateError('Loom is locked');
       }
       await _storage.write(
-        key: key,
+        key: LoomAccountScope.scopedKey(key),
         value: value == null || !_lock.enabled
             ? value
-            : await _lock._seal(key, value),
+            : await _lock._seal(LoomAccountScope.scopedKey(key), value),
       );
     });
   }
@@ -454,7 +459,7 @@ class LoomSecretStorage {
       if (_lock.locked) {
         throw StateError('Loom is locked');
       }
-      await _storage.delete(key: key);
+      await _storage.delete(key: LoomAccountScope.scopedKey(key));
     });
   }
 }

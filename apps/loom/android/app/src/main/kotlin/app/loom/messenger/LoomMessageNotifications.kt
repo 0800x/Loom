@@ -6,6 +6,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.RemoteInput
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -18,7 +19,10 @@ class LoomMessageNotifications(private val activity: Activity, private val chann
     private val manager get() = activity.getSystemService(NotificationManager::class.java)
     private var ready = false
     private var pending: String? = null
-    init { consume(activity.intent) }
+    init {
+        dartChannel = channel
+        consume(activity.intent)
+    }
     fun consume(intent: Intent?) {
         val id = intent?.getStringExtra(EXTRA) ?: return
         intent.removeExtra(EXTRA)
@@ -84,12 +88,50 @@ class LoomMessageNotifications(private val activity: Activity, private val chann
             .setOnlyAlertOnce(false).setPriority(Notification.PRIORITY_HIGH)
             .setPublicVersion((if (Build.VERSION.SDK_INT >= 26) Notification.Builder(activity, CHANNEL) else Notification.Builder(activity))
                 .setSmallIcon(R.drawable.ic_stat_message).setContentTitle("Loom").setContentText("New encrypted message").build())
+        // Inline reply. Plaintext stays on-device; the receiver forwards the
+        // text over the method channel so Dart owns all encryption.
+        builder.addAction(
+            Notification.Action.Builder(
+                android.graphics.drawable.Icon.createWithResource(activity, R.drawable.ic_stat_message),
+                activity.getString(R.string.loom_quick_reply),
+                quickReplyPendingIntent(activity, id)
+            ).addRemoteInput(
+                RemoteInput.Builder(KEY_QUICK_REPLY)
+                    .setLabel(activity.getString(R.string.loom_quick_reply))
+                    .build()
+            ).setAllowGeneratedReplies(false).build()
+        )
         if (Build.VERSION.SDK_INT < 26) builder.setDefaults(Notification.DEFAULT_SOUND or Notification.DEFAULT_VIBRATE)
         manager.notify(tag(id), 1, builder.build())
+    }
+    private fun quickReplyPendingIntent(context: android.content.Context, conversationId: String): PendingIntent {
+        val intent = Intent(context, LoomQuickReplyReceiver::class.java).apply {
+            putExtra(EXTRA, conversationId)
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            (conversationId.hashCode() and 0x7FFFFFFF) + QUICK_REPLY_REQUEST_OFFSET,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        )
     }
     companion object {
         const val CHANNEL = "loom_messages_v1"
         const val EXTRA = "loom_message_conversation"
         const val PERMISSION_REQUEST_CODE = 9042
+        const val KEY_QUICK_REPLY = "loom_quick_reply_text"
+        const val QUICK_REPLY_REQUEST_OFFSET = 41000
+
+        @Volatile
+        private var dartChannel: MethodChannel? = null
+
+        /** Called by LoomQuickReplyReceiver; forwards reply text to Dart. */
+        fun forwardQuickReply(conversationId: String, text: String) {
+            val channel = dartChannel ?: return
+            channel.invokeMethod(
+                "quickReply",
+                mapOf("conversationId" to conversationId, "text" to text)
+            )
+        }
     }
 }

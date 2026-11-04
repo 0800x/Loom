@@ -1,11 +1,11 @@
 import 'dart:async';
+import '../../accounts/application/account_workspace.dart';
 
 import 'package:loom_calls/loom_calls.dart';
 import 'package:loom_crypto_bridge/loom_crypto_bridge.dart';
 import 'package:loom_models/loom_models.dart';
 import 'package:loom_protocol/loom_protocol.dart';
 import 'package:flutter/widgets.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../messaging/application/messaging_session_controller.dart';
 import '../../onboarding/application/onboarding_controller.dart';
@@ -198,7 +198,7 @@ class LoomCallSessionController extends ChangeNotifier
         return;
       }
 
-      final support = await getApplicationSupportDirectory();
+      final support = await LoomAccountWorkspace.active();
       if (_disposed) {
         await _disposeSessionOnly();
         return;

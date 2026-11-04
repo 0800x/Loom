@@ -136,7 +136,12 @@ class LoomOnboardingController extends ChangeNotifier {
       final stored = await _sessionVault.read();
       _requireCurrentRestore(epoch);
       if (stored == null) {
-        if (identity == null && LoomAppLock.instance.enabled) {
+        // A fresh account slot (multi-account) legitimately has neither an
+        // identity nor a session; only the legacy device-wide scope treats an
+        // empty vault under an enabled lock as tamper evidence.
+        if (identity == null &&
+            LoomAccountScope.current == null &&
+            LoomAppLock.instance.enabled) {
           throw const FormatException(
             'Protected account storage is unavailable',
           );
@@ -512,6 +517,30 @@ class LoomOnboardingController extends ChangeNotifier {
     _restoreFuture = null;
     _storedSession = null;
     _restoreAttempted = true;
+    _identityCore.discardPendingIdentity();
+    pendingIdentity = null;
+    committedIdentity = null;
+    receipt = null;
+    accessToken = null;
+    accessTokenExpiresAt = null;
+    errorMessage = null;
+    username = '';
+    displayName = '';
+    password = '';
+    status = LoomOnboardingStatus.idle;
+    notifyListeners();
+  }
+
+  /// In-memory teardown for the account switcher. Unlike [resetPending] the
+  /// next `restorePersistedSession` re-reads secure storage: the newly active
+  /// account's scoped session vault decides whether the gate signs the user
+  /// back in or offers the onboarding flow. No secret is deleted, so both
+  /// accounts survive the switch.
+  void beginAccountSwitch() {
+    _sessionEpoch++;
+    _restoreFuture = null;
+    _storedSession = null;
+    _restoreAttempted = false;
     _identityCore.discardPendingIdentity();
     pendingIdentity = null;
     committedIdentity = null;

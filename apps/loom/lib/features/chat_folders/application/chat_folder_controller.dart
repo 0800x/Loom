@@ -1,9 +1,9 @@
 import 'dart:convert';
+import '../../accounts/application/account_workspace.dart';
 import 'dart:io';
 
 import 'package:loom_models/loom_models.dart';
 import 'package:flutter/widgets.dart';
-import 'package:path_provider/path_provider.dart';
 
 const String loomAllChatsFolderId = 'all';
 const String loomUnreadFolderId = 'unread';
@@ -128,7 +128,7 @@ class LoomChatFolderController extends ChangeNotifier {
     required this._identityIdProvider,
     Future<Directory> Function()? supportDirectoryProvider,
   }) : _supportDirectoryProvider =
-           supportDirectoryProvider ?? getApplicationSupportDirectory;
+           supportDirectoryProvider ?? LoomAccountWorkspace.active;
 
   final String? Function() _identityIdProvider;
   final Future<Directory> Function() _supportDirectoryProvider;

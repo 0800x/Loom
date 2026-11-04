@@ -12,6 +12,7 @@ import 'appearance_panel.dart';
 import '../../calls/application/call_platform_bridge.dart';
 import '../../notifications/application/message_notifications.dart';
 import '../../messaging/presentation/local_message_cleanup_screen.dart';
+import '../../messaging/application/messaging_session_controller.dart';
 import '../../security/presentation/app_lock_gate.dart';
 
 enum LoomSettingsSection {
@@ -350,6 +351,21 @@ class _LoomSettingsDetailScreenState extends State<LoomSettingsDetailScreen> {
 
   List<Widget> _privacy(BuildContext context) => [
     const LoomAppLockSettings(),
+    const SizedBox(height: 16),
+    const _LocalSearchToggle(),
+    const SizedBox(height: 16),
+    const _BlockedContactsCard(),
+    const SizedBox(height: 16),
+    LoomSettingsRow(
+      icon: LoomIcons.person_outline,
+      title: tr(context, 'Accounts', 'حساب‌ها'),
+      subtitle: tr(
+        context,
+        'Switch or add accounts on this device',
+        'تغییر یا افزودن حساب‌ها روی این دستگاه',
+      ),
+      onTap: () => Navigator.pushNamed(context, '/settings/accounts'),
+    ),
     const SizedBox(height: 16),
     _StatusRow(
       icon: LoomIcons.analytics_outlined,
@@ -804,6 +820,110 @@ class _MessageNotificationToggleState extends State<_MessageNotificationToggle>
       // in widget tests and any infinite animation stalls pumpAndSettle.
       trailing: Switch(value: _enabled, onChanged: _working ? null : _toggle),
       onTap: () => _toggle(!_enabled),
+    );
+  }
+}
+
+
+/// Device-local search index consent. Turning it off wipes the decrypted
+/// preview index immediately; turning it on starts a bounded back-fill.
+class _LocalSearchToggle extends StatefulWidget {
+  const _LocalSearchToggle();
+
+  @override
+  State<_LocalSearchToggle> createState() => _LocalSearchToggleState();
+}
+
+class _LocalSearchToggleState extends State<_LocalSearchToggle> {
+  bool? _enabled;
+  bool _working = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final messaging = LoomMessagingSessionScope.maybeOf(context);
+    if (_enabled == null && messaging != null) {
+      _enabled = messaging.searchEnabled;
+    }
+  }
+
+  Future<void> _toggle(bool value) async {
+    final messaging = LoomMessagingSessionScope.maybeOf(context);
+    if (messaging == null || _working) return;
+    setState(() => _working = true);
+    try {
+      await messaging.setSearchEnabled(value);
+      if (mounted) setState(() => _enabled = value);
+    } catch (_) {
+      // The switch re-reads from the controller on the next rebuild.
+    } finally {
+      if (mounted) setState(() => _working = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = _enabled ?? true;
+    return Card(
+      elevation: 0,
+      color: Theme.of(context).cardColor,
+      child: SwitchListTile.adaptive(
+        secondary: const Icon(LoomIcons.search_rounded),
+        title: Text(
+          tr(context, 'Local message search', 'جستجوی محلی پیام‌ها'),
+        ),
+        subtitle: Text(
+          tr(
+            context,
+            'Keeps decrypted previews on this device so chats stay searchable. Turning it off erases the index.',
+            'پیش‌نمایش رمزگشایی‌شدهٔ پیام‌ها روی همین دستگاه نگه داشته می‌شود تا گفتگوها قابل جستجو باشند. خاموش‌کردن آن فهرست را پاک می‌کند.',
+          ),
+        ),
+        value: enabled,
+        onChanged: _working ? null : _toggle,
+      ),
+    );
+  }
+}
+
+/// Lists blocked addresses with one-tap unblock.
+class _BlockedContactsCard extends StatelessWidget {
+  const _BlockedContactsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final messaging = LoomMessagingSessionScope.maybeOf(context);
+    if (messaging == null) return const SizedBox.shrink();
+    final blocked = messaging.blockedPeers.toList(growable: false)..sort();
+    if (blocked.isEmpty) return const SizedBox.shrink();
+    return Card(
+      elevation: 0,
+      color: Theme.of(context).cardColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 4),
+            child: Text(
+              tr(context, 'Blocked contacts', 'مخاطبان مسدودشده'),
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+          ),
+          for (final address in blocked)
+            ListTile(
+              dense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 18),
+              leading: const Icon(LoomIcons.shield_outlined),
+              title: Text(address, textDirection: TextDirection.ltr),
+              trailing: TextButton(
+                onPressed: () =>
+                    unawaited(messaging.unblockPeer(address)),
+                child: Text(tr(context, 'Unblock', 'رفع مسدودی')),
+              ),
+            ),
+          const SizedBox(height: 4),
+        ],
+      ),
     );
   }
 }

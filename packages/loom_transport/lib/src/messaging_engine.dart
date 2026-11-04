@@ -25,6 +25,19 @@ class LoomOpaqueEnvelope {
   final String protocolVersion;
 }
 
+/// Minimal builder for the encrypted content-document envelope used by
+/// durable control messages. Mirrors `LoomMessageContent` (apps/loom) v1:
+/// the canonical prefix plus a JSON map with an empty text and a control
+/// block. Kept here because the transport package must not depend on the
+/// application layer; the app layer always decodes through the strict parser.
+final class _LoomControlDocument {
+  static const _prefix = '\u2063loom.content.v1:';
+  _LoomControlDocument(this.control);
+  final Map<String, Object?> control;
+  String encode() =>
+      '$_prefix${jsonEncode({'v': 1, 'text': '', 'control': control})}';
+}
+
 class LoomMessagingEngine {
   LoomMessagingEngine({
     required this.store,
@@ -70,11 +83,26 @@ class LoomMessagingEngine {
         maxCharacters: 64 * 1024,
       );
 
+  /// Durable control document (reaction/edit/delete-for-everyone). Rides the
+  /// same encrypted queue with wire type `system` so nodes and older clients
+  /// treat it as a non-chat record while the encrypted fold applies it.
+  Future<LoomMessageRecord> queueControl({
+    required String conversationId,
+    required Map<String, Object?> control,
+  }) =>
+      _queue(
+        conversationId: conversationId,
+        plaintext: _LoomControlDocument(control).encode(),
+        maxCharacters: 8 * 1024,
+        type: LoomMessageType.system,
+      );
+
   Future<LoomMessageRecord> _queue({
     required String conversationId,
     required String plaintext,
     required int maxCharacters,
     String? replyToMessageId,
+    LoomMessageType type = LoomMessageType.text,
   }) async {
     if (_disposed) {
       throw StateError('Messaging engine is closed');
@@ -109,7 +137,7 @@ class LoomMessagingEngine {
       clientId: clientId,
       conversationId: conversationId,
       senderAddress: senderAddress,
-      type: LoomMessageType.text,
+      type: type,
       ciphertext: envelope.ciphertext,
       protocolVersion: envelope.protocolVersion,
       createdOrder: localOrder,
@@ -125,7 +153,7 @@ class LoomMessagingEngine {
         conversationId: conversationId,
         kind: LoomPendingOperationKind.sendMessage,
         payload: {
-          'type': 'text',
+          'type': type.name,
           'ciphertext': envelope.ciphertext,
           'protocolVersion': envelope.protocolVersion,
           if (replyToMessageId != null) 'replyToMessageId': replyToMessageId,
@@ -228,7 +256,10 @@ class LoomMessagingEngine {
       final receipt = await client.sendOpaqueMessage(
         conversationId: operation.conversationId,
         clientId: operation.clientId,
-        type: LoomMessageType.text,
+        type: LoomMessageType.values.firstWhere(
+          (value) => value.name == (payload['type'] ?? 'text'),
+          orElse: () => LoomMessageType.text,
+        ),
         ciphertext: ciphertext,
         protocolVersion: protocolVersion,
         replyToMessageId: payload['replyToMessageId'] as String?,

@@ -68,144 +68,145 @@ class LoomChatRow extends StatelessWidget {
           child: InkWell(
             onTap: onTapWithOrigin != null
                 ? () =>
-                    onTapWithOrigin!(LoomOrigin.of(avatarKey.currentContext))
+                      onTapWithOrigin!(LoomOrigin.of(avatarKey.currentContext))
                 : onTap,
             borderRadius: radius,
-            child: AnimatedContainer(
-              duration: LoomAccessibility.fromContext(context).reduceMotion
-                  ? Duration.zero
-                  : LoomMotion.component,
-              constraints: const BoxConstraints(
-                minHeight: LoomSizing.compactRowHeight,
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: LoomSpacing.sm,
-                vertical: LoomSpacing.xs,
-              ),
-              decoration: BoxDecoration(
-                color: selected ? p.surfaceElevated : Colors.transparent,
-                borderRadius: radius,
-                border: Border.all(
-                  color: selected ? p.borderStrong : Colors.transparent,
-                  width: LoomBorders.hairline,
+            // Selection surface animates per row: repaint scoped to the row.
+            child: RepaintBoundary(
+              child: AnimatedContainer(
+                duration: LoomAccessibility.fromContext(context).reduceMotion
+                    ? Duration.zero
+                    : LoomMotion.component,
+                constraints: const BoxConstraints(
+                  minHeight: LoomSizing.compactRowHeight,
                 ),
-              ),
-              child: Row(
-                children: [
-                  KeyedSubtree(
-                    key: avatarKey,
-                    child:
-                        avatar ?? LoomAvatar(label: name, presence: presence),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: LoomSpacing.sm,
+                  vertical: LoomSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: selected ? p.surfaceElevated : Colors.transparent,
+                  borderRadius: radius,
+                  border: Border.all(
+                    color: selected ? p.borderStrong : Colors.transparent,
+                    width: LoomBorders.hairline,
                   ),
-                  const SizedBox(width: LoomSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                ),
+                child: RepaintBoundary(
+                  child: Row(
+                    children: [
+                      KeyedSubtree(
+                        key: avatarKey,
+                        child:
+                            avatar ??
+                            LoomAvatar(label: name, presence: presence),
+                      ),
+                      const SizedBox(width: LoomSpacing.sm),
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                                if (pinned) ...[
+                                  Icon(
+                                    LoomIcons.push_pin_outlined,
+                                    size: LoomIconSize.micro,
+                                    color: p.textMuted,
+                                  ),
+                                  const SizedBox(width: LoomSpacing.xxs),
+                                ],
+                                Text(
+                                  time,
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(color: p.textMuted),
+                                ),
+                              ],
                             ),
-                            if (pinned) ...[
-                              Icon(
-                                LoomIcons.push_pin_outlined,
-                                size: LoomIconSize.micro,
-                                color: p.textMuted,
-                              ),
-                              const SizedBox(width: LoomSpacing.xxs),
-                            ],
-                            Text(
-                              time,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(color: p.textMuted),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: LoomSpacing.xxs),
-                        Row(
-                          children: [
-                            if (delivery != LoomDeliveryState.none) ...[
-                              _DeliveryIcon(state: delivery),
-                              const SizedBox(width: LoomSpacing.xxs),
-                            ],
-                            if (draft) ...[
-                              Text(
-                                draftLabel,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                      color: p.critical,
-                                      fontWeight: FontWeight.w700,
+                            const SizedBox(height: LoomSpacing.xxs),
+                            Row(
+                              children: [
+                                if (delivery != LoomDeliveryState.none) ...[
+                                  _DeliveryIcon(state: delivery),
+                                  const SizedBox(width: LoomSpacing.xxs),
+                                ],
+                                if (draft) ...[
+                                  Text(
+                                    draftLabel,
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: p.critical,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                  ),
+                                  const SizedBox(width: LoomSpacing.xxs),
+                                ],
+                                Expanded(
+                                  child: Text(
+                                    typing ? typingLabel : preview,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(color: previewColor),
+                                  ),
+                                ),
+                                if (muted) ...[
+                                  const SizedBox(width: LoomSpacing.xs),
+                                  Icon(
+                                    LoomIcons.volume_off_outlined,
+                                    size: LoomIconSize.compact,
+                                    color: p.textMuted,
+                                  ),
+                                ],
+                                if (unread > 0) ...[
+                                  const SizedBox(width: LoomSpacing.xs),
+                                  Container(
+                                    constraints: const BoxConstraints(
+                                      minWidth: LoomIconSize.standard,
+                                      minHeight: LoomIconSize.standard,
                                     ),
-                              ),
-                              const SizedBox(width: LoomSpacing.xxs),
-                            ],
-                            Expanded(
-                              child: Text(
-                                typing ? typingLabel : preview,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(color: previewColor),
-                              ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: LoomSpacing.xs,
+                                    ),
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: muted ? p.surfaceMuted : p.primary,
+                                      borderRadius: BorderRadius.circular(
+                                        LoomRadii.pill,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      unread > 99 ? '99+' : '$unread',
+                                      style: TextStyle(
+                                        color: muted
+                                            ? p.textSecondary
+                                            : p.onPrimary,
+                                        fontSize: LoomTypeScale.labelSmall,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
-                            if (muted) ...[
-                              const SizedBox(width: LoomSpacing.xs),
-                              Icon(
-                                LoomIcons.volume_off_outlined,
-                                size: LoomIconSize.compact,
-                                color: p.textMuted,
-                              ),
-                            ],
-                            if (unread > 0) ...[
-                              const SizedBox(width: LoomSpacing.xs),
-                              Container(
-                                constraints: const BoxConstraints(
-                                  minWidth: LoomIconSize.standard,
-                                  minHeight: LoomIconSize.standard,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: LoomSpacing.xs,
-                                ),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: muted ? p.surfaceMuted : p.primary,
-                                  borderRadius: BorderRadius.circular(
-                                    LoomRadii.pill,
-                                  ),
-                                ),
-                                child: Text(
-                                  unread > 99 ? '99+' : '$unread',
-                                  style: TextStyle(
-                                    color:
-                                        muted ? p.textSecondary : p.onPrimary,
-                                    fontSize: LoomTypeScale.labelSmall,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -229,8 +230,7 @@ class _DeliveryIcon extends StatelessWidget {
       LoomDeliveryState.sending => LoomIcons.sync_rounded,
       LoomDeliveryState.sent => LoomIcons.check_rounded,
       LoomDeliveryState.delivered ||
-      LoomDeliveryState.read =>
-        LoomIcons.done_all_rounded,
+      LoomDeliveryState.read => LoomIcons.done_all_rounded,
       LoomDeliveryState.failed => LoomIcons.error_outline_rounded,
       LoomDeliveryState.none => LoomIcons.check_rounded,
     };
@@ -273,6 +273,9 @@ class LoomMessageBubble extends StatelessWidget {
     this.onLinkTap,
     this.grouped = false,
     this.highlighted = false,
+    this.banner,
+    this.footer,
+    this.editedLabel,
     super.key,
   });
 
@@ -293,232 +296,253 @@ class LoomMessageBubble extends StatelessWidget {
   final Widget? content;
   final LoomMessagePresentation presentation;
 
+  /// Optional line rendered above the quote/text (e.g. a forwarded marker).
+  final Widget? banner;
+
+  /// Optional row rendered BELOW the bubble (e.g. reaction chips), aligned
+  /// with the bubble side.
+  final Widget? footer;
+
+  /// Localized "edited" marker shown next to the timestamp.
+  final String? editedLabel;
+
   @override
   Widget build(BuildContext context) => LayoutBuilder(
-        builder: (context, bounds) {
-          final p = context.loom;
-          final compact =
-              LoomChatLayoutScope.of(context) == LoomChatDensity.compact;
-          final receipt = mine && delivery != LoomDeliveryState.none
-              ? _MessageDeliveryPresentation(
-                  time: time,
-                  state: delivery,
-                  semanticLabel: deliveryLabel,
-                )
-              : mine
-                  ? _deliveryPresentation(time)
-                  : null;
-          final sticker = presentation == LoomMessagePresentation.sticker;
-          final round = presentation == LoomMessagePresentation.roundVideo;
-          final framed = presentation == LoomMessagePresentation.photo ||
-              presentation == LoomMessagePresentation.video ||
-              presentation == LoomMessagePresentation.location;
-          final overlay =
-              (framed || round) && text.isEmpty && quotedText == null;
-          final foreground = sticker
-              ? p.textPrimary
-              : overlay || round
-                  ? Colors.white
-                  : p.textPrimary;
-          final secondary = foreground.withValues(alpha: .85);
-          final maxWidth = (bounds.maxWidth * .86)
-              .clamp(
-                0.0,
-                presentation == LoomMessagePresentation.voice
-                    ? 260.0
-                    : LoomSizing.messageMax,
-              )
-              .toDouble();
-          final radius = BorderRadius.only(
-            topLeft: Radius.circular(grouped && !mine ? 6 : 20),
-            topRight: Radius.circular(grouped && mine ? 6 : 20),
-            bottomLeft: Radius.circular(mine ? 20 : 6),
-            bottomRight: Radius.circular(mine ? 6 : 20),
-          );
-          final metadata = Wrap(
-            alignment: WrapAlignment.end,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 4,
-            runSpacing: 2,
-            children: [
-              if (transportLabel != null)
-                Tooltip(
-                  message: transportLabel!,
-                  child: Icon(
-                    LoomIcons.wifi_tethering_rounded,
-                    size: 12,
-                    color: secondary,
-                  ),
-                ),
-              Text(
-                receipt?.time ?? time,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall
-                    ?.copyWith(color: secondary),
+    builder: (context, bounds) {
+      final p = context.loom;
+      final compact =
+          LoomChatLayoutScope.of(context) == LoomChatDensity.compact;
+      final receipt = mine && delivery != LoomDeliveryState.none
+          ? _MessageDeliveryPresentation(
+              time: time,
+              state: delivery,
+              semanticLabel: deliveryLabel,
+            )
+          : mine
+          ? _deliveryPresentation(time)
+          : null;
+      final sticker = presentation == LoomMessagePresentation.sticker;
+      final round = presentation == LoomMessagePresentation.roundVideo;
+      final framed =
+          presentation == LoomMessagePresentation.photo ||
+          presentation == LoomMessagePresentation.video ||
+          presentation == LoomMessagePresentation.location;
+      final overlay = (framed || round) && text.isEmpty && quotedText == null;
+      final foreground = sticker
+          ? p.textPrimary
+          : overlay || round
+          ? Colors.white
+          : p.textPrimary;
+      final secondary = foreground.withValues(alpha: .85);
+      final maxWidth = (bounds.maxWidth * .86)
+          .clamp(
+            0.0,
+            presentation == LoomMessagePresentation.voice
+                ? 260.0
+                : LoomSizing.messageMax,
+          )
+          .toDouble();
+      final radius = BorderRadius.only(
+        topLeft: Radius.circular(grouped && !mine ? 6 : 20),
+        topRight: Radius.circular(grouped && mine ? 6 : 20),
+        bottomLeft: Radius.circular(mine ? 20 : 6),
+        bottomRight: Radius.circular(mine ? 6 : 20),
+      );
+      final metadata = Wrap(
+        alignment: WrapAlignment.end,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 4,
+        runSpacing: 2,
+        children: [
+          if (transportLabel != null)
+            Tooltip(
+              message: transportLabel!,
+              child: Icon(
+                LoomIcons.wifi_tethering_rounded,
+                size: 12,
+                color: secondary,
               ),
-              if (receipt != null)
-                Tooltip(
-                  message: receipt.semanticLabel,
-                  child: Semantics(
-                    label: receipt.semanticLabel,
-                    child: ExcludeSemantics(
-                      child: _DeliveryIcon(
-                        state: receipt.state,
-                        neutral: secondary,
-                      ),
+            ),
+          if (editedLabel != null)
+            Text(
+              editedLabel!,
+              style: Theme.of(context).textTheme.labelSmall
+                  ?.copyWith(color: secondary),
+            ),
+          Text(
+            receipt?.time ?? time,
+            style: Theme.of(context).textTheme.labelSmall
+                ?.copyWith(color: secondary),
+          ),
+          if (receipt != null)
+            Tooltip(
+              message: receipt.semanticLabel,
+              child: Semantics(
+                label: receipt.semanticLabel,
+                child: ExcludeSemantics(
+                  child: _DeliveryIcon(
+                    state: receipt.state,
+                    neutral: secondary,
+                  ),
+                ),
+              ),
+            ),
+          if (receipt != null &&
+              (receipt.state == LoomDeliveryState.queued ||
+                  receipt.state == LoomDeliveryState.failed))
+            Text(
+              receipt.semanticLabel,
+              style: Theme.of(context).textTheme.labelSmall
+                  ?.copyWith(color: secondary),
+            ),
+        ],
+      );
+      final quote = quotedText == null
+          ? null
+          : InkWell(
+              onTap: onQuoteTap,
+              child: Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: (mine ? p.textPrimary : p.primary).withValues(
+                    alpha: .12,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  border: BorderDirectional(
+                    start: BorderSide(
+                      color: mine ? p.textPrimary : p.primary,
+                      width: 3,
                     ),
                   ),
                 ),
-              if (receipt != null &&
-                  (receipt.state == LoomDeliveryState.queued ||
-                      receipt.state == LoomDeliveryState.failed))
-                Text(
-                  receipt.semanticLabel,
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelSmall
-                      ?.copyWith(color: secondary),
-                ),
-            ],
-          );
-          final quote = quotedText == null
-              ? null
-              : InkWell(
-                  onTap: onQuoteTap,
-                  child: Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: (mine ? p.textPrimary : p.primary).withValues(
-                        alpha: .12,
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                      border: BorderDirectional(
-                        start: BorderSide(
-                          color: mine ? p.textPrimary : p.primary,
-                          width: 3,
-                        ),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (quotedAuthor != null)
-                          Text(
-                            quotedAuthor!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium
-                                ?.copyWith(
-                                  color: mine ? p.textPrimary : p.primary,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                        Text(
-                          quotedText!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: p.textPrimary),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-          final messageText = _LinkedMessageText(
-            text: text,
-            onLinkTap: onLinkTap,
-            selectable: onActions == null && onReply == null,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: p.textPrimary),
-          );
-          Widget body;
-          if (content == null) {
-            body = Wrap(
-              alignment: WrapAlignment.end,
-              crossAxisAlignment: WrapCrossAlignment.end,
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                if (quote != null) quote,
-                if (text.isNotEmpty) messageText,
-                metadata,
-              ],
-            );
-          } else {
-            final contentWidth = maxWidth
-                .clamp(
-                  0.0,
-                  sticker
-                      ? 180.0
-                      : round
-                          ? 240.0
-                          : 340.0,
-                )
-                .toDouble();
-            body = SizedBox(
-              width: contentWidth,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (quote != null)
-                    Padding(padding: const EdgeInsets.all(8), child: quote),
-                  if (overlay)
-                    Stack(
-                      children: [
-                        content!,
-                        Positioned(
-                          left: 8,
-                          right: 8,
-                          bottom: round ? 12 : 8,
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: .5),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: metadata,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (quotedAuthor != null)
+                      Text(
+                        quotedAuthor!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              color: mine ? p.textPrimary : p.primary,
+                              fontWeight: FontWeight.w700,
                             ),
-                          ),
-                        ),
-                      ],
-                    )
-                  else
-                    content!,
-                  if (text.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 7, 10, 0),
-                      child: messageText,
+                      ),
+                    Text(
+                      quotedText!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(color: p.textPrimary),
                     ),
-                  if (!overlay)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 2, 10, 5),
+                  ],
+                ),
+              ),
+            );
+      final messageText = _LinkedMessageText(
+        text: text,
+        onLinkTap: onLinkTap,
+        selectable: onActions == null && onReply == null,
+        style: Theme.of(context).textTheme.bodyMedium
+            ?.copyWith(color: p.textPrimary),
+      );
+      Widget body;
+      if (content == null) {
+        body = Wrap(
+          alignment: WrapAlignment.end,
+          crossAxisAlignment: WrapCrossAlignment.end,
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            if (banner != null) banner!,
+            if (quote != null) quote,
+            if (text.isNotEmpty) messageText,
+            metadata,
+          ],
+        );
+      } else {
+        final contentWidth = maxWidth
+            .clamp(
+              0.0,
+              sticker
+                  ? 180.0
+                  : round
+                  ? 240.0
+                  : 340.0,
+            )
+            .toDouble();
+        body = SizedBox(
+          width: contentWidth,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (banner != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+                  child: DefaultTextStyle.merge(
+                    style: Theme.of(context).textTheme.labelSmall,
+                    child: banner!,
+                  ),
+                ),
+              if (quote != null)
+                Padding(padding: const EdgeInsets.all(8), child: quote),
+              if (overlay)
+                Stack(
+                  children: [
+                    content!,
+                    Positioned(
+                      left: 8,
+                      right: 8,
+                      bottom: round ? 12 : 8,
                       child: Align(
                         alignment: Alignment.centerRight,
-                        child: metadata,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: .5),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: metadata,
+                        ),
                       ),
                     ),
-                ],
-              ),
-            );
-          }
-          return Align(
-            alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-            child: Semantics(
+                  ],
+                )
+              else
+                content!,
+              if (text.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 7, 10, 0),
+                  child: messageText,
+                ),
+              if (!overlay)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 2, 10, 5),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: metadata,
+                  ),
+                ),
+            ],
+          ),
+        );
+      }
+      return Align(
+        alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: mine
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
+          children: [
+            Semantics(
               customSemanticsActions: onReply == null
                   ? null
                   : {CustomSemanticsAction(label: replyLabel): onReply!},
@@ -536,8 +560,8 @@ class LoomMessageBubble extends StatelessWidget {
                       top: grouped
                           ? 2
                           : compact
-                              ? 3
-                              : 7,
+                          ? 3
+                          : 7,
                       bottom: 2,
                     ),
                     padding: content == null
@@ -546,17 +570,17 @@ class LoomMessageBubble extends StatelessWidget {
                             vertical: compact ? 6 : 8,
                           )
                         : presentation == LoomMessagePresentation.voice
-                            ? const EdgeInsets.fromLTRB(10, 6, 6, 0)
-                            : EdgeInsets.zero,
+                        ? const EdgeInsets.fromLTRB(10, 6, 6, 0)
+                        : EdgeInsets.zero,
                     decoration: BoxDecoration(
                       color: round || sticker
                           ? Colors.transparent
                           : mine
-                              ? Color.alphaBlend(
-                                  p.primary.withValues(alpha: .16),
-                                  p.surfaceElevated,
-                                )
-                              : p.surfaceElevated,
+                          ? Color.alphaBlend(
+                              p.primary.withValues(alpha: .16),
+                              p.surfaceElevated,
+                            )
+                          : p.surfaceElevated,
                       borderRadius: radius,
                       border: highlighted
                           ? Border.all(color: p.info, width: 2)
@@ -574,9 +598,12 @@ class LoomMessageBubble extends StatelessWidget {
                 ),
               ),
             ),
-          );
-        },
+            if (footer != null) footer!,
+          ],
+        ),
       );
+    },
+  );
 }
 
 final class _MessageDeliveryPresentation {
@@ -632,71 +659,71 @@ class _LoomSwipeToReplyState extends State<LoomSwipeToReply> {
   double get _direction =>
       Directionality.of(context) == TextDirection.rtl ? -1 : 1;
   void _reset() => setState(() {
-        _offset = 0;
-        _armed = false;
-        _dragging = false;
-        _origin = null;
-      });
+    _offset = 0;
+    _armed = false;
+    _dragging = false;
+    _origin = null;
+  });
   @override
   Widget build(BuildContext context) => GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        dragStartBehavior: DragStartBehavior.down,
-        onHorizontalDragStart: widget.onReply == null
-            ? null
-            : (details) => setState(() {
-                  _dragging = true;
-                  _origin = details.globalPosition.dx;
-                }),
-        onHorizontalDragUpdate: widget.onReply == null
-            ? null
-            : (details) {
-                final next = ((details.globalPosition.dx -
+    behavior: HitTestBehavior.opaque,
+    dragStartBehavior: DragStartBehavior.down,
+    onHorizontalDragStart: widget.onReply == null
+        ? null
+        : (details) => setState(() {
+            _dragging = true;
+            _origin = details.globalPosition.dx;
+          }),
+    onHorizontalDragUpdate: widget.onReply == null
+        ? null
+        : (details) {
+            final next =
+                ((details.globalPosition.dx -
                             (_origin ?? details.globalPosition.dx)) *
                         _direction)
                     .clamp(0.0, 72.0);
-                if (next >= 52 && !_armed) {
-                  _armed = true;
-                  HapticFeedback.selectionClick();
-                }
-                if (next < 52) {
-                  _armed = false;
-                }
-                setState(() => _offset = next);
-              },
-        onHorizontalDragEnd: widget.onReply == null
-            ? null
-            : (_) {
-                final reply = _armed;
-                _reset();
-                if (reply) {
-                  widget.onReply?.call();
-                }
-              },
-        onHorizontalDragCancel: widget.onReply == null ? null : _reset,
-        child: Stack(
-          alignment: AlignmentDirectional.centerStart,
-          children: [
-            if (_offset > 0)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(start: 12),
-                child: Opacity(
-                  opacity: (_offset / 52).clamp(0.0, 1.0),
-                  child: Icon(LoomIcons.reply_rounded,
-                      color: context.loom.primary),
-                ),
-              ),
-            AnimatedContainer(
-              duration: _dragging ||
-                      LoomAccessibility.fromContext(context).reduceMotion
-                  ? Duration.zero
-                  : const Duration(milliseconds: 160),
-              curve: Curves.easeOut,
-              transform: Matrix4.translationValues(_offset * _direction, 0, 0),
-              child: widget.child,
+            if (next >= 52 && !_armed) {
+              _armed = true;
+              HapticFeedback.selectionClick();
+            }
+            if (next < 52) {
+              _armed = false;
+            }
+            setState(() => _offset = next);
+          },
+    onHorizontalDragEnd: widget.onReply == null
+        ? null
+        : (_) {
+            final reply = _armed;
+            _reset();
+            if (reply) {
+              widget.onReply?.call();
+            }
+          },
+    onHorizontalDragCancel: widget.onReply == null ? null : _reset,
+    child: Stack(
+      alignment: AlignmentDirectional.centerStart,
+      children: [
+        if (_offset > 0)
+          Padding(
+            padding: const EdgeInsetsDirectional.only(start: 12),
+            child: Opacity(
+              opacity: (_offset / 52).clamp(0.0, 1.0),
+              child: Icon(LoomIcons.reply_rounded, color: context.loom.primary),
             ),
-          ],
+          ),
+        AnimatedContainer(
+          duration:
+              _dragging || LoomAccessibility.fromContext(context).reduceMotion
+              ? Duration.zero
+              : const Duration(milliseconds: 160),
+          curve: Curves.easeOut,
+          transform: Matrix4.translationValues(_offset * _direction, 0, 0),
+          child: RepaintBoundary(child: widget.child),
         ),
-      );
+      ],
+    ),
+  );
 }
 
 class _LinkedMessageText extends StatefulWidget {

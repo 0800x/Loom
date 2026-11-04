@@ -88,6 +88,10 @@
             android:name=".CallActionReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".LoomQuickReplyReceiver"
+            android:exported="false" />
+
         <service
             android:name=".CallForegroundService"
             android:exported="false"

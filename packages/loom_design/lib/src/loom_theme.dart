@@ -71,27 +71,26 @@ class LoomPalette extends ThemeExtension<LoomPalette> {
     Color? onPrimary,
     Color? shadow,
     Color? scrim,
-  }) =>
-      LoomPalette(
-        background: background ?? this.background,
-        surface: surface ?? this.surface,
-        surfaceMuted: surfaceMuted ?? this.surfaceMuted,
-        surfaceElevated: surfaceElevated ?? this.surfaceElevated,
-        textPrimary: textPrimary ?? this.textPrimary,
-        textSecondary: textSecondary ?? this.textSecondary,
-        textMuted: textMuted ?? this.textMuted,
-        border: border ?? this.border,
-        borderStrong: borderStrong ?? this.borderStrong,
-        primary: primary ?? this.primary,
-        secondary: secondary ?? this.secondary,
-        connectivity: connectivity ?? this.connectivity,
-        warning: warning ?? this.warning,
-        critical: critical ?? this.critical,
-        info: info ?? this.info,
-        onPrimary: onPrimary ?? this.onPrimary,
-        shadow: shadow ?? this.shadow,
-        scrim: scrim ?? this.scrim,
-      );
+  }) => LoomPalette(
+    background: background ?? this.background,
+    surface: surface ?? this.surface,
+    surfaceMuted: surfaceMuted ?? this.surfaceMuted,
+    surfaceElevated: surfaceElevated ?? this.surfaceElevated,
+    textPrimary: textPrimary ?? this.textPrimary,
+    textSecondary: textSecondary ?? this.textSecondary,
+    textMuted: textMuted ?? this.textMuted,
+    border: border ?? this.border,
+    borderStrong: borderStrong ?? this.borderStrong,
+    primary: primary ?? this.primary,
+    secondary: secondary ?? this.secondary,
+    connectivity: connectivity ?? this.connectivity,
+    warning: warning ?? this.warning,
+    critical: critical ?? this.critical,
+    info: info ?? this.info,
+    onPrimary: onPrimary ?? this.onPrimary,
+    shadow: shadow ?? this.shadow,
+    scrim: scrim ?? this.scrim,
+  );
 
   @override
   LoomPalette lerp(covariant LoomPalette? other, double t) {
@@ -196,21 +195,21 @@ abstract final class LoomTheme {
   static LoomPalette get darkPalette => _dark;
 
   static ThemeData light({String? fontFamily, Color? accent}) => _build(
-        _accent(_light, Brightness.light, accent),
-        Brightness.light,
-        fontFamily: fontFamily,
-      );
+    _accent(_light, Brightness.light, accent),
+    Brightness.light,
+    fontFamily: fontFamily,
+  );
 
   static ThemeData dark({String? fontFamily, Color? accent}) => _build(
-        _accent(_dark, Brightness.dark, accent),
-        Brightness.dark,
-        fontFamily: fontFamily,
-      );
+    _accent(_dark, Brightness.dark, accent),
+    Brightness.dark,
+    fontFamily: fontFamily,
+  );
   static ThemeData oled({String? fontFamily, Color? accent}) => _build(
-        _accent(_oled, Brightness.dark, accent),
-        Brightness.dark,
-        fontFamily: fontFamily,
-      );
+    _accent(_oled, Brightness.dark, accent),
+    Brightness.dark,
+    fontFamily: fontFamily,
+  );
 
   static LoomPalette _accent(
     LoomPalette palette,
@@ -242,51 +241,48 @@ abstract final class LoomTheme {
       brightness: brightness,
       fontFamily: fontFamily,
       scaffoldBackgroundColor: p.background,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: p.primary,
-        brightness: brightness,
-      ).copyWith(
-        primary: p.primary,
-        onPrimary: p.onPrimary,
-        primaryContainer: p.primary.withAlphaFraction(.16),
-        onPrimaryContainer: p.primary,
-        secondary: p.secondary,
-        onSecondary: p.onPrimary,
-        secondaryContainer: p.secondary.withAlphaFraction(.18),
-        onSecondaryContainer: p.textPrimary,
-        tertiary: p.info,
-        onTertiary: p.onPrimary,
-        surface: p.surface,
-        onSurface: p.textPrimary,
-        onSurfaceVariant: p.textSecondary,
-        surfaceContainerHighest: p.surfaceMuted,
-        surfaceContainerHigh: p.surfaceMuted,
-        surfaceContainer: p.surfaceMuted,
-        surfaceContainerLow: p.surface,
-        surfaceContainerLowest: p.surface,
-        outline: p.borderStrong,
-        outlineVariant: p.border,
-        error: p.critical,
-        onError: brightness == Brightness.dark
-            ? const Color(0xFF3A0A10)
-            : Colors.white,
-        inverseSurface: p.textPrimary,
-        onInverseSurface: p.background,
-        scrim: p.scrim,
-        shadow: p.shadow,
-      ),
+      colorScheme:
+          ColorScheme.fromSeed(
+            seedColor: p.primary,
+            brightness: brightness,
+          ).copyWith(
+            primary: p.primary,
+            onPrimary: p.onPrimary,
+            primaryContainer: p.primary.withAlphaFraction(.16),
+            onPrimaryContainer: p.primary,
+            secondary: p.secondary,
+            onSecondary: p.onPrimary,
+            secondaryContainer: p.secondary.withAlphaFraction(.18),
+            onSecondaryContainer: p.textPrimary,
+            tertiary: p.info,
+            onTertiary: p.onPrimary,
+            surface: p.surface,
+            onSurface: p.textPrimary,
+            onSurfaceVariant: p.textSecondary,
+            surfaceContainerHighest: p.surfaceMuted,
+            surfaceContainerHigh: p.surfaceMuted,
+            surfaceContainer: p.surfaceMuted,
+            surfaceContainerLow: p.surface,
+            surfaceContainerLowest: p.surface,
+            outline: p.borderStrong,
+            outlineVariant: p.border,
+            error: p.critical,
+            onError: brightness == Brightness.dark
+                ? const Color(0xFF3A0A10)
+                : Colors.white,
+            inverseSurface: p.textPrimary,
+            onInverseSurface: p.background,
+            scrim: p.scrim,
+            shadow: p.shadow,
+          ),
     );
     // Persian text frequently appears inside English-mode strings (contact
     // names, message snippets). The platform default family has no
     // Arabic-script coverage, so Vazirmatn rides along as the first
     // fallback for every style; the explicit fa family keeps its own chain.
-    final fallback = <String>[
-      if (fontFamily != null) fontFamily,
-      'Vazirmatn',
-    ];
+    final fallback = <String>[if (fontFamily != null) fontFamily, 'Vazirmatn'];
     TextStyle fb(TextStyle? style) =>
-        style?.copyWith(fontFamilyFallback: fallback) ??
-        const TextStyle();
+        style?.copyWith(fontFamilyFallback: fallback) ?? const TextStyle();
     final themed = base.copyWith(
       extensions: <ThemeExtension<dynamic>>[p],
       pageTransitionsTheme: const PageTransitionsTheme(
@@ -398,9 +394,7 @@ abstract final class LoomTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(LoomRadii.control),
         ),
-        labelStyle: base.textTheme.labelMedium?.copyWith(
-          color: p.textPrimary,
-        ),
+        labelStyle: base.textTheme.labelMedium?.copyWith(color: p.textPrimary),
       ),
       sliderTheme: SliderThemeData(
         activeTrackColor: p.primary,
@@ -441,16 +435,17 @@ abstract final class LoomTheme {
         size: LoomIconSize.standard,
       ),
       appBarTheme: AppBarTheme(
-        systemOverlayStyle: (base.brightness == Brightness.dark
-                ? SystemUiOverlayStyle.light
-                : SystemUiOverlayStyle.dark)
-            .copyWith(
-          statusBarColor: Colors.transparent,
-          systemNavigationBarColor: Colors.transparent,
-          systemNavigationBarDividerColor: Colors.transparent,
-          systemStatusBarContrastEnforced: false,
-          systemNavigationBarContrastEnforced: false,
-        ),
+        systemOverlayStyle:
+            (base.brightness == Brightness.dark
+                    ? SystemUiOverlayStyle.light
+                    : SystemUiOverlayStyle.dark)
+                .copyWith(
+                  statusBarColor: Colors.transparent,
+                  systemNavigationBarColor: Colors.transparent,
+                  systemNavigationBarDividerColor: Colors.transparent,
+                  systemStatusBarContrastEnforced: false,
+                  systemNavigationBarContrastEnforced: false,
+                ),
         backgroundColor: p.surface,
         foregroundColor: p.textPrimary,
         surfaceTintColor: Colors.transparent,

@@ -50,14 +50,19 @@ class LoomOfflineDeviceDirectoryCache {
               item.trustState != LoomDeviceTrustState.changed,
         )
         .toList(growable: false);
-    if (active.isEmpty ||
-        active.any((item) => !_isFresh(item.lastSeenAt, current))) {
-      return null;
-    }
+    if (active.isEmpty) return null;
+    // A stale observation must not veto the whole peer: encrypting to the
+    // devices that are still fresh keeps offline sends working after one
+    // device has merely not been seen recently. Stale bundles are excluded
+    // from this message's recipient set instead of failing the send.
+    final fresh = active
+        .where((item) => _isFresh(item.lastSeenAt, current))
+        .toList(growable: false);
+    if (fresh.isEmpty) return null;
 
     final devices = <LoomDeviceKeyBundle>[];
     try {
-      for (final item in active) {
+      for (final item in fresh) {
         devices.add(
           await _verifyBundle(
             bundle: item.bundle,

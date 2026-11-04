@@ -942,7 +942,8 @@ class LoomGroupCallSurface extends StatelessWidget {
                       // Deliberately finite: a repeating halo here never lets
                       // the frame pipeline rest (battery, tests). A smooth
                       // one-shot glow reads just as clearly as "speaking".
-                      leading: AnimatedContainer(
+                      // Glow repaint is scoped to this roster row.
+                      leading: RepaintBoundary(child: AnimatedContainer(
                         duration: LoomMotion.component,
                         curve: LoomMotion.standard,
                         decoration: BoxDecoration(
@@ -968,7 +969,7 @@ class LoomGroupCallSurface extends StatelessWidget {
                           label: p.name,
                           size: LoomSizing.compactAvatar,
                         ),
-                      ),
+                      )),
                       title: Text(
                         '${p.name}${p.id == ownId ? ' · ${tr(context, 'You', 'شما')}' : ''}',
                         maxLines: 1,

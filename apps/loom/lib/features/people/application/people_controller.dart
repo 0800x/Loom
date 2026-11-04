@@ -1,10 +1,10 @@
 import 'dart:async';
+import '../../accounts/application/account_workspace.dart';
 
 import 'package:loom_models/loom_models.dart';
 import 'package:loom_protocol/loom_protocol.dart';
 import 'package:loom_storage/loom_storage.dart';
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../onboarding/application/onboarding_controller.dart';
 import '../../profile/application/local_avatar_store.dart';
@@ -110,7 +110,7 @@ class LoomPeopleController extends ChangeNotifier {
   Future<void> _open() async {
     try {
       if (_store == null) {
-        final support = await getApplicationSupportDirectory();
+        final support = await LoomAccountWorkspace.active();
         if (_disposed) return;
         _store = LoomContactStore.openFile(
           '${support.path}/loom-contacts-v1.sqlite3',

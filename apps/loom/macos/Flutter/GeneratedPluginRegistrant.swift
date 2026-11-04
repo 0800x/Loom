@@ -21,7 +21,7 @@ import package_info_plus
 import photo_manager
 import record_macos
 import sqflite_darwin
-import sqlite3_flutter_libs
+import sqlcipher_flutter_libs
 import url_launcher_macos
 import video_compress
 import video_player_avfoundation

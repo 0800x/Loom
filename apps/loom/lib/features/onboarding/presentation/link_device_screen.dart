@@ -7,7 +7,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../app/loom_strings.dart';
-import 'setup_scaffold.dart';
+import 'onboarding_chrome.dart';
 import '../application/device_link_service.dart';
 import '../application/onboarding_controller.dart';
 
@@ -136,11 +136,23 @@ class _LinkDeviceScreenState extends State<LinkDeviceScreen> {
     required String title,
     required String subtitle,
     required List<Widget> children,
-  }) => LoomSetupScaffold(
+    String? error,
+    String? ctaLabel,
+    IconData? ctaIcon,
+    VoidCallback? onCta,
+  }) => LoomOnboardingShell(
     title: title,
     subtitle: subtitle,
+    error: error,
+    ctaLabel: ctaLabel,
+    ctaIcon: ctaIcon,
+    onCta: onCta,
+    ctaBusy: _working,
     canPop: !_working,
-    children: children,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: children,
+    ),
   );
 
   Widget _trustedDeviceView() {
@@ -153,8 +165,12 @@ class _LinkDeviceScreenState extends State<LinkDeviceScreen> {
         'On the new device, sign in with your username and password first, then scan this short-lived QR. The Home Node only relays an encrypted one-time package.',
         'روی دستگاه جدید اول با نام کاربری و رمز عبور وارد شوید و بعد این QR کوتاه‌عمر را اسکن کنید. Home Node فقط یک بسته رمزگذاری‌شده و یک‌بارمصرف را منتقل می‌کند.',
       ),
+      error: _error,
+      ctaLabel: created == null
+          ? tr(context, 'Generate QR', 'ساخت QR')
+          : null,
+      onCta: created == null ? (_working ? null : _createInvitation) : null,
       children: [
-        const SizedBox(height: LoomSpacing.lg),
         LoomGlassSurface(
           strength: LoomGlassStrength.weak,
           blur: false,
@@ -172,30 +188,43 @@ class _LinkDeviceScreenState extends State<LinkDeviceScreen> {
                         color: p.textMuted,
                       ),
                       const SizedBox(height: LoomSpacing.sm),
-                      FilledButton.icon(
-                        onPressed: _working ? null : _createInvitation,
-                        icon: const Icon(LoomIcons.refresh_rounded),
-                        label: Text(tr(context, 'Generate QR', 'ساخت QR')),
+                      Text(
+                        tr(
+                          context,
+                          'Generate a one-time QR below to pair your new device.',
+                          'برای جفت‌کردن دستگاه جدید، QR یک‌بارمصرف را بسازید.',
+                        ),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: p.textMuted),
                       ),
                     ],
                   )
                 : Column(
                     key: ValueKey(created.linkId),
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        color: Colors.white,
-                        child: QrImageView(
-                          data: created.qrPayload,
-                          version: QrVersions.auto,
-                          size: MediaQuery.sizeOf(context).width < 400
-                              ? 180
-                              : 250,
-                          backgroundColor: Colors.white,
-                          semanticsLabel: tr(
-                            context,
-                            'One-time Loom device-link QR',
-                            'QR یک‌بارمصرف اتصال دستگاه لوم',
+                      LoomOnboardingQrFrame(
+                        child: Container(
+                          padding: const EdgeInsets.all(LoomSpacing.sm),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(
+                              LoomRadii.control,
+                            ),
+                          ),
+                          child: QrImageView(
+                            data: created.qrPayload,
+                            version: QrVersions.auto,
+                            size: MediaQuery.sizeOf(context).width < 400
+                                ? 180
+                                : 250,
+                            backgroundColor: Colors.white,
+                            semanticsLabel: tr(
+                              context,
+                              'One-time Loom device-link QR',
+                              'QR یک‌بارمصرف اتصال دستگاه لوم',
+                            ),
                           ),
                         ),
                       ),
@@ -249,15 +278,6 @@ class _LinkDeviceScreenState extends State<LinkDeviceScreen> {
                   ),
           ),
         ),
-        if (_error != null) ...[
-          const SizedBox(height: LoomSpacing.sm),
-          Text(
-            _error!,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: p.critical),
-          ),
-        ],
         const SizedBox(height: LoomSpacing.md),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,11 +311,14 @@ class _LinkDeviceScreenState extends State<LinkDeviceScreen> {
         'Password accepted for @${pending.username}. Now scan the QR shown on an already signed-in Loom device. After verification, this device gets its own fresh keys and message sync starts.',
         'رمز عبور برای @${pending.username} پذیرفته شد. حالا QR روی یکی از دستگاه‌های لوم که از قبل وارد حساب است را اسکن کنید. بعد از تأیید، این دستگاه کلیدهای جدید خودش را می‌گیرد و همگام‌سازی پیام‌ها شروع می‌شود.',
       ),
+      error: _error,
+      ctaLabel: tr(context, 'Verify and link', 'تأیید و اتصال'),
+      ctaIcon: _working ? null : LoomIcons.verified_user_outlined,
+      onCta: _working ? null : () => _redeem(_pasteController.text),
       children: [
-        const SizedBox(height: LoomSpacing.lg),
         if (_scannerSupported)
           ClipRRect(
-            borderRadius: BorderRadius.circular(LoomRadii.surface),
+            borderRadius: BorderRadius.circular(LoomRadii.sheet),
             child: SizedBox(
               height: 310,
               child: Stack(
@@ -319,6 +342,13 @@ class _LinkDeviceScreenState extends State<LinkDeviceScreen> {
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.white, width: 2),
                           borderRadius: BorderRadius.circular(22),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.white.withAlphaFraction(.16),
+                              blurRadius: 28,
+                              spreadRadius: 8,
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -371,26 +401,6 @@ class _LinkDeviceScreenState extends State<LinkDeviceScreen> {
             prefixIcon: const Icon(LoomIcons.qr_code_rounded),
           ),
         ),
-        const SizedBox(height: LoomSpacing.sm),
-        FilledButton.icon(
-          onPressed: _working ? null : () => _redeem(_pasteController.text),
-          icon: _working
-              ? const SizedBox.square(
-                  dimension: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(LoomIcons.verified_user_outlined),
-          label: Text(tr(context, 'Verify and link', 'تأیید و اتصال')),
-        ),
-        if (_error != null) ...[
-          const SizedBox(height: LoomSpacing.sm),
-          Text(
-            _error!,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: p.critical),
-          ),
-        ],
         const SizedBox(height: LoomSpacing.md),
         TextButton.icon(
           onPressed: _working

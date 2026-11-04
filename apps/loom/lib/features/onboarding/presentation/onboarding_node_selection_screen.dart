@@ -7,8 +7,8 @@ import '../../nodes/application/local_https_trust.dart';
 
 import '../../../app/loom_strings.dart';
 import '../../nodes/application/node_directory_controller.dart';
+import 'onboarding_chrome.dart';
 import 'onboarding_flow.dart';
-import 'setup_scaffold.dart';
 import '../../nodes/application/node_share_link.dart';
 import '../../nodes/presentation/node_qr_screen.dart';
 
@@ -343,7 +343,8 @@ class _LoomOnboardingNodeSelectionScreenState
         selecting ||
         controller.state == LoomNodeDirectoryState.loading;
     final signingIn = purpose == LoomNodeSelectionPurpose.signIn;
-    return LoomSetupScaffold(
+    final canContinue = verifiedHere && controller.selectedNodeVerified;
+    return LoomOnboardingShell(
       step: signingIn ? null : 1,
       canPop: !selecting,
       title: tr(
@@ -362,21 +363,20 @@ class _LoomOnboardingNodeSelectionScreenState
               'Scan its QR, enter an address or choose a verified server.',
               'QR را اسکن کنید، نشانی بدهید یا سرور تأییدشده‌ای انتخاب کنید.',
             ),
-      actions: verifiedHere && controller.selectedNodeVerified
-          ? FilledButton(
-              onPressed:
-                  loading ||
-                      (!signingIn &&
-                          controller.selectedLiveInfo!.registration != 'open')
-                  ? null
-                  : _continue,
-              child: Text(
-                tr(context, 'Continue with this server', 'ادامه با این سرور'),
-              ),
-            )
-          : null,
       error: controller.errorMessage,
-      children: [
+      ctaLabel: canContinue
+          ? tr(context, 'Continue with this server', 'ادامه با این سرور')
+          : null,
+      onCta: canContinue
+          ? (loading ||
+                    (!signingIn &&
+                        controller.selectedLiveInfo!.registration != 'open')
+                ? null
+                : _continue)
+          : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
         LoomGlassSurface(
           blur: false,
           radius: LoomRadii.surface,
@@ -591,7 +591,8 @@ class _LoomOnboardingNodeSelectionScreenState
               textAlign: TextAlign.center,
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 }

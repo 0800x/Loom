@@ -139,9 +139,15 @@ class LoomSetupScaffold extends StatelessWidget {
 }
 
 class LoomSetupHeader extends StatelessWidget {
-  const LoomSetupHeader({this.step, this.canPop = true, super.key});
+  const LoomSetupHeader({
+    this.step,
+    this.canPop = true,
+    this.trailing,
+    super.key,
+  });
   final int? step;
   final bool canPop;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -188,6 +194,7 @@ class LoomSetupHeader extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
+            if (trailing != null) trailing!,
             if (current != null)
               Text(
                 '$current / 4',

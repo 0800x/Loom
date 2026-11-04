@@ -1,4 +1,4 @@
-Loom / لوم 0.2.0-alpha.1
+Loom / لوم 0.3.0-alpha.1
 
 The first alpha brings conversations, MLS groups, attachments and media,
 English/Persian layouts and multiple delivery paths. A guided Home Node installer

@@ -5,7 +5,7 @@
 
 **پیام‌رسانی با چند مسیر تحویل**
 
-نسخهٔ آزمایشی آلفا · `0.1.0-alpha.1`
+نسخهٔ آزمایشی آلفا · `0.3.0-alpha.1`
 
 [English](README.md) · [کانال تلگرام](https://t.me/LoomMessanger) · [مستندات](docs/README.md)
 </div>
@@ -120,8 +120,8 @@ Node Manager را از قبل می‌سازد. سرور مقصد فقط آن‌�
 کامپایل Go، Node یا MinIO روی سرور انجام نمی‌شود.
 
 ```bash
-curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh https://github.com/0800x/Loom/releases/download/v0.2.0-alpha.1/loom-install.sh &&
-curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh.sha256 https://github.com/0800x/Loom/releases/download/v0.2.0-alpha.1/loom-install.sh.sha256 &&
+curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh https://github.com/0800x/Loom/releases/download/v0.3.0-alpha.1/loom-install.sh &&
+curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh.sha256 https://github.com/0800x/Loom/releases/download/v0.3.0-alpha.1/loom-install.sh.sha256 &&
 (cd /tmp && sha256sum --check loom-install.sh.sha256) &&
 bash /tmp/loom-install.sh --wizard
 ```
