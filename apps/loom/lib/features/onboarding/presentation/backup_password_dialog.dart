@@ -115,3 +115,74 @@ Future<LoomBackupExportPasswordChoice?> showLoomBackupExportPasswordDialog(
     confirmation.dispose();
   }
 }
+
+
+/// Prompts for the password protecting an imported recovery file.
+///
+/// Returning null means the user cancelled. The caller owns the returned
+/// string and must not persist it.
+Future<String?> showLoomBackupImportPasswordDialog(
+  BuildContext context, {
+  String? errorText,
+}) async {
+  final password = TextEditingController();
+  var visible = false;
+  try {
+    return await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Unlock recovery file'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Enter the password used when this recovery file was exported.',
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: password,
+                autofocus: true,
+                obscureText: !visible,
+                autocorrect: false,
+                enableSuggestions: false,
+                onSubmitted: (_) {
+                  if (password.text.isNotEmpty) {
+                    Navigator.pop(dialogContext, password.text);
+                  }
+                },
+                decoration: InputDecoration(
+                  labelText: 'Recovery-file password',
+                  errorText: errorText,
+                  suffixIcon: IconButton(
+                    tooltip: visible ? 'Hide password' : 'Show password',
+                    onPressed: () => setState(() => visible = !visible),
+                    icon: Icon(
+                      visible ? Icons.visibility_off : Icons.visibility,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: password.text.isEmpty
+                  ? null
+                  : () => Navigator.pop(dialogContext, password.text),
+              child: const Text('Unlock'),
+            ),
+          ],
+        ),
+      ),
+    );
+  } finally {
+    password.dispose();
+  }
+}
