@@ -126,7 +126,7 @@ abstract final class LoomDbEncryption {
         throw StateError('SQLCipher key was not configured');
       }
       final escapedPath = LoomSqliteEncryption.quoteLiteral(temporaryPath);
-      final escapedKey = "x'" + keyHex + "'".replaceAll("'", "''");
+      final escapedKey = ("x'" + keyHex + "'").replaceAll("'", "''");
       plain.execute(
         'ATTACH DATABASE ' +
         escapedPath +
