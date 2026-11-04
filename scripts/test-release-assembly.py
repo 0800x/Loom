@@ -67,6 +67,15 @@ class ReleaseAssembly(unittest.TestCase):
         self.assertIn("if info['tag_name'] != tag or info['draft'] or not info['prerelease']:", publisher)
         self.assertIn("actual[name] != digest", publisher)
         self.assertNotIn('refusing replacement', publisher)
+        self.assertIn('require_revision_on_main(revision)', publisher)
+        self.assertIn('/compare/', publisher)
+
+    def test_saved_build_publisher_reuses_existing_artifacts(self):
+        workflow = (release.ROOT / '.github/workflows/publish-saved-build.yml').read_text()
+        self.assertIn('workflow_dispatch:', workflow)
+        self.assertIn('actions/download-artifact@v4', workflow)
+        self.assertIn('run-id: ${{ inputs.source_run_id }}', workflow)
+        self.assertIn('LOOM_BUILD_REVISION:', workflow)
 
     def test_draft_refuses_another_repository_before_any_api_call(self):
         with patch.dict(os.environ, {'GITHUB_REPOSITORY': 'example/fork'}, clear=True):
