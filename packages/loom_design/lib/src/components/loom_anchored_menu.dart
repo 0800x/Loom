@@ -80,3 +80,60 @@ class LoomAnchoredMenu<T> extends StatelessWidget {
     );
   }
 }
+
+
+/// Displays a menu at an explicit overlay position while preserving Material's
+/// keyboard, focus, semantics and dismissal behavior.
+Future<T?> showLoomAnchoredMenu<T>({
+  required BuildContext context,
+  required RelativeRect position,
+  required List<PopupMenuEntry<T>> items,
+  double elevation = 8,
+  Color? color,
+  ShapeBorder? shape,
+  bool useRootNavigator = true,
+}) {
+  return showMenu<T>(
+    context: context,
+    position: position,
+    items: items,
+    elevation: elevation,
+    color: color ?? Theme.of(context).colorScheme.surfaceContainer,
+    shape: shape ??
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+    useRootNavigator: useRootNavigator,
+  );
+}
+
+/// Staggers menu rows into view with a small fade and vertical lift.
+class LoomMenuStagger extends StatelessWidget {
+  const LoomMenuStagger({
+    required this.index,
+    required this.animation,
+    required this.child,
+    super.key,
+  });
+
+  final int index;
+  final Animation<double> animation;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final start = (index * .055).clamp(0.0, .88).toDouble();
+    final interval = CurvedAnimation(
+      parent: animation,
+      curve: Interval(start, 1, curve: Curves.easeOutCubic),
+    );
+    return FadeTransition(
+      opacity: interval,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, .055),
+          end: Offset.zero,
+        ).animate(interval),
+        child: child,
+      ),
+    );
+  }
+}
