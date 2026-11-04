@@ -403,7 +403,7 @@ build_or_install_manager() {
   esac
   [[ "$INSTALL_COMMIT" =~ ^[a-f0-9]{40}$ ]] || { echo 'A full verified Loom commit is required.' >&2; exit 1; }
   release_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "$REPO_ROOT/release/version.json")"
-  release_tag="v$release_version"
+  release_tag="node-manager-$release_version-${INSTALL_COMMIT:0:12}"
   manager_asset="Loom-$release_version-manager-linux-$goarch"
   manifest_asset="Loom-node-linux-$goarch-build-manifest.json"
   work="$(mktemp -d)"
