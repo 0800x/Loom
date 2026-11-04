@@ -60,6 +60,14 @@ class ReleaseAssembly(unittest.TestCase):
         workflow = (release.ROOT / '.github/workflows/loom-alpha.yml').read_text()
         self.assertIn('cancel-in-progress: false', workflow)
 
+    def test_release_publication_can_resume_after_partial_success(self):
+        publisher = (release.ROOT / 'scripts/create-draft.py').read_text()
+        self.assertIn('def publish_or_verify(', publisher)
+        self.assertIn('if existing is None:', publisher)
+        self.assertIn("if info['tag_name'] != tag or info['draft'] or not info['prerelease']:", publisher)
+        self.assertIn("actual[name] != digest", publisher)
+        self.assertNotIn('refusing replacement', publisher)
+
     def test_draft_refuses_another_repository_before_any_api_call(self):
         with patch.dict(os.environ, {'GITHUB_REPOSITORY': 'example/fork'}, clear=True):
             with patch('subprocess.check_output', side_effect=AssertionError('Unexpected API call')):
