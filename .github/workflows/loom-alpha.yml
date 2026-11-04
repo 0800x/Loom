@@ -237,7 +237,7 @@ jobs:
         if: always()
         run: rm -f "$RUNNER_TEMP/loom-existing.jks"
       - name: Upload eligible Android candidate
-        if: env.LOOM_ANDROID_ENGINEERING_UNSIGNED != 'true' || (github.event_name == 'workflow_dispatch' && inputs.android_signing == 'unsigned-engineering')
+        if: env.LOOM_ANDROID_ENGINEERING_UNSIGNED != 'true' || github.ref_type != 'tag'
         uses: actions/upload-artifact@v4
         with:
           name: Loom-0.2.0-alpha.1-android
@@ -251,7 +251,7 @@ jobs:
           path: dist/
           if-no-files-found: error
       - name: Require signed APKs for the installable candidate
-        if: github.ref_type == 'tag' || github.event_name == 'push' || inputs.android_signing == 'existing-production-key'
+        if: github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.android_signing == 'existing-production-key')
         shell: bash
         run: |
           if [[ "$LOOM_ANDROID_ENGINEERING_UNSIGNED" == true ]]; then
