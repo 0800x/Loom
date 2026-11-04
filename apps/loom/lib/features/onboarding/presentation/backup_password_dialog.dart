@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:loom_design/loom_design.dart';
 
 class LoomBackupExportPasswordChoice {
   const LoomBackupExportPasswordChoice({
@@ -161,7 +162,7 @@ Future<String?> showLoomBackupImportPasswordDialog(
                     tooltip: visible ? 'Hide password' : 'Show password',
                     onPressed: () => setState(() => visible = !visible),
                     icon: Icon(
-                      visible ? Icons.visibility_off : Icons.visibility,
+                      visible ? LoomLoomIcons.visibility_rounded_off_rounded : LoomIcons.visibility_rounded,
                     ),
                   ),
                 ),
