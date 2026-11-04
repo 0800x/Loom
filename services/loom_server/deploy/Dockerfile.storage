@@ -1,5 +1,4 @@
 ARG LOOM_DOCKER_PREFIX=
-ARG LOOM_DOCKER_PREFIX=
 FROM ${LOOM_DOCKER_PREFIX}golang:1.25.14-alpine3.23@sha256:27b3069b25647beacd3745b0b2c83e2f9b8d3935455a32cd4531236ee1c960e0 AS build
 ARG LOOM_GO_PROXY=https://proxy.golang.org,direct
 ARG LOOM_ALPINE_MIRROR=
@@ -53,8 +52,10 @@ ENV HOME=/home/minio
 COPY --from=build /out/minio /usr/local/bin/minio
 COPY --from=build /src/LICENSE /src/NOTICE /usr/share/licenses/minio/
 COPY --from=build /source.tar.gz /usr/share/minio-source/source.tar.gz
-LABEL org.opencontainers.image.source=https://github.com/minio/minio \
-      org.opencontainers.image.revision=7aac2a2c5b7c882e68c1ce017d8256be2feea27f \
+LABEL org.opencontainers.image.source=https://github.com/0800x/Loom \
+      org.opencontainers.image.revision=$LOOM_BUILD_COMMIT \
+      org.opencontainers.image.version=$LOOM_RELEASE_VERSION \
+      org.loom.minio.upstream-revision=7aac2a2c5b7c882e68c1ce017d8256be2feea27f \
       org.opencontainers.image.licenses=AGPL-3.0-or-later
 USER 1000:1000
 VOLUME ["/data"]

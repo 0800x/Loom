@@ -322,15 +322,14 @@ ensure_docker() {
 }
 
 ensure_runtime_tools() {
-  if command -v curl >/dev/null 2>&1 && command -v openssl >/dev/null 2>&1 && command -v git >/dev/null 2>&1 && command -v ss >/dev/null 2>&1; then
+  if command -v curl >/dev/null 2>&1 && command -v openssl >/dev/null 2>&1 && command -v git >/dev/null 2>&1 && command -v ss >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
     return
   fi
   load_os_release
   case "${ID:-}" in
-    fedora|centos|rhel|rocky|almalinux|opensuse-*|sles) loom_packages ca-certificates curl openssl git iproute ;;
-    *) loom_packages ca-certificates curl openssl git iproute2 ;;
+    fedora|centos|rhel|rocky|almalinux|opensuse-*|sles) loom_packages ca-certificates curl openssl git iproute python3 ;;
+    *) loom_packages ca-certificates curl openssl git iproute2 python3 ;;
   esac
-
 }
 
 random_secret() {
