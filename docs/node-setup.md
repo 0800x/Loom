@@ -11,7 +11,10 @@ exists, its IPv6 address must also reach this server.
 Connect over SSH and paste:
 
 ```bash
-bash <(curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/0800x/Loom/main/install.sh)
+curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh https://github.com/0800x/Loom/releases/download/v0.2.0-alpha.1/loom-install.sh &&
+curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh.sha256 https://github.com/0800x/Loom/releases/download/v0.2.0-alpha.1/loom-install.sh.sha256 &&
+(cd /tmp && sha256sum --check loom-install.sh.sha256) &&
+bash /tmp/loom-install.sh --wizard
 ```
 
 The domain is the only required free-text answer. Use **Up/Down and Enter**
@@ -21,7 +24,7 @@ need typing. Use `--text` for line prompts on a basic terminal. The menus offer 
 | Question | Choices |
 | --- | --- |
 | Download sources | `official`, `liara` (Iran mirrors), or `arvan` (Arvan Docker/Ubuntu/Alpine, Liara Go/npm/Debian) |
-| Go modules | `profile`, `official`, `liara`, `parspack`, `runflare`, or `goproxy-cn`; independent of Docker/APK/npm |
+| Go modules | Retained for optional source/offline build workflows; not used by the prebuilt production installer |
 | HTTPS mode | `public` for a public CA certificate; `local` for an explicitly trusted local certificate |
 | Server address | Your hostname or IPv4 address, without a scheme, port or path |
 | Registration | `approval` to review requests, `open` to allow sign-ups, `closed` to stop new registrations |
@@ -43,18 +46,19 @@ Obtain this initial script through the project's trusted GitHub URL. For
 independent source approval and offline preparation, see the
 [deployment reference](../services/loom_server/deploy/README.md).
 
-The install takes several minutes because it builds the server, manager and
-[pinned storage service](../services/loom_server/deploy/STORAGE.md). Existing
-MinIO binaries and storage formats are retained during a source update.
-It stops on failed source verification, service startup or HTTPS validation.
+GitHub Actions builds the Node Manager and multi-architecture Node/MinIO images.
+A fresh Home Node downloads those prebuilt outputs and verifies the Manager
+against the release manifest; it does not compile Go, Node or MinIO locally.
+Docker, PostgreSQL, proxy/TLS setup and image downloads still require network
+access. Existing MinIO binaries and storage formats are retained during updates.
+The installer stops on failed source/image verification or startup validation.
 Existing data, identity and valid service secrets are retained on reruns.
 An unrelated web server or TURN service is never replaced automatically.
 
 ## Installing from Iran
 
 The first menu selects **Official**, **Liara**, or **Arvan Docker + Liara Go/npm**. Arvan also supplies Ubuntu host and Alpine container package mirrors; Debian host packages use Liara.
-The selected policy is saved for later setup and source updates. For unattended
-setup, add `--downloads liara` or `--downloads arvan` to the installer arguments.
+The selected Docker source policy applies to Docker Hub dependencies such as PostgreSQL and Caddy. Loom Node and MinIO are pulled from GHCR using immutable source-commit tags; the production installer does not build them locally. For unattended setup, add `--downloads liara` or `--downloads arvan` to the installer arguments.
 The default is `official`; no IP geolocation or silent mirror switching is used.
 
 | Dependency | Liara profile | Arvan profile |

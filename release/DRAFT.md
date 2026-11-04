@@ -1,4 +1,4 @@
-Loom / لوم 0.1.0-alpha.1
+Loom / لوم 0.2.0-alpha.1
 
 The first alpha brings conversations, MLS groups, attachments and media,
 English/Persian layouts and multiple delivery paths. A guided Home Node installer
@@ -9,8 +9,9 @@ Android signing status appears in each filename and manifest. Signed APKs use th
 configured production key; unsigned-engineering APKs are not installable as-is.
 Windows and Linux packages are unsigned builds. macOS ZIPs and DMGs
 contain the complete ad-hoc signed application; they are not Developer ID signed
-or notarized. Node bundles include server source and the compiled manager, not
-offline Docker images.
+or notarized. Node releases include a precompiled Manager and server source
+bundle; matching multi-architecture Node and MinIO images are published to GHCR.
+The Home Node installer pulls them instead of compiling locally.
 
 Each platform includes a build manifest with its revision/toolchains and
 SHA256SUMS. Keep complete desktop bundles together. Retain identity and recovery

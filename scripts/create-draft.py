@@ -1,4 +1,4 @@
-"""Create a new draft only; never publish, replace a release or push a tag."""
+"""Publish approved version tags; keep branch previews as drafts."""
 import json
 import os
 from pathlib import Path
@@ -54,14 +54,14 @@ with tempfile.TemporaryDirectory() as folder:
     if not assets:
         raise ValueError('No release assets')
     subprocess.run(['gh', 'release', 'create', tag, *assets, '--repo', REPOSITORY,
-                    '--draft', '--prerelease', '--title', title,
+                    *(['--draft'] if not is_tag else []), '--prerelease', '--title', title,
                     '--notes-file', str(note_file), *extra], check=True)
 draft = json.loads(gh('api', '--paginate', 'repos/' + REPOSITORY + '/releases?per_page=100',
                      '--jq', '.[] | select(.tag_name == "' + tag + '")'))
-if not draft['draft'] or not draft['prerelease']:
-    raise ValueError('Release must remain a draft prerelease')
+if draft['draft'] != (not is_tag) or not draft['prerelease']:
+    raise ValueError('Release state does not match the approved trigger')
 if not is_tag:
     tags_after = gh('api', 'repos/' + REPOSITORY + '/git/matching-refs/tags/', '--jq', '.[].ref')
     if tags_after != tags_before:
         raise ValueError('Unexpected tag change while creating an unpublished draft')
-print('Draft prepared for owner review: ' + draft['html_url'])
+print(('Published prerelease: ' if is_tag else 'Draft prepared for owner review: ') + draft['html_url'])

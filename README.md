@@ -33,7 +33,7 @@ identity, and keep your conversations in one app. Messages can travel through
 verified nodes, a local network, or compatible Android devices encountered along
 the way.
 
-This first alpha is for testing. Native media, background behavior and Nearby
+Loom 0.2.0 is an alpha release for testing. Native media, background behavior and Nearby
 still need device testing. Keep a recovery backup; the project has not received
 an independent security audit.
 
@@ -134,6 +134,23 @@ a browser capture of a running local server.
 
 [Capture details and image hashes](docs/screenshots/loom-current/provenance.json).
 Messenger widget renders do not establish native playback, device or radio support.
+
+## Install your own Home Node
+
+GitHub Actions builds the Node Manager and multi-architecture Node/MinIO images.
+The Home Node downloads and verifies those prebuilt outputs; it does not compile
+them locally.
+
+```bash
+curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh https://github.com/0800x/Loom/releases/download/v0.2.0-alpha.1/loom-install.sh &&
+curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh.sha256 https://github.com/0800x/Loom/releases/download/v0.2.0-alpha.1/loom-install.sh.sha256 &&
+(cd /tmp && sha256sum --check loom-install.sh.sha256) &&
+bash /tmp/loom-install.sh --wizard
+```
+
+Before first public installation, make the `loom-node` and `loom-minio`
+packages in GitHub Container Registry **Public**. See
+[Home Node setup](docs/node-setup.md) for DNS, firewall and HTTPS requirements.
 
 ## Get started
 

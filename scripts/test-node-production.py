@@ -42,8 +42,8 @@ copy_bundle
 """
     staged=run(['bash','-c',stage,'fixture',str(SERVER),str(fixture_repo),str(home),revision])
     if staged.returncode: raise RuntimeError('Installed production bundle staging failed: '+staged.stderr)
-    body='set -euo pipefail\n'+random_secret+write_env+'\nINSTALL_DIR="$1"; DOMAIN=chat.example.org; PROXY_MODE=nginx; OPERATOR_NAME="Example operator"; JURISDICTION=Unspecified; REGISTRATION=approval; FEDERATION=trusted; write_env\n'
-    result=run(['bash','-c',body,'fixture',str(home)])
+    body='set -euo pipefail\n'+random_secret+write_env+'\nINSTALL_DIR="$1"; INSTALL_COMMIT="$2"; DOMAIN=chat.example.org; PROXY_MODE=nginx; OPERATOR_NAME="Example operator"; JURISDICTION=Unspecified; REGISTRATION=approval; FEDERATION=trusted; write_env\n'
+    result=run(['bash','-c',body,'fixture',str(home),revision])
     if result.returncode:raise RuntimeError('Production environment generation failed')
     env_path=home/'deploy/.env'
     env_path.write_text(env_path.read_text().replace('LOOM_HOST_PORT=7483','LOOM_HOST_PORT=0')+'LOOM_BUILD_COMMIT='+revision+'\n')
@@ -56,7 +56,34 @@ copy_bundle
     if policy.returncode: raise RuntimeError('Fixture download policy failed')
     env_path.write_text(env_path.read_text()+policy.stdout)
     original=env_path.read_bytes()
-    compose=['docker','compose','--project-name',project,'--env-file',str(env_path),'-f',str(home/'deploy/docker-compose.production.yml')]
+    test_override=home/'deploy/docker-compose.test-build.yml'
+    test_override.write_text(f"""services:
+  minio:
+    image: loom-test-minio:{revision}
+    pull_policy: build
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.storage
+  minio-init:
+    image: loom-test-node-init:{revision}
+    pull_policy: build
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        LOOM_BUILD_COMMIT: {revision}
+        LOOM_RELEASE_VERSION: 0.2.0-alpha.1
+  loom-node:
+    image: loom-test-node:{revision}
+    pull_policy: build
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        LOOM_BUILD_COMMIT: {revision}
+        LOOM_RELEASE_VERSION: 0.2.0-alpha.1
+""")
+    compose=['docker','compose','--project-name',project,'--env-file',str(env_path),'-f',str(home/'deploy/docker-compose.production.yml'),'-f',str(test_override)]
     def safe_output(text):
         for line in original.decode().splitlines():
             if '=' in line:
@@ -77,19 +104,13 @@ copy_bundle
         result=run(command)
         if result.returncode: raise RuntimeError('Mirror Compose configuration rejected: '+profile)
         services=json.loads(result.stdout)['services']
-        exporters={}
-        for name, service in services.items():
-            if 'build' not in service: continue
-            image=service.get('image')
-            if not image: raise RuntimeError('Build service lacks an explicit image target: '+name)
-            if image in exporters: raise RuntimeError('Concurrent build exporters share an image tag: '+exporters[image]+' and '+name)
-            exporters[image]=name
         if services['postgres']['image'] != prefix+'postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24': raise RuntimeError('PostgreSQL mirror missing')
+        if services['minio']['image'] != 'ghcr.io/0800x/loom-minio:'+revision: raise RuntimeError('MinIO image is not commit-pinned')
         for service in ('minio', 'minio-init', 'loom-node'):
-            if services[service].get('pull_policy') != 'build': raise RuntimeError('Local source image may be pulled: '+service)
-            if services[service]['build']['args']['LOOM_DOCKER_PREFIX'] != prefix: raise RuntimeError('Build-base mirror missing')
-        if services['minio']['build']['args']['LOOM_GO_PROXY'] != 'https://package-mirror.liara.ir/repository/go/': raise RuntimeError('Go mirror missing')
-        if services['loom-node']['build']['args']['LOOM_NPM_REGISTRY'] != 'https://package-mirror.liara.ir/repository/npm/': raise RuntimeError('npm mirror missing')
+            if services[service].get('pull_policy') != 'always': raise RuntimeError('Release image must always be pulled: '+service)
+            if 'build' in services[service]: raise RuntimeError('Production Compose must not build images on the server: '+service)
+        if services['minio-init']['image'] != 'ghcr.io/0800x/loom-node:'+revision or services['loom-node']['image'] != services['minio-init']['image']:
+            raise RuntimeError('Node and bucket initializer must use the same prebuilt commit image')
         print('Real Compose accepts the isolated '+profile+' download profile',flush=True)
     identity_command=['exec','-T','loom-node','node','-e',"console.log(require('node:crypto').createHash('sha256').update(require('node:fs').readFileSync('/app/data/node-identity.json')).digest('hex'))"]
     try:
@@ -99,12 +120,11 @@ copy_bundle
         if len(identity)!=64:raise RuntimeError('Persistent identity was not created by the production runtime')
         operation(['exec','-T','loom-node','node','-e',"fetch('http://127.0.0.1:7483/readyz').then(r=>process.exit(r.ok?0:1))"])
         print('Fresh production runtime is ready',flush=True)
-        # Rebuild both cached Node targets together, including when their tags
-        # already exist. Containerd stores reject concurrent exports to one tag.
+        # This is a test-only Compose override; production Compose stays pull-only.
         operation(['build','loom-node','minio-init'])
         images=operation(['images','--format','json'])
         if not images: raise RuntimeError('Built production images are unavailable')
-        print('Concurrent Node and bucket-initializer rebuild completed with distinct image targets',flush=True)
+        print('Test-only Node and bucket-initializer image builds completed',flush=True)
         # Simulate the reported retained-volume/missing-config situation.
         missing=home/'deploy/missing.env'
         guard='source "$1"; loom_guard_persistent_install "$2"'

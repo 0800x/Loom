@@ -13,7 +13,11 @@ import (
 	"time"
 )
 
-const publisherChannelURL = "https://raw.githubusercontent.com/0800x/Loom/main/release/node-channel.json"
+var publisherChannelVersion = "0.2.0-alpha.1"
+
+func publisherChannelURL() string {
+	return "https://github.com/0800x/Loom/releases/download/v" + publisherChannelVersion + "/node-channel.json"
+}
 const updatePolicyPath = "/etc/loom/update-policy"
 
 type publisherRelease struct {
@@ -69,7 +73,7 @@ func publisherPolicyEnabled(path string) (bool, error) {
 func fetchPublisherRelease() (publisherRelease, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	cmd := updateCommand(ctx, "curl", "--proto", "=https", "--tlsv1.2", "--fail", "--silent", "--show-error", "--max-time", "15", "--max-filesize", "4096", "--max-redirs", "0", publisherChannelURL)
+	cmd := updateCommand(ctx, "curl", "--proto", "=https", "--tlsv1.2", "--fail", "--silent", "--show-error", "--max-time", "15", "--max-filesize", "4096", "--max-redirs", "0", publisherChannelURL())
 	cmd.Dir = "/"
 	if err := dropUpdatePrivileges(cmd); err != nil {
 		return publisherRelease{}, err

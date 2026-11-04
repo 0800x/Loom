@@ -395,43 +395,50 @@ select_proxy_mode() {
 }
 
 build_or_install_manager() {
-  local packaged="$SOURCE_ROOT/bin/loom-node-manager"
   local target="$INSTALL_DIR/bin/loom-node-manager"
-  if [[ ! -f "$MANAGER_SOURCE/go.mod" && -x "$packaged" ]]; then
-    loom_install_manager_binary "$packaged" "$target"
-    ui_ok "Installed packaged Loom Node Manager"
-    return
-  fi
-  if [[ ! -f "$MANAGER_SOURCE/go.mod" ]]; then
-    echo "Node Manager source/binary is missing; cannot provide the loom-node command." >&2
-    exit 1
-  fi
-  local goarch build_dir
+  local work release_version release_tag manager_asset manifest_asset expected_sha version_output source_digest goarch
   case "$(uname -m)" in
     x86_64|amd64) goarch=amd64 ;;
     aarch64|arm64) goarch=arm64 ;;
     *) echo "Unsupported CPU architecture for Node Manager: $(uname -m)" >&2; exit 1 ;;
   esac
-  build_dir="$(mktemp -d)"
-  trap 'rm -rf "${build_dir:-}"' RETURN
-  mkdir -p "$build_dir/src"
-  cp -a "$MANAGER_SOURCE/." "$build_dir/src/"
-  ui_info "Building Loom Node Manager TUI for linux/$goarch"
-  docker run --rm \
-    -e GOPROXY="$LOOM_GO_PROXY" -e GOSUMDB=sum.golang.org -e LOOM_ALPINE_MIRROR="$LOOM_ALPINE_MIRROR" \
-    -e CGO_ENABLED=0 -e GOOS=linux -e GOARCH="$goarch" \
-    -e LOOM_SOURCE_COMMIT="$INSTALL_COMMIT" -e LOOM_SOURCE_BRANCH="$UPDATE_BRANCH" -e LOOM_SOURCE_REPOSITORY="$UPDATE_REPOSITORY" \
-    -e PATH=/usr/local/go/bin:/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-    -v "$SCRIPT_DIR/go-build-resources.sh:/usr/local/lib/loom/go-build-resources.sh:ro,Z" \
-    -v "$build_dir:/work:Z" -w /work/src "${LOOM_DOCKER_PREFIX}golang:1.25.14-alpine3.23@sha256:27b3069b25647beacd3745b0b2c83e2f9b8d3935455a32cd4531236ee1c960e0" \
-    sh -c 'set -eu; if [ -n "$LOOM_ALPINE_MIRROR" ]; then v=$(cut -d. -f1,2 /etc/alpine-release); printf "%s/v%s/main\n%s/v%s/community\n" "$LOOM_ALPINE_MIRROR" "$v" "$LOOM_ALPINE_MIRROR" "$v" > /etc/apk/repositories; fi; apk add --no-cache git; /usr/local/go/bin/go version; echo "Downloading manager modules from $GOPROXY (10-minute limit)"; timeout -s TERM -k 10 600 /usr/local/go/bin/go mod download -x; . /usr/local/lib/loom/go-build-resources.sh; loom_go_build_resources; /usr/local/go/bin/go test -p "$LOOM_GO_BUILD_JOBS" -mod=readonly ./...; /usr/local/go/bin/go build -p "$LOOM_GO_BUILD_JOBS" -buildvcs=false -mod=readonly -trimpath -ldflags="-s -w -X main.buildCommit=$LOOM_SOURCE_COMMIT -X main.buildBranch=$LOOM_SOURCE_BRANCH -X main.buildRepository=$LOOM_SOURCE_REPOSITORY" -o /work/loom-node-manager .'
-  loom_install_manager_binary "$build_dir/loom-node-manager" "$target"
-  rm -rf "$build_dir"
-  trap - RETURN
-  ui_ok "Loom Node Manager built and installed"
-}
-
-write_launcher() {
+  [[ "$INSTALL_COMMIT" =~ ^[a-f0-9]{40}$ ]] || { echo 'A full verified Loom commit is required.' >&2; exit 1; }
+  release_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "$REPO_ROOT/release/version.json")"
+  release_tag="v$release_version"
+  manager_asset="Loom-$release_version-manager-linux-$goarch"
+  manifest_asset="Loom-node-linux-$goarch-build-manifest.json"
+  work="$(mktemp -d)"
+  trap 'rm -rf "$work"' RETURN
+  ui_info "Downloading the prebuilt Node Manager for linux/$goarch"
+  curl --proto '=https' --tlsv1.2 -fLsS --retry 3 --max-time 90 "https://github.com/0800x/Loom/releases/download/$release_tag/$manager_asset" -o "$work/manager"
+  curl --proto '=https' --tlsv1.2 -fLsS --retry 3 --max-time 30 "https://github.com/0800x/Loom/releases/download/$release_tag/$manifest_asset" -o "$work/manifest.json"
+  curl --proto '=https' --tlsv1.2 -fLsS --retry 3 --max-time 30 "https://github.com/0800x/Loom/releases/download/$release_tag/node-channel.json" -o "$work/node-channel.json"
+  source_digest="$(cat "$REPO_ROOT/.loom-source-sha256")"
+  expected_sha="$(python3 - "$work/manifest.json" "$manager_asset" "$INSTALL_COMMIT" "$release_version" "$goarch" <<'PY'
+import json,re,sys
+path,name,commit,version,arch=sys.argv[1:]
+m=json.load(open(path,encoding='utf-8'))
+if (m.get('revision'),m.get('version'),m.get('platform'),m.get('architecture')) != (commit,version,'node-linux',arch): raise SystemExit('Manager manifest does not match selected release')
+item=next((x for x in m.get('files',[]) if x.get('name')==name),None)
+if not item or not re.fullmatch(r'[0-9a-f]{64}',item.get('sha256','')): raise SystemExit('Manager SHA256 missing')
+print(item['sha256'])
+PY
+  )"
+  printf '%s  %s\n' "$expected_sha" "$work/manager" | sha256sum --check --status - || { echo 'Node Manager SHA256 verification failed.' >&2; exit 1; }
+  python3 - "$work/node-channel.json" "$INSTALL_COMMIT" "$source_digest" <<'PY'
+import json,sys
+path,commit,digest=sys.argv[1:]
+m=json.load(open(path,encoding='utf-8'))
+if m.get('schema') != 1 or m.get('repository') != '0800x/Loom' or m.get('branch') != 'main' or m.get('revision') != commit or m.get('sha256') != digest or not isinstance(m.get('sequence'),int) or m['sequence'] < 1: raise SystemExit('Release channel does not match verified source')
+PY
+  chmod 0755 "$work/manager"
+  version_output="$("$work/manager" --version 2>&1)"
+  [[ "$version_output" == *"Loom Node Manager $MANAGER_VERSION ${INSTALL_COMMIT:0:10}"* ]] || { echo 'Prebuilt Manager version/commit mismatch.' >&2; exit 1; }
+  loom_install_manager_binary "$work/manager" "$target"
+  install -d -m 0755 "$INSTALL_DIR/release"
+  install -m 0644 "$work/node-channel.json" "$INSTALL_DIR/release/node-channel.json"
+  ui_ok 'Installed verified prebuilt Loom Node Manager'
+}write_launcher() {
   bash "$INSTALL_DIR/scripts/linux/install-cli.sh"
 }
 
@@ -475,9 +482,9 @@ copy_bundle() {
     ui_warn 'Setup pin unavailable. Reopen setup through the verified public bootstrap.'
   fi
   build_or_install_manager
-  if [[ -f "$REPO_ROOT/release/node-channel.json" ]]; then
+  if [[ -f "$INSTALL_DIR/release/node-channel.json" ]]; then
     local source_sequence
-    source_sequence="$(sed -n 's/.*"sequence":[[:space:]]*\([0-9][0-9]*\).*/\1/p' "$REPO_ROOT/release/node-channel.json")"
+    source_sequence="$(sed -n 's/.*"sequence":[[:space:]]*\([0-9][0-9]*\).*/\1/p' "$INSTALL_DIR/release/node-channel.json")"
     [[ "$source_sequence" =~ ^[1-9][0-9]*$ ]] || return 1
     "$INSTALL_DIR/bin/loom-node-manager" --home "$INSTALL_DIR" --record-installed-source-sequence "$source_sequence"
   fi
@@ -496,6 +503,7 @@ LOOM_MODE=production
 LOOM_HOST=0.0.0.0
 LOOM_PORT=7483
 LOOM_HOST_PORT=7483
+LOOM_IMAGE_TAG=$INSTALL_COMMIT
 LOOM_PROXY_MODE=$PROXY_MODE
 LOOM_PUBLIC_DOMAIN=$DOMAIN
 LOOM_PUBLIC_BASE_URL=https://$DOMAIN
@@ -892,7 +900,7 @@ fi
 loom_download_profile "${DOWNLOAD_PROFILE:-official}"
 if [[ -z "$GO_MIRROR" && -f "$EXISTING_ENV" ]]; then GO_MIRROR="$(read_env_value "$EXISTING_ENV" LOOM_GO_MIRROR)"; fi
 loom_go_mirror "${GO_MIRROR:-profile}"
-ui_info "Go module downloads: $LOOM_GO_PROXY"
+ui_info "Using prebuilt Node/MinIO images for commit $INSTALL_COMMIT; host-side compilation is disabled"
 ui_step 1 7 "Ensuring Docker Engine + Compose v2"
 ensure_docker
 ensure_runtime_tools
@@ -922,6 +930,7 @@ set_env_value "$EXISTING_ENV" LOOM_GO_MIRROR "$LOOM_GO_MIRROR"
 set_env_value "$EXISTING_ENV" LOOM_NPM_REGISTRY "$LOOM_NPM_REGISTRY"
 set_env_value "$EXISTING_ENV" LOOM_ALPINE_MIRROR "$LOOM_ALPINE_MIRROR"
 set_env_value "$EXISTING_ENV" LOOM_BUILD_COMMIT "${INSTALL_COMMIT:-unknown}"
+set_env_value "$EXISTING_ENV" LOOM_IMAGE_TAG "$INSTALL_COMMIT"
 set_env_value "$EXISTING_ENV" LOOM_UPDATE_BRANCH "$UPDATE_BRANCH"
 set_env_value "$EXISTING_ENV" LOOM_UPDATE_REPOSITORY "$UPDATE_REPOSITORY"
 set_env_value "$EXISTING_ENV" LOOM_UPDATE_SOURCE_DIR "$UPDATE_SOURCE_DIR"
@@ -934,11 +943,15 @@ open_firewall_ports
 compose config --quiet
 
 if [[ $NO_START -eq 0 ]]; then
-  ui_step 6 7 "Building and starting Loom Node"
+  ui_step 6 7 "Pulling prebuilt Loom Node and MinIO images"
   stop_embedded_caddy_for_nginx
-  if ! compose up -d --build; then
-    ui_fail 'Container build/start failed. No database credentials or identity were reset.'
-    ui_info 'If module downloads report 403, this host cannot reach a dependency source. Do not uninstall or delete data; resolve outbound access and rerun the same installer.'
+  if ! compose pull; then
+    ui_fail 'Prebuilt release images could not be downloaded. Check GHCR package visibility and server connectivity.'
+    ui_info 'No local image compilation is attempted. Database credentials and Node identity are left untouched.'
+    exit 1
+  fi
+  if ! compose up -d --wait --wait-timeout 180; then
+    ui_fail 'Container startup failed. No database credentials or identity were reset.'
     exit 1
   fi
   compose ps

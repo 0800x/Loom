@@ -1,4 +1,4 @@
-# Loom 0.1.0-alpha.1
+# Loom 0.2.0-alpha.1
 
 The first public alpha includes the messenger, a self-hosted Home Node and its
 terminal manager. Public download availability is shown on
@@ -7,12 +7,12 @@ available from [Actions](https://github.com/0800x/Loom/actions/workflows/loom-al
 
 | Component | Version |
 | --- | --- |
-| Messenger | 0.1.0+28 |
+| Messenger | 0.2.0+29 |
 | Node | 0.10.10 |
 | Terminal manager | 0.8.6 |
 | Desktop Node UI | 0.7.1+2 |
 
-The public label is `0.1.0-alpha.1`. Component versions are checked independently.
+The app's in-app version is `0.2.0` (build 29); the public prerelease label is `0.2.0-alpha.1`. Node and Node Manager keep independent component versions.
 See the [artifact matrix](ARTIFACT-MATRIX.md) for architecture and signing labels.
 Each artifact manifest identifies its exact source revision. A build of an older
 revision does not validate subsequent source changes.
@@ -34,6 +34,10 @@ silently import, delete or replace another application's identity or data.
 Keep recovery exports; see [compatibility](../docs/compatibility.md).
 
 GPLv3-only. Third-party code and assets retain their licenses and attribution.
+
+## Release status
+
+The alpha prerelease is an engineering distribution, not a claim that the separate signed stable-release process is complete. `release/version.json` remains `published: false` until publisher signing, provenance and independent verification are operational.
 
 ## Signed release process — required, not yet operational
 

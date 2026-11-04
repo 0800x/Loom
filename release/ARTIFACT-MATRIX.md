@@ -1,6 +1,6 @@
 # Artifacts and signing
 
-Artifacts use the public label `0.1.0-alpha.1`. Check the exact revision and
+Artifacts use the public label `0.2.0-alpha.1`. Check the exact revision and
 signing status in each generated build manifest and the corresponding
 [Actions run](https://github.com/0800x/Loom/actions/workflows/loom-alpha.yml).
 
@@ -20,7 +20,8 @@ selected Actions run or published release; a draft is not a public download.
 Universal APK/AAB are optional local build-script outputs. Android 32-bit x86,
 Windows ARM64, Linux ARM64 messenger and universal macOS packages are not
 advertised. x86_64 is 64-bit x86. Node source bundles do not include offline
-Docker images.
+Docker images; the production installer pulls multi-architecture GHCR images
+addressed by the exact 40-character source commit.
 
 Native MLS libraries are packaged and checked for every advertised messenger
 architecture. Missing libraries, failed checks and missing required signing

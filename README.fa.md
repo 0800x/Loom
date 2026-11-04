@@ -113,6 +113,23 @@ x64 یا arm64 لازم است. توضیح محدودیت‌ها، پورت‌ه
 
 [شرح کامل مسیرها، وضعیت‌ها و معماری](README.md#how-messages-travel)
 
+## نصب Home Node شخصی
+
+در نسخهٔ ۰٫۲، GitHub Actions ایمیج‌های چندمعماری Node و MinIO و فایل اجرایی
+Node Manager را از قبل می‌سازد. سرور مقصد فقط آن‌ها را دانلود و اجرا می‌کند؛
+کامپایل Go، Node یا MinIO روی سرور انجام نمی‌شود.
+
+```bash
+curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh https://github.com/0800x/Loom/releases/download/v0.2.0-alpha.1/loom-install.sh &&
+curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh.sha256 https://github.com/0800x/Loom/releases/download/v0.2.0-alpha.1/loom-install.sh.sha256 &&
+(cd /tmp && sha256sum --check loom-install.sh.sha256) &&
+bash /tmp/loom-install.sh --wizard
+```
+
+پیش از نصب عمومی، بسته‌های `loom-node` و `loom-minio` در GitHub Container
+Registry باید روی حالت **Public** باشند. [راهنمای نصب نود](docs/node-setup.md)
+نیازهای DNS، فایروال و HTTPS را توضیح می‌دهد.
+
 ## فدراسیون و مدیریت سرور
 
 دو نفر می‌توانند روی نودهای خانگی متفاوت گفتگو کنند. نود فرستنده، دامنهٔ مخاطب
