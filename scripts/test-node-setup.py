@@ -50,6 +50,54 @@ class SetupTests(unittest.TestCase):
             result = subprocess.run(['bash', str(SETUP), '--plan', '--yes', *args], capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0)
 
+    def test_release_asset_download_resumes_interrupted_transfers(self):
+        installer = SETUP.with_name('install-production.sh').read_text()
+        start = installer.index('download_release_asset() {')
+        end = installer.index('\\nbuild_or_install_manager() {', start)
+        downloader = installer[start:end]
+        self.assertIn('--connect-timeout 20', downloader)
+        self.assertIn('--max-time 300', downloader)
+        self.assertIn('resume=(-C -)', downloader)
+        self.assertIn('for attempt in 1 2 3 4', downloader)
+
+        with tempfile.TemporaryDirectory(prefix='loom-download-resume-') as temp:
+            root = Path(temp)
+            script = downloader + r"""
+ui_info(){ :; }
+ui_warn(){ :; }
+sleep(){ :; }
+curl(){
+  local output='' joined="$*"
+  printf '%s\\n' "$joined" >> "$CALLS"
+  while (($#)); do
+    if [[ "$1" == '-o' ]]; then output="$2"; shift 2; else shift; fi
+  done
+  if [[ ! -e "$MARKER" ]]; then
+    : > "$MARKER"
+    printf partial > "$output"
+    return 28
+  fi
+  [[ "$joined" == *'-C -'* ]] || return 97
+  printf complete >> "$output"
+}
+download_release_asset 'https://release.invalid/asset' "$DEST"
+cat "$DEST"
+"""
+            env = {
+                **os.environ,
+                'CALLS': str(root / 'calls'),
+                'MARKER': str(root / 'failed-once'),
+                'DEST': str(root / 'asset'),
+            }
+            result = subprocess.run(['bash', '-c', script], env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout, 'partialcomplete')
+            calls = (root / 'calls').read_text().splitlines()
+            self.assertEqual(len(calls), 2)
+            self.assertIn('--max-time 300', calls[0])
+            self.assertNotIn('-C -', calls[0])
+            self.assertIn('-C -', calls[1])
+
     def test_prebuilt_manager_release_is_pinned_separately_from_node_revision(self):
         installer = SETUP.with_name('install-production.sh').read_text()
         start = installer.index('build_or_install_manager() {')

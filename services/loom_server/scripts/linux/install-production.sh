@@ -393,6 +393,25 @@ select_proxy_mode() {
   ui_ok "Reverse proxy selected: $PROXY_MODE"
 }
 
+download_release_asset() {
+  local url="$1" output="$2" attempt status
+  for attempt in 1 2 3 4; do
+    local -a resume=()
+    [[ -s "$output" ]] && resume=(-C -)
+    if curl --proto '=https' --tlsv1.2 -fLsS --connect-timeout 20 --max-time 300 "${resume[@]}" "$url" -o "$output"; then
+      return 0
+    else
+      status=$?
+    fi
+    if (( attempt < 4 )); then
+      ui_warn "Release asset transfer interrupted (curl exit $status); preserving the partial file and retrying/resuming (attempt $attempt/4)."
+      sleep 3
+    fi
+  done
+  echo "Release asset download failed after 4 attempts (curl exit $status): $url" >&2
+  return "$status"
+}
+
 build_or_install_manager() {
   local target="$INSTALL_DIR/bin/loom-node-manager"
   local work release_version release_tag manager_asset manifest_asset expected_sha version_output goarch manager_commit manifest_sha256 channel_sha256
@@ -413,9 +432,9 @@ build_or_install_manager() {
   work="$(mktemp -d)"
   trap 'rm -rf -- "$work"; trap - RETURN' RETURN
   ui_info "Downloading verified prebuilt Node Manager for linux/$goarch (build ${manager_commit:0:12})"
-  curl --proto '=https' --tlsv1.2 -fLsS --retry 3 --max-time 90 "https://github.com/0800x/Loom/releases/download/$release_tag/$manager_asset" -o "$work/manager"
-  curl --proto '=https' --tlsv1.2 -fLsS --retry 3 --max-time 30 "https://github.com/0800x/Loom/releases/download/$release_tag/$manifest_asset" -o "$work/manifest.json"
-  curl --proto '=https' --tlsv1.2 -fLsS --retry 3 --max-time 30 "https://github.com/0800x/Loom/releases/download/$release_tag/node-channel.json" -o "$work/node-channel.json"
+  download_release_asset "https://github.com/0800x/Loom/releases/download/$release_tag/$manager_asset" "$work/manager"
+  download_release_asset "https://github.com/0800x/Loom/releases/download/$release_tag/$manifest_asset" "$work/manifest.json"
+  download_release_asset "https://github.com/0800x/Loom/releases/download/$release_tag/node-channel.json" "$work/node-channel.json"
   printf '%s  %s\n' "$manifest_sha256" "$work/manifest.json" | sha256sum --check --status - || { echo 'Node Manager manifest SHA256 verification failed.' >&2; exit 1; }
   printf '%s  %s\n' "$channel_sha256" "$work/node-channel.json" | sha256sum --check --status - || { echo 'Node Manager channel SHA256 verification failed.' >&2; exit 1; }
   expected_sha="$(python3 - "$work/manifest.json" "$manager_asset" "$manager_commit" "$release_version" "$goarch" <<'PY'
