@@ -395,44 +395,49 @@ select_proxy_mode() {
 
 build_or_install_manager() {
   local target="$INSTALL_DIR/bin/loom-node-manager"
-  local work release_version release_tag manager_asset manifest_asset expected_sha version_output source_digest goarch
+  local work release_version release_tag manager_asset manifest_asset expected_sha version_output goarch manager_commit manifest_sha256 channel_sha256
+  # The Node runtime/source revision is newer than the latest published Manager payload.
+  # Manager sources are unchanged since this published build; keep this pin separate from INSTALL_COMMIT.
+  manager_commit='a96ea6c24f8bc531fa23d34a4f735cd6ba398458'
+  channel_sha256='1796595eb15b7380b5dbd6e789a9f1d753b5f922bf4c0519c906940778049672'
   case "$(uname -m)" in
-    x86_64|amd64) goarch=amd64 ;;
-    aarch64|arm64) goarch=arm64 ;;
+    x86_64|amd64) goarch=amd64; manifest_sha256='76f7f52a4e2ad37703bb24eae14f5a49ad439344f410247739379e8a9cb0e885' ;;
+    aarch64|arm64) goarch=arm64; manifest_sha256='b46d8acbbfe77ec26f38295220ec60ce93d3d759917f1a9c581e8430ecb6c7c9' ;;
     *) echo "Unsupported CPU architecture for Node Manager: $(uname -m)" >&2; exit 1 ;;
   esac
-  [[ "$INSTALL_COMMIT" =~ ^[a-f0-9]{40}$ ]] || { echo 'A full verified Loom commit is required.' >&2; exit 1; }
+  [[ "$manager_commit" =~ ^[a-f0-9]{40}$ ]] || { echo 'A pinned prebuilt Manager commit is required.' >&2; exit 1; }
   release_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "$REPO_ROOT/release/version.json")"
-  release_tag="node-manager-$release_version-${INSTALL_COMMIT:0:12}"
+  release_tag="node-manager-$release_version-${manager_commit:0:12}"
   manager_asset="Loom-$release_version-manager-linux-$goarch"
   manifest_asset="Loom-node-linux-$goarch-build-manifest.json"
   work="$(mktemp -d)"
   trap 'rm -rf -- "$work"; trap - RETURN' RETURN
-  ui_info "Downloading the prebuilt Node Manager for linux/$goarch"
+  ui_info "Downloading verified prebuilt Node Manager for linux/$goarch (build ${manager_commit:0:12})"
   curl --proto '=https' --tlsv1.2 -fLsS --retry 3 --max-time 90 "https://github.com/0800x/Loom/releases/download/$release_tag/$manager_asset" -o "$work/manager"
   curl --proto '=https' --tlsv1.2 -fLsS --retry 3 --max-time 30 "https://github.com/0800x/Loom/releases/download/$release_tag/$manifest_asset" -o "$work/manifest.json"
   curl --proto '=https' --tlsv1.2 -fLsS --retry 3 --max-time 30 "https://github.com/0800x/Loom/releases/download/$release_tag/node-channel.json" -o "$work/node-channel.json"
-  source_digest="$(cat "$REPO_ROOT/.loom-source-sha256")"
-  expected_sha="$(python3 - "$work/manifest.json" "$manager_asset" "$INSTALL_COMMIT" "$release_version" "$goarch" <<'PY'
+  printf '%s  %s\\n' "$manifest_sha256" "$work/manifest.json" | sha256sum --check --status - || { echo 'Node Manager manifest SHA256 verification failed.' >&2; exit 1; }
+  printf '%s  %s\\n' "$channel_sha256" "$work/node-channel.json" | sha256sum --check --status - || { echo 'Node Manager channel SHA256 verification failed.' >&2; exit 1; }
+  expected_sha="$(python3 - "$work/manifest.json" "$manager_asset" "$manager_commit" "$release_version" "$goarch" <<'PY'
 import json,re,sys
 path,name,commit,version,arch=sys.argv[1:]
 m=json.load(open(path,encoding='utf-8'))
-if (m.get('revision'),m.get('version'),m.get('platform'),m.get('architecture')) != (commit,version,'node-linux',arch): raise SystemExit('Manager manifest does not match selected release')
+if (m.get('revision'),m.get('version'),m.get('platform'),m.get('architecture')) != (commit,version,'node-linux',arch): raise SystemExit('Manager manifest does not match pinned Manager release')
 item=next((x for x in m.get('files',[]) if x.get('name')==name),None)
 if not item or not re.fullmatch(r'[0-9a-f]{64}',item.get('sha256','')): raise SystemExit('Manager SHA256 missing')
 print(item['sha256'])
 PY
   )"
-  printf '%s  %s\n' "$expected_sha" "$work/manager" | sha256sum --check --status - || { echo 'Node Manager SHA256 verification failed.' >&2; exit 1; }
-  python3 - "$work/node-channel.json" "$INSTALL_COMMIT" "$source_digest" <<'PY'
-import json,sys
-path,commit,digest=sys.argv[1:]
+  printf '%s  %s\\n' "$expected_sha" "$work/manager" | sha256sum --check --status - || { echo 'Node Manager SHA256 verification failed.' >&2; exit 1; }
+  python3 - "$work/node-channel.json" "$manager_commit" <<'PY'
+import json,re,sys
+path,commit=sys.argv[1:]
 m=json.load(open(path,encoding='utf-8'))
-if m.get('schema') != 1 or m.get('repository') != '0800x/Loom' or m.get('branch') != 'main' or m.get('revision') != commit or m.get('sha256') != digest or not isinstance(m.get('sequence'),int) or m['sequence'] < 1: raise SystemExit('Release channel does not match verified source')
+if m.get('schema') != 1 or m.get('repository') != '0800x/Loom' or m.get('branch') != 'main' or m.get('revision') != commit or not re.fullmatch(r'[0-9a-f]{64}',m.get('sha256','')) or not isinstance(m.get('sequence'),int) or m['sequence'] < 1: raise SystemExit('Pinned Manager channel metadata is invalid')
 PY
   chmod 0755 "$work/manager"
   version_output="$("$work/manager" --version 2>&1)"
-  [[ "$version_output" == *"Loom Node Manager $MANAGER_VERSION ${INSTALL_COMMIT:0:10}"* ]] || { echo 'Prebuilt Manager version/commit mismatch.' >&2; exit 1; }
+  [[ "$version_output" == *"Loom Node Manager $MANAGER_VERSION ${manager_commit:0:10}"* ]] || { echo 'Prebuilt Manager version/commit mismatch.' >&2; exit 1; }
   loom_install_manager_binary "$work/manager" "$target"
   install -d -m 0755 "$INSTALL_DIR/release"
   install -m 0644 "$work/node-channel.json" "$INSTALL_DIR/release/node-channel.json"
