@@ -20,6 +20,7 @@ abstract final class LoomLocalMessagingCleanup {
     LoomSqliteEncryption.assertOpenable(databasePath);
     final db = sqlite3.open(databasePath);
     LoomSqliteEncryption.attachKey(db);
+    LoomSqliteEncryption.verify(db);
     try {
       db.execute('PRAGMA foreign_keys = ON');
       db.execute('PRAGMA busy_timeout = 5000');
@@ -54,6 +55,7 @@ abstract final class LoomLocalMessagingCleanup {
     LoomSqliteEncryption.assertOpenable(databasePath);
     final db = sqlite3.open(databasePath);
     LoomSqliteEncryption.attachKey(db);
+    LoomSqliteEncryption.verify(db);
     try {
       db.execute('PRAGMA foreign_keys = ON');
       db.execute('PRAGMA busy_timeout = 5000');
