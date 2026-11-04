@@ -19,7 +19,6 @@ bootstrap_sha = hashlib.sha256((ROOT / "scripts/install-loom-node.sh").read_byte
 template = (ROOT / "install.sh").read_text(encoding="utf-8")
 pins = {
     "LOOM_INSTALL_REVISION": revision,
-    "LOOM_INSTALL_ARCHIVE_SHA256": archive_sha,
     "LOOM_INSTALL_BOOTSTRAP_SHA256": bootstrap_sha,
 }
 for name, value in pins.items():
