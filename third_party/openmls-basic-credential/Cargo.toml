@@ -12,6 +12,7 @@ readme = "README.md"
 
 [dependencies]
 openmls_traits = "0.6.0"
+maybe-async = "0.2.11"
 tls_codec = { version = "0.5", features = ["derive", "serde", "mls"] }
 serde = "1"
 ed25519-dalek = { version = "3.0", features = ["rand_core"] }
