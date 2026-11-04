@@ -125,17 +125,17 @@ if missing:
 notes = (release.ROOT / 'release/DRAFT.md').read_text()
 if not is_tag:
     notes = (
-        'Alpha preview for revision `' + revision + '`.\\n\\n'
+        'Alpha preview for revision `' + revision + '`.\n\n'
         'Android APKs labeled unsigned-engineering cannot be installed as-is. '
         'Windows/Linux artifacts are unsigned. macOS is ad-hoc signed, '
-        'without Developer ID or notarization. No production signing key is generated.\\n\\n'
+        'without Developer ID or notarization. No production signing key is generated.\n\n'
         + notes
     )
 publish_or_verify(tag, title, assets, notes, primary_extra)
 
 manager_notes = (
-    'Public prebuilt Loom Node Manager binaries for source revision `' + revision + '`.\\n\\n'
-    'The Home Node installer downloads these verified binaries and pulls prebuilt Node and MinIO images from GHCR.\\n'
+    'Public prebuilt Loom Node Manager binaries for source revision `' + revision + '`.\n\n'
+    'The Home Node installer downloads these verified binaries and pulls prebuilt Node and MinIO images from GHCR.\n'
     'It does not compile Go or build Docker images on the target server.'
 )
 publish_or_verify(
