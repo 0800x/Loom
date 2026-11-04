@@ -164,8 +164,7 @@ class _LoomGroupsScreenState extends State<LoomGroupsScreen>
   ) async {
     if (groups.busy) return;
     final owner = group.members.any(
-      (m) =>
-          m.deviceId == groups.ownDeviceId && m.role == 'owner',
+      (m) => m.deviceId == groups.ownDeviceId && m.role == 'owner',
     );
     final confirmed = await _confirm(
       owner
@@ -916,7 +915,8 @@ class _LoomGroupsScreenState extends State<LoomGroupsScreen>
                                               // while the node is switching
                                               // or after an expired session;
                                               // never force-unwrap here.
-                                              home: groups
+                                              home:
+                                                  groups
                                                       .onboarding
                                                       .nodes
                                                       .selectedEndpoint
@@ -928,13 +928,13 @@ class _LoomGroupsScreenState extends State<LoomGroupsScreen>
                                           if (message.createdAt != null) ...[
                                             const SizedBox(height: 4),
                                             Text(
-                                              MaterialLocalizations.of(context)
-                                                  .formatTimeOfDay(
-                                                    TimeOfDay.fromDateTime(
-                                                      message.createdAt!
-                                                          .toLocal(),
-                                                    ),
-                                                  ),
+                                              MaterialLocalizations.of(
+                                                context,
+                                              ).formatTimeOfDay(
+                                                TimeOfDay.fromDateTime(
+                                                  message.createdAt!.toLocal(),
+                                                ),
+                                              ),
                                               textDirection: TextDirection.ltr,
                                               style: Theme.of(context)
                                                   .textTheme

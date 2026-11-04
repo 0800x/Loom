@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget surface(TextDirection direction, Widget child) => MaterialApp(
-      theme: LoomTheme.dark(),
-      home: Scaffold(
-        body: Directionality(
-          textDirection: direction,
-          child: Center(child: child),
-        ),
-      ),
-    );
+  theme: LoomTheme.dark(),
+  home: Scaffold(
+    body: Directionality(
+      textDirection: direction,
+      child: Center(child: child),
+    ),
+  ),
+);
 
 void main() {
   for (final direction in TextDirection.values) {

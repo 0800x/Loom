@@ -107,20 +107,23 @@ class LoomControlFold<T> {
       final originalSender = originalSenders[control.target];
       if (originalSender == null) continue;
 
+      final isMutation =
+          control.op == LoomMessageControlOp.edit ||
+          control.op == LoomMessageControlOp.delete;
+      if (isMutation && sender.toLowerCase() != originalSender.toLowerCase()) {
+        continue;
+      }
+
       final fold = folds.putIfAbsent(control.target, LoomMessageFold.new);
       switch (control.op) {
         case LoomMessageControlOp.react:
           fold.toggleReaction(emoji: control.emoji, sender: sender);
           break;
         case LoomMessageControlOp.edit:
-          if (sender.toLowerCase() == originalSender.toLowerCase()) {
-            fold.applyEdit(control.text);
-          }
+          fold.applyEdit(control.text);
           break;
         case LoomMessageControlOp.delete:
-          if (sender.toLowerCase() == originalSender.toLowerCase()) {
-            fold.deleteForEveryone();
-          }
+          fold.deleteForEveryone();
           break;
         case LoomMessageControlOp.typing:
           // Typing frames are handled before target lookup.

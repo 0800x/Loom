@@ -176,9 +176,7 @@ void main() {
     },
   );
 
-  test(
-      'verified receipt with no logical/device correlation cannot invent Delivered',
-      () {
+  test('verified receipt with no logical/device correlation cannot invent Delivered', () {
     final packetStore = LoomSqlitePacketStore.openInMemory();
     final stateStore = LoomV2MessageStateStore.openInMemory();
     addTearDown(packetStore.close);
@@ -259,9 +257,7 @@ void main() {
     },
   );
 
-  test(
-      'late authenticated receipt after packet expiry is evidence but does not resurrect routing',
-      () {
+  test('late authenticated receipt after packet expiry is evidence but does not resurrect routing', () {
     final packetStore = LoomSqlitePacketStore.openInMemory();
     final stateStore = LoomV2MessageStateStore.openInMemory();
     addTearDown(packetStore.close);

@@ -14,14 +14,15 @@ class LoomMessageControl {
     this.text = '',
   });
 
-  const LoomMessageControl.react({required String target, required String emoji})
-      : this._(op: LoomMessageControlOp.react, target: target, emoji: emoji);
+  const LoomMessageControl.react({
+    required String target,
+    required String emoji,
+  }) : this._(op: LoomMessageControlOp.react, target: target, emoji: emoji);
   const LoomMessageControl.edit({required String target, required String text})
-      : this._(op: LoomMessageControlOp.edit, target: target, text: text);
+    : this._(op: LoomMessageControlOp.edit, target: target, text: text);
   const LoomMessageControl.delete({required String target})
-      : this._(op: LoomMessageControlOp.delete, target: target);
-  const LoomMessageControl.typing()
-      : this._(op: LoomMessageControlOp.typing);
+    : this._(op: LoomMessageControlOp.delete, target: target);
+  const LoomMessageControl.typing() : this._(op: LoomMessageControlOp.typing);
 
   final LoomMessageControlOp op;
   final String target;
@@ -29,19 +30,15 @@ class LoomMessageControl {
   final String text;
 
   Map<String, Object?> toMap() => switch (op) {
-        LoomMessageControlOp.react => {
-            'op': 'react',
-            'target': target,
-            'emoji': emoji,
-          },
-        LoomMessageControlOp.edit => {
-            'op': 'edit',
-            'target': target,
-            'text': text,
-          },
-        LoomMessageControlOp.delete => {'op': 'delete', 'target': target},
-        LoomMessageControlOp.typing => {'op': 'typing'},
-      };
+    LoomMessageControlOp.react => {
+      'op': 'react',
+      'target': target,
+      'emoji': emoji,
+    },
+    LoomMessageControlOp.edit => {'op': 'edit', 'target': target, 'text': text},
+    LoomMessageControlOp.delete => {'op': 'delete', 'target': target},
+    LoomMessageControlOp.typing => {'op': 'typing'},
+  };
 
   /// Strict validation: returns null instead of throwing so a malformed or
   /// future control op degrades to a hidden row, never a broken bubble.

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:loom_models/loom_models.dart';
 import 'package:loom_crypto_bridge/loom_crypto_bridge.dart';
+import 'package:loom_design/loom_design.dart';
 
 import '../../messaging/application/messaging_session_controller.dart';
 
@@ -43,7 +44,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               textInputAction: TextInputAction.search,
               onChanged: (value) => setState(() => _value = value),
               decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: const Icon(LoomIcons.search_rounded),
                 hintText: 'Search messages on this device',
                 suffixIcon: IconButton(
                   tooltip: 'Clear search',
@@ -51,7 +52,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                     _query.clear();
                     setState(() => _value = '');
                   },
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(LoomIcons.close),
                 ),
                 border: const OutlineInputBorder(),
               ),
@@ -91,13 +92,11 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     subtitle: Text(
-                      record.senderAddress.toString() +
-                          ' · ' +
-                          record.createdAt.toLocal().toString(),
+                      '${record.senderAddress} · ${record.createdAt.toLocal()}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    leading: const Icon(Icons.message_outlined),
+                    leading: const Icon(LoomIcons.chat_bubble_outline_rounded),
                   );
                 },
               ),

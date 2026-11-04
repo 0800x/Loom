@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:test/test.dart';
 import 'package:loom_transport/src/local_certificate_policy.dart';
 
 void main() {
-  test(
-      'leaf pins are origin scoped, reject CA, survive reload and revoke open clients',
-      () async {
+  test('leaf pins are origin scoped, reject CA, survive reload and revoke open clients', () async {
     final temp = await Directory.systemTemp.createTemp('loom-host-pins-');
     addTearDown(() => temp.delete(recursive: true));
     Future<File> certificate(String name, bool ca) async {
@@ -27,7 +26,7 @@ void main() {
         '-keyout',
         '${temp.path}/$name.key',
         '-out',
-        '${temp.path}/$name.pem'
+        '${temp.path}/$name.pem',
       ]);
       expect(result.exitCode, 0);
       return File('${temp.path}/$name.pem');
@@ -39,8 +38,11 @@ void main() {
     final context = SecurityContext()
       ..useCertificateChain(file.path)
       ..usePrivateKey('${temp.path}/leaf.key');
-    final server =
-        await HttpServer.bindSecure(InternetAddress.loopbackIPv4, 0, context);
+    final server = await HttpServer.bindSecure(
+      InternetAddress.loopbackIPv4,
+      0,
+      context,
+    );
     addTearDown(() => server.close(force: true));
     server.listen((req) {
       req.response.write('verified');
@@ -58,30 +60,44 @@ void main() {
     final ordinary = HttpClient();
     addTearDown(() => ordinary.close(force: true));
     await expectLater(
-        read(ordinary, endpoint), throwsA(isA<HandshakeException>()));
+      read(ordinary, endpoint),
+      throwsA(isA<HandshakeException>()),
+    );
     await expectLater(
-        policy.accept(caBytes,
-            endpoint: endpoint,
-            confirmedFingerprint:
-                LoomScopedCertificatePolicy.fingerprint(caBytes),
-            directory: trust),
-        throwsFormatException);
+      policy.accept(
+        caBytes,
+        endpoint: endpoint,
+        confirmedFingerprint: LoomScopedCertificatePolicy.fingerprint(caBytes),
+        directory: trust,
+      ),
+      throwsFormatException,
+    );
     await expectLater(
-        policy.accept(bytes,
-            endpoint: endpoint,
-            confirmedFingerprint: 'wrong',
-            directory: trust),
-        throwsFormatException);
-    await policy.accept(bytes,
-        endpoint: endpoint, confirmedFingerprint: digest, directory: trust);
+      policy.accept(
+        bytes,
+        endpoint: endpoint,
+        confirmedFingerprint: 'wrong',
+        directory: trust,
+      ),
+      throwsFormatException,
+    );
+    await policy.accept(
+      bytes,
+      endpoint: endpoint,
+      confirmedFingerprint: digest,
+      directory: trust,
+    );
     final pinned = policy.createHttpClient(null);
     addTearDown(() => pinned.close(force: true));
     expect(await read(pinned, endpoint), 'verified');
     await expectLater(
-        read(ordinary, endpoint), throwsA(isA<HandshakeException>()));
+      read(ordinary, endpoint),
+      throwsA(isA<HandshakeException>()),
+    );
     await expectLater(
-        read(pinned, Uri.parse('https://localhost:${server.port}')),
-        throwsA(isA<HandshakeException>()));
+      read(pinned, Uri.parse('https://localhost:${server.port}')),
+      throwsA(isA<HandshakeException>()),
+    );
     final restored = LoomScopedCertificatePolicy();
     expect(await restored.load(trust), 0);
     final reload = restored.createHttpClient(null);
@@ -91,7 +107,9 @@ void main() {
     final fresh = restored.createHttpClient(null);
     addTearDown(() => fresh.close(force: true));
     await expectLater(
-        read(fresh, endpoint), throwsA(isA<HandshakeException>()));
+      read(fresh, endpoint),
+      throwsA(isA<HandshakeException>()),
+    );
     await File('${trust.path}/old.pem').writeAsBytes(bytes);
     expect(await restored.load(trust), 1);
   });

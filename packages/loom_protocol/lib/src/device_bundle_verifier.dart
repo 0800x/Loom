@@ -6,9 +6,7 @@ import 'package:cryptography/cryptography.dart';
 import 'node_client.dart';
 
 class LoomDeviceBundleVerifier {
-  LoomDeviceBundleVerifier()
-      : _ed25519 = Ed25519(),
-        _sha256 = Sha256();
+  LoomDeviceBundleVerifier() : _ed25519 = Ed25519(), _sha256 = Sha256();
 
   final Ed25519 _ed25519;
   final Sha256 _sha256;

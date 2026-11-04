@@ -21,21 +21,21 @@ class LoomFederationChallenge {
   final DateTime expiresAt;
 
   List<int> signingBytes() => utf8.encode(
-        [
-          'loom-node-auth-v1',
-          challengeId,
-          nonce,
-          requesterNodeId,
-          responderNodeId,
-          createdAt.toUtc().toIso8601String(),
-          expiresAt.toUtc().toIso8601String(),
-        ].join('\n'),
-      );
+    [
+      'loom-node-auth-v1',
+      challengeId,
+      nonce,
+      requesterNodeId,
+      responderNodeId,
+      createdAt.toUtc().toIso8601String(),
+      expiresAt.toUtc().toIso8601String(),
+    ].join('\n'),
+  );
 }
 
 class LoomFederationChallengeFactory {
   LoomFederationChallengeFactory({Random? random})
-      : _random = random ?? Random.secure();
+    : _random = random ?? Random.secure();
   final Random _random;
 
   LoomFederationChallenge create({

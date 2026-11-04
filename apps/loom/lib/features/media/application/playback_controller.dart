@@ -137,6 +137,7 @@ class LoomPlaybackController extends ChangeNotifier
       // Focus denial must not break playback.
     }
   }
+
   Future<void>? _systemSetup;
   final List<StreamSubscription<dynamic>> _sessionSubscriptions = [];
   List<LoomMusicTrack> get queue =>
@@ -408,8 +409,9 @@ class LoomPlaybackController extends ChangeNotifier
     _permissionNudged = true;
     try {
       const channel = MethodChannel('loom/notifications');
-      final status =
-          await channel.invokeMethod<Map<Object?, Object?>>('status');
+      final status = await channel.invokeMethod<Map<Object?, Object?>>(
+        'status',
+      );
       if (status?['enabled'] == true) return;
       await channel.invokeMethod<void>('enable');
     } catch (_) {

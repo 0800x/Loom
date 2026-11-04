@@ -109,13 +109,13 @@ abstract final class LoomAccountRegistry {
 
   static Future<void> _save(LoomAccountRegistryState state) async {
     final file = await _file();
-    final temporary = File(file.path + '.tmp');
+    final temporary = File('${file.path}.tmp');
     final json = jsonEncode(<String, Object?>{
       'version': 1,
       'activeId': state.activeId,
       'accounts': state.accounts.map((entry) => entry.toJson()).toList(),
     });
-    final backup = File(file.path + '.bak');
+    final backup = File('${file.path}.bak');
     if (await backup.exists() && !await file.exists()) {
       await backup.rename(file.path);
     } else if (await backup.exists()) {
@@ -210,7 +210,7 @@ abstract final class LoomAccountRegistry {
     final state = await load();
     final entry = LoomAccountEntry(
       id: _newId(),
-      label: 'Account ' + (state.accounts.length + 1).toString(),
+      label: 'Account ${state.accounts.length + 1}',
     );
     await _save(
       LoomAccountRegistryState(

@@ -257,9 +257,7 @@ void main() {
     expect(reopened.listEligible(now), isEmpty);
   });
 
-  test(
-      'direct recipient transfer ACK does not consume copy budget or mark delivered',
-      () {
+  test('direct recipient transfer ACK does not consume copy budget or mark delivered', () {
     final store = LoomSqlitePacketStore.openInMemory();
     addTearDown(store.close);
     final packet = _putPacket(store, now: now, copies: 2);
@@ -318,45 +316,45 @@ LoomStoredDtnPacket _putPacket(
 }
 
 LoomDtnOpportunity _peer(String id) => LoomDtnOpportunity(
-      opportunityId: id,
-      authenticated: true,
-      directRecipient: false,
-      gatewayClaim: LoomGatewayClaimState.none,
-      supportedRelayScopes: const <LoomRoutingScopeV2>{},
-      canStoreCarry: true,
-      linkQualityPercent: 70,
-      congestionPercent: 10,
-      batteryConstrained: false,
-      recentSuccessfulTransfers: 0,
-      recentFailedTransfers: 0,
-    );
+  opportunityId: id,
+  authenticated: true,
+  directRecipient: false,
+  gatewayClaim: LoomGatewayClaimState.none,
+  supportedRelayScopes: const <LoomRoutingScopeV2>{},
+  canStoreCarry: true,
+  linkQualityPercent: 70,
+  congestionPercent: 10,
+  batteryConstrained: false,
+  recentSuccessfulTransfers: 0,
+  recentFailedTransfers: 0,
+);
 
 LoomDtnOpportunity _gateway(String id) => LoomDtnOpportunity(
-      opportunityId: id,
-      authenticated: true,
-      directRecipient: false,
-      gatewayClaim: LoomGatewayClaimState.verifiedRecently,
-      supportedRelayScopes: const <LoomRoutingScopeV2>{
-        LoomRoutingScopeV2.globalRelay,
-      },
-      canStoreCarry: true,
-      linkQualityPercent: 70,
-      congestionPercent: 10,
-      batteryConstrained: false,
-      recentSuccessfulTransfers: 0,
-      recentFailedTransfers: 0,
-    );
+  opportunityId: id,
+  authenticated: true,
+  directRecipient: false,
+  gatewayClaim: LoomGatewayClaimState.verifiedRecently,
+  supportedRelayScopes: const <LoomRoutingScopeV2>{
+    LoomRoutingScopeV2.globalRelay,
+  },
+  canStoreCarry: true,
+  linkQualityPercent: 70,
+  congestionPercent: 10,
+  batteryConstrained: false,
+  recentSuccessfulTransfers: 0,
+  recentFailedTransfers: 0,
+);
 
 LoomDtnOpportunity _recipient(String id) => LoomDtnOpportunity(
-      opportunityId: id,
-      authenticated: true,
-      directRecipient: true,
-      gatewayClaim: LoomGatewayClaimState.none,
-      supportedRelayScopes: const <LoomRoutingScopeV2>{},
-      canStoreCarry: false,
-      linkQualityPercent: 70,
-      congestionPercent: 10,
-      batteryConstrained: false,
-      recentSuccessfulTransfers: 0,
-      recentFailedTransfers: 0,
-    );
+  opportunityId: id,
+  authenticated: true,
+  directRecipient: true,
+  gatewayClaim: LoomGatewayClaimState.none,
+  supportedRelayScopes: const <LoomRoutingScopeV2>{},
+  canStoreCarry: false,
+  linkQualityPercent: 70,
+  congestionPercent: 10,
+  batteryConstrained: false,
+  recentSuccessfulTransfers: 0,
+  recentFailedTransfers: 0,
+);

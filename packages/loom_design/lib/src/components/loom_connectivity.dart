@@ -34,9 +34,9 @@ class _LoomConnectivityPillState extends State<LoomConnectivityPill> {
       LoomConnectivity.queued => (LoomIcons.schedule_rounded, p.warning),
       LoomConnectivity.syncing => (LoomIcons.sync_rounded, p.info),
       LoomConnectivity.unavailable => (
-          LoomIcons.error_outline_rounded,
-          p.critical,
-        ),
+        LoomIcons.error_outline_rounded,
+        p.critical,
+      ),
     };
     final labelColor = switch (state) {
       LoomConnectivity.queued => p.warning,
@@ -91,9 +91,13 @@ class _LoomConnectivityPillState extends State<LoomConnectivityPill> {
               const SizedBox(width: LoomSpacing.xxs),
               AnimatedDefaultTextStyle(
                 duration: LoomMotion.component,
-                style: (Theme.of(context).textTheme.labelSmall ??
-                        const TextStyle(fontSize: LoomTypeScale.labelSmall))
-                    .copyWith(color: labelColor, fontWeight: FontWeight.w600),
+                style:
+                    (Theme.of(context).textTheme.labelSmall ??
+                            const TextStyle(fontSize: LoomTypeScale.labelSmall))
+                        .copyWith(
+                          color: labelColor,
+                          fontWeight: FontWeight.w600,
+                        ),
                 child: Text(widget.label),
               ),
             ],

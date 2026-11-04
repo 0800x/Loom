@@ -410,7 +410,8 @@ class LoomCallSessionController extends ChangeNotifier
     _incomingTimeout?.cancel();
     incomingCall = null;
     incomingPeer = null;
-    final resolvedPeer = peer ??
+    final resolvedPeer =
+        peer ??
         LoomCallPeer(
           conversationId: pending.conversationId,
           address: '',
@@ -431,11 +432,12 @@ class LoomCallSessionController extends ChangeNotifier
         incomingCall = pending;
         incomingPeer = peer;
         currentPeer = null;
-        final remaining =
-            pending.expiresAt.difference(DateTime.now().toUtc());
+        final remaining = pending.expiresAt.difference(DateTime.now().toUtc());
         if (remaining > Duration.zero) {
-          _incomingTimeout =
-              Timer(remaining, () => unawaited(_expireIncoming()));
+          _incomingTimeout = Timer(
+            remaining,
+            () => unawaited(_expireIncoming()),
+          );
         }
       }
       notifyListeners();

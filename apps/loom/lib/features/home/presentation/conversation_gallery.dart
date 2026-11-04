@@ -311,7 +311,11 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
     if (!mounted || source == null) return;
     final edited = await showLoomImageEditor(context, source: source);
     if (!mounted || edited == null) return;
-    final replacement = _GalleryItem(id: item.id, kind: item.kind, file: edited);
+    final replacement = _GalleryItem(
+      id: item.id,
+      kind: item.kind,
+      file: edited,
+    );
     _edited[item.id] = edited;
     if (batch.pending.containsKey(item.id)) {
       batch.replace(item.id, replacement);
@@ -353,7 +357,11 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          tr(context, 'Could not send. Try again.', 'ارسال نشد؛ دوباره تلاش کنید.'),
+          tr(
+            context,
+            'Could not send. Try again.',
+            'ارسال نشد؛ دوباره تلاش کنید.',
+          ),
         ),
       ),
     );
@@ -398,8 +406,7 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
                   final album = albums[index];
                   return _AlbumTile(
                     album: album,
-                    label:
-                        album.isAll
+                    label: album.isAll
                         ? tr(sheetContext, 'Recent', 'اخیر')
                         : album.name,
                     selected: current != null && album.id == current.id,
@@ -442,69 +449,66 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
       child: SizedBox.expand(
         child: SafeArea(
           top: false,
-          child:
-              previewItem != null
-                  ? _buildPreviewStage(previewItem)
-                  : Column(
-                    children: [
-                      _buildHeader(),
-                      if (_permission == PermissionState.limited)
-                        TextButton.icon(
-                          onPressed:
-                              batch.sending
+          child: previewItem != null
+              ? _buildPreviewStage(previewItem)
+              : Column(
+                  children: [
+                    _buildHeader(),
+                    if (_permission == PermissionState.limited)
+                      TextButton.icon(
+                        onPressed: batch.sending
+                            ? null
+                            : () async {
+                                await PhotoManager.presentLimited(
+                                  type: RequestType.common,
+                                );
+                                if (mounted) await _loadLibrary();
+                              },
+                        icon: const Icon(LoomIcons.photo_library_outlined),
+                        label: Text(
+                          tr(
+                            context,
+                            'Manage selected-photo access',
+                            'مدیریت دسترسی عکس‌های انتخاب‌شده',
+                          ),
+                        ),
+                      ),
+                    if (_error != null || batch.error != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          tr(
+                            context,
+                            'Some items are unavailable or were not sent. Your remaining selection is kept.',
+                            'بعضی موارد در دسترس نیستند یا ارسال نشدند؛ انتخاب‌های باقی‌مانده حفظ شده‌اند.',
+                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(color: context.loom.critical),
+                        ),
+                      ),
+                    if (MediaQuery.viewInsetsOf(context).bottom == 0)
+                      _buildActionRow(),
+                    _buildGrid(selected),
+                    if (selected.isNotEmpty) _buildTray(selected),
+                    if (batch.sending)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Column(
+                          children: [
+                            LinearProgressIndicator(
+                              value: batch.total == 0
                                   ? null
-                                  : () async {
-                                    await PhotoManager.presentLimited(
-                                      type: RequestType.common,
-                                    );
-                                    if (mounted) await _loadLibrary();
-                                  },
-                          icon: const Icon(LoomIcons.photo_library_outlined),
-                          label: Text(
-                            tr(
-                              context,
-                              'Manage selected-photo access',
-                              'مدیریت دسترسی عکس‌های انتخاب‌شده',
+                                  : batch.completed / batch.total,
                             ),
-                          ),
+                            Text('${batch.completed} / ${batch.total}'),
+                          ],
                         ),
-                      if (_error != null || batch.error != null)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            tr(
-                              context,
-                              'Some items are unavailable or were not sent. Your remaining selection is kept.',
-                              'بعضی موارد در دسترس نیستند یا ارسال نشدند؛ انتخاب‌های باقی‌مانده حفظ شده‌اند.',
-                            ),
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(color: context.loom.critical),
-                          ),
-                        ),
-                      if (MediaQuery.viewInsetsOf(context).bottom == 0)
-                        _buildActionRow(),
-                      _buildGrid(selected),
-                      if (selected.isNotEmpty) _buildTray(selected),
-                      if (batch.sending)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          child: Column(
-                            children: [
-                              LinearProgressIndicator(
-                                value:
-                                    batch.total == 0
-                                        ? null
-                                        : batch.completed / batch.total,
-                              ),
-                              Text('${batch.completed} / ${batch.total}'),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
+                      ),
+                  ],
+                ),
         ),
       ),
     );
@@ -521,8 +525,9 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
           children: [
             IconButton(
               tooltip: tr(context, 'Close', 'بستن'),
-              onPressed:
-                  batch.sending ? null : () => Navigator.pop(context, null),
+              onPressed: batch.sending
+                  ? null
+                  : () => Navigator.pop(context, null),
               icon: const Icon(LoomIcons.close),
             ),
             Expanded(
@@ -530,18 +535,17 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
                 tr(context, 'Send', 'ارسال'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
             if (_mobile) Flexible(child: _buildAlbumChip(p)),
             IconButton(
               tooltip: tr(context, 'Multi-select', 'انتخاب چندتایی'),
-              onPressed:
-                  batch.sending
-                      ? null
-                      : () => setState(() => _multiSelect = !_multiSelect),
+              onPressed: batch.sending
+                  ? null
+                  : () => setState(() => _multiSelect = !_multiSelect),
               icon: Icon(
                 LoomIcons.done_all,
                 size: 22,
@@ -556,12 +560,11 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
 
   Widget _buildAlbumChip(LoomPalette p) {
     final album = _album;
-    final label =
-        album == null
-            ? tr(context, 'Gallery', 'گالری')
-            : album.isAll
-            ? tr(context, 'Recent', 'اخیر')
-            : album.name;
+    final label = album == null
+        ? tr(context, 'Gallery', 'گالری')
+        : album.isAll
+        ? tr(context, 'Recent', 'اخیر')
+        : album.name;
     return Padding(
       padding: const EdgeInsetsDirectional.only(end: 4),
       child: Material(
@@ -575,7 +578,11 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(LoomIcons.photo_library_outlined, size: 15, color: p.primary),
+                Icon(
+                  LoomIcons.photo_library_outlined,
+                  size: 15,
+                  color: p.primary,
+                ),
                 const SizedBox(width: 6),
                 // Flexible (not a fixed max box): the chip may be squeezed by
                 // the header row on narrow screens, and the label must
@@ -731,10 +738,9 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
                         final item = _GalleryItem(
                           id: asset.id,
                           asset: asset,
-                          kind:
-                              asset.type == AssetType.video
-                                  ? 'video'
-                                  : 'image',
+                          kind: asset.type == AssetType.video
+                              ? 'video'
+                              : 'image',
                           file: _edited[asset.id],
                         );
                         _toggle(item);
@@ -743,21 +749,19 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
                         _GalleryItem(
                           id: asset.id,
                           asset: asset,
-                          kind:
-                              asset.type == AssetType.video
-                                  ? 'video'
-                                  : 'image',
+                          kind: asset.type == AssetType.video
+                              ? 'video'
+                              : 'image',
                           file: _edited[asset.id],
                         ),
                       ),
                     );
                   }, childCount: _assets.length),
-                  gridDelegate:
-                      SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: columns,
-                        crossAxisSpacing: 6,
-                        mainAxisSpacing: 6,
-                      ),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    crossAxisSpacing: 6,
+                    mainAxisSpacing: 6,
+                  ),
                 ),
                 if (_pageLoading)
                   const SliverToBoxAdapter(child: LinearProgressIndicator()),
@@ -880,10 +884,9 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
           vertical: 14,
         ),
         filled: true,
-        fillColor:
-            dark
-                ? Colors.white.withValues(alpha: .08)
-                : p.surfaceMuted.withValues(alpha: .6),
+        fillColor: dark
+            ? Colors.white.withValues(alpha: .08)
+            : p.surfaceMuted.withValues(alpha: .6),
         border: _pillBorder(dark ? Colors.white24 : Colors.transparent),
         enabledBorder: _pillBorder(dark ? Colors.white24 : Colors.transparent),
         focusedBorder: _pillBorder(dark ? Colors.white54 : p.primary),
@@ -904,10 +907,11 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
     final reduceMotion = LoomAccessibility.fromContext(context).reduceMotion;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 160),
+      duration: reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 160),
       curve: Curves.easeOut,
-      builder:
-          (context, t, child) => Opacity(opacity: t, child: child),
+      builder: (context, t, child) => Opacity(opacity: t, child: child),
       child: ColoredBox(
         color: Colors.black,
         child: SafeArea(
@@ -940,10 +944,9 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
                     if (!isVideo)
                       IconButton(
                         tooltip: tr(context, 'Edit', 'ویرایش'),
-                        onPressed:
-                            _singleSending || batch.sending
-                                ? null
-                                : () => unawaited(_editPreview(item)),
+                        onPressed: _singleSending || batch.sending
+                            ? null
+                            : () => unawaited(_editPreview(item)),
                         icon: const Icon(
                           LoomIcons.tune_rounded,
                           color: Colors.white,
@@ -1001,11 +1004,10 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
                                   file,
                                   fit: BoxFit.contain,
                                   cacheWidth: 1080,
-                                  errorBuilder:
-                                      (_, _, _) => const Icon(
-                                        LoomIcons.broken_image_outlined,
-                                        color: Colors.white70,
-                                      ),
+                                  errorBuilder: (_, _, _) => const Icon(
+                                    LoomIcons.broken_image_outlined,
+                                    color: Colors.white70,
+                                  ),
                                 ),
                               ),
                             );
@@ -1159,14 +1161,14 @@ class _GalleryThumbState extends State<_GalleryThumb> {
     return RepaintBoundary(
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0, end: 1),
-        duration:
-            reduceMotion ? Duration.zero : const Duration(milliseconds: 150),
+        duration: reduceMotion
+            ? Duration.zero
+            : const Duration(milliseconds: 150),
         curve: Curves.easeOut,
-        builder:
-            (context, t, child) => Opacity(
-              opacity: t,
-              child: Transform.scale(scale: .97 + .03 * t, child: child),
-            ),
+        builder: (context, t, child) => Opacity(
+          opacity: t,
+          child: Transform.scale(scale: .97 + .03 * t, child: child),
+        ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: InkWell(
@@ -1179,41 +1181,36 @@ class _GalleryThumbState extends State<_GalleryThumb> {
                 if (selected)
                   const ColoredBox(
                     color: Colors.black26,
-                    child: Center(
-                      child: _GallerySelectionCheck(),
-                    ),
+                    child: Center(child: _GallerySelectionCheck()),
                   ),
                 PositionedDirectional(
                   top: 5,
                   end: 5,
                   child: RepaintBoundary(
                     child: AnimatedContainer(
-                      duration:
-                          reduceMotion
-                              ? Duration.zero
-                              : const Duration(milliseconds: 150),
+                      duration: reduceMotion
+                          ? Duration.zero
+                          : const Duration(milliseconds: 150),
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color:
-                            selected ? p.primary : Colors.black38,
+                        color: selected ? p.primary : Colors.black38,
                         border: Border.all(color: Colors.white, width: 2),
                       ),
                       alignment: Alignment.center,
-                      child:
-                          selected
-                              ? Text(
-                                '${widget.number}',
-                                style: TextStyle(
-                                  color: p.onPrimary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                              : widget.multiSelect
-                              ? null
-                              : const SizedBox.shrink(),
+                      child: selected
+                          ? Text(
+                              '${widget.number}',
+                              style: TextStyle(
+                                color: p.onPrimary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : widget.multiSelect
+                          ? null
+                          : const SizedBox.shrink(),
                     ),
                   ),
                 ),
@@ -1255,8 +1252,7 @@ class _GalleryThumbState extends State<_GalleryThumb> {
         file,
         fit: BoxFit.cover,
         cacheWidth: 256,
-        errorBuilder:
-            (_, _, _) => const Icon(LoomIcons.broken_image_outlined),
+        errorBuilder: (_, _, _) => const Icon(LoomIcons.broken_image_outlined),
       );
     }
     return FutureBuilder<Uint8List?>(
@@ -1269,11 +1265,7 @@ class _GalleryThumbState extends State<_GalleryThumb> {
         }
         return snapshot.data == null
             ? ColoredBox(color: context.loom.surfaceMuted)
-            : Image.memory(
-              snapshot.data!,
-              fit: BoxFit.cover,
-              cacheWidth: 256,
-            );
+            : Image.memory(snapshot.data!, fit: BoxFit.cover, cacheWidth: 256);
       },
     );
   }
@@ -1293,7 +1285,11 @@ class _GallerySelectionCheck extends StatelessWidget {
         boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)],
       ),
       alignment: Alignment.center,
-      child: const Icon(LoomIcons.check_rounded, size: 18, color: Colors.black87),
+      child: const Icon(
+        LoomIcons.check_rounded,
+        size: 18,
+        color: Colors.black87,
+      ),
     );
   }
 }
@@ -1329,21 +1325,20 @@ class _GallerySendFab extends StatelessWidget {
                 customBorder: const CircleBorder(),
                 onTap: enabled && !busy ? onTap : null,
                 child: Center(
-                  child:
-                      busy
-                          ? SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.4,
-                              color: p.onPrimary,
-                            ),
-                          )
-                          : Icon(
-                            LoomIcons.arrow_upward,
-                            size: 26,
+                  child: busy
+                      ? SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.4,
                             color: p.onPrimary,
                           ),
+                        )
+                      : Icon(
+                          LoomIcons.arrow_upward,
+                          size: 26,
+                          color: p.onPrimary,
+                        ),
                 ),
               ),
             ),
@@ -1482,15 +1477,14 @@ class _TrayThumbState extends State<_TrayThumb> {
         file,
         fit: BoxFit.cover,
         cacheWidth: 128,
-        errorBuilder:
-            (_, _, _) => ColoredBox(
-              color: p.surfaceMuted,
-              child: Icon(
-                LoomIcons.broken_image_outlined,
-                size: 16,
-                color: p.textSecondary,
-              ),
-            ),
+        errorBuilder: (_, _, _) => ColoredBox(
+          color: p.surfaceMuted,
+          child: Icon(
+            LoomIcons.broken_image_outlined,
+            size: 16,
+            color: p.textSecondary,
+          ),
+        ),
       );
     }
     return FutureBuilder<Uint8List?>(
@@ -1607,14 +1601,9 @@ class _AlbumTileState extends State<_AlbumTile> {
             const SizedBox(width: 8),
             SizedBox.square(
               dimension: 20,
-              child:
-                  widget.selected
-                      ? Icon(
-                        LoomIcons.check_rounded,
-                        size: 20,
-                        color: p.primary,
-                      )
-                      : null,
+              child: widget.selected
+                  ? Icon(LoomIcons.check_rounded, size: 20, color: p.primary)
+                  : null,
             ),
           ],
         ),

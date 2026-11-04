@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:loom_design/loom_design.dart';
 
 import '../application/account_registry.dart';
 
@@ -31,11 +32,12 @@ class _LoomAccountsScreenState extends State<LoomAccountsScreen> {
   Future<void> _load() async {
     try {
       final state = await LoomAccountRegistry.load();
-      if (mounted)
+      if (mounted) {
         setState(() {
           _state = state;
           _error = null;
         });
+      }
     } catch (error) {
       if (mounted) setState(() => _error = error);
     }
@@ -74,7 +76,7 @@ class _LoomAccountsScreenState extends State<LoomAccountsScreen> {
       appBar: AppBar(title: const Text('Accounts')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _adding || _workingId != null ? null : _add,
-        icon: const Icon(Icons.add),
+        icon: const Icon(LoomIcons.add),
         label: const Text('Add account'),
       ),
       body: _error != null
@@ -99,7 +101,9 @@ class _LoomAccountsScreenState extends State<LoomAccountsScreen> {
                 return Card(
                   child: ListTile(
                     leading: Icon(
-                      active ? Icons.account_circle : Icons.person_outline,
+                      active
+                          ? LoomIcons.person_outline_rounded
+                          : LoomIcons.person_outline_rounded,
                     ),
                     title: Text(entry.label),
                     subtitle: Text(
@@ -107,7 +111,7 @@ class _LoomAccountsScreenState extends State<LoomAccountsScreen> {
                           (active ? 'Current account' : 'On this device'),
                     ),
                     trailing: active
-                        ? const Icon(Icons.check_circle)
+                        ? const Icon(LoomIcons.check_circle_rounded)
                         : working
                         ? const SizedBox(
                             width: 20,

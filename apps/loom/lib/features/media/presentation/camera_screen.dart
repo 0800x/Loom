@@ -501,9 +501,8 @@ class _CameraScreenState extends State<LoomCameraScreen>
                                       key: const ValueKey(
                                         'open-camera-settings',
                                       ),
-                                      onPressed: () => unawaited(
-                                        _openSystemSettings(),
-                                      ),
+                                      onPressed: () =>
+                                          unawaited(_openSystemSettings()),
                                       child: Text(
                                         tr(
                                           context,

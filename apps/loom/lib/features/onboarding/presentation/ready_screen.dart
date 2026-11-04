@@ -85,11 +85,7 @@ class ReadyScreen extends StatelessWidget {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  tr(
-                                    context,
-                                    'Address copied',
-                                    'نشانی کپی شد',
-                                  ),
+                                  tr(context, 'Address copied', 'نشانی کپی شد'),
                                 ),
                               ),
                             );

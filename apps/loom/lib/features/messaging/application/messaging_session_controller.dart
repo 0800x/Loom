@@ -34,28 +34,30 @@ import '../../onboarding/application/onboarding_controller.dart';
 import 'legacy_dtn_mailbox.dart';
 import 'offline_device_directory_cache.dart';
 
-typedef LoomNearbyOpaqueMessageSender = Future<void> Function({
-  required String destinationNodeDomain,
-  required String senderAddress,
-  required List<LoomDeviceKeyBundle> recipientDevices,
-  required String conversationId,
-  required String clientId,
-  required LoomMessageType type,
-  required String ciphertext,
-  required String protocolVersion,
-  String? replyToMessageId,
-  Map<String, Object?> metadata,
-});
+typedef LoomNearbyOpaqueMessageSender =
+    Future<void> Function({
+      required String destinationNodeDomain,
+      required String senderAddress,
+      required List<LoomDeviceKeyBundle> recipientDevices,
+      required String conversationId,
+      required String clientId,
+      required LoomMessageType type,
+      required String ciphertext,
+      required String protocolVersion,
+      String? replyToMessageId,
+      Map<String, Object?> metadata,
+    });
 
-typedef _LoomDtnFallbackCommitter = Future<void> Function({
-  required String conversationId,
-  required String clientId,
-  required LoomMessageType type,
-  required String ciphertext,
-  required String protocolVersion,
-  String? replyToMessageId,
-  Map<String, Object?> metadata,
-});
+typedef _LoomDtnFallbackCommitter =
+    Future<void> Function({
+      required String conversationId,
+      required String clientId,
+      required LoomMessageType type,
+      required String ciphertext,
+      required String protocolVersion,
+      String? replyToMessageId,
+      Map<String, Object?> metadata,
+    });
 
 final class LoomDtnCustodyPending implements Exception {
   const LoomDtnCustodyPending(this.clientId);
@@ -683,8 +685,9 @@ class LoomMessagingSessionController extends ChangeNotifier
         _peerPresence[id] = LoomPeerPresence(
           online: value['online'] == true,
           observedAt: DateTime.now().toUtc(),
-          lastSeenAt: DateTime.tryParse(value['lastSeenAt'] as String? ?? '')
-              ?.toUtc(),
+          lastSeenAt: DateTime.tryParse(
+            value['lastSeenAt'] as String? ?? '',
+          )?.toUtc(),
         );
         notifyListeners();
       }
@@ -738,8 +741,9 @@ class LoomMessagingSessionController extends ChangeNotifier
       _refreshConversationPreferences();
       return;
     }
-    final readable = visibleMessagesFor(conversationId)
-        .where((m) => m.readable);
+    final readable = visibleMessagesFor(
+      conversationId,
+    ).where((m) => m.readable);
     _store!.setConversationMarkedUnread(conversationId, false);
     _store!.markMessagesRead(
       conversationId,
@@ -947,7 +951,8 @@ class LoomMessagingSessionController extends ChangeNotifier
         await _refreshLocal();
         status = LoomMessagingSessionStatus.offline;
         connectivity = LoomConnectivityState.nodeUnreachable;
-        errorMessage = 'Encrypted messages are available offline. Reconnect the Home Node to refresh this session.';
+        errorMessage =
+            'Encrypted messages are available offline. Reconnect the Home Node to refresh this session.';
         notifyListeners();
         return;
       }
@@ -1107,11 +1112,12 @@ class LoomMessagingSessionController extends ChangeNotifier
     if (_disposed || _engine == null) {
       return Future<void>.value();
     }
-    return _syncFuture ??= Future<void>.microtask(_synchronize)
-        .whenComplete(() {
-          _syncFuture = null;
-          notifyListeners();
-        });
+    return _syncFuture ??= Future<void>.microtask(_synchronize).whenComplete(
+      () {
+        _syncFuture = null;
+        notifyListeners();
+      },
+    );
   }
 
   Future<void> _synchronize() async {
@@ -1950,8 +1956,9 @@ class LoomMessagingSessionController extends ChangeNotifier
       clear.fillRange(0, clear.length, 0);
       clear = null;
       final temp = await getTemporaryDirectory();
-      final folder = await Directory('${temp.path}/loom_upload')
-          .create(recursive: true);
+      final folder = await Directory(
+        '${temp.path}/loom_upload',
+      ).create(recursive: true);
       final nonce = base64UrlEncode(
         List.generate(24, (_) => Random.secure().nextInt(256)),
       );
@@ -2030,7 +2037,8 @@ class LoomMessagingSessionController extends ChangeNotifier
       );
     } catch (_) {
       if (!_disposed) {
-        errorMessage = 'Media could not be sent. Check the 32 MB limit and Home Node version, then retry.';
+        errorMessage =
+            'Media could not be sent. Check the 32 MB limit and Home Node version, then retry.';
         notifyListeners();
       }
       return false;
@@ -2375,8 +2383,9 @@ class LoomMessagingSessionController extends ChangeNotifier
       if (member.accountId != onboarding.receipt?.accountId) {
         throw StateError('Own MLS account mismatch');
       }
-      return (await _ownDevices(force: true))
-          .singleWhere((d) => d.deviceId == member.deviceId);
+      return (await _ownDevices(
+        force: true,
+      )).singleWhere((d) => d.deviceId == member.deviceId);
     }
     final pin = _peerIdentityStore?.pinForIdentity(member.identityId);
     String? address = pin?.address;

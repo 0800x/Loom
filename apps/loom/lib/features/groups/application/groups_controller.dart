@@ -768,10 +768,7 @@ class LoomGroupsController extends ChangeNotifier {
   /// Durable encrypted control (react/edit/delete-for-everyone). Shares the
   /// message outbox so it survives restarts exactly like a normal send.
   Future<bool> sendControl(String id, LoomMessageControl control) =>
-      sendContent(
-        id,
-        LoomMessageContent(control: control),
-      );
+      sendContent(id, LoomMessageContent(control: control));
 
   /// Ephemeral typing signal. Fire-and-forget: never queued, never surfaced.
   Future<void> sendTyping(String id) async {

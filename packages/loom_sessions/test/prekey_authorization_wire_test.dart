@@ -101,6 +101,5 @@ final class _AlwaysTrustedSignatureVerifier
     required Uint8List canonicalPayload,
     required Uint8List signature,
     required DateTime now,
-  }) async =>
-      true;
+  }) async => true;
 }

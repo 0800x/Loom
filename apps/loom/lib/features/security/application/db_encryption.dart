@@ -90,7 +90,7 @@ abstract final class LoomDbEncryption {
 
   static Future<void> _migratePlaintextDatabase(String path) async {
     final source = File(path);
-    final backup = File(path + '.plaintext-migration-backup');
+    final backup = File('$path.plaintext-migration-backup');
 
     // Recover an interrupted rename before attempting another migration.
     if (await backup.exists() && !await source.exists()) {
@@ -117,7 +117,7 @@ abstract final class LoomDbEncryption {
       // a different key. Only the former is eligible for automatic migration.
     }
 
-    final temporaryPath = path + '.sqlcipher-migration.tmp';
+    final temporaryPath = '$path.sqlcipher-migration.tmp';
     final temporary = File(temporaryPath);
     if (await temporary.exists()) await temporary.delete();
 
@@ -131,13 +131,9 @@ abstract final class LoomDbEncryption {
         throw StateError('SQLCipher key was not configured');
       }
       final escapedPath = LoomSqliteEncryption.quoteLiteral(temporaryPath);
-      final escapedKey = ("x'" + keyHex + "'").replaceAll("'", "''");
+      final escapedKey = ("x'$keyHex'").replaceAll("'", "''");
       plain.execute(
-        'ATTACH DATABASE ' +
-            escapedPath +
-            " AS loom_encrypted KEY '" +
-            escapedKey +
-            "'",
+        'ATTACH DATABASE $escapedPath AS loom_encrypted KEY \'$escapedKey\'',
       );
       try {
         plain.select("SELECT sqlcipher_export('loom_encrypted')");

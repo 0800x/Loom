@@ -183,8 +183,9 @@ void main() {
         expect(secondFallback.keyKind, LoomVodozemacPocPrekeyKind.fallback);
         expect(secondFallback.prekeyId, isNot(firstFallback.prekeyId));
 
-        final revisionAfterRotation =
-            store.readProviderState(provider.localAccountStateId)!.revision;
+        final revisionAfterRotation = store
+            .readProviderState(provider.localAccountStateId)!
+            .revision;
         final afterRetention = await lifecycle.ensurePublished(
           publisher: publisher,
           now: rotationTime.add(const Duration(days: 15)),

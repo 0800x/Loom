@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+
 import 'subscription.dart';
 
 class CompressMixin {

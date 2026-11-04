@@ -23,5 +23,9 @@ rand = "0.8"
 # pin is advanced to the upstream RustSec-fixed release. See vendored provenance.
 [patch.crates-io]
 hpke-rs-libcrux = { path = "../../third_party/hpke-rs-libcrux" }
+# Upstream OpenMLS RustCrypto provider with p256/p384 0.14, avoiding the
+# vulnerable crypto-bigint 0.5.x dependency while retaining OpenMLS 0.6 traits.
+openmls_rust_crypto = { path = "../../third_party/openmls-rust-crypto" }
+openmls_basic_credential = { path = "../../third_party/openmls-basic-credential" }
 # Upstream compiler-diagnostic backport; runtime/crypto source unchanged (ADR 012).
 hax-lib-macros = { path = "../../third_party/hax-lib-macros" }

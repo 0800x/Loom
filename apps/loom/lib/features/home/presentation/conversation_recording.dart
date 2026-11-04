@@ -676,10 +676,7 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
             // Live input level: the already-captured peaks painted as bars,
             // so the composer shows what is actually being recorded.
             Expanded(
-              child: _LiveWaveform(
-                peaks: _voice.waveform,
-                color: p.critical,
-              ),
+              child: _LiveWaveform(peaks: _voice.waveform, color: p.critical),
             ),
             if (phase == VoicePhase.locked) ...[
               const SizedBox(width: 6),

@@ -71,11 +71,7 @@ class LoomSettingsRow extends StatelessWidget {
                     color: accent.withAlphaFraction(LoomOpacity.mutedTint),
                     borderRadius: BorderRadius.circular(LoomRadii.compact),
                   ),
-                  child: Icon(
-                    icon,
-                    size: LoomIconSize.standard,
-                    color: accent,
-                  ),
+                  child: Icon(icon, size: LoomIconSize.standard, color: accent),
                 ),
                 const SizedBox(width: LoomSpacing.sm),
                 Expanded(
@@ -85,9 +81,7 @@ class LoomSettingsRow extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
+                        style: Theme.of(context).textTheme.bodyMedium
                             ?.copyWith(fontWeight: FontWeight.w500),
                       ),
                       if (subtitle != null) ...[
@@ -130,11 +124,11 @@ class LoomGlassSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => LoomGlassSurface(
-        strength: LoomGlassStrength.standard,
-        radius: LoomRadii.sheet,
-        padding: const EdgeInsets.all(LoomSpacing.md),
-        child: child,
-      );
+    strength: LoomGlassStrength.standard,
+    radius: LoomRadii.sheet,
+    padding: const EdgeInsets.all(LoomSpacing.md),
+    child: child,
+  );
 }
 
 Color _settingsIconColor(IconData icon, LoomPalette p) {
@@ -176,9 +170,9 @@ class LoomSettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: context.loom.surface,
-        borderRadius: BorderRadius.circular(LoomRadii.surface),
-        clipBehavior: Clip.antiAlias,
-        child: Padding(padding: padding, child: child),
-      );
+    color: context.loom.surface,
+    borderRadius: BorderRadius.circular(LoomRadii.surface),
+    clipBehavior: Clip.antiAlias,
+    child: Padding(padding: padding, child: child),
+  );
 }

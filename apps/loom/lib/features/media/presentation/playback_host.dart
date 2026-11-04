@@ -65,15 +65,13 @@ class _SeekSliderState extends State<_SeekSlider> {
     );
     final double value =
         (_dragValue ?? widget.position.inMilliseconds.toDouble()).clamp(
-      0.0,
-      max,
-    );
+          0.0,
+          max,
+        );
     return Slider(
       value: value,
       max: max,
-      onChanged: widget.enabled
-          ? (v) => setState(() => _dragValue = v)
-          : null,
+      onChanged: widget.enabled ? (v) => setState(() => _dragValue = v) : null,
       onChangeEnd: widget.enabled
           ? (v) {
               widget.onSeek(Duration(milliseconds: v.round()));
@@ -183,9 +181,10 @@ class LoomPlaybackHost extends StatelessWidget {
                                                       right: -4,
                                                       bottom: -4,
                                                       child: _EqualizerBadge(
-                                                        reduceMotion: LoomAccessibility
-                                                            .fromContext(context)
-                                                            .reduceMotion,
+                                                        reduceMotion:
+                                                            LoomAccessibility.fromContext(
+                                                              context,
+                                                            ).reduceMotion,
                                                       ),
                                                     ),
                                                 ],
@@ -194,7 +193,9 @@ class LoomPlaybackHost extends StatelessWidget {
                                           IconButton(
                                             tooltip: tr(
                                               context,
-                                              playback.playing ? 'Pause' : 'Play',
+                                              playback.playing
+                                                  ? 'Pause'
+                                                  : 'Play',
                                               playback.playing ? 'مکث' : 'پخش',
                                             ),
                                             onPressed: playback.loading
@@ -206,24 +207,24 @@ class LoomPlaybackHost extends StatelessWidget {
                                                     height: 20,
                                                     child:
                                                         CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                    ),
+                                                          strokeWidth: 2,
+                                                        ),
                                                   )
                                                 : AnimatedSwitcher(
                                                     duration:
                                                         LoomAccessibility.fromContext(
-                                                              context,
-                                                            ).reduceMotion
-                                                            ? Duration.zero
-                                                            : const Duration(
-                                                                milliseconds: 180,
-                                                              ),
-                                                    transitionBuilder: (child,
-                                                            animation) =>
-                                                        ScaleTransition(
-                                                      scale: animation,
-                                                      child: child,
-                                                    ),
+                                                          context,
+                                                        ).reduceMotion
+                                                        ? Duration.zero
+                                                        : const Duration(
+                                                            milliseconds: 180,
+                                                          ),
+                                                    transitionBuilder:
+                                                        (child, animation) =>
+                                                            ScaleTransition(
+                                                              scale: animation,
+                                                              child: child,
+                                                            ),
                                                     child: Icon(
                                                       playback.playing
                                                           ? LoomIcons
@@ -239,9 +240,8 @@ class LoomPlaybackHost extends StatelessWidget {
                                           Expanded(
                                             child: InkWell(
                                               onTap: expand,
-                                              borderRadius: BorderRadius.circular(
-                                                12,
-                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                               child: Column(
                                                 mainAxisAlignment:
                                                     MainAxisAlignment.center,
@@ -258,11 +258,12 @@ class LoomPlaybackHost extends StatelessWidget {
                                                     ).textTheme.titleSmall,
                                                   ),
                                                   const SizedBox(height: 1),
-                                                  ValueListenableBuilder<Duration>(
+                                                  ValueListenableBuilder<
+                                                    Duration
+                                                  >(
                                                     valueListenable:
                                                         playback.timeline,
-                                                    builder: (context, _, _) =>
-                                                        Text(
+                                                    builder: (context, _, _) => Text(
                                                       playback.error != null
                                                           ? tr(
                                                               context,
@@ -271,8 +272,8 @@ class LoomPlaybackHost extends StatelessWidget {
                                                             )
                                                           : '${playback.subtitle} · ${mediaTime(playback.position)} / ${mediaTime(playback.duration)}',
                                                       maxLines: 1,
-                                                      overflow: TextOverflow
-                                                          .ellipsis,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
                                                       style: Theme.of(
                                                         context,
                                                       ).textTheme.bodySmall,
@@ -300,7 +301,9 @@ class LoomPlaybackHost extends StatelessWidget {
                                               child: Text('${playback.speed}×'),
                                             ),
                                           if (Platform.isWindows &&
-                                              MediaQuery.sizeOf(context).width >=
+                                              MediaQuery.sizeOf(
+                                                    context,
+                                                  ).width >=
                                                   600)
                                             SizedBox(
                                               width: 190,
@@ -331,9 +334,8 @@ class LoomPlaybackHost extends StatelessWidget {
                                     ValueListenableBuilder<Duration>(
                                       valueListenable: playback.timeline,
                                       builder: (context, position, _) {
-                                        final total = playback
-                                            .duration
-                                            .inMilliseconds;
+                                        final total =
+                                            playback.duration.inMilliseconds;
                                         final fraction = total <= 0
                                             ? 0.0
                                             : (position.inMilliseconds / total)
@@ -343,9 +345,7 @@ class LoomPlaybackHost extends StatelessWidget {
                                           minHeight: 3,
                                           color: context.loom.primary
                                               .withAlphaFraction(.75),
-                                          backgroundColor: context
-                                              .loom
-                                              .primary
+                                          backgroundColor: context.loom.primary
                                               .withAlphaFraction(.12),
                                         );
                                       },
@@ -573,118 +573,120 @@ class LoomAudioTile extends StatelessWidget {
           style: TextStyle(fontSize: 11, color: color.withValues(alpha: .85)),
         );
         // Playback tint animates inside the chat list: own repaint layer.
-        return RepaintBoundary(child: AnimatedContainer(
-          duration: _motionDuration(context, 240),
-          curve: Curves.easeInOutCubicEmphasized,
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          padding: music ? const EdgeInsets.all(12) : EdgeInsets.zero,
-          decoration: music
-              ? BoxDecoration(
-                  borderRadius: BorderRadius.circular(22),
-                  gradient: LinearGradient(
-                    begin: AlignmentDirectional.topStart,
-                    end: AlignmentDirectional.bottomEnd,
-                    colors: [
-                      context.loom.primary.withValues(
-                        alpha: active ? .16 : .08,
-                      ),
-                      context.loom.surfaceElevated,
-                    ],
-                  ),
-                  border: Border.all(
-                    color: context.loom.primary.withValues(alpha: .12),
-                  ),
-                )
-              : null,
-          child: Row(
-            children: [
-              if (music)
-                SizedBox.square(
-                  dimension: 52,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      if (artworkBytes != null)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.memory(
-                            artworkBytes!,
-                            width: 52,
-                            height: 52,
-                            cacheWidth: 128,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) =>
-                                const Icon(LoomIcons.music_note_rounded),
-                          ),
-                        )
-                      else
-                        _Cover(
-                          file: track?.artwork,
-                          size: 52,
-                          playing: active && p.playing,
+        return RepaintBoundary(
+          child: AnimatedContainer(
+            duration: _motionDuration(context, 240),
+            curve: Curves.easeInOutCubicEmphasized,
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: music ? const EdgeInsets.all(12) : EdgeInsets.zero,
+            decoration: music
+                ? BoxDecoration(
+                    borderRadius: BorderRadius.circular(22),
+                    gradient: LinearGradient(
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
+                      colors: [
+                        context.loom.primary.withValues(
+                          alpha: active ? .16 : .08,
                         ),
-                      play,
-                    ],
-                  ),
-                )
-              else
-                play,
-              const SizedBox(width: 8),
-              Expanded(
-                child: compact
-                    ? Row(
-                        children: [
-                          Expanded(child: seek),
-                          const SizedBox(width: 6),
-                          time,
-                        ],
-                      )
-                    : Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (music)
-                            Text(
-                              track?.title ?? title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: color,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
+                        context.loom.surfaceElevated,
+                      ],
+                    ),
+                    border: Border.all(
+                      color: context.loom.primary.withValues(alpha: .12),
+                    ),
+                  )
+                : null,
+            child: Row(
+              children: [
+                if (music)
+                  SizedBox.square(
+                    dimension: 52,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (artworkBytes != null)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.memory(
+                              artworkBytes!,
+                              width: 52,
+                              height: 52,
+                              cacheWidth: 128,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) =>
+                                  const Icon(LoomIcons.music_note_rounded),
                             ),
-                          if (music && (track?.artist ?? subtitle).isNotEmpty)
-                            Text(
-                              track?.artist ?? subtitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: color.withValues(alpha: .8),
+                          )
+                        else
+                          _Cover(
+                            file: track?.artwork,
+                            size: 52,
+                            playing: active && p.playing,
+                          ),
+                        play,
+                      ],
+                    ),
+                  )
+                else
+                  play,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: compact
+                      ? Row(
+                          children: [
+                            Expanded(child: seek),
+                            const SizedBox(width: 6),
+                            time,
+                          ],
+                        )
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (music)
+                              Text(
+                                track?.title ?? title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: color,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
                               ),
-                            ),
-                          seek,
-                          time,
-                        ],
-                      ),
-              ),
-              if (!music && !compact)
-                TextButton(
-                  style: TextButton.styleFrom(
-                    foregroundColor: color,
-                    minimumSize: const Size(40, 40),
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                  ),
-                  onPressed: active ? p.changeSpeed : null,
-                  child: Text(
-                    '${p.speed}×',
-                    style: const TextStyle(fontSize: 11),
-                  ),
+                            if (music && (track?.artist ?? subtitle).isNotEmpty)
+                              Text(
+                                track?.artist ?? subtitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: color.withValues(alpha: .8),
+                                ),
+                              ),
+                            seek,
+                            time,
+                          ],
+                        ),
                 ),
-            ],
+                if (!music && !compact)
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: color,
+                      minimumSize: const Size(40, 40),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                    ),
+                    onPressed: active ? p.changeSpeed : null,
+                    child: Text(
+                      '${p.speed}×',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ));
+        );
       },
     );
   }
@@ -814,25 +816,21 @@ class _EqualizerBadgeState extends State<_EqualizerBadge>
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 20,
-        height: 20,
-        decoration: BoxDecoration(
-          color: context.loom.primary,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: context.loom.surfaceElevated,
-            width: 1.5,
-          ),
-        ),
-        child: RepaintBoundary(
-          child: AnimatedBuilder(
-            animation: _motion,
-            builder: (context, _) => CustomPaint(
-              painter: _EqualizerPainter(progress: _motion.value),
-            ),
-          ),
-        ),
-      );
+    width: 20,
+    height: 20,
+    decoration: BoxDecoration(
+      color: context.loom.primary,
+      shape: BoxShape.circle,
+      border: Border.all(color: context.loom.surfaceElevated, width: 1.5),
+    ),
+    child: RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _motion,
+        builder: (context, _) =>
+            CustomPaint(painter: _EqualizerPainter(progress: _motion.value)),
+      ),
+    ),
+  );
 }
 
 class _EqualizerPainter extends CustomPainter {
@@ -917,45 +915,47 @@ class _CoverState extends State<_Cover> with SingleTickerProviderStateMixin {
           : const Duration(milliseconds: 350),
       curve: Curves.easeOutCubic,
       // Playing glow animates in-list; boundary sits inside the scaling chrome.
-      child: RepaintBoundary(child: AnimatedContainer(
-        duration: _motionDuration(context, 350),
-        width: size,
-        height: size,
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(size * .16),
-          color: context.loom.surfaceElevated,
-          boxShadow: playing && size > 100
-              ? [
-                  BoxShadow(
-                    color: context.loom.primary.withValues(alpha: .2),
-                    blurRadius: 28,
-                    offset: const Offset(0, 12),
+      child: RepaintBoundary(
+        child: AnimatedContainer(
+          duration: _motionDuration(context, 350),
+          width: size,
+          height: size,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(size * .16),
+            color: context.loom.surfaceElevated,
+            boxShadow: playing && size > 100
+                ? [
+                    BoxShadow(
+                      color: context.loom.primary.withValues(alpha: .2),
+                      blurRadius: 28,
+                      offset: const Offset(0, 12),
+                    ),
+                  ]
+                : [],
+          ),
+          child: AnimatedSwitcher(
+            duration: _motionDuration(context, 240),
+            child: file == null
+                ? Icon(
+                    LoomIcons.music_note_rounded,
+                    size: size * .45,
+                    key: const ValueKey('no-cover'),
+                  )
+                : Image.file(
+                    file!,
+                    key: ValueKey(file!.path),
+                    fit: BoxFit.cover,
+                    width: size,
+                    height: size,
+                    cacheWidth: (size * MediaQuery.devicePixelRatioOf(context))
+                        .round(),
+                    errorBuilder: (_, _, _) =>
+                        Icon(LoomIcons.music_note_rounded, size: size * .45),
                   ),
-                ]
-              : [],
+          ),
         ),
-        child: AnimatedSwitcher(
-          duration: _motionDuration(context, 240),
-          child: file == null
-              ? Icon(
-                  LoomIcons.music_note_rounded,
-                  size: size * .45,
-                  key: const ValueKey('no-cover'),
-                )
-              : Image.file(
-                  file!,
-                  key: ValueKey(file!.path),
-                  fit: BoxFit.cover,
-                  width: size,
-                  height: size,
-                  cacheWidth: (size * MediaQuery.devicePixelRatioOf(context))
-                      .round(),
-                  errorBuilder: (_, _, _) =>
-                      Icon(LoomIcons.music_note_rounded, size: size * .45),
-                ),
-        ),
-      )),
+      ),
     ),
   );
 }
@@ -1195,207 +1195,212 @@ class _PlaybackDetails extends StatelessWidget {
               ),
             ),
             SafeArea(
-          child: LayoutBuilder(
-            builder: (context, bounds) => SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: bounds.maxHeight),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _Cover(
-                        file: p.artwork,
-                        size: (bounds.maxHeight * .34)
-                            .clamp(100, 240)
-                            .toDouble(),
-                        playing: p.playing,
+              child: LayoutBuilder(
+                builder: (context, bounds) => SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: bounds.maxHeight),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
                       ),
-                      const SizedBox(height: 20),
-                      AnimatedSwitcher(
-                        duration: _motionDuration(context, 220),
-                        child: Text(
-                          p.title,
-                          key: ValueKey(p.title),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        p.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: context.loom.textSecondary,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          trackHeight: 3,
-                          thumbShape: const RoundSliderThumbShape(
-                            enabledThumbRadius: 6,
-                          ),
-                        ),
-                        child: _SeekSlider(
-                          position: p.position,
-                          duration: p.duration,
-                          enabled: p.visible,
-                          onSeek: p.seek,
-                        ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            mediaTime(p.position),
-                            textDirection: TextDirection.ltr,
-                            style: Theme.of(context).textTheme.labelSmall,
+                          _Cover(
+                            file: p.artwork,
+                            size: (bounds.maxHeight * .34)
+                                .clamp(100, 240)
+                                .toDouble(),
+                            playing: p.playing,
                           ),
-                          Text(
-                            mediaTime(p.duration),
-                            textDirection: TextDirection.ltr,
-                            style: Theme.of(context).textTheme.labelSmall,
+                          const SizedBox(height: 20),
+                          AnimatedSwitcher(
+                            duration: _motionDuration(context, 220),
+                            child: Text(
+                              p.title,
+                              key: ValueKey(p.title),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
+                          const SizedBox(height: 6),
+                          Text(
+                            p.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: context.loom.textSecondary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              trackHeight: 3,
+                              thumbShape: const RoundSliderThumbShape(
+                                enabledThumbRadius: 6,
+                              ),
+                            ),
+                            child: _SeekSlider(
+                              position: p.position,
+                              duration: p.duration,
+                              enabled: p.visible,
+                              onSeek: p.seek,
+                            ),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                mediaTime(p.position),
+                                textDirection: TextDirection.ltr,
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
+                              Text(
+                                mediaTime(p.duration),
+                                textDirection: TextDirection.ltr,
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              if (p.music)
+                                IconButton(
+                                  tooltip: tr(context, 'Shuffle', 'تصادفی'),
+                                  isSelected: p.shuffle,
+                                  onPressed: p.toggleShuffle,
+                                  icon: const Icon(LoomIcons.shuffle_rounded),
+                                ),
+                              IconButton(
+                                tooltip: tr(context, 'Previous', 'قبلی'),
+                                onPressed: p.music
+                                    ? p.previous
+                                    : () => p.seek(
+                                        p.position > const Duration(seconds: 10)
+                                            ? p.position -
+                                                  const Duration(seconds: 10)
+                                            : Duration.zero,
+                                      ),
+                                icon: Icon(
+                                  p.music
+                                      ? LoomIcons.skip_previous_rounded
+                                      : LoomIcons.replay_10_rounded,
+                                ),
+                              ),
+                              IconButton.filled(
+                                key: const ValueKey('full-player-transport'),
+                                iconSize: 36,
+                                style: IconButton.styleFrom(
+                                  minimumSize: const Size.square(64),
+                                  foregroundColor: context.loom.onPrimary,
+                                ),
+                                tooltip: tr(
+                                  context,
+                                  p.playing ? 'Pause' : 'Play',
+                                  p.playing ? 'مکث' : 'پخش',
+                                ),
+                                onPressed: p.visible && !p.loading
+                                    ? p.toggle
+                                    : null,
+                                icon: AnimatedSwitcher(
+                                  duration: _motionDuration(context, 180),
+                                  child: Icon(
+                                    p.playing
+                                        ? LoomIcons.pause_rounded
+                                        : LoomIcons.play_arrow_rounded,
+                                    key: ValueKey(p.playing),
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: tr(context, 'Next', 'بعدی'),
+                                onPressed: p.music
+                                    ? () => p.next()
+                                    : () => p.seek(
+                                        p.position +
+                                            const Duration(seconds: 10),
+                                      ),
+                                icon: Icon(
+                                  p.music
+                                      ? LoomIcons.skip_next_rounded
+                                      : LoomIcons.forward_10_rounded,
+                                ),
+                              ),
+                              if (p.music)
+                                IconButton(
+                                  tooltip: tr(context, 'Repeat', 'تکرار'),
+                                  isSelected: p.repeat != 0,
+                                  onPressed: p.cycleRepeat,
+                                  icon: Icon(
+                                    p.repeat == 2
+                                        ? LoomIcons.repeat_one_rounded
+                                        : LoomIcons.repeat_rounded,
+                                  ),
+                                )
+                              else
+                                TextButton(
+                                  onPressed: p.changeSpeed,
+                                  child: Text('${p.speed}×'),
+                                ),
+                            ],
+                          ),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 360),
+                            child: _PlaybackVolumeControl(playback: p),
+                          ),
+                          if (p.error != null)
+                            Text(
+                              tr(
+                                context,
+                                'Playback unavailable. Choose another file.',
+                                'پخش ممکن نیست؛ فایل دیگری انتخاب کنید.',
+                              ),
+                            ),
+                          const SizedBox(height: 20),
+                          if (p.music)
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: 8,
+                              children: [
+                                TextButton.icon(
+                                  onPressed: () => _queue(context, p),
+                                  icon: const Icon(
+                                    LoomIcons.queue_music_rounded,
+                                  ),
+                                  label: Text(
+                                    '${tr(context, 'Queue', 'صف پخش')} · ${p.queue.length}',
+                                  ),
+                                ),
+                                TextButton.icon(
+                                  onPressed: () =>
+                                      _queue(context, p, playlists: true),
+                                  icon: const Icon(
+                                    LoomIcons.playlist_play_rounded,
+                                  ),
+                                  label: Text(
+                                    tr(context, 'Playlists', 'پلی‌لیست‌ها'),
+                                  ),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
-                      const SizedBox(height: 14),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          if (p.music)
-                            IconButton(
-                              tooltip: tr(context, 'Shuffle', 'تصادفی'),
-                              isSelected: p.shuffle,
-                              onPressed: p.toggleShuffle,
-                              icon: const Icon(LoomIcons.shuffle_rounded),
-                            ),
-                          IconButton(
-                            tooltip: tr(context, 'Previous', 'قبلی'),
-                            onPressed: p.music
-                                ? p.previous
-                                : () => p.seek(
-                                    p.position > const Duration(seconds: 10)
-                                        ? p.position -
-                                              const Duration(seconds: 10)
-                                        : Duration.zero,
-                                  ),
-                            icon: Icon(
-                              p.music
-                                  ? LoomIcons.skip_previous_rounded
-                                  : LoomIcons.replay_10_rounded,
-                            ),
-                          ),
-                          IconButton.filled(
-                            key: const ValueKey('full-player-transport'),
-                            iconSize: 36,
-                            style: IconButton.styleFrom(
-                              minimumSize: const Size.square(64),
-                              foregroundColor: context.loom.onPrimary,
-                            ),
-                            tooltip: tr(
-                              context,
-                              p.playing ? 'Pause' : 'Play',
-                              p.playing ? 'مکث' : 'پخش',
-                            ),
-                            onPressed: p.visible && !p.loading
-                                ? p.toggle
-                                : null,
-                            icon: AnimatedSwitcher(
-                              duration: _motionDuration(context, 180),
-                              child: Icon(
-                                p.playing
-                                    ? LoomIcons.pause_rounded
-                                    : LoomIcons.play_arrow_rounded,
-                                key: ValueKey(p.playing),
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: tr(context, 'Next', 'بعدی'),
-                            onPressed: p.music
-                                ? () => p.next()
-                                : () => p.seek(
-                                    p.position + const Duration(seconds: 10),
-                                  ),
-                            icon: Icon(
-                              p.music
-                                  ? LoomIcons.skip_next_rounded
-                                  : LoomIcons.forward_10_rounded,
-                            ),
-                          ),
-                          if (p.music)
-                            IconButton(
-                              tooltip: tr(context, 'Repeat', 'تکرار'),
-                              isSelected: p.repeat != 0,
-                              onPressed: p.cycleRepeat,
-                              icon: Icon(
-                                p.repeat == 2
-                                    ? LoomIcons.repeat_one_rounded
-                                    : LoomIcons.repeat_rounded,
-                              ),
-                            )
-                          else
-                            TextButton(
-                              onPressed: p.changeSpeed,
-                              child: Text('${p.speed}×'),
-                            ),
-                        ],
-                      ),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 360),
-                        child: _PlaybackVolumeControl(playback: p),
-                      ),
-                      if (p.error != null)
-                        Text(
-                          tr(
-                            context,
-                            'Playback unavailable. Choose another file.',
-                            'پخش ممکن نیست؛ فایل دیگری انتخاب کنید.',
-                          ),
-                        ),
-                      const SizedBox(height: 20),
-                      if (p.music)
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 8,
-                          children: [
-                            TextButton.icon(
-                              onPressed: () => _queue(context, p),
-                              icon: const Icon(LoomIcons.queue_music_rounded),
-                              label: Text(
-                                '${tr(context, 'Queue', 'صف پخش')} · ${p.queue.length}',
-                              ),
-                            ),
-                            TextButton.icon(
-                              onPressed: () =>
-                                  _queue(context, p, playlists: true),
-                              icon: const Icon(LoomIcons.playlist_play_rounded),
-                              label: Text(
-                                tr(context, 'Playlists', 'پلی‌لیست‌ها'),
-                              ),
-                            ),
-                          ],
-                        ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
-            ],
-          ),
       ),
     );
   }

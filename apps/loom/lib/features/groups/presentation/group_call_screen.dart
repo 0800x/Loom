@@ -54,7 +54,9 @@ class LoomGroupCallOverlayHost extends StatelessWidget {
       valueListenable: observer.visible,
       builder: (context, visible, _) {
         final active =
-            calls.isActive && id != null && !visible &&
+            calls.isActive &&
+            id != null &&
+            !visible &&
             !LoomAppLock.instance.locked;
         return Stack(
           children: [
@@ -83,14 +85,12 @@ class LoomGroupCallOverlayHost extends StatelessWidget {
                       child: _GroupMiniCallBar(
                         calls: calls,
                         groupId: id,
-                        onReturn: () => navigatorKey.currentState
-                            ?.push<void>(
+                        onReturn: () => navigatorKey.currentState?.push<void>(
                           MaterialPageRoute(
                             settings: const RouteSettings(
                               name: loomGroupCallRoute,
                             ),
-                            builder: (_) =>
-                                LoomGroupCallScreen(groupId: id),
+                            builder: (_) => LoomGroupCallScreen(groupId: id),
                           ),
                         ),
                       ),
@@ -143,8 +143,12 @@ class _GroupMiniCallBarState extends State<_GroupMiniCallBar> {
 
   String get _duration {
     final d = widget.calls.connectedDuration;
-    final h = d.inHours, m = d.inMinutes.remainder(60), s = d.inSeconds.remainder(60);
-    return h > 0 ? '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}' : '$m:${s.toString().padLeft(2, '0')}';
+    final h = d.inHours,
+        m = d.inMinutes.remainder(60),
+        s = d.inSeconds.remainder(60);
+    return h > 0
+        ? '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}'
+        : '$m:${s.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -191,19 +195,13 @@ class _GroupMiniCallBarState extends State<_GroupMiniCallBar> {
                   Text(
                     calls.phase == LoomGroupCallPhase.connected
                         ? _duration
-                        : tr(
-                            context,
-                            'Connecting…',
-                            'در حال اتصال…',
-                          ),
+                        : tr(context, 'Connecting…', 'در حال اتصال…'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: context.loom.textSecondary,
-                          fontFeatures: const [
-                            FontFeature.tabularFigures(),
-                          ],
-                        ),
+                      color: context.loom.textSecondary,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
                   ),
                 ],
               ),
@@ -215,9 +213,7 @@ class _GroupMiniCallBarState extends State<_GroupMiniCallBar> {
                 ? tr(context, 'Mute', 'بی‌صدا')
                 : tr(context, 'Unmute', 'باصدا'),
             icon: Icon(
-              micOn
-                  ? LoomIcons.mic_rounded
-                  : LoomIcons.mic_off_rounded,
+              micOn ? LoomIcons.mic_rounded : LoomIcons.mic_off_rounded,
               size: LoomIconSize.compact,
               color: micOn
                   ? (dark ? null : context.loom.textSecondary)
@@ -445,7 +441,9 @@ class _LoomGroupCallScreenState extends State<LoomGroupCallScreen> {
       data: LoomTheme.dark(
         fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
       ).copyWith(platform: Theme.of(context).platform),
-      child: Builder(builder: (context) => _buildStage(context, admin, active, call, role)),
+      child: Builder(
+        builder: (context) => _buildStage(context, admin, active, call, role),
+      ),
     );
   }
 
@@ -825,8 +823,8 @@ class LoomGroupCallSurface extends StatelessWidget {
                               key: ValueKey('tile-${p.id}'),
                               width: box.maxWidth > 600
                                   ? (box.maxWidth -
-                                          (box.maxWidth > 900 ? 16 : 8)) /
-                                      (box.maxWidth > 900 ? 3 : 2)
+                                            (box.maxWidth > 900 ? 16 : 8)) /
+                                        (box.maxWidth > 900 ? 3 : 2)
                                   : box.maxWidth,
                               height: 220,
                               child: ClipRRect(
@@ -850,8 +848,8 @@ class LoomGroupCallSurface extends StatelessWidget {
                                               borderRadius:
                                                   BorderRadius.circular(20),
                                               border: Border.all(
-                                                color: context
-                                                    .loom.connectivity,
+                                                color:
+                                                    context.loom.connectivity,
                                                 width: 2,
                                               ),
                                             ),
@@ -868,16 +866,14 @@ class LoomGroupCallSurface extends StatelessWidget {
                                             child: Text(
                                               p.name,
                                               maxLines: 1,
-                                              overflow:
-                                                  TextOverflow.ellipsis,
+                                              overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
                                                 color: Colors.white,
                                                 fontWeight: FontWeight.w600,
                                                 shadows: [
                                                   Shadow(
                                                     blurRadius: 8,
-                                                    color:
-                                                        Colors.black87,
+                                                    color: Colors.black87,
                                                   ),
                                                 ],
                                               ),
@@ -891,8 +887,7 @@ class LoomGroupCallSurface extends StatelessWidget {
                                               padding: const EdgeInsets.all(
                                                 LoomSpacing.xxs,
                                               ),
-                                              decoration:
-                                                  const BoxDecoration(
+                                              decoration: const BoxDecoration(
                                                 color: Colors.black54,
                                                 shape: BoxShape.circle,
                                               ),
@@ -911,8 +906,7 @@ class LoomGroupCallSurface extends StatelessWidget {
                                               padding: const EdgeInsets.all(
                                                 LoomSpacing.xxs,
                                               ),
-                                              decoration:
-                                                  const BoxDecoration(
+                                              decoration: const BoxDecoration(
                                                 color: Colors.black54,
                                                 shape: BoxShape.circle,
                                               ),
@@ -943,33 +937,35 @@ class LoomGroupCallSurface extends StatelessWidget {
                       // the frame pipeline rest (battery, tests). A smooth
                       // one-shot glow reads just as clearly as "speaking".
                       // Glow repaint is scoped to this roster row.
-                      leading: RepaintBoundary(child: AnimatedContainer(
-                        duration: LoomMotion.component,
-                        curve: LoomMotion.standard,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: speakers.contains(p.id)
-                                ? context.loom.connectivity
-                                : Colors.transparent,
-                            width: LoomBorders.selectedRail,
+                      leading: RepaintBoundary(
+                        child: AnimatedContainer(
+                          duration: LoomMotion.component,
+                          curve: LoomMotion.standard,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: speakers.contains(p.id)
+                                  ? context.loom.connectivity
+                                  : Colors.transparent,
+                              width: LoomBorders.selectedRail,
+                            ),
+                            boxShadow: speakers.contains(p.id)
+                                ? [
+                                    BoxShadow(
+                                      color: context.loom.connectivity
+                                          .withAlphaFraction(.28),
+                                      blurRadius: 10,
+                                      spreadRadius: 1,
+                                    ),
+                                  ]
+                                : const <BoxShadow>[],
                           ),
-                          boxShadow: speakers.contains(p.id)
-                              ? [
-                                  BoxShadow(
-                                    color: context.loom.connectivity
-                                        .withAlphaFraction(.28),
-                                    blurRadius: 10,
-                                    spreadRadius: 1,
-                                  ),
-                                ]
-                              : const <BoxShadow>[],
+                          child: LoomAvatar(
+                            label: p.name,
+                            size: LoomSizing.compactAvatar,
+                          ),
                         ),
-                        child: LoomAvatar(
-                          label: p.name,
-                          size: LoomSizing.compactAvatar,
-                        ),
-                      )),
+                      ),
                       title: Text(
                         '${p.name}${p.id == ownId ? ' · ${tr(context, 'You', 'شما')}' : ''}',
                         maxLines: 1,
@@ -1267,22 +1263,18 @@ class _GroupCallTitleWithDurationState
 
   @override
   Widget build(BuildContext context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            _duration,
-            maxLines: 1,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: context.loom.connectivity,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-          ),
-        ],
-      );
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(widget.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      Text(
+        _duration,
+        maxLines: 1,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: context.loom.connectivity,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
+    ],
+  );
 }

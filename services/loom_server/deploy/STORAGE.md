@@ -30,4 +30,16 @@ The GitHub Actions release pipeline builds and publishes the image. A Home Node
 needs network access to pull it (or a preloaded image archive); the server source
 bundle is not an offline image bundle.
 
-The source build uses the selected Go module proxy. Some upstream dependency repositories are no longer public, so direct VCS downloads cannot replace a complete module proxy. Select an Iran mirror explicitly when the official proxy refuses access. `go.sum`, read-only module resolution and the public Go checksum database remain enabled. A network refusal is a build failure, not a reason to reset retained data. First installation still compiles storage and can take several minutes; no prebuilt storage image is advertised here.
+Normal Home Node installation does not build MinIO or Loom Node on the target
+server. GitHub Actions builds and publishes both multi-architecture OCI images
+to GHCR under the exact Loom source commit. The installer verifies the selected
+release and prebuilt Node Manager, runs `docker compose pull`, then starts the
+stack and waits for service health checks. It does not invoke `docker build`,
+Go, npm, or a source compilation step on the Home Node.
+
+The Go module proxy and BuildKit cache described by older development notes are
+only relevant to maintainers building the MinIO image inside CI or running an
+explicit source-build workflow. They are not part of the supported one-command
+Home Node installation. This bundle is not an offline-image bundle: the Home
+Node must be able to pull the immutable Node and MinIO tags from GHCR (or have
+the matching images preloaded by an operator).

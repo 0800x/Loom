@@ -207,157 +207,157 @@ class _LoomSignInScreenState extends State<LoomSignInScreen> {
       ctaIcon: busy
           ? null
           : (hasLocalIdentity
-          ? LoomIcons.arrow_forward_rounded
-          : LoomIcons.qr_code_rounded),
+                ? LoomIcons.arrow_forward_rounded
+                : LoomIcons.qr_code_rounded),
       onCta: busy || checkingIdentity || identityCheckFailed ? null : _signIn,
       ctaBusy: busy,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-        LoomGlassSurface(
-          blur: false,
-          radius: LoomRadii.surface,
-          strength: LoomGlassStrength.standard,
-          padding: const EdgeInsets.all(LoomSpacing.md),
-          child: Form(
-            key: _form,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: AutofillGroup(
-              child: Column(
-                children: [
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: TextFormField(
-                      controller: nodeDomain,
-                      keyboardType: TextInputType.url,
-                      textInputAction: TextInputAction.next,
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? tr(
-                              context,
-                              'Enter your server address.',
-                              'نشانی سرور را وارد کنید.',
-                            )
-                          : null,
-                      enabled: !busy,
-                      readOnly: lockedNode,
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      decoration: InputDecoration(
-                        labelText: tr(context, 'Home server', 'سرور میزبان'),
-                        hintText: '192.168.1.10:7483 or chat.example.org',
-                        suffixIcon: lockedNode
-                            ? const Icon(LoomIcons.verified_user_outlined)
+          LoomGlassSurface(
+            blur: false,
+            radius: LoomRadii.surface,
+            strength: LoomGlassStrength.standard,
+            padding: const EdgeInsets.all(LoomSpacing.md),
+            child: Form(
+              key: _form,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: AutofillGroup(
+                child: Column(
+                  children: [
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: TextFormField(
+                        controller: nodeDomain,
+                        keyboardType: TextInputType.url,
+                        textInputAction: TextInputAction.next,
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                            ? tr(
+                                context,
+                                'Enter your server address.',
+                                'نشانی سرور را وارد کنید.',
+                              )
                             : null,
+                        enabled: !busy,
+                        readOnly: lockedNode,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        decoration: InputDecoration(
+                          labelText: tr(context, 'Home server', 'سرور میزبان'),
+                          hintText: '192.168.1.10:7483 or chat.example.org',
+                          suffixIcon: lockedNode
+                              ? const Icon(LoomIcons.verified_user_outlined)
+                              : null,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: LoomSpacing.sm),
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: TextFormField(
-                      controller: username,
-                      textInputAction: TextInputAction.next,
-                      autofillHints: const [AutofillHints.username],
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? tr(
-                              context,
-                              'Enter your username.',
-                              'نام کاربری را وارد کنید.',
-                            )
-                          : null,
-                      enabled: !busy,
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      decoration: InputDecoration(
-                        labelText: tr(context, 'Username', 'نام کاربری'),
+                    const SizedBox(height: LoomSpacing.sm),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: TextFormField(
+                        controller: username,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.username],
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                            ? tr(
+                                context,
+                                'Enter your username.',
+                                'نام کاربری را وارد کنید.',
+                              )
+                            : null,
+                        enabled: !busy,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        decoration: InputDecoration(
+                          labelText: tr(context, 'Username', 'نام کاربری'),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: LoomSpacing.sm),
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: TextFormField(
-                      controller: password,
-                      textInputAction: TextInputAction.done,
-                      autofillHints: const [AutofillHints.password],
-                      validator: (value) => value == null || value.isEmpty
-                          ? tr(
-                              context,
-                              'Enter your password.',
-                              'گذرواژه را وارد کنید.',
-                            )
-                          : null,
-                      enabled: !busy,
-                      obscureText: obscurePassword,
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      onFieldSubmitted: busy ? null : (_) => _signIn(),
-                      decoration: InputDecoration(
-                        labelText: tr(context, 'Password', 'رمز عبور'),
-                        suffixIcon: IconButton(
-                          tooltip: obscurePassword
-                              ? tr(context, 'Show password', 'نمایش گذرواژه')
-                              : tr(
-                                  context,
-                                  'Hide password',
-                                  'پنهان کردن گذرواژه',
-                                ),
-                          onPressed: () => setState(
-                            () => obscurePassword = !obscurePassword,
-                          ),
-                          icon: Icon(
-                            obscurePassword
-                                ? LoomIcons.visibility_rounded
-                                : LoomIcons.visibility_off_rounded,
+                    const SizedBox(height: LoomSpacing.sm),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: TextFormField(
+                        controller: password,
+                        textInputAction: TextInputAction.done,
+                        autofillHints: const [AutofillHints.password],
+                        validator: (value) => value == null || value.isEmpty
+                            ? tr(
+                                context,
+                                'Enter your password.',
+                                'گذرواژه را وارد کنید.',
+                              )
+                            : null,
+                        enabled: !busy,
+                        obscureText: obscurePassword,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        onFieldSubmitted: busy ? null : (_) => _signIn(),
+                        decoration: InputDecoration(
+                          labelText: tr(context, 'Password', 'رمز عبور'),
+                          suffixIcon: IconButton(
+                            tooltip: obscurePassword
+                                ? tr(context, 'Show password', 'نمایش گذرواژه')
+                                : tr(
+                                    context,
+                                    'Hide password',
+                                    'پنهان کردن گذرواژه',
+                                  ),
+                            onPressed: () => setState(
+                              () => obscurePassword = !obscurePassword,
+                            ),
+                            icon: Icon(
+                              obscurePassword
+                                  ? LoomIcons.visibility_rounded
+                                  : LoomIcons.visibility_off_rounded,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        if (identityCheckFailed)
-          TextButton.icon(
-            onPressed: busy || checkingIdentity
+          if (identityCheckFailed)
+            TextButton.icon(
+              onPressed: busy || checkingIdentity
+                  ? null
+                  : () => _checkIdentity(controller),
+              icon: const Icon(LoomIcons.refresh_rounded),
+              label: Text(
+                tr(context, 'Retry device check', 'بررسی دوبارهٔ دستگاه'),
+              ),
+            ),
+          const SizedBox(height: LoomSpacing.sm),
+          OutlinedButton.icon(
+            onPressed: busy
                 ? null
-                : () => _checkIdentity(controller),
-            icon: const Icon(LoomIcons.refresh_rounded),
+                : () => Navigator.pushNamed(context, '/restore'),
+            icon: const Icon(LoomIcons.key_rounded),
             label: Text(
-              tr(context, 'Retry device check', 'بررسی دوبارهٔ دستگاه'),
-            ),
-          ),
-        const SizedBox(height: LoomSpacing.sm),
-        OutlinedButton.icon(
-          onPressed: busy
-              ? null
-              : () => Navigator.pushNamed(context, '/restore'),
-          icon: const Icon(LoomIcons.key_rounded),
-          label: Text(
-            tr(
-              context,
-              'Use recovery words instead',
-              'استفاده از واژه‌های بازیابی',
-            ),
-          ),
-        ),
-        ...[
-          const SizedBox(height: LoomSpacing.xs),
-          TextButton(
-            onPressed: busy ? null : _chooseNode,
-            child: Text(
               tr(
                 context,
-                lockedNode ? 'Change home server' : 'Choose home server',
-                lockedNode ? 'تغییر سرور میزبان' : 'انتخاب سرور میزبان',
+                'Use recovery words instead',
+                'استفاده از واژه‌های بازیابی',
               ),
             ),
           ),
-        ],
+          ...[
+            const SizedBox(height: LoomSpacing.xs),
+            TextButton(
+              onPressed: busy ? null : _chooseNode,
+              child: Text(
+                tr(
+                  context,
+                  lockedNode ? 'Change home server' : 'Choose home server',
+                  lockedNode ? 'تغییر سرور میزبان' : 'انتخاب سرور میزبان',
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
