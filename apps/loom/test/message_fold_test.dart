@@ -49,10 +49,10 @@ void main() {
     );
 
     expect(result, ['message-1']);
-    expect(
-      fold.folds['message-1']!.reactions,
-      [const LoomReactionEntry(emoji: '👍', sender: 'bob')],
-    );
+    final reactions = fold.folds['message-1']!.reactions;
+    expect(reactions, hasLength(1));
+    expect(reactions.single.emoji, '👍');
+    expect(reactions.single.sender, 'bob');
   });
 
   test('only the original sender can edit or delete a message', () {
