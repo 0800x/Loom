@@ -40,8 +40,19 @@ jobs:
           dart format apps/loom apps/loom_node_ui packages
           dart format --output=none --set-exit-if-changed apps/loom apps/loom_node_ui packages
 
+      - name: Resolve the patched OpenMLS provider and build native libraries for Flutter tests
+        run: |
+          cargo update --manifest-path native/loom_mls/Cargo.toml
+          cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i crypto-bigint
+          cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i ctutils
+          cargo build --locked --manifest-path native/loom_mls/Cargo.toml
+          cargo build --locked --manifest-path native/loom_vodozemac_poc/Cargo.toml
+
       - name: Analyze and test the application
         working-directory: apps/loom
+        env:
+          LOOM_TEST_MLS_LIBRARY: ${{ github.workspace }}/native/loom_mls/target/debug/libloom_mls.so
+          LOOM_VODOZEMAC_POC_LIB: ${{ github.workspace }}/native/loom_vodozemac_poc/target/debug/libloom_vodozemac_poc.so
         run: |
           flutter pub get
           flutter analyze --fatal-infos
@@ -61,13 +72,11 @@ jobs:
           (cd packages/loom_design && flutter pub get && flutter analyze --fatal-infos && flutter test)
           (cd packages/loom_storage && dart pub get && dart analyze --fatal-infos && dart test)
 
-      - name: Resolve the patched OpenMLS provider and refresh the lockfile
+      - name: Run native MLS and Vodozemac regression tests
         run: |
-          cargo update --manifest-path native/loom_mls/Cargo.toml
-          cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i crypto-bigint
-          cargo tree --locked --manifest-path native/loom_mls/Cargo.toml -i ctutils
           cargo test --locked --manifest-path native/loom_mls/Cargo.toml
-          cargo build --locked --manifest-path native/loom_mls/Cargo.toml
+          cargo test --locked --manifest-path native/loom_vodozemac_poc/Cargo.toml
+          cargo build --locked --manifest-path native/loom_vodozemac_poc/Cargo.toml
 
       - name: Audit Rust dependencies
         shell: bash
