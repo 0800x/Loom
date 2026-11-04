@@ -40,6 +40,16 @@ jobs:
           dart format apps/loom apps/loom_node_ui packages
           dart format --output=none --set-exit-if-changed apps/loom apps/loom_node_ui packages
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install and test the Home Node server fixture dependencies
+        working-directory: services/loom_server
+        run: |
+          npm install --ignore-scripts --no-package-lock --no-audit --no-fund
+          npm test
+
       - name: Resolve the patched OpenMLS provider and build native libraries for Flutter tests
         run: |
           cargo update --manifest-path native/loom_mls/Cargo.toml
