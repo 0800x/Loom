@@ -1,7 +1,9 @@
 """Publish version tags and successful main builds as public prereleases.
 
 Publication is idempotent: a retry verifies an existing release and its assets
-instead of failing merely because an earlier attempt created it.
+instead of failing merely because an earlier attempt created it. A build commit
+may be published after main advances, provided that commit remains in main's
+history and its original artifacts are verified.
 """
 import json
 import os
@@ -15,12 +17,15 @@ REPOSITORY = '0800x/Loom'
 if os.getenv('GITHUB_REPOSITORY') != REPOSITORY:
     raise ValueError('Release publication is restricted to ' + REPOSITORY)
 directory = Path(sys.argv[1])
-revision = release.git('rev-parse', 'HEAD')
-if os.getenv('GITHUB_SHA') != revision:
-    raise ValueError('Workflow and checked-out revision differ')
 manifest = json.loads((directory / 'BUILD-MANIFEST.json').read_text())
-if manifest['revision'] != revision:
-    raise ValueError('Release assets are stale')
+revision = manifest['revision']
+requested_revision = os.getenv('LOOM_BUILD_REVISION')
+if requested_revision:
+    if requested_revision != revision:
+        raise ValueError('Saved artifacts do not match the requested source revision')
+else:
+    if release.git('rev-parse', 'HEAD') != revision or os.getenv('GITHUB_SHA') != revision:
+        raise ValueError('Workflow, checked-out and artifact revisions differ')
 
 
 def gh(*arguments):
@@ -29,6 +34,14 @@ def gh(*arguments):
 
 def api_json(*arguments):
     return json.loads(gh('api', *arguments))
+
+
+def require_revision_on_main(source_revision):
+    comparison = api_json(
+        'repos/' + REPOSITORY + '/compare/' + source_revision + '...main'
+    )
+    if comparison.get('status') not in ('ahead', 'identical') or comparison.get('behind_by') != 0:
+        raise ValueError('Build revision is not an ancestor of the current main branch')
 
 
 def resolve_tag_commit(tag):
@@ -84,9 +97,7 @@ if is_tag:
 else:
     if os.getenv('GITHUB_REF_NAME') != 'main':
         raise ValueError('Preview releases require main')
-    current = gh('api', 'repos/' + REPOSITORY + '/git/ref/heads/main', '--jq', '.object.sha')
-    if current != revision:
-        raise ValueError('Main advanced; refusing a stale release')
+    require_revision_on_main(revision)
     tag = 'preview-' + release.version()['version'] + '-' + revision[:12]
     title = 'Loom ' + release.version()['version'] + ' — alpha preview'
     primary_extra = ['--target', revision]
@@ -102,8 +113,8 @@ manager_tag = 'node-manager-' + version + '-' + revision[:12]
 manager_names = [
     f'Loom-{version}-manager-linux-amd64',
     f'Loom-{version}-manager-linux-arm64',
-    'Loom-node-linux-amd64-build-manifest.json',
-    'Loom-node-linux-arm64-build-manifest.json',
+    f'Loom-node-linux-amd64-build-manifest.json',
+    f'Loom-node-linux-arm64-build-manifest.json',
     'node-channel.json',
 ]
 manager_assets = [directory / name for name in manager_names]
@@ -114,17 +125,17 @@ if missing:
 notes = (release.ROOT / 'release/DRAFT.md').read_text()
 if not is_tag:
     notes = (
-        'Alpha preview for revision `' + revision + '`.\n\n'
+        'Alpha preview for revision `' + revision + '`.\\n\\n'
         'Android APKs labeled unsigned-engineering cannot be installed as-is. '
         'Windows/Linux artifacts are unsigned. macOS is ad-hoc signed, '
-        'without Developer ID or notarization. No production signing key is generated.\n\n'
+        'without Developer ID or notarization. No production signing key is generated.\\n\\n'
         + notes
     )
 publish_or_verify(tag, title, assets, notes, primary_extra)
 
 manager_notes = (
-    'Public prebuilt Loom Node Manager binaries for source revision `' + revision + '`.\n\n'
-    'The Home Node installer downloads these verified binaries and pulls prebuilt Node and MinIO images from GHCR.\n'
+    'Public prebuilt Loom Node Manager binaries for source revision `' + revision + '`.\\n\\n'
+    'The Home Node installer downloads these verified binaries and pulls prebuilt Node and MinIO images from GHCR.\\n'
     'It does not compile Go or build Docker images on the target server.'
 )
 publish_or_verify(
