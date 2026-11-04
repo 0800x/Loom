@@ -283,7 +283,7 @@ impl SignatureKeyPair {
     }
 
     /// Store this signature key pair in the key store.
-    #[openmls_traits::maybe_async]
+    #[maybe_async::must_be_sync]
     pub async fn store<T>(&self, store: &T) -> Result<(), T::Error>
     where
         T: StorageProvider<CURRENT_VERSION>,
@@ -292,7 +292,7 @@ impl SignatureKeyPair {
     }
 
     /// Read a signature key pair from the key store.
-    #[openmls_traits::maybe_async]
+    #[maybe_async::must_be_sync]
     pub async fn read(
         store: &impl StorageProvider<CURRENT_VERSION>,
         public_key: &[u8],
@@ -308,7 +308,7 @@ impl SignatureKeyPair {
     }
 
     /// Delete a signature key pair from the key store.
-    #[openmls_traits::maybe_async]
+    #[maybe_async::must_be_sync]
     pub async fn delete<T: StorageProvider<CURRENT_VERSION>>(
         store: &T,
         public_key: &[u8],
