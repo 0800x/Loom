@@ -135,7 +135,7 @@ a browser capture of a running local server.
 [Capture details and image hashes](docs/screenshots/loom-current/provenance.json).
 Messenger widget renders do not establish native playback, device or radio support.
 
-## Install your own Home Node
+## Install or update your own Home Node
 
 GitHub Actions builds the Node Manager and multi-architecture Node/MinIO images.
 The Home Node downloads and verifies those prebuilt outputs; it does not compile

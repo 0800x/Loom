@@ -537,7 +537,7 @@ jobs:
         run: |
           python scripts/assemble-release.py candidate release-assets
           python scripts/create-bootstrap.py release-assets
-      - name: Create draft prerelease after all required jobs succeed
+      - name: Publish public prerelease after all required jobs succeed
         env:
           GH_TOKEN: ${{ github.token }}
         run: python scripts/create-draft.py release-assets

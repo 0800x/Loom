@@ -6,7 +6,7 @@ capacity as participants increase. For public HTTPS, point a domain's **A record
 server's public IPv4. Disable a CDN proxy for this hostname. If an AAAA record
 exists, its IPv6 address must also reach this server.
 
-## Install
+## Install or update
 
 Connect over SSH and paste this command for a first installation or to rerun the installer on an existing Home Node:
 
@@ -38,7 +38,7 @@ there are no database passwords or TURN secrets to copy into a form.
 
 The same bootstrap is used for installation and installer-driven reconfiguration or refresh. On an existing Home Node, it detects the current setup and preserves the existing `.env`, service secrets, identity, database volumes and attachments. It does not turn a failed image pull into a local build.
 
-The bootstrap contains a fixed source revision and two SHA256 pins. It verifies
+The bootstrap contains a fixed source revision and a SHA256 pin. It verifies
 the helper and complete source archive before privileged application setup.
 Obtain this initial script through the project's trusted GitHub URL. For
 independent source approval and offline preparation, see the
