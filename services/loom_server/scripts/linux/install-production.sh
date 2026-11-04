@@ -416,8 +416,8 @@ build_or_install_manager() {
   curl --proto '=https' --tlsv1.2 -fLsS --retry 3 --max-time 90 "https://github.com/0800x/Loom/releases/download/$release_tag/$manager_asset" -o "$work/manager"
   curl --proto '=https' --tlsv1.2 -fLsS --retry 3 --max-time 30 "https://github.com/0800x/Loom/releases/download/$release_tag/$manifest_asset" -o "$work/manifest.json"
   curl --proto '=https' --tlsv1.2 -fLsS --retry 3 --max-time 30 "https://github.com/0800x/Loom/releases/download/$release_tag/node-channel.json" -o "$work/node-channel.json"
-  printf '%s  %s\\n' "$manifest_sha256" "$work/manifest.json" | sha256sum --check --status - || { echo 'Node Manager manifest SHA256 verification failed.' >&2; exit 1; }
-  printf '%s  %s\\n' "$channel_sha256" "$work/node-channel.json" | sha256sum --check --status - || { echo 'Node Manager channel SHA256 verification failed.' >&2; exit 1; }
+  printf '%s  %s\n' "$manifest_sha256" "$work/manifest.json" | sha256sum --check --status - || { echo 'Node Manager manifest SHA256 verification failed.' >&2; exit 1; }
+  printf '%s  %s\n' "$channel_sha256" "$work/node-channel.json" | sha256sum --check --status - || { echo 'Node Manager channel SHA256 verification failed.' >&2; exit 1; }
   expected_sha="$(python3 - "$work/manifest.json" "$manager_asset" "$manager_commit" "$release_version" "$goarch" <<'PY'
 import json,re,sys
 path,name,commit,version,arch=sys.argv[1:]
@@ -428,7 +428,7 @@ if not item or not re.fullmatch(r'[0-9a-f]{64}',item.get('sha256','')): raise Sy
 print(item['sha256'])
 PY
   )"
-  printf '%s  %s\\n' "$expected_sha" "$work/manager" | sha256sum --check --status - || { echo 'Node Manager SHA256 verification failed.' >&2; exit 1; }
+  printf '%s  %s\n' "$expected_sha" "$work/manager" | sha256sum --check --status - || { echo 'Node Manager SHA256 verification failed.' >&2; exit 1; }
   python3 - "$work/node-channel.json" "$manager_commit" <<'PY'
 import json,re,sys
 path,commit=sys.argv[1:]
