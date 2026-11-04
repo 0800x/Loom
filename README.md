@@ -340,21 +340,20 @@ Point your domain directly to a Linux server, allow TCP **80/443**, connect over
 SSH and run:
 
 ```bash
+set -euo pipefail
 # Use the published versioned bootstrap and verify its SHA256 before execution.
 : "${LOOM_RELEASE_TAG:?set a published release tag, e.g. v0.3.0-alpha.1}"
 tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
 curl --proto '=https' --tlsv1.2 -fsSLo "$tmp/loom-install.sh" "https://github.com/0800x/Loom/releases/download/$LOOM_RELEASE_TAG/loom-install.sh"
 curl --proto '=https' --tlsv1.2 -fsSLo "$tmp/loom-install.sh.sha256" "https://github.com/0800x/Loom/releases/download/$LOOM_RELEASE_TAG/loom-install.sh.sha256"
 (cd "$tmp" && sha256sum --check loom-install.sh.sha256)
 bash "$tmp/loom-install.sh" --wizard
-rm -rf "$tmp"
 ```
 
-A signed public release and independently authenticated publisher key are not yet
-available (`release/version.json` has `published: false`). The commands above are
-the required verification workflow for such a release, not a currently usable
-one-command public installer. For now use a separately reviewed immutable source
-checkout for isolated testing. See [release verification](release/README.md).
+The v0.3.0-alpha.1 release is not published yet (`release/version.json` has
+`published: false`). The command above documents the release bootstrap, but it
+cannot be used until GitHub Actions publishes the versioned installer and checksum.
 
 Choose **Official / Liara / Arvan** download sources, then **Public / Local HTTPS**.
 Type your hostname or IPv4 address; use **Up/Down and Enter** to select registration, federation, voice calls, video and
@@ -367,9 +366,10 @@ Package routes cover maintained Debian/Ubuntu, Fedora, CentOS Stream/RHEL,
 Rocky/AlmaLinux, Arch/Manjaro and openSUSE/SLES hosts. Use **systemd** and **x64 or
 arm64**. The [setup guide](docs/node-setup.md) explains DNS, distribution limits,
 provider firewall ports and troubleshooting; [راهنمای فارسی](docs/node-setup.fa.md)
-is available too. Iran mirror profiles cover Docker images, Go/npm dependencies,
-Alpine container packages and supported APT host packages without restarting
-Docker or replacing system repository settings. They do not guarantee offline installation.
+is available too. Iran mirror profiles apply to supported Docker Hub dependencies
+and host OS package downloads. Node and MinIO images are pulled from GHCR with
+source-commit tags built by GitHub Actions. Go/npm mirrors are not used by the
+pull-only Home Node installer; no Go, Node.js or npm build runs on the host.
 
 **HTTPS:** Public mode uses a publicly trusted certificate. Local mode creates a
 certificate for your hostname or IPv4 address without contacting a certificate
