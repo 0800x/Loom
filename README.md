@@ -142,11 +142,14 @@ The Home Node downloads and verifies those prebuilt outputs; it does not compile
 them locally.
 
 ```bash
-curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh https://github.com/0800x/Loom/releases/download/v0.3.0-alpha.1/loom-install.sh &&
-curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh.sha256 https://github.com/0800x/Loom/releases/download/v0.3.0-alpha.1/loom-install.sh.sha256 &&
-(cd /tmp && sha256sum --check loom-install.sh.sha256) &&
-bash /tmp/loom-install.sh --wizard
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/0800x/Loom/main/install.sh -o /tmp/loom-install.sh &&
+bash /tmp/loom-install.sh
 ```
+
+The bootstrap is the only file you need to download. It verifies its pinned
+source and then runs the Home Node setup wizard. Do not download the release
+asset or checksum separately, and do not set `LOOM_PUBLISHER_KEY` or install
+`minisign` manually for this bootstrap.
 
 Before first public installation, make the `loom-node` and `loom-minio`
 packages in GitHub Container Registry **Public**. See
