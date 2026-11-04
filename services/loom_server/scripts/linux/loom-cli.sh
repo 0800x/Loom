@@ -58,9 +58,11 @@ case "$command_name" in
     if [[ $EUID -ne 0 ]]; then
       exec /usr/bin/sudo /usr/bin/env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/root TERM="${TERM:-xterm}" /bin/bash --noprofile --norc /opt/loom-node/scripts/linux/loom-cli.sh "$command_name"
     fi
-    loom_require_install_path "$LOOM_NODE_HOME"
-    loom_require_root_owned "$LOOM_NODE_HOME/scripts/linux/install-safety.sh" || { echo 'Unsafe installation safety helper.' >&2; exit 1; }
-    source "$LOOM_NODE_HOME/scripts/linux/install-safety.sh"
+    helper="$LOOM_NODE_HOME/scripts/linux/install-safety.sh"
+    [[ -f "$helper" && ! -L "$helper" && "$(stat -c %u -- "$helper")" == 0 ]] || { echo 'Unsafe installation safety helper.' >&2; exit 1; }
+    helper_mode="$(stat -c %a -- "$helper")"
+    (( (8#$helper_mode & 0022) == 0 )) || { echo 'Installation safety helper is writable by others.' >&2; exit 1; }
+    source "$helper"
     loom_require_install_owner "$LOOM_NODE_HOME" || { echo 'Loom installation ownership check failed.' >&2; exit 1; }
     deploy_dir="$LOOM_NODE_HOME/deploy"
     env_file="$deploy_dir/.env"
