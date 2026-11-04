@@ -340,13 +340,14 @@ Point your domain directly to a Linux server, allow TCP **80/443**, connect over
 SSH and run:
 
 ```bash
-# Use an exact signed release tag and a publisher key verified independently.
-: "${LOOM_RELEASE_TAG:?set a signed release tag}"
-: "${LOOM_PUBLISHER_KEY:?set the verified minisign public key}" # gitleaks:allow -- public verification key placeholder
-curl --proto '=https' --tlsv1.2 -fsSLo install.sh "https://raw.githubusercontent.com/0800x/Loom/$LOOM_RELEASE_TAG/install.sh"
-curl --proto '=https' --tlsv1.2 -fsSLo install.sh.minisig "https://github.com/0800x/Loom/releases/download/$LOOM_RELEASE_TAG/install.sh.minisig"
-minisign -Vm install.sh -P "$LOOM_PUBLISHER_KEY"
-bash install.sh
+# Use the published versioned bootstrap and verify its SHA256 before execution.
+: "${LOOM_RELEASE_TAG:?set a published release tag, e.g. v0.3.0-alpha.1}"
+tmp="$(mktemp -d)"
+curl --proto '=https' --tlsv1.2 -fsSLo "$tmp/loom-install.sh" "https://github.com/0800x/Loom/releases/download/$LOOM_RELEASE_TAG/loom-install.sh"
+curl --proto '=https' --tlsv1.2 -fsSLo "$tmp/loom-install.sh.sha256" "https://github.com/0800x/Loom/releases/download/$LOOM_RELEASE_TAG/loom-install.sh.sha256"
+(cd "$tmp" && sha256sum --check loom-install.sh.sha256)
+bash "$tmp/loom-install.sh" --wizard
+rm -rf "$tmp"
 ```
 
 A signed public release and independently authenticated publisher key are not yet
