@@ -367,8 +367,8 @@ choice_description() {
     'HTTPS mode:public') echo 'Public certificate for an internet domain' ;;
     'HTTPS mode:local') echo 'Offline certificate; import and verify it on clients' ;;
     'Download sources:official') echo 'Upstream registries and configured OS repositories' ;;
-    'Download sources:liara') echo 'Iran: Liara Docker, npm and host package mirrors' ;;
-    'Download sources:arvan') echo 'Arvan Docker/Ubuntu/Alpine; Liara npm and Debian' ;;
+    'Download sources:liara') echo 'Iran: Liara Docker Hub and host package mirrors' ;;
+    'Download sources:arvan') echo 'Arvan Docker Hub/Ubuntu/Alpine; Liara Debian' ;;
     'Go modules:profile') echo 'Follow the package source selection' ;;
     'Go modules:official') echo 'Go official module proxy' ;;
     'Go modules:liara') echo 'Liara · Iran' ;;
