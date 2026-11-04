@@ -33,6 +33,13 @@ with tempfile.TemporaryDirectory(prefix='loom-bundle-') as temp:
     (folder / 'bin').mkdir()
     shutil.copy2(manager, folder / 'bin' / ('loom-node-manager' + suffix))
     for legal in ('LICENSE', 'COPYRIGHT'): shutil.copy2(root / legal, folder)
+    build_info = {
+        'commit': release.git('rev-parse', 'HEAD'),
+        'version': release.version()['version'],
+    }
+    (folder / 'build-info.env').write_text(
+        chr(10).join(f'{key}={value}' for key, value in build_info.items()) + chr(10)
+    )
     (folder / 'BUNDLE.md').write_text('Loom source server bundle with a precompiled Node Manager.\nProduction Node and MinIO OCI images are published to GHCR for linux/amd64 and linux/arm64.\nThe verified installer pulls those images; it does not compile them on the target server.\nThis is not an offline-image bundle.\n')
     archive = out / name
     shutil.make_archive(str(archive), 'zip' if platform == 'windows' else 'gztar', temp, name)

@@ -49,6 +49,22 @@ function Assert-SingleLineValue {
     }
 }
 
+$buildInfoPath = Join-Path $serverRoot "build-info.env"
+$imageTag = ""
+if (Test-Path $buildInfoPath) {
+    $buildInfo = Get-Content $buildInfoPath | ConvertFrom-StringData
+    $imageTag = [string]$buildInfo["commit"]
+} else {
+    $gitCommand = Get-Command git -ErrorAction SilentlyContinue
+    if ($gitCommand) {
+        $gitOutput = & git -C $serverRoot rev-parse HEAD 2>$null
+        if ($LASTEXITCODE -eq 0 -and $gitOutput) { $imageTag = [string]$gitOutput }
+    }
+}
+if ($imageTag -notmatch '^[0-9a-f]{40}$') {
+    throw "A verified 40-character Loom source commit is required. Use the versioned Node release bundle."
+}
+
 $Domain = $Domain.Trim().ToLowerInvariant()
 if ($Domain -match '^[a-z][a-z0-9+.-]*://' -or $Domain.Contains('/') -or $Domain.Contains(' ')) {
     throw "-Domain must be a hostname only, for example chat.example.com"
@@ -85,6 +101,7 @@ $lines = @(
     "LOOM_HOST=0.0.0.0",
     "LOOM_PORT=7483",
     "LOOM_HOST_PORT=7483",
+    "LOOM_IMAGE_TAG=$imageTag",
     "LOOM_PROXY_MODE=caddy",
     "LOOM_PUBLIC_DOMAIN=$Domain",
     "LOOM_PUBLIC_BASE_URL=https://$Domain",
@@ -133,8 +150,12 @@ try {
 
     if (-not $NoStart) {
         Write-Host ""
-        Write-Host "Building and starting the production bundle..."
-        & docker compose --env-file $envPath -f $composePath --profile caddy up -d --build
+        Write-Host "Pulling prebuilt Loom Node and MinIO images for commit $imageTag..."
+        & docker compose --env-file $envPath -f $composePath --profile caddy pull
+        if ($LASTEXITCODE -ne 0) {
+            throw "Prebuilt images could not be downloaded. Check GHCR package visibility and server connectivity."
+        }
+        & docker compose --env-file $envPath -f $composePath --profile caddy up -d --wait --wait-timeout 180
         if ($LASTEXITCODE -ne 0) {
             throw "The production bundle failed to start."
         }
