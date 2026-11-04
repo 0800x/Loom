@@ -437,7 +437,9 @@ PY
   install -d -m 0755 "$INSTALL_DIR/release"
   install -m 0644 "$work/node-channel.json" "$INSTALL_DIR/release/node-channel.json"
   ui_ok 'Installed verified prebuilt Loom Node Manager'
-}write_launcher() {
+}
+
+write_launcher() {
   bash "$INSTALL_DIR/scripts/linux/install-cli.sh"
 }
 
