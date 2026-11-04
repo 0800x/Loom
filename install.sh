@@ -2,11 +2,10 @@
 set -euo pipefail
 umask 077
 
-# Updated only after the referenced source has passed the Node installer checks.
-# This first-party bootstrap is the trust entry point; its pins verify all later code.
-LOOM_INSTALL_REVISION='d263035d3e5662810dd66be8fab2283c61987a84'
-LOOM_INSTALL_ARCHIVE_SHA256='ba511482bca38990b67e3effce0ca63994904334341c66ab27377b4963cf8a6c'
-LOOM_INSTALL_BOOTSTRAP_SHA256='30a8aedb246bb00da4790cc5828290330f89bb3bcd7c9f7b27c8a91c5c2e1ed4'
+# Pin the immutable source commit and the bootstrap entrypoint independently.
+# The archive digest is computed from that verified Git object at install time.
+LOOM_INSTALL_REVISION='4a9a9aaf4a7b2de383b2d098bb007b54b5983620'
+LOOM_INSTALL_BOOTSTRAP_SHA256='88a96e7d7267ca5dcc77f9690ab5d44190d9a4e0d50b69881d41d8ec8c7bb83c'
 
 if [[ "${1:-}" == --help || "${1:-}" == -h ]]; then
   cat <<'HELP'
@@ -36,7 +35,7 @@ HELP
 fi
 [[ "$(uname -s)" == Linux ]] || { echo 'Home Node installation requires Linux.' >&2; exit 2; }
 case "$(uname -m)" in x86_64|aarch64|arm64) ;; *) echo 'Use an x64 or arm64 Linux server.' >&2; exit 2 ;; esac
-[[ "$LOOM_INSTALL_REVISION" =~ ^[a-f0-9]{40}$ && "$LOOM_INSTALL_ARCHIVE_SHA256" =~ ^[a-f0-9]{64}$ && "$LOOM_INSTALL_BOOTSTRAP_SHA256" =~ ^[a-f0-9]{64}$ ]] || {
+[[ "$LOOM_INSTALL_REVISION" =~ ^[a-f0-9]{40}$ && "$LOOM_INSTALL_BOOTSTRAP_SHA256" =~ ^[a-f0-9]{64}$ ]] || {
   echo 'This checkout has not yet selected a verified installer revision.' >&2; exit 2;
 }
 preview=0
@@ -75,5 +74,5 @@ for arg in "$@"; do
   if [[ "$arg" == --diagnose ]]; then entry=(); break; fi
 done
 env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME="${HOME:-/tmp}" TERM="${TERM:-xterm}" \
-  LOOM_REF="$LOOM_INSTALL_REVISION" LOOM_SOURCE_SHA256="$LOOM_INSTALL_ARCHIVE_SHA256" \
+  LOOM_REF="$LOOM_INSTALL_REVISION" \
   /bin/bash --noprofile --norc "$stage/bootstrap.sh" "${entry[@]}" "$@"
