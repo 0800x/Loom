@@ -11,10 +11,11 @@ exists, its IPv6 address must also reach this server.
 Connect over SSH and paste:
 
 ```bash
-curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh https://github.com/0800x/Loom/releases/download/v0.3.0-alpha.1/loom-install.sh &&
-curl --proto '=https' --tlsv1.2 -fsSLo /tmp/loom-install.sh.sha256 https://github.com/0800x/Loom/releases/download/v0.3.0-alpha.1/loom-install.sh.sha256 &&
-(cd /tmp && sha256sum --check loom-install.sh.sha256) &&
-bash /tmp/loom-install.sh --wizard
+tmp="$(mktemp -d)" &&
+curl --proto '=https' --tlsv1.2 -fsSLo "$tmp/loom-install.sh" https://github.com/0800x/Loom/releases/download/v0.3.0-alpha.1/loom-install.sh &&
+curl --proto '=https' --tlsv1.2 -fsSLo "$tmp/loom-install.sh.sha256" https://github.com/0800x/Loom/releases/download/v0.3.0-alpha.1/loom-install.sh.sha256 &&
+(cd "$tmp" && sha256sum --check loom-install.sh.sha256) &&
+bash "$tmp/loom-install.sh" --wizard; result=$?; rm -rf "$tmp"; exit "$result"
 ```
 
 The domain is the only required free-text answer. Use **Up/Down and Enter**
@@ -23,8 +24,7 @@ need typing. Use `--text` for line prompts on a basic terminal. The menus offer 
 
 | Question | Choices |
 | --- | --- |
-| Download sources | `official`, `liara` (Iran mirrors), or `arvan` (Arvan Docker/Ubuntu/Alpine, Liara Go/npm/Debian) |
-| Go modules | Retained for optional source/offline build workflows; not used by the prebuilt production installer |
+| Download sources | `official`, `liara` (Iran mirrors), or `arvan` (Arvan Docker/Ubuntu/Alpine, Liara npm/Debian) |
 | HTTPS mode | `public` for a public CA certificate; `local` for an explicitly trusted local certificate |
 | Server address | Your hostname or IPv4 address, without a scheme, port or path |
 | Registration | `approval` to review requests, `open` to allow sign-ups, `closed` to stop new registrations |
@@ -57,14 +57,13 @@ An unrelated web server or TURN service is never replaced automatically.
 
 ## Installing from Iran
 
-The first menu selects **Official**, **Liara**, or **Arvan Docker + Liara Go/npm**. Arvan also supplies Ubuntu host and Alpine container package mirrors; Debian host packages use Liara.
+The first menu selects **Official**, **Liara**, or **Arvan** package/image sources. Arvan also supplies Ubuntu host and Alpine container package mirrors; Debian host packages use Liara.
 The selected Docker source policy applies to Docker Hub dependencies such as PostgreSQL and Caddy. Loom Node and MinIO are pulled from GHCR using immutable source-commit tags; the production installer does not build them locally. For unattended setup, add `--downloads liara` or `--downloads arvan` to the installer arguments.
 The default is `official`; no IP geolocation or silent mirror switching is used.
 
 | Dependency | Liara profile | Arvan profile |
 | --- | --- | --- |
 | Docker Hub images, including build bases and call services | `docker-mirror.liara.ir` | `docker.arvancloud.ir` |
-| Go modules | Liara Go proxy | Liara Go proxy |
 | Node packages | Liara npm registry, with the committed dependency lock | Same |
 | Alpine packages inside build/runtime images | Liara Alpine mirror | Arvan Alpine mirror |
 | Ubuntu amd64 host packages | Temporary Liara APT sources | Temporary Arvan APT sources |
@@ -82,12 +81,11 @@ Changing a tagged image's registry explicitly trusts the selected mirror for tha
 tag; a digest-pinned image must still match the original digest.
 
 These profiles **do not provide a fully offline installation**. GitHub source,
-uncached dependencies, the Go checksum service when needed, initial bootstrap prerequisites and public certificate issuance can still require international access.
+uncached packages, initial bootstrap prerequisites and public certificate issuance can still require international access.
 A failed checksum never falls back to another source. If a selected mirror is
 unavailable, installation fails; rerun setup and explicitly choose another profile.
 
-Provider references: [Liara Go](https://docs.liara.ir/mirrors/go/),
-[Docker](https://docs.liara.ir/mirrors/docker/),
+Provider references: [Docker](https://docs.liara.ir/mirrors/docker/),
 [npm](https://docs.liara.ir/mirrors/npm/),
 [Ubuntu](https://docs.liara.ir/mirrors/ubuntu/),
 [Debian](https://docs.liara.ir/mirrors/debian/),
@@ -95,53 +93,25 @@ Provider references: [Liara Go](https://docs.liara.ir/mirrors/go/),
 [Arvan Docker](https://www.arvancloud.ir/fa/dev/docker) and
 [Arvan Linux repositories](https://www.arvancloud.ir/fa/dev/linux-repository).
 
-## Choose a different Go mirror
+## What runs on the Home Node
 
-Docker/APT and Go modules can use different providers. Both Iran download
-profiles use Liara Go by default; selecting Arvan alone does not change Go.
-If module downloads stall, rerun the verified installer with:
+The Home Node setup is deliberately pull-only. GitHub Actions builds the
+versioned Node image, MinIO image and Node Manager binaries. The installer
+checks the immutable source revision and SHA256 metadata, installs or verifies
+Docker Engine and Compose, generates or preserves private configuration, pulls
+the exact Node and MinIO image tags from GHCR, configures the selected proxy
+and TLS mode, starts the services, and waits for health checks.
 
-```bash
-bash install.sh --downloads liara --go-mirror runflare
-```
+It does **not** install Go or Node.js on the host, run `npm install`, execute
+`docker build`, or compile Node/MinIO from source. A failed image pull or
+health check stops setup rather than falling back to a local build. This keeps
+CPU, RAM and build time off the Home Node. The standard setup still needs
+network access to GitHub/GHCR, package mirrors selected by the operator, and
+the certificate authority when public HTTPS is selected.
 
-`--go-mirror` accepts `profile` (follow the download profile), `official`,
-`liara`, `runflare`, `parspack`, or `goproxy-cn`. The choice is saved for future setup and
-updates. It affects both Node Manager and the source-built storage service;
-it does not edit global Go configuration or switch Docker/npm/APT sources.
-Runflare documents `https://mirror-go.runflare.com`; Goproxy.cn documents
-`https://goproxy.cn`. Neither is a guarantee of reachability from your server.
-
-Storage builds now show module download requests separately from compilation.
-Module downloads have a ten-minute limit. The interactive **Go modules** menu exposes every supported provider; a command-line mirror becomes its initially selected option. BuildKit caches verified modules and
-compiled packages across interrupted builds, so retrying can reuse completed
-work. Do not prune Docker build caches when recovering from a network failure.
-Checksum verification remains enabled; no mirror switching follows a failure.
-The compile phase uses downloaded modules with network module fetching disabled
-and prints package names as it progresses. Download and compilation appear as separate build steps. Compiler parallelism follows CPU quota and available RAM (at most eight workers), instead of a fixed two-worker limit. Compilation can still be slow on
-small servers; a quiet interval alone does not establish a network failure.
-
-Provider documentation: [Runflare Go mirror](https://runflare.com/mirrors/go-mirror/)
-and [Goproxy.cn](https://goproxy.cn/).
-
-### ParsPack and package ecosystems
-
-ParsPack Go is available with `--go-mirror parspack`, using the provider's
-published endpoint `https://mirror.abrha.net/repository/go/`. Go checksum
-verification remains enabled; the installer does not apply the provider guide's
-`GOSUMDB=off` example. Reachability of both modules and authenticated checksum
-metadata is required.
-
-The builder uses Go 1.25.14 on explicit Alpine 3.23, pinned by image digest.
-It does not follow the moving `-alpine` tag, which can switch to a release that
-a selected APK mirror has not synchronized. APK signatures remain required;
-packages from another Alpine release are never mixed into the image.
-
-[ParsPack Go documentation](https://docs.parspack.com/reference/mirror/golang/)
-and [NuGet mirror directory](https://github.com/VahidN/nuget-net-melli-mirrors)
-are additional references. The latter covers .NET/NuGet, not Go modules or
-Alpine APK packages. Its endpoints are not inserted into the Linux installer;
-no global NuGet configuration or audit settings are changed.
+`--go-mirror` remains available only for maintainers using a separate,
+explicit source-build workflow; it is not a Home Node setup question and does
+not affect the supported pull-only installation.
 
 ## Linux distributions
 
@@ -231,7 +201,6 @@ bash install.sh --yes --domain chat.example.org --registration approval \
 | Missing update approval metadata | Rerun the trusted installer once; existing operator policies are retained |
 | PostgreSQL rejects its password | Restore the original `.env` matching retained database volumes; do not delete volumes or generate another identity |
 | Existing volumes but missing `.env` | Restore the original configuration backup before installation can proceed |
-| Module download returns `403 Forbidden` | The selected source is refusing this host. Rerun setup and select Liara or Arvan for an Iran server. Checksums remain mandatory; deleting data will not help |
 | TUI closed | Run `loom`; exiting the manager does not stop the server |
 
 Keep backups of Node identity, database, attachments and configuration. Do not
