@@ -53,7 +53,7 @@ class SetupTests(unittest.TestCase):
     def test_release_asset_download_resumes_interrupted_transfers(self):
         installer = SETUP.with_name('install-production.sh').read_text()
         start = installer.index('download_release_asset() {')
-        end = installer.index('\\nbuild_or_install_manager() {', start)
+        end = installer.index('\nbuild_or_install_manager() {', start)
         downloader = installer[start:end]
         self.assertIn('--connect-timeout 20', downloader)
         self.assertIn('--max-time 300', downloader)
@@ -68,7 +68,7 @@ ui_warn(){ :; }
 sleep(){ :; }
 curl(){
   local output='' joined="$*"
-  printf '%s\\n' "$joined" >> "$CALLS"
+  printf '%s\n' "$joined" >> "$CALLS"
   while (($#)); do
     if [[ "$1" == '-o' ]]; then output="$2"; shift 2; else shift; fi
   done
