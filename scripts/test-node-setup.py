@@ -55,13 +55,20 @@ class SetupTests(unittest.TestCase):
         start = installer.index('build_or_install_manager() {')
         end = installer.index('\n}\n\nwrite_launcher()', start)
         manager = installer[start:end]
-        self.assertIn("manager_commit='a96ea6c24f8bc531fa23d34a4f735cd6ba398458'", manager)
+        self.assertIn('manager_commit="$PREBUILT_RELEASE_COMMIT"', manager)
         self.assertIn('release_tag="node-manager-$release_version-${manager_commit:0:12}"', manager)
         self.assertIn('Node Manager manifest SHA256 verification failed', manager)
         self.assertIn('Node Manager channel SHA256 verification failed', manager)
         self.assertIn('Loom Node Manager $MANAGER_VERSION ${manager_commit:0:10}', manager)
         self.assertNotIn('INSTALL_COMMIT:0:12', manager)
 
+    def test_prebuilt_runtime_release_is_separate_from_installer_source_revision(self):
+        installer = SETUP.with_name('install-production.sh').read_text()
+        self.assertIn("PREBUILT_RELEASE_COMMIT='a96ea6c24f8bc531fa23d34a4f735cd6ba398458'", installer)
+        self.assertIn('LOOM_IMAGE_TAG=$PREBUILT_RELEASE_COMMIT', installer)
+        self.assertIn('set_env_value "$EXISTING_ENV" LOOM_BUILD_COMMIT "$PREBUILT_RELEASE_COMMIT"', installer)
+        self.assertIn('Using verified prebuilt Node/MinIO images for commit $PREBUILT_RELEASE_COMMIT', installer)
+        self.assertNotIn('LOOM_IMAGE_TAG=$INSTALL_COMMIT', installer)
     def test_interactive_questions_and_invalid_answer_retry(self):
         pid, fd = pty.fork()
         if pid == 0:

@@ -398,7 +398,7 @@ build_or_install_manager() {
   local work release_version release_tag manager_asset manifest_asset expected_sha version_output goarch manager_commit manifest_sha256 channel_sha256
   # The Node runtime/source revision is newer than the latest published Manager payload.
   # Manager sources are unchanged since this published build; keep this pin separate from INSTALL_COMMIT.
-  manager_commit='a96ea6c24f8bc531fa23d34a4f735cd6ba398458'
+  manager_commit="$PREBUILT_RELEASE_COMMIT"
   channel_sha256='1796595eb15b7380b5dbd6e789a9f1d753b5f922bf4c0519c906940778049672'
   case "$(uname -m)" in
     x86_64|amd64) goarch=amd64; manifest_sha256='76f7f52a4e2ad37703bb24eae14f5a49ad439344f410247739379e8a9cb0e885' ;;
@@ -509,7 +509,7 @@ LOOM_MODE=production
 LOOM_HOST=0.0.0.0
 LOOM_PORT=7483
 LOOM_HOST_PORT=7483
-LOOM_IMAGE_TAG=$INSTALL_COMMIT
+LOOM_IMAGE_TAG=$PREBUILT_RELEASE_COMMIT
 LOOM_PROXY_MODE=$PROXY_MODE
 LOOM_PUBLIC_DOMAIN=$DOMAIN
 LOOM_PUBLIC_BASE_URL=https://$DOMAIN
@@ -875,6 +875,8 @@ if ! [[ "$INSTALL_COMMIT" =~ ^[a-fA-F0-9]{40}$ ]]; then
   INSTALL_COMMIT="${LOOM_SOURCE_COMMIT:-$(read_env_value "$SOURCE_ROOT/build-info.env" commit)}"
 fi
 if ! [[ "$INSTALL_COMMIT" =~ ^[a-fA-F0-9]{40}$ ]]; then INSTALL_COMMIT=""; fi
+PREBUILT_RELEASE_COMMIT='a96ea6c24f8bc531fa23d34a4f735cd6ba398458'
+[[ "$PREBUILT_RELEASE_COMMIT" =~ ^[a-f0-9]{40}$ ]] || { ui_fail "Invalid prebuilt release pin."; exit 1; }
 SOURCE_BRANCH="$(git -C "$REPO_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
 UPDATE_BRANCH="${UPDATE_BRANCH:-$SOURCE_BRANCH}"
 UPDATE_BRANCH="${UPDATE_BRANCH:-$(read_env_value "$SOURCE_ROOT/build-info.env" branch)}"
@@ -906,7 +908,7 @@ fi
 loom_download_profile "${DOWNLOAD_PROFILE:-official}"
 if [[ -z "$GO_MIRROR" && -f "$EXISTING_ENV" ]]; then GO_MIRROR="$(read_env_value "$EXISTING_ENV" LOOM_GO_MIRROR)"; fi
 loom_go_mirror "${GO_MIRROR:-profile}"
-ui_info "Using prebuilt Node/MinIO images for commit $INSTALL_COMMIT; host-side compilation is disabled"
+ui_info "Using verified prebuilt Node/MinIO images for commit $PREBUILT_RELEASE_COMMIT; installer source is $INSTALL_COMMIT; host-side compilation is disabled"
 ui_step 1 7 "Ensuring Docker Engine + Compose v2"
 ensure_docker
 ensure_runtime_tools
@@ -935,12 +937,12 @@ set_env_value "$EXISTING_ENV" LOOM_GO_PROXY "$LOOM_GO_PROXY"
 set_env_value "$EXISTING_ENV" LOOM_GO_MIRROR "$LOOM_GO_MIRROR"
 set_env_value "$EXISTING_ENV" LOOM_NPM_REGISTRY "$LOOM_NPM_REGISTRY"
 set_env_value "$EXISTING_ENV" LOOM_ALPINE_MIRROR "$LOOM_ALPINE_MIRROR"
-set_env_value "$EXISTING_ENV" LOOM_BUILD_COMMIT "${INSTALL_COMMIT:-unknown}"
-set_env_value "$EXISTING_ENV" LOOM_IMAGE_TAG "$INSTALL_COMMIT"
+set_env_value "$EXISTING_ENV" LOOM_BUILD_COMMIT "$PREBUILT_RELEASE_COMMIT"
+set_env_value "$EXISTING_ENV" LOOM_IMAGE_TAG "$PREBUILT_RELEASE_COMMIT"
 set_env_value "$EXISTING_ENV" LOOM_UPDATE_BRANCH "$UPDATE_BRANCH"
 set_env_value "$EXISTING_ENV" LOOM_UPDATE_REPOSITORY "$UPDATE_REPOSITORY"
 set_env_value "$EXISTING_ENV" LOOM_UPDATE_SOURCE_DIR "$UPDATE_SOURCE_DIR"
-export LOOM_BUILD_COMMIT="${INSTALL_COMMIT:-unknown}"
+export LOOM_BUILD_COMMIT="$PREBUILT_RELEASE_COMMIT"
 
 ui_step 5 7 "Checking DNS and host firewall"
 open_firewall_ports
@@ -970,7 +972,7 @@ if [[ $NO_START -eq 0 ]]; then
       if(expected && actual!==expected) process.exit(2);
       fetch("http://127.0.0.1:7483/readyz",{signal:AbortSignal.timeout(3000)})
         .then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1));
-    ' "$INSTALL_COMMIT" >/dev/null 2>&1; then node_ready=1; break; fi
+    ' "$PREBUILT_RELEASE_COMMIT" >/dev/null 2>&1; then node_ready=1; break; fi
     sleep 2
   done
   if [[ $node_ready -ne 1 ]]; then
@@ -988,7 +990,7 @@ if [[ $NO_START -eq 0 ]]; then
 
   ui_step 7 7 "Verifying public HTTPS certificate"
   verify_https
-  loom_write_install_state "$INSTALL_DIR" "$UPDATE_REPOSITORY" "$UPDATE_BRANCH" "$UPDATE_SOURCE_DIR" "$INSTALL_COMMIT" "$MANAGER_VERSION"
+  loom_write_install_state "$INSTALL_DIR" "$UPDATE_REPOSITORY" "$UPDATE_BRANCH" "$UPDATE_SOURCE_DIR" "$PREBUILT_RELEASE_COMMIT" "$MANAGER_VERSION"
 else
   ui_step 6 7 "Start skipped (--no-start)"
   ui_step 7 7 "Reverse-proxy/TLS setup skipped"
