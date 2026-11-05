@@ -366,6 +366,9 @@ choice_description() {
   case "$1:$2" in
     'HTTPS mode:public') echo 'Public certificate for an internet domain' ;;
     'HTTPS mode:local') echo 'Offline certificate; import and verify it on clients' ;;
+    'HTTPS proxy:auto') echo 'Preserve existing choice; otherwise detect Nginx or use Caddy' ;;
+    'HTTPS proxy:caddy') echo 'Bundled Caddy; automatic HTTPS' ;;
+    'HTTPS proxy:nginx') echo 'Host Nginx + Certbot; still needs inbound TCP 80/443' ;;
     'Download sources:official') echo 'Upstream registries and configured OS repositories' ;;
     'Download sources:liara') echo 'Iran: Liara Docker Hub and host package mirrors' ;;
     'Download sources:arvan') echo 'Arvan Docker Hub/Ubuntu/Alpine; Liara Debian' ;;
@@ -506,6 +509,10 @@ if [[ $interactive -eq 1 ]]; then
 
   if [[ $TLS_SET -eq 0 ]]; then
     prompt_choice_into TLS_MODE "HTTPS mode" "$TLS_MODE" 'public local'
+  fi
+  if [[ "$TLS_MODE" == public && $PROXY_SET -eq 0 ]]; then
+    printf '\nChoose the reverse proxy for public HTTPS. Caddy and Nginx both require inbound TCP ports 80 and 443.\n'
+    prompt_choice_into PROXY "HTTPS proxy" "$PROXY" 'auto caddy nginx'
   fi
   if [[ "$TLS_MODE" == local && $EXISTING_INSTALL -eq 0 && $GROUP_SET -eq 0 ]]; then GROUP_CALLS=off; fi
   if [[ $DOMAIN_SET -eq 0 ]]; then

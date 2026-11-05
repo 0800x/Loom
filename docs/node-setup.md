@@ -22,12 +22,23 @@ need typing. Use `--text` for line prompts on a basic terminal. The menus offer 
 | --- | --- |
 | Download sources | `official`, `liara` (Liara Docker Hub and supported host packages), or `arvan` (Arvan Docker Hub/Ubuntu/Alpine and Liara Debian) |
 | HTTPS mode | `public` for a public CA certificate; `local` for an explicitly trusted local certificate |
+| HTTPS proxy | `auto` to preserve/detect, `caddy` for bundled Caddy, or `nginx` for host Nginx + Certbot |
 | Server address | Your hostname or IPv4 address, without a scheme, port or path |
 | Registration | `approval` to review requests, `open` to allow sign-ups, `closed` to stop new registrations |
 | Federation | `trusted` for approved peers, `disabled` for a standalone node, `open` for verified compatible peers |
 | Voice calls | `auto` installs TURN, `manual` keeps an external relay, `off` disables calls |
 | Video calls | `yes` or `no`, when calls are enabled |
 | Group calls | `on` installs the media service, `off` disables it, `keep` preserves existing settings |
+
+For public HTTPS, both Caddy and Nginx require inbound TCP ports **80 and 443**
+to reach this VPS for automatic certificate issuance. Allow those ports in both
+the VPS provider firewall/security group and any host firewall. If the provider
+uses NAT, point the DNS A record to the provider-assigned **public ingress IP**
+and make sure ports 80/443 are forwarded to this server. The server's interface
+or outbound IPv4 can differ from that ingress IP. Liara/Arvan Docker mirrors
+only help download images; they do not proxy inbound HTTP/HTTPS. Changing from
+Caddy to Nginx cannot fix blocked inbound ports. The built-in public TLS flow
+does not currently provide a DNS-01 challenge fallback.
 
 For local HTTPS, use a hostname resolvable by your devices or an IPv4 address. No public DNS or certificate issuance is required.
 

@@ -381,10 +381,15 @@ Allow TCP/UDP **3478** and UDP **49160–49200** for TURN, plus TCP **7881** and
 **50000–50100** for group media in your provider firewall. Text/MLS groups do not
 require group-call media. Calls require live connectivity.
 
-The bootstrap pins and verifies source before privileged setup. It preserves an
-existing Loom proxy selection, uses active host Nginx when detected, otherwise
-Caddy, and refuses to take over unrelated listeners. For advanced source
-approval, Windows and offline preparation, see the
+The bootstrap pins and verifies source before privileged setup. The setup
+wizard lets you choose **Auto**, bundled **Caddy**, or host **Nginx**; Auto
+preserves an existing Loom proxy selection and otherwise detects host Nginx
+before falling back to Caddy. It refuses to take over unrelated listeners.
+Both public HTTPS proxies need inbound TCP ports **80 and 443** to reach the
+VPS. Switching between Caddy and Nginx does not bypass provider firewalls,
+NAT or blocked inbound ports. Docker image mirrors only affect downloads; they
+do not proxy incoming web traffic. For advanced source approval, Windows and
+offline preparation, see the
 [deployment reference](services/loom_server/deploy/README.md).
 
 **Easy Mode** uses host Node.js, SQLite and filesystem attachments for local

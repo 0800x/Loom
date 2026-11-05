@@ -129,12 +129,58 @@ cat "$DEST"
         self.assertLess(cli.index('[[ -f "$helper"'), cli.index('source "$helper"'))
         self.assertNotIn('down -v', cli)
         self.assertNotIn('volume rm', cli)
+    def test_selecting_nginx_can_replace_only_the_existing_loom_caddy_listener(self):
+        installer = SETUP.with_name('install-production.sh').read_text()
+        start = installer.index('port_in_use() {')
+        end = installer.index('\ndownload_release_asset() {', start)
+        proxy_functions = installer[start:end]
+        base = proxy_functions + r"""
+PROXY_MODE_REQUESTED=nginx
+PROXY_MODE=''
+EXISTING_ENV=/path/that/does/not/exist
+nginx_is_active(){ return 1; }
+port_in_use(){ return 0; }
+ui_info(){ :; }
+ui_ok(){ :; }
+"""
+        allowed = subprocess.run(['bash', '-c', base + '\nloom_caddy_container_running(){ return 0; }; select_proxy_mode'], capture_output=True, text=True)
+        self.assertEqual(allowed.returncode, 0, allowed.stderr)
+        self.assertIn('Reverse proxy selected: nginx', allowed.stdout)
+
+        rejected = subprocess.run(['bash', '-c', base + '\nloom_caddy_container_running(){ return 1; }; select_proxy_mode'], capture_output=True, text=True)
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn('Refusing to overwrite or stop the unknown listener.', rejected.stderr)
+
+    def test_dns_preflight_does_not_confuse_egress_with_public_ingress(self):
+        installer = SETUP.with_name('install-production.sh').read_text()
+        start = installer.index('interface_ipv4() {')
+        end = installer.index('\nensure_nginx_certbot()', start)
+        dns_functions = installer[start:end]
+        script = dns_functions + r"""
+ui_info(){ echo "INFO: $*"; }
+ui_warn(){ echo "WARN: $*"; }
+ui_ok(){ echo "OK: $*"; }
+ip(){ echo '1.1.1.1 via 185.226.116.1 dev eth0 src 185.226.116.45'; }
+curl(){ echo '205.252.135.142'; }
+getent(){ echo '205.252.135.109 STREAM loom.devnu.ir'; }
+DOMAIN=loom.devnu.ir
+SKIP_DNS_CHECK=0
+dns_preflight
+"""
+        result = subprocess.run(['bash', '-c', script], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Interface IPv4 185.226.116.45', result.stdout)
+        self.assertIn('Outbound IPv4 205.252.135.142', result.stdout)
+        self.assertIn('DNS A          205.252.135.109', result.stdout)
+        self.assertNotIn('DNS does not currently point to this server', result.stdout)
+        self.assertIn('public ingress IP assigned by your VPS provider', result.stdout)
+
     def test_interactive_questions_and_invalid_answer_retry(self):
         pid, fd = pty.fork()
         if pid == 0:
             os.execvp('bash', ['bash', str(SETUP), '--plan', '--text'])
         output = bytearray()
-        prompts = [(b'Download sources', b'official\n'), (b'HTTPS mode', b'public\n'), (b'Server hostname or IPv4', b'chat.example.org\n'), (b'Registration', b'invalid\nopen\n'), (b'Federation', b'disabled\n'), (b'Voice calls', b'auto\n'), (b'Video calls', b'no\n'), (b'Group calls (', b'on\n')]
+        prompts = [(b'Download sources', b'official\n'), (b'HTTPS mode', b'public\n'), (b'HTTPS proxy', b'nginx\n'), (b'Server hostname or IPv4', b'chat.example.org\n'), (b'Registration', b'invalid\nopen\n'), (b'Federation', b'disabled\n'), (b'Voice calls', b'auto\n'), (b'Video calls', b'no\n'), (b'Group calls (', b'on\n')]
         index, deadline = 0, time.monotonic() + 15
         try:
             while time.monotonic() < deadline:
@@ -157,6 +203,7 @@ cat "$DEST"
             text = output.decode()
             self.assertIn('Invalid choice:', text)
             self.assertIn('Registration       open', text)
+            self.assertIn('HTTPS proxy        nginx', text)
             self.assertIn('Video calls        no', text)
         finally:
             os.close(fd)
