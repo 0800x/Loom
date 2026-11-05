@@ -3,13 +3,15 @@ import 'dart:io';
 
 import 'media_draft_notifier.dart';
 
-enum VoicePhase { idle, starting, recording, locked, stopping, draft, sending }
+enum VoicePhase { idle, starting, recording, locked, paused, stopping, draft, sending }
 
 /// The backend owns ONLY its private temporary recording folder.
 abstract interface class VoiceRecorderBackend {
   Future<bool> permission();
   Future<void> start();
   Stream<double> get amplitudes;
+  Future<void> pause();
+  Future<void> resume();
   Future<File?> stop();
   Future<void> cancel();
   Future<void> dispose();
@@ -39,6 +41,8 @@ class VoiceDraftController extends MediaDraftNotifier {
   bool get active => phase != VoicePhase.idle;
   bool get capturing =>
       phase == VoicePhase.recording || phase == VoicePhase.locked;
+  bool get paused => phase == VoicePhase.paused;
+  VoicePhase? _phaseBeforePause;
   List<double> get waveform {
     if (_peaks.length <= 64) return List.unmodifiable(_peaks);
     // Preserve actual peaks from each time bucket, never synthesize bars.
@@ -129,9 +133,49 @@ class VoiceDraftController extends MediaDraftNotifier {
     return Future.value();
   }
 
-  Future<void> stop() {
+  /// Suspends capture without ending the draft; the clock keeps the elapsed
+  /// time so the final duration excludes paused spans.
+  Future<void> pause() {
     if (!capturing || _disposed) return Future.value();
     final epoch = _epoch;
+    _phaseBeforePause = phase;
+    _clock.stop();
+    duration = _clock.elapsed;
+    phase = VoicePhase.paused;
+    _notify();
+    return _enqueue(() async {
+      try {
+        await backend.pause();
+      } catch (_) {}
+      if (!_valid(epoch)) return;
+    });
+  }
+
+  /// Continues a paused capture where it stopped.
+  Future<void> resume() {
+    if (phase != VoicePhase.paused || _phaseBeforePause == null) {
+      return Future.value();
+    }
+    final epoch = _epoch;
+    final next = _phaseBeforePause!;
+    _phaseBeforePause = null;
+    return _enqueue(() async {
+      try {
+        await backend.resume();
+      } catch (_) {}
+      if (!_valid(epoch)) return;
+      _clock.start();
+      phase = next;
+      _notify();
+    });
+  }
+
+  Future<void> stop() {
+    if ((!capturing && phase != VoicePhase.paused) || _disposed) {
+      return Future.value();
+    }
+    final epoch = _epoch;
+    _phaseBeforePause = null;
     phase = VoicePhase.stopping;
     _clock.stop();
     duration = _clock.elapsed;

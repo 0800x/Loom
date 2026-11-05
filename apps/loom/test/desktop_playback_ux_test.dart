@@ -1,5 +1,6 @@
 import 'package:loom_design/loom_design.dart';
 import 'package:loom_next/features/media/application/playback_controller.dart';
+import 'package:loom_next/features/media/presentation/compact_playback_bar.dart';
 import 'package:loom_next/features/media/presentation/playback_host.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,7 +27,13 @@ void main() {
           navigatorKey: navigator,
           builder: (_, child) =>
               LoomPlaybackHost(navigatorKey: navigator, child: child!),
-          home: const Scaffold(body: Text('Chat draft remains')),
+          home: const Scaffold(
+            body: SafeArea(
+              // Desktop docks the compact bar next to the list in the real
+              // app; the open/close contract lives in the bar itself.
+              child: LoomCompactPlaybackBar(),
+            ),
+          ),
         ),
       );
       await tester.pumpAndSettle();

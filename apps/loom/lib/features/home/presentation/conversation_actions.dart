@@ -182,32 +182,18 @@ Future<bool> _manageConversation(
           await messaging.deleteLocalConversation(id);
         }
       case 'clear':
-        final confirmed = await showDialog<bool>(
+        final confirmed = await showLoomConfirmDialog(
           context: context,
-          builder: (dialog) => AlertDialog(
-            title: Text(
-              tr(context, 'Clear local history?', 'پاک کردن تاریخچهٔ محلی؟'),
-            ),
-            content: Text(
-              tr(
-                context,
-                'Removes messages and pending sends from this device. The chat and contact stay. Copies on other devices remain.',
-                'پیام‌ها و ارسال‌های در صف از این دستگاه حذف می‌شوند. گفتگو و مخاطب باقی می‌مانند؛ نسخهٔ دستگاه‌های دیگر حفظ می‌شود.',
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialog, false),
-                child: Text(tr(context, 'Cancel', 'انصراف')),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(dialog, true),
-                child: Text(tr(context, 'Clear', 'پاک کردن')),
-              ),
-            ],
+          title: tr(context, 'Clear local history?', 'پاک کردن تاریخچهٔ محلی؟'),
+          message: tr(
+            context,
+            'Removes messages and pending sends from this device. The chat and contact stay. Copies on other devices remain.',
+            'پیام‌ها و ارسال‌های در صف از این دستگاه حذف می‌شوند. گفتگو و مخاطب باقی می‌مانند؛ نسخهٔ دستگاه‌های دیگر حفظ می‌شود.',
           ),
+          confirmLabel: tr(context, 'Clear', 'پاک کردن'),
+          destructive: true,
         );
-        if (confirmed == true) {
+        if (confirmed) {
           await messaging.clearLocalConversationHistory(id);
         }
       default:

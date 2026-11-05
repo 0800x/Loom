@@ -18,6 +18,10 @@ class Backend implements VoiceRecorderBackend {
   @override
   Stream<double> get amplitudes => const Stream.empty();
   @override
+  Future<void> pause() async {}
+  @override
+  Future<void> resume() async {}
+  @override
   Future<File?> stop() async => null;
   @override
   Future<void> cancel() async {

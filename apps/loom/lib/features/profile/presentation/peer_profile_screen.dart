@@ -11,6 +11,7 @@ import '../../messaging/application/messaging_session_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../calls/presentation/call_surfaces.dart';
+import 'profile_common.dart';
 import 'profile_header.dart';
 
 class LoomPeerProfileScreen extends StatelessWidget {
@@ -31,6 +32,7 @@ class LoomPeerProfileScreen extends StatelessWidget {
   final Widget Function(LoomVisibleMessage)? mediaBuilder;
   @override
   Widget build(BuildContext context) {
+    final p = context.loom;
     final name = displayName.trim().isEmpty ? address : displayName;
     return Scaffold(
       body: CustomScrollView(
@@ -40,95 +42,77 @@ class LoomPeerProfileScreen extends StatelessWidget {
         slivers: [
           LoomProfileHeader(name: name, identityId: identityId),
           SliverPadding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             sliver: SliverList.list(
               children: [
-                Row(
+                // Telegram-style quick actions: circular tinted discs with
+                // captions, evenly spaced under the hero header.
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceEvenly,
+                    runSpacing: 12,
+                    children: [
+                      ProfileQuickAction(
+                        icon: LoomIcons.chat_bubble_outline_rounded,
+                        label: tr(context, 'Message', 'پیام'),
+                        onTap: () => Navigator.pop(context),
+                      ),
+                      ProfileQuickAction(
+                        icon: LoomIcons.call_outlined,
+                        label: tr(context, 'Audio', 'صوتی'),
+                        onTap: () => unawaited(
+                          startAddressCallFromUi(
+                            context,
+                            address,
+                            LoomCallKind.audio,
+                          ),
+                        ),
+                      ),
+                      ProfileQuickAction(
+                        icon: LoomIcons.videocam_outlined,
+                        label: tr(context, 'Video', 'ویدیو'),
+                        onTap: () => unawaited(
+                          startAddressCallFromUi(
+                            context,
+                            address,
+                            LoomCallKind.video,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                ProfileSection(
+                  title: tr(context, 'Contact', 'اطلاعات تماس'),
                   children: [
-                    _PeerAction(
-                      icon: LoomIcons.chat_bubble_outline_rounded,
-                      label: tr(context, 'Message', 'پیام'),
-                      onTap: () => Navigator.pop(context),
-                    ),
-                    const SizedBox(width: 8),
-                    _PeerAction(
-                      icon: LoomIcons.call_outlined,
-                      label: tr(context, 'Audio', 'صوتی'),
-                      onTap: () => unawaited(
-                        startAddressCallFromUi(
-                          context,
-                          address,
-                          LoomCallKind.audio,
-                        ),
+                    ProfileInfoRow(
+                      icon: LoomIcons.link_outlined,
+                      label: tr(context, 'Loom address', 'نشانی لوم'),
+                      value: address,
+                      iconColor: p.primary,
+                      trailing: IconButton(
+                        tooltip: tr(context, 'Copy address', 'کپی نشانی'),
+                        onPressed: () => _copyAddress(context),
+                        icon: const Icon(LoomIcons.copy_outlined, size: 20),
                       ),
+                      onTap: () => _copyAddress(context),
+                      showDivider: identityId?.isNotEmpty == true,
                     ),
-                    const SizedBox(width: 8),
-                    _PeerAction(
-                      icon: LoomIcons.videocam_outlined,
-                      label: tr(context, 'Video', 'ویدیو'),
-                      onTap: () => unawaited(
-                        startAddressCallFromUi(
+                    if (identityId?.isNotEmpty == true)
+                      ProfileIdentityValue(
+                        label: tr(
                           context,
-                          address,
-                          LoomCallKind.video,
+                          'Identity fingerprint',
+                          'اثر انگشت هویت',
                         ),
+                        value: identityId!,
+                        showDivider: false,
                       ),
-                    ),
                   ],
                 ),
-                const SizedBox(height: 24),
-                Card(
-                  elevation: 0,
-                  color: context.loom.surface,
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 10,
-                    ),
-                    title: Text(address, textDirection: TextDirection.ltr),
-                    subtitle: Text(
-                      tr(
-                        context,
-                        'Loom address · tap to copy',
-                        'نشانی لوم · برای کپی بزنید',
-                      ),
-                    ),
-                    trailing: const Icon(LoomIcons.copy_outlined),
-                    onTap: () async {
-                      await Clipboard.setData(ClipboardData(text: address));
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              tr(context, 'Address copied', 'نشانی کپی شد'),
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ),
-                if (identityId?.isNotEmpty == true)
-                  Card(
-                    elevation: 0,
-                    color: context.loom.surface,
-                    child: ExpansionTile(
-                      leading: const Icon(LoomIcons.shield_outlined),
-                      title: Text(
-                        tr(context, 'Identity details', 'جزئیات هویت'),
-                      ),
-                      childrenPadding: const EdgeInsets.all(18),
-                      children: [
-                        SelectableText(
-                          identityId!,
-                          textDirection: TextDirection.ltr,
-                        ),
-                      ],
-                    ),
-                  ),
                 if (messaging != null)
-                  _BlockContactCard(address: address, messaging: messaging!),
-                const SizedBox(height: 32),
+                  _BlockContactRow(address: address, messaging: messaging!),
                 if (conversationId != null &&
                     messaging != null &&
                     mediaBuilder != null)
@@ -143,6 +127,15 @@ class LoomPeerProfileScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _copyAddress(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: address));
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr(context, 'Address copied', 'نشانی کپی شد'))),
+      );
+    }
   }
 }
 
@@ -194,19 +187,47 @@ class _SharedConversationMediaState extends State<_SharedConversationMedia> {
         tr(context, 'Voice', 'صدا'),
         tr(context, 'Links', 'لینک‌ها'),
       ];
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      return ProfileSection(
+        title: tr(context, 'Shared', 'مشترک‌ها'),
         children: [
-          SizedBox(
-            height: 48,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: labels.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 6),
-              itemBuilder: (_, i) => ChoiceChip(
-                label: Text(labels[i]),
-                selected: _tab == i,
-                onSelected: (_) => setState(() => _tab = i),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+            child: SizedBox(
+              height: 36,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: labels.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 6),
+                itemBuilder: (_, i) {
+                  final selected = _tab == i;
+                  return Material(
+                    color: selected
+                        ? context.loom.primary
+                        : context.loom.primary.withValues(alpha: .08),
+                    borderRadius: BorderRadius.circular(18),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: () => setState(() => _tab = i),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Center(
+                          child: Text(
+                            labels[i],
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(
+                                  color: selected
+                                      ? Colors.white
+                                      : context.loom.textPrimary,
+                                  fontWeight: selected
+                                      ? FontWeight.w600
+                                      : FontWeight.w500,
+                                ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -221,6 +242,9 @@ class _SharedConversationMediaState extends State<_SharedConversationMedia> {
                   'موردی در تاریخچهٔ بارگذاری‌شده وجود ندارد',
                 ),
                 textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: context.loom.textSecondary,
+                ),
               ),
             )
           else
@@ -228,19 +252,21 @@ class _SharedConversationMediaState extends State<_SharedConversationMedia> {
               height: 420,
               child: _tab == 0
                   ? GridView.builder(
+                      padding: const EdgeInsets.only(bottom: 12),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
-                            crossAxisSpacing: 3,
-                            mainAxisSpacing: 3,
+                            crossAxisSpacing: 2,
+                            mainAxisSpacing: 2,
                           ),
                       itemCount: messages.length,
                       itemBuilder: (_, i) => ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(6),
                         child: widget.mediaBuilder(messages[i]),
                       ),
                     )
                   : ListView.separated(
+                      padding: const EdgeInsets.only(bottom: 12),
                       itemCount: messages.length,
                       separatorBuilder: (_, _) => const Divider(height: 16),
                       itemBuilder: (_, i) => _tab == 3
@@ -279,82 +305,38 @@ class _SharedConversationMediaState extends State<_SharedConversationMedia> {
   );
 }
 
-class _PeerAction extends StatelessWidget {
-  const _PeerAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: Material(
-      color: context.loom.surface,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            children: [
-              Icon(icon, color: context.loom.primary),
-              const SizedBox(height: 8),
-              Text(label, style: Theme.of(context).textTheme.labelLarge),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
 /// Block / unblock control. Blocking hides future inbound messages from this
 /// address, suppresses notifications and refuses outgoing sends; existing
 /// history stays on the device.
-class _BlockContactCard extends StatefulWidget {
-  const _BlockContactCard({required this.address, required this.messaging});
+class _BlockContactRow extends StatefulWidget {
+  const _BlockContactRow({required this.address, required this.messaging});
 
   final String address;
   final LoomMessagingSessionController messaging;
 
   @override
-  State<_BlockContactCard> createState() => _BlockContactCardState();
+  State<_BlockContactRow> createState() => _BlockContactRowState();
 }
 
-class _BlockContactCardState extends State<_BlockContactCard> {
+class _BlockContactRowState extends State<_BlockContactRow> {
   late bool _blocked = widget.messaging.isPeerBlocked(widget.address);
   bool _working = false;
 
   Future<void> _toggle() async {
     if (_working) return;
     if (!_blocked) {
-      final confirmed = await showDialog<bool>(
+      final confirmed = await showLoomConfirmDialog(
         context: context,
-        builder: (dialog) => AlertDialog(
-          title: Text(tr(context, 'Block contact?', 'مسدود کردن مخاطب؟')),
-          content: Text(
-            tr(
-              context,
-              'New messages from this address will not be shown or notified, and you cannot send to them until you unblock.',
-              'پیام‌های جدید این نشانی نمایش داده نمی‌شوند و اعلانی نمی‌آید؛ تا زمان رفع مسدودی نمی‌توانید به او پیام دهید.',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialog, false),
-              child: Text(tr(context, 'Cancel', 'انصراف')),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialog, true),
-              child: Text(tr(context, 'Block', 'مسدود کردن')),
-            ),
-          ],
+        title: tr(context, 'Block contact?', 'مسدود کردن مخاطب؟'),
+        message: tr(
+          context,
+          'New messages from this address will not be shown or notified, and you cannot send to them until you unblock.',
+          'پیام‌های جدید این نشانی نمایش داده نمی‌شوند و اعلانی نمی‌آید؛ تا زمان رفع مسدودی نمی‌توانید به او پیام دهید.',
         ),
+        confirmLabel: tr(context, 'Block', 'مسدود کردن'),
+        destructive: true,
       );
-      if (confirmed != true || !mounted) return;
+      if (!confirmed || !mounted) return;
     }
     setState(() => _working = true);
     try {
@@ -372,40 +354,81 @@ class _BlockContactCardState extends State<_BlockContactCard> {
   }
 
   @override
-  Widget build(BuildContext context) => Card(
-    elevation: 0,
-    color: context.loom.surface,
-    child: ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-      leading: Icon(
-        _blocked ? LoomIcons.check : LoomIcons.shield_outlined,
-        color: _blocked ? context.loom.primary : context.loom.critical,
-      ),
-      title: Text(
-        _blocked
-            ? tr(context, 'Unblock contact', 'رفع مسدودی مخاطب')
-            : tr(context, 'Block contact', 'مسدود کردن مخاطب'),
-      ),
-      subtitle: Text(
-        _blocked
-            ? tr(
-                context,
-                'Messages from this address are hidden. Unblock to resume.',
-                'پیام‌های این نشانی پنهان است؛ برای ادامه گفتگو رفع مسدودی کنید.',
-              )
-            : tr(
-                context,
-                'Hide future messages and stop notifications.',
-                'پیام‌های بعدی پنهان و اعلان‌ها قطع می‌شود.',
-              ),
-      ),
-      trailing: _working
-          ? const SizedBox.square(
-              dimension: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : null,
-      onTap: _toggle,
-    ),
-  );
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    return ProfileSection(
+      title: tr(context, 'Privacy', 'حریم خصوصی'),
+      children: [
+        InkWell(
+          onTap: _working ? null : _toggle,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 60),
+            padding: const EdgeInsetsDirectional.only(
+              start: 16,
+              end: 16,
+              top: 9,
+              bottom: 9,
+            ),
+            child: Row(
+              children: [
+                SizedBox.square(
+                  dimension: 34,
+                  child: Icon(
+                    _blocked ? LoomIcons.check : LoomIcons.shield_outlined,
+                    size: 19,
+                    color: _blocked ? p.primary : p.critical,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _blocked
+                            ? tr(context, 'Unblock contact', 'رفع مسدودی مخاطب')
+                            : tr(
+                                context,
+                                'Block contact',
+                                'مسدود کردن مخاطب',
+                              ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: _blocked ? p.primary : p.critical,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _blocked
+                            ? tr(
+                                context,
+                                'Messages from this address are hidden. Unblock to resume.',
+                                'پیام‌های این نشانی پنهان است؛ برای ادامه گفتگو رفع مسدودی کنید.',
+                              )
+                            : tr(
+                                context,
+                                'Hide future messages and stop notifications.',
+                                'پیام‌های بعدی پنهان و اعلان‌ها قطع می‌شود.',
+                              ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(color: p.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_working)
+                  const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }

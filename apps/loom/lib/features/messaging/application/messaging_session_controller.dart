@@ -794,9 +794,84 @@ class LoomMessagingSessionController extends ChangeNotifier
 
   @override
   void notifyListeners() {
-    if (!_disposed) {
-      super.notifyListeners();
+    if (_disposed) {
+      return;
     }
+    // Remember the presentation state this fan-out produced so the periodic
+    // sync heartbeat can skip rebuilding the whole shell when nothing the UI
+    // renders actually changed.
+    _notifiedFingerprint = _presentationFingerprint();
+    super.notifyListeners();
+  }
+
+  /// Cheap signature of everything the messenger shell renders from this
+  /// controller: session status, conversation rows and their unread/pin
+  /// flags, the visible message window per conversation (count, newest and
+  /// oldest order, delivery of the newest message) and typing peers.
+  String _presentationFingerprint() {
+    final buffer = StringBuffer()
+      ..write(status.name)
+      ..write('|')
+      ..write(connectivity.name)
+      ..write('|')
+      ..write(errorMessage ?? '');
+    for (final conversation in conversations) {
+      buffer
+        ..write('#')
+        ..write(conversation.id)
+        ..write(':')
+        ..write(conversation.updatedOrder)
+        ..write(':')
+        ..write(conversation.unreadCount)
+        ..write(':')
+        ..write(conversation.isMuted ? 1 : 0)
+        ..write(':')
+        ..write(conversation.isPinned ? 1 : 0)
+        ..write(':')
+        ..write(conversation.title ?? '');
+      final messages = visibleMessages[conversation.id];
+      if (messages == null || messages.isEmpty) {
+        continue;
+      }
+      final last = messages.last;
+      buffer
+        ..write(':')
+        ..write(messages.length)
+        ..write(':')
+        ..write(messages.first.record.createdOrder)
+        ..write(':')
+        ..write(last.record.createdOrder)
+        ..write(':')
+        ..write(last.record.clientId)
+        ..write(':')
+        ..write(last.record.deliveryState.name);
+    }
+    for (final entry in _typing.entries) {
+      buffer
+        ..write('~')
+        ..write(entry.key)
+        ..write(':')
+        ..write(entry.value.length);
+    }
+    return buffer.toString();
+  }
+
+  String? _notifiedFingerprint;
+
+  /// Fan out only when the rendered presentation differs from the last
+  /// notification. The 5-second sync heartbeat otherwise triggers two to four
+  /// full messenger-shell rebuilds per minute even with zero new data, which
+  /// reads as periodic stutter on mid-range devices.
+  void notifyIfPresentationChanged() {
+    if (_disposed) {
+      return;
+    }
+    final fingerprint = _presentationFingerprint();
+    if (fingerprint == _notifiedFingerprint) {
+      return;
+    }
+    _notifiedFingerprint = fingerprint;
+    super.notifyListeners();
   }
 
   Future<void> retryQueuedMessages() async {
@@ -1115,7 +1190,7 @@ class LoomMessagingSessionController extends ChangeNotifier
     return _syncFuture ??= Future<void>.microtask(_synchronize).whenComplete(
       () {
         _syncFuture = null;
-        notifyListeners();
+        notifyIfPresentationChanged();
       },
     );
   }
@@ -1130,7 +1205,7 @@ class LoomMessagingSessionController extends ChangeNotifier
         status != LoomMessagingSessionStatus.offline) {
       status = LoomMessagingSessionStatus.syncing;
     }
-    notifyListeners();
+    notifyIfPresentationChanged();
     try {
       _rememberStoredConversationTitles();
       // First-contact delivery can create the recipient conversation on the
@@ -1162,7 +1237,7 @@ class LoomMessagingSessionController extends ChangeNotifier
           : LoomConnectivityState.online;
       status = LoomMessagingSessionStatus.ready;
       errorMessage = null;
-      notifyListeners();
+      notifyIfPresentationChanged();
       unawaited(_refreshPresence());
       unawaited(onboarding.synchronizeProfile());
       unawaited(_refreshVisiblePeerProfile());
@@ -1183,7 +1258,7 @@ class LoomMessagingSessionController extends ChangeNotifier
       status = LoomMessagingSessionStatus.offline;
       connectivity = LoomConnectivityState.nodeUnreachable;
       errorMessage = _safeError(error);
-      notifyListeners();
+      notifyIfPresentationChanged();
     }
   }
 
@@ -1200,7 +1275,7 @@ class LoomMessagingSessionController extends ChangeNotifier
         }
         await _refreshLocal();
         if (!_disposed) {
-          notifyListeners();
+          notifyIfPresentationChanged();
         }
       }
     } catch (_) {

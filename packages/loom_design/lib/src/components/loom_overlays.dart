@@ -134,40 +134,33 @@ class LoomDetailTile extends StatelessWidget {
   final Color? tileColor;
   final EdgeInsetsGeometry? contentPadding;
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: LoomGlassSurface(
-      strength: LoomGlassStrength.weak,
-      radius: LoomRadii.surface,
-      padding: EdgeInsets.zero,
-      child: Material(
-        type: MaterialType.transparency,
-        child: ListTile(
-          title: title,
-          subtitle: subtitle,
-          leading: leading,
-          trailing: trailing,
-          onTap: onTap,
-          onLongPress: onLongPress,
-          enabled: enabled,
-          dense: dense,
-          isThreeLine: isThreeLine,
-          contentPadding:
-              contentPadding ??
-              const EdgeInsetsDirectional.symmetric(
-                horizontal: 16,
-                vertical: 4,
-              ),
-          iconColor: context.loom.primary,
-          textColor: context.loom.textPrimary,
-          tileColor: tileColor,
-          shape:
-              shape ??
-              RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(LoomRadii.surface),
-              ),
-        ),
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    return Material(
+      color: tileColor ?? p.surface,
+      clipBehavior: Clip.antiAlias,
+      borderRadius: BorderRadius.circular(LoomRadii.surface),
+      child: ListTile(
+        title: title,
+        subtitle: subtitle,
+        leading: leading,
+        trailing: trailing,
+        onTap: onTap,
+        onLongPress: onLongPress,
+        enabled: enabled,
+        dense: dense,
+        isThreeLine: isThreeLine,
+        contentPadding:
+            contentPadding ??
+            const EdgeInsetsDirectional.symmetric(horizontal: 16, vertical: 4),
+        iconColor: p.primary,
+        textColor: p.textPrimary,
+        shape:
+            shape ??
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(LoomRadii.surface),
+            ),
       ),
-    ),
-  );
+    );
+  }
 }

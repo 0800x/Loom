@@ -10,6 +10,10 @@ import 'group_avatar.dart';
 
 /// Account-oriented group details. Device credentials stay in the controller;
 /// they are never presented as duplicate people or invented presence states.
+///
+/// Layout follows the flat Telegram pattern: a centred hero, circular tinted
+/// quick actions, grouped setting cards and one continuous members card with
+/// inset dividers and role pills.
 class LoomGroupInfoSurface extends StatefulWidget {
   const LoomGroupInfoSurface({
     required this.groups,
@@ -90,14 +94,9 @@ class _LoomGroupInfoSurfaceState extends State<LoomGroupInfoSurface> {
     _ => 2,
   };
 
-  String _role(BuildContext context, String role) => switch (role) {
-    'owner' => tr(context, 'Owner', 'مالک'),
-    'admin' => tr(context, 'Admin', 'مدیر'),
-    _ => tr(context, 'Member', 'عضو'),
-  };
-
   @override
   Widget build(BuildContext context) {
+    final p = context.loom;
     final groups = widget.groups, group = widget.group;
     final own = group.members
         .where((m) => m.deviceId == groups.ownDeviceId)
@@ -137,7 +136,7 @@ class _LoomGroupInfoSurfaceState extends State<LoomGroupInfoSurface> {
         });
 
     return Scaffold(
-      backgroundColor: context.loom.background,
+      backgroundColor: p.background,
       appBar: LoomGlassAppBar(
         title: Text(tr(context, 'Group info', 'اطلاعات گروه')),
         actions: [
@@ -163,185 +162,235 @@ class _LoomGroupInfoSurfaceState extends State<LoomGroupInfoSurface> {
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-                  sliver: SliverToBoxAdapter(
-                    child: LoomGlassSurface(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          LoomGroupAvatar(
-                            groupId: group.id,
-                            label: group.title,
-                            size: 92,
-                            groups: groups,
+                // Flat hero: avatar, title, member count, circular actions.
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                    child: Column(
+                      children: [
+                        LoomGroupAvatar(
+                          groupId: group.id,
+                          label: group.title,
+                          size: 92,
+                          groups: groups,
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          group.title,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          tr(
+                            context,
+                            '${people.length} members',
+                            '${people.length} عضو',
                           ),
-                          if (admin && widget.onPhoto != null)
-                            TextButton.icon(
-                              onPressed: groups.busy ? null : widget.onPhoto,
-                              icon: const Icon(
-                                LoomIcons.photo_library_outlined,
-                              ),
-                              label: Text(
-                                tr(
-                                  context,
-                                  'Edit group photo',
-                                  'ویرایش تصویر گروه',
-                                ),
-                              ),
-                            ),
-                          const SizedBox(height: 16),
-                          Text(
-                            group.title,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '${people.length} ${tr(context, 'members', 'عضو')}',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          const SizedBox(height: 20),
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 12,
-                            runSpacing: 8,
-                            children: [
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: p.textSecondary),
+                        ),
+                        const SizedBox(height: 18),
+                        // Scrollable so four actions stay reachable at 320px.
+                        Builder(
+                          builder: (context) {
+                            final actions = <Widget>[
                               if (admin)
-                                FilledButton.icon(
-                                  onPressed: groups.busy
-                                      ? null
-                                      : widget.onAddMember,
-                                  icon: const Icon(
-                                    LoomIcons.person_add_alt_rounded,
+                                _GroupAction(
+                                  icon: LoomIcons.person_add_alt_rounded,
+                                  label: tr(
+                                    context,
+                                    'Add members',
+                                    'افزودن اعضا',
                                   ),
-                                  label: Text(
-                                    tr(context, 'Add members', 'افزودن اعضا'),
-                                  ),
+                                  enabled: !groups.busy,
+                                  onTap: widget.onAddMember,
                                 ),
                               if (admin)
-                                OutlinedButton.icon(
-                                  onPressed: groups.busy
-                                      ? null
-                                      : widget.onInvite,
-                                  icon: const Icon(LoomIcons.link),
-                                  label: Text(
-                                    tr(context, 'Invite link', 'لینک دعوت'),
+                                _GroupAction(
+                                  icon: LoomIcons.link,
+                                  label: tr(
+                                    context,
+                                    'Invite link',
+                                    'لینک دعوت',
                                   ),
+                                  enabled: !groups.busy,
+                                  onTap: widget.onInvite,
                                 ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          LoomSettingsGroup(
-                            children: [
+                              if (admin && widget.onPhoto != null)
+                                _GroupAction(
+                                  icon: LoomIcons.photo_library_outlined,
+                                  label: tr(
+                                    context,
+                                    'Group photo',
+                                    'تصویر گروه',
+                                  ),
+                                  enabled: !groups.busy,
+                                  onTap: widget.onPhoto!,
+                                ),
                               if (widget.onNotifications != null)
-                                LoomSettingsRow(
+                                _GroupAction(
                                   icon: widget.muted
                                       ? LoomIcons.notifications_off_outlined
                                       : LoomIcons.notifications_none_rounded,
-                                  title: tr(
-                                    context,
-                                    'Notifications',
-                                    'اعلان‌ها',
-                                  ),
-                                  subtitle: widget.muted
-                                      ? tr(context, 'Off', 'خاموش')
-                                      : tr(context, 'On', 'روشن'),
-                                  onTap: widget.onNotifications,
+                                  label: widget.muted
+                                      ? tr(context, 'Unmute', 'قطع بی‌صدا')
+                                      : tr(context, 'Mute', 'بی‌صدا'),
+                                  enabled: true,
+                                  onTap: widget.onNotifications!,
                                 ),
-                              if (widget.onMedia != null)
-                                LoomSettingsRow(
-                                  icon: LoomIcons.photo_library_outlined,
-                                  title: tr(
-                                    context,
-                                    'Shared media',
-                                    'رسانه‌های مشترک',
-                                  ),
-                                  onTap: widget.onMedia,
-                                  showDivider: admin,
-                                ),
-                              if (admin)
-                                LoomSettingsRow(
-                                  icon: LoomIcons.person_add_alt_rounded,
-                                  title: tr(
-                                    context,
-                                    'Join requests',
-                                    'درخواست‌های عضویت',
-                                  ),
-                                  subtitle: '$pendingRequests',
-                                  onTap: groups.busy ? null : widget.onRequests,
-                                  showDivider: false,
-                                ),
-                            ],
-                          ),
-                          if (groups.busy) const LinearProgressIndicator(),
-                          if (groups.error != null)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              child: Text(
-                                tr(
-                                  context,
-                                  'The change could not be completed. Pull down to refresh and try again.',
-                                  'تغییر انجام نشد. برای تازه‌سازی صفحه را پایین بکشید و دوباره تلاش کنید.',
-                                ),
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
+                            ];
+                            return SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  for (var i = 0; i < actions.length; i++) ...[
+                                    if (i > 0) const SizedBox(width: 16),
+                                    actions[i],
+                                  ],
+                                ],
                               ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (groups.busy)
+                  const SliverToBoxAdapter(
+                    child: LinearProgressIndicator(minHeight: 2),
+                  ),
+                if (groups.error != null)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: Material(
+                        color: p.critical.withValues(alpha: .08),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            tr(
+                              context,
+                              'The change could not be completed. Pull down to refresh and try again.',
+                              'تغییر انجام نشد. برای تازه‌سازی صفحه را پایین بکشید و دوباره تلاش کنید.',
                             ),
-                          const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _tab(
-                                  context,
-                                  '${tr(context, 'Members', 'اعضا')} (${people.length})',
-                                  false,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _tab(
-                                  context,
-                                  '${tr(context, 'Administrators', 'مدیرها')} ($admins)',
-                                  true,
-                                ),
-                              ),
-                            ],
+                            style: TextStyle(color: p.critical, fontSize: 13),
                           ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            key: const ValueKey('group-member-search'),
-                            controller: _search,
-                            onChanged: (value) => setState(
-                              () => _query = value.trim().toLowerCase(),
-                            ),
-                            decoration: InputDecoration(
-                              hintText: tr(
-                                context,
-                                'Search members',
-                                'جست‌وجوی اعضا',
-                              ),
-                              prefixIcon: const Icon(LoomIcons.search_rounded),
-                              suffixIcon: _query.isEmpty
-                                  ? null
-                                  : IconButton(
-                                      tooltip: tr(
-                                        context,
-                                        'Clear search',
-                                        'پاک کردن جست‌وجو',
-                                      ),
-                                      icon: const Icon(LoomIcons.close_rounded),
-                                      onPressed: () => setState(() {
-                                        _search.clear();
-                                        _query = '';
-                                      }),
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                        ],
+                        ),
                       ),
+                    ),
+                  ),
+                // Group settings card.
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                  sliver: SliverToBoxAdapter(
+                    child: LoomSettingsGroup(
+                      children: [
+                        if (widget.onMedia != null)
+                          LoomSettingsRow(
+                            icon: LoomIcons.photo_library_outlined,
+                            title: tr(
+                              context,
+                              'Shared media',
+                              'رسانه‌های مشترک',
+                            ),
+                            onTap: widget.onMedia,
+                            showDivider: admin,
+                          ),
+                        if (admin)
+                          LoomSettingsRow(
+                            icon: LoomIcons.person_add_alt_rounded,
+                            title: tr(
+                              context,
+                              'Join requests',
+                              'درخواست‌های عضویت',
+                            ),
+                            subtitle: pendingRequests > 0
+                                ? tr(
+                                    context,
+                                    '$pendingRequests pending',
+                                    '$pendingRequests در انتظار',
+                                  )
+                                : tr(context, 'None', 'هیچ'),
+                            trailing: pendingRequests > 0 ? _Dot() : null,
+                            onTap: groups.busy ? null : widget.onRequests,
+                            showDivider: false,
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Members header: pills + search.
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Wrap (not a horizontal scroller): nested horizontal
+                        // scrollables break Scrollable.ensureVisible targeting
+                        // in the outer list and the pills overflow at 320px.
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _MemberPill(
+                              key: const ValueKey('group-members-tab'),
+                              label: tr(context, 'Members', 'اعضا'),
+                              count: people.length,
+                              selected: !_adminsOnly,
+                              onTap: () => setState(() => _adminsOnly = false),
+                            ),
+                            _MemberPill(
+                              key: const ValueKey('group-admins-tab'),
+                              label: tr(context, 'Administrators', 'مدیرها'),
+                              count: admins,
+                              selected: _adminsOnly,
+                              onTap: () => setState(() => _adminsOnly = true),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          key: const ValueKey('group-member-search'),
+                          controller: _search,
+                          onChanged: (value) => setState(
+                            () => _query = value.trim().toLowerCase(),
+                          ),
+                          decoration: InputDecoration(
+                            hintText: tr(
+                              context,
+                              'Search members',
+                              'جست‌وجوی اعضا',
+                            ),
+                            prefixIcon: const Icon(
+                              LoomIcons.search_rounded,
+                              size: 20,
+                            ),
+                            isDense: true,
+                            suffixIcon: _query.isEmpty
+                                ? null
+                                : IconButton(
+                                    tooltip: tr(
+                                      context,
+                                      'Clear search',
+                                      'پاک کردن جست‌وجو',
+                                    ),
+                                    icon: const Icon(
+                                      LoomIcons.close_rounded,
+                                      size: 18,
+                                    ),
+                                    onPressed: () => setState(() {
+                                      _search.clear();
+                                      _query = '';
+                                    }),
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -352,120 +401,40 @@ class _LoomGroupInfoSurfaceState extends State<LoomGroupInfoSurface> {
                       child: Center(
                         child: Text(
                           tr(context, 'No members found', 'عضوی پیدا نشد'),
+                          style: TextStyle(color: p.textSecondary),
                         ),
                       ),
                     ),
+                  )
+                else
+                  // Lazy SliverList styled as one continuous card: the first
+                  // and last rows carry the rounded corners.
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    sliver: SliverList.builder(
+                      itemCount: visible.length,
+                      itemBuilder: (context, index) {
+                        return _MemberRow(
+                          key: ValueKey(
+                            'group-member-${visible[index].accountId}',
+                          ),
+                          groups: groups,
+                          member: visible[index],
+                          owner: owner,
+                          admin: admin,
+                          isFirst: index == 0,
+                          isLast: index == visible.length - 1,
+                          showDivider: index < visible.length - 1,
+                          onOpenMember: widget.onOpenMember,
+                          onMemberAction: widget.onMemberAction,
+                        );
+                      },
+                    ),
                   ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 24),
-                  sliver: SliverList.builder(
-                    itemCount: visible.length,
-                    itemBuilder: (context, index) {
-                      final member = visible[index];
-                      final self = member.accountId == groups.ownAccountId;
-                      final name = self
-                          ? tr(context, 'You', 'شما')
-                          : groups.memberLabel(member);
-                      final address = groups.memberCachedAddress(member);
-                      return LoomDetailTile(
-                        key: ValueKey('group-member-${member.accountId}'),
-                        leading: LoomAvatar(label: name, size: 44),
-                        title: Text(
-                          name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: address == null
-                            ? null
-                            : Text(
-                                address,
-                                textDirection: TextDirection.ltr,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                        onTap: self || groups.busy
-                            ? null
-                            : () => widget.onOpenMember(member),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (member.role != 'member')
-                              Text(
-                                _role(context, member.role),
-                                style: TextStyle(
-                                  color: context.loom.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            if (!self)
-                              PopupMenuButton<String>(
-                                tooltip: tr(
-                                  context,
-                                  'Member options',
-                                  'گزینه‌های عضو',
-                                ),
-                                enabled: !groups.busy,
-                                onSelected: (value) => value == 'chat'
-                                    ? widget.onOpenMember(member)
-                                    : widget.onMemberAction(member, value),
-                                itemBuilder: (context) => [
-                                  PopupMenuItem(
-                                    value: 'chat',
-                                    child: Text(
-                                      tr(context, 'Send message', 'ارسال پیام'),
-                                    ),
-                                  ),
-                                  if (owner && member.role != 'owner')
-                                    PopupMenuItem(
-                                      value: member.role == 'admin'
-                                          ? 'member'
-                                          : 'admin',
-                                      child: Text(
-                                        member.role == 'admin'
-                                            ? tr(
-                                                context,
-                                                'Remove admin role',
-                                                'برداشتن نقش مدیر',
-                                              )
-                                            : tr(
-                                                context,
-                                                'Make admin',
-                                                'تبدیل به مدیر',
-                                              ),
-                                      ),
-                                    ),
-                                  if (admin &&
-                                      (owner || member.role == 'member') &&
-                                      member.role != 'owner')
-                                    PopupMenuItem(
-                                      value: 'remove',
-                                      child: Text(
-                                        tr(context, 'Remove member', 'حذف عضو'),
-                                      ),
-                                    ),
-                                  if (owner)
-                                    PopupMenuItem(
-                                      value: 'owner',
-                                      child: Text(
-                                        tr(
-                                          context,
-                                          'Transfer ownership',
-                                          'انتقال مالکیت',
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
                 if (widget.onLeave != null && !groups.busy)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 4, 8, 32),
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                       child: Center(
                         child: TextButton.icon(
                           key: const ValueKey('group-leave'),
@@ -473,7 +442,7 @@ class _LoomGroupInfoSurfaceState extends State<LoomGroupInfoSurface> {
                           icon: Icon(
                             LoomIcons.logout_rounded,
                             size: LoomIconSize.compact,
-                            color: context.loom.critical,
+                            color: p.critical,
                           ),
                           label: Text(
                             tr(
@@ -481,7 +450,7 @@ class _LoomGroupInfoSurfaceState extends State<LoomGroupInfoSurface> {
                               owner ? 'Delete and leave group' : 'Leave group',
                               owner ? 'حذف گروه و خروج' : 'خروج از گروه',
                             ),
-                            style: TextStyle(color: context.loom.critical),
+                            style: TextStyle(color: p.critical),
                           ),
                         ),
                       ),
@@ -494,16 +463,271 @@ class _LoomGroupInfoSurfaceState extends State<LoomGroupInfoSurface> {
       ),
     );
   }
+}
 
-  Widget _tab(BuildContext context, String label, bool admins) => TextButton(
-    key: ValueKey(admins ? 'group-admins-tab' : 'group-members-tab'),
-    style: TextButton.styleFrom(
-      backgroundColor: _adminsOnly == admins
-          ? context.loom.primary.withAlphaFraction(.12)
-          : null,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+/// Circular tinted quick action, matching the profile screens.
+class _GroupAction extends StatelessWidget {
+  const _GroupAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    return Opacity(
+      opacity: enabled ? 1 : .45,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Material(
+            color: p.primary.withValues(alpha: .10),
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: enabled ? onTap : null,
+              child: SizedBox.square(
+                dimension: 52,
+                child: Icon(icon, size: 23, color: p.primary),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(color: p.primary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Dot extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 9,
+    height: 9,
+    decoration: BoxDecoration(
+      color: context.loom.primary,
+      shape: BoxShape.circle,
     ),
-    onPressed: () => setState(() => _adminsOnly = admins),
-    child: Text(label, textAlign: TextAlign.center),
   );
+}
+
+/// Flat pill filter for the member list (Members / Administrators).
+class _MemberPill extends StatelessWidget {
+  const _MemberPill({
+    required this.label,
+    required this.count,
+    required this.selected,
+    required this.onTap,
+    super.key,
+  });
+
+  final String label;
+  final int count;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    return Material(
+      color: selected ? p.primary : p.primary.withValues(alpha: .08),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Text(
+            '$label $count',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: selected ? Colors.white : p.textPrimary,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One flat member row: avatar, name + address, role pill and the overflow
+/// menu; rows stack into a continuous card with inset dividers.
+class _MemberRow extends StatelessWidget {
+  const _MemberRow({
+    required this.groups,
+    required this.member,
+    required this.owner,
+    required this.admin,
+    required this.isFirst,
+    required this.isLast,
+    required this.showDivider,
+    required this.onOpenMember,
+    required this.onMemberAction,
+    super.key,
+  });
+
+  final LoomGroupsController groups;
+  final LoomGroupMember member;
+  final bool owner, admin, isFirst, isLast, showDivider;
+  final void Function(LoomGroupMember) onOpenMember;
+  final void Function(LoomGroupMember, String) onMemberAction;
+
+  String _role(BuildContext context, String role) => switch (role) {
+    'owner' => tr(context, 'Owner', 'مالک'),
+    'admin' => tr(context, 'Admin', 'مدیر'),
+    _ => tr(context, 'Member', 'عضو'),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    final self = member.accountId == groups.ownAccountId;
+    final name = self ? tr(context, 'You', 'شما') : groups.memberLabel(member);
+    final address = groups.memberCachedAddress(member);
+    final radius = BorderRadius.vertical(
+      top: isFirst ? const Radius.circular(LoomRadii.surface) : Radius.zero,
+      bottom: isLast ? const Radius.circular(LoomRadii.surface) : Radius.zero,
+    );
+    return Material(
+      color: p.surface,
+      clipBehavior: Clip.antiAlias,
+      borderRadius: radius,
+      child: InkWell(
+        onTap: self || groups.busy ? null : () => onOpenMember(member),
+        child: Column(
+          children: [
+            Container(
+              constraints: const BoxConstraints(minHeight: 64),
+              padding: const EdgeInsetsDirectional.only(
+                start: 14,
+                end: 8,
+                top: 8,
+                bottom: 8,
+              ),
+              child: Row(
+                children: [
+                  LoomAvatar(label: name, size: 42),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        if (address != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            address,
+                            textDirection: TextDirection.ltr,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(color: p.textSecondary),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (member.role != 'member')
+                    Container(
+                      margin: const EdgeInsetsDirectional.only(end: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: p.primary.withValues(alpha: .10),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        _role(context, member.role),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: p.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  if (!self)
+                    PopupMenuButton<String>(
+                      tooltip: tr(context, 'Member options', 'گزینه‌های عضو'),
+                      enabled: !groups.busy,
+                      onSelected: (value) => value == 'chat'
+                          ? onOpenMember(member)
+                          : onMemberAction(member, value),
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'chat',
+                          child: Text(
+                            tr(context, 'Send message', 'ارسال پیام'),
+                          ),
+                        ),
+                        if (owner && member.role != 'owner')
+                          PopupMenuItem(
+                            value: member.role == 'admin' ? 'member' : 'admin',
+                            child: Text(
+                              member.role == 'admin'
+                                  ? tr(
+                                      context,
+                                      'Remove admin role',
+                                      'برداشتن نقش مدیر',
+                                    )
+                                  : tr(context, 'Make admin', 'تبدیل به مدیر'),
+                            ),
+                          ),
+                        if (admin &&
+                            (owner || member.role == 'member') &&
+                            member.role != 'owner')
+                          PopupMenuItem(
+                            value: 'remove',
+                            child: Text(
+                              tr(context, 'Remove member', 'حذف عضو'),
+                            ),
+                          ),
+                        if (owner)
+                          PopupMenuItem(
+                            value: 'owner',
+                            child: Text(
+                              tr(
+                                context,
+                                'Transfer ownership',
+                                'انتقال مالکیت',
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+            if (showDivider)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(start: 68),
+                child: Divider(height: 1, color: p.border),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

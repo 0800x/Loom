@@ -17,3 +17,4 @@ export 'loom_forms.dart';
 export 'loom_call_control.dart';
 
 export 'loom_composer_overlay.dart';
+export 'loom_dialog.dart';

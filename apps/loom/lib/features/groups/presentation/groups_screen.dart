@@ -136,25 +136,14 @@ class _LoomGroupsScreenState extends State<LoomGroupsScreen>
         ),
       );
 
-  Future<bool> _confirm(String title, String detail, String action) async =>
-      await showDialog<bool>(
+  Future<bool> _confirm(String title, String detail, String action) =>
+      showLoomConfirmDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text(title),
-          content: Text(detail),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(tr(context, 'Cancel', 'لغو')),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(action),
-            ),
-          ],
-        ),
-      ) ==
-      true;
+        title: title,
+        message: detail,
+        confirmLabel: action,
+        destructive: true,
+      );
 
   /// Self-removal from the group. MLS models leaving as a member-list
   /// update without this device; history stays readable (read-only).
@@ -471,32 +460,22 @@ class _LoomGroupsScreenState extends State<LoomGroupsScreen>
     );
     if (choice == null || !mounted) return;
     if (choice == 'revoke') {
-      final confirmed = await showDialog<bool>(
+      final confirmed = await showLoomConfirmDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text(
-            tr(context, 'Revoke invitation links?', 'لینک‌های دعوت لغو شوند؟'),
-          ),
-          content: Text(
-            tr(
-              context,
-              'Existing members stay. Unfinished requests using these links cannot join.',
-              'اعضای فعلی می‌مانند؛ درخواست‌های تکمیل‌نشده با این لینک‌ها دیگر پذیرفته نمی‌شوند.',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(tr(context, 'Cancel', 'لغو')),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(tr(context, 'Revoke', 'لغو لینک')),
-            ),
-          ],
+        title: tr(
+          context,
+          'Revoke invitation links?',
+          'لینک‌های دعوت لغو شوند؟',
         ),
+        message: tr(
+          context,
+          'Existing members stay. Unfinished requests using these links cannot join.',
+          'اعضای فعلی می‌مانند؛ درخواست‌های تکمیل‌نشده با این لینک‌ها دیگر پذیرفته نمی‌شوند.',
+        ),
+        confirmLabel: tr(context, 'Revoke', 'لغو لینک'),
+        destructive: true,
       );
-      if (confirmed == true) await groups.revokeInvites(group.id);
+      if (confirmed) await groups.revokeInvites(group.id);
       return;
     }
     final link = await groups.createInvite(group.id, choice);

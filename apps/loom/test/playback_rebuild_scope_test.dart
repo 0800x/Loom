@@ -1,5 +1,6 @@
 import 'package:loom_design/loom_design.dart';
 import 'package:loom_next/features/media/application/playback_controller.dart';
+import 'package:loom_next/features/media/presentation/compact_playback_bar.dart';
 import 'package:loom_next/features/media/presentation/playback_host.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,7 +22,11 @@ void main() {
           navigatorKey: navigator,
           builder: (_, child) =>
               LoomPlaybackHost(navigatorKey: navigator, child: child!),
-          home: const Scaffold(body: Text('Chat')),
+          // The compact bar is hosted by the shell/dock in the real app;
+          // the contract under test lives in the bar widget itself.
+          home: const Scaffold(
+            body: SafeArea(child: LoomCompactPlaybackBar()),
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -36,7 +41,7 @@ void main() {
               'Progress must not reconstruct the title/artwork/transport subtree',
         );
       }
-      expect(find.textContaining('0:10'), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
       await playback.close();
       await tester.pumpWidget(const SizedBox.shrink());
     },

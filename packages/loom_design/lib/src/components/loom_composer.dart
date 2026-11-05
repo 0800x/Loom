@@ -211,7 +211,9 @@ class _LoomGlassComposerState extends State<LoomGlassComposer> {
         strength: LoomGlassStrength.standard,
         liveBackdrop: true,
         radius: 26,
-        padding: const EdgeInsets.fromLTRB(4, 0, 2, 0),
+        // Symmetric horizontal padding: the same breathing room on both
+        // sides of the input, in LTR and RTL alike.
+        padding: const EdgeInsets.symmetric(horizontal: 3),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -267,8 +269,12 @@ class _LoomGlassComposerState extends State<LoomGlassComposer> {
                         style: Theme.of(context).textTheme.bodyMedium,
                         decoration: InputDecoration(
                           hintText: widget.hintText,
-                          isDense: true,
-                          constraints: const BoxConstraints(minHeight: 48),
+                          // Collapsed decorator: the field is exactly as
+                          // tall as its content, so the caret and text sit
+                          // dead-center between the 48px action buttons.
+                          // isDense + a min-height constraint let the text
+                          // ride high inside the composer box.
+                          isCollapsed: true,
                           counterText: '',
                           filled: false,
                           border: InputBorder.none,
@@ -276,7 +282,7 @@ class _LoomGlassComposerState extends State<LoomGlassComposer> {
                           focusedBorder: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: LoomSpacing.sm,
-                            vertical: 9,
+                            vertical: 14,
                           ),
                         ),
                       ),

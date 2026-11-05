@@ -527,7 +527,9 @@ class _RichMessageContentState extends State<_RichMessageContent> {
     final origin = LoomOrigin.of(context);
     Uint8List? copy;
     try {
-      await LoomPlaybackController.pauseAll();
+      // Music keeps playing while photos are viewed (Telegram behaviour).
+      // Videos claim playback themselves through claimVideo() inside the
+      // viewer, so no unconditional pause belongs on this path.
       if (!mounted || LoomAppLock.instance.locked) return;
       copy = Uint8List.fromList(bytes);
       final image = widget.message.content.attachment!['kind'] == 'image';
@@ -983,10 +985,13 @@ class _LocalVideoPreview extends StatefulWidget {
     required this.file,
     this.round = false,
     this.active = true,
+    this.fill = false,
     super.key,
   });
   final File file;
-  final bool round, active;
+  // fill expands to the parent box (used inside the circular recording
+  // preview) instead of the fixed 220px tile, avoiding black rings.
+  final bool round, fill, active;
   @override
   State<_LocalVideoPreview> createState() => _LocalVideoPreviewState();
 }
@@ -1136,6 +1141,9 @@ class _LocalVideoPreviewState extends State<_LocalVideoPreview>
         ),
       ),
     );
+    if (widget.fill) {
+      return preview;
+    }
     return Center(
       child: widget.round
           ? SizedBox.square(dimension: 220, child: ClipOval(child: preview))

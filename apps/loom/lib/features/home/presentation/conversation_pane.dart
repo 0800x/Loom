@@ -561,22 +561,11 @@ class _ConversationPaneState extends State<_ConversationPane>
           return;
         }
         final submitted = composer.value;
-        final confirmed = await showDialog<bool>(
+        final confirmed = await showLoomConfirmDialog(
           context: context,
-          builder: (context) => AlertDialog(
-            title: Text(tr(context, 'Send file', 'ارسال فایل')),
-            content: Text(selected.name),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(tr(context, 'Cancel', 'لغو')),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(tr(context, 'Send', 'ارسال')),
-              ),
-            ],
-          ),
+          title: tr(context, 'Send file', 'ارسال فایل'),
+          message: selected.name,
+          confirmLabel: tr(context, 'Send', 'ارسال'),
         );
         if (confirmed != true ||
             !mounted ||
@@ -2081,6 +2070,13 @@ class _ConversationPaneState extends State<_ConversationPane>
                   composer: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Telegram-style docked player: rides directly above
+                      // the composer; the overlay already measures this
+                      // column into the list's bottom padding.
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(10, 4, 10, 4),
+                        child: LoomCompactPlaybackBar(),
+                      ),
                       if (messaging?.pendingMedia != null &&
                           messaging!.pendingMedia!.conversationId ==
                               conversation?.id)
@@ -2519,7 +2515,14 @@ class _MessageDayLabel extends StatelessWidget {
         : MaterialLocalizations.of(context).formatMediumDate(date);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        // Density-aware breathing room: compact pulls consecutive days
+        // visibly closer together.
+        padding: EdgeInsets.symmetric(
+          vertical: LoomChatLayoutScope.of(context) ==
+                  LoomChatDensity.compact
+              ? 5
+              : 12,
+        ),
         child: LoomGlassSurface(
           blur: false,
           radius: LoomRadii.pill,

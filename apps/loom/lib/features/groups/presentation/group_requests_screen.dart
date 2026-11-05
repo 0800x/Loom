@@ -93,11 +93,16 @@ class _LoomGroupRequestsScreenState extends State<LoomGroupRequestsScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 if (!admin)
-                  Text(
-                    tr(
-                      context,
-                      'Only administrators can review requests.',
-                      'فقط مدیرها می‌توانند درخواست‌ها را بررسی کنند.',
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Text(
+                      tr(
+                        context,
+                        'Only administrators can review requests.',
+                        'فقط مدیرها می‌توانند درخواست‌ها را بررسی کنند.',
+                      ),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: context.loom.textSecondary),
                     ),
                   )
                 else if (requests.isEmpty)
@@ -110,111 +115,198 @@ class _LoomGroupRequestsScreenState extends State<LoomGroupRequestsScreen> {
                           'No pending requests',
                           'درخواستی در انتظار نیست',
                         ),
+                        style: TextStyle(color: context.loom.textSecondary),
                       ),
                     ),
                   ),
                 if (groups.error != null)
-                  LoomFeedbackSurface(
-                    message: tr(
-                      context,
-                      'Unable to complete the request. Refresh and try again.',
-                      'درخواست انجام نشد؛ صفحه را تازه‌سازی و دوباره تلاش کنید.',
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: LoomFeedbackSurface(
+                      message: tr(
+                        context,
+                        'Unable to complete the request. Refresh and try again.',
+                        'درخواست انجام نشد؛ صفحه را تازه‌سازی و دوباره تلاش کنید.',
+                      ),
+                      actionLabel: tr(context, 'Retry', 'تلاش مجدد'),
+                      onAction: groups.busy
+                          ? null
+                          : () => unawaited(groups.synchronize()),
                     ),
-                    actionLabel: tr(context, 'Retry', 'تلاش مجدد'),
-                    onAction: groups.busy
-                        ? null
-                        : () => unawaited(groups.synchronize()),
                   ),
-                for (final accountRequests in requests)
-                  Builder(
-                    builder: (context) {
-                      final member = LoomGroupMember.fromJson(
-                        Map<String, Object?>.from(
-                          accountRequests.first['member'] as Map,
-                        ),
-                      );
-                      final pending = accountRequests.any(
-                        (r) => r['status'] == 'pending',
-                      );
-                      final working = _deciding == member.accountId;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: LoomGlassSurface(
-                          radius: 20,
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: LoomAvatar(
-                                  label: groups.memberLabel(member),
-                                  size: 44,
+                // One continuous card of requests with flat rows.
+                if (requests.isNotEmpty)
+                  Material(
+                    color: context.loom.surface,
+                    clipBehavior: Clip.antiAlias,
+                    borderRadius: BorderRadius.circular(LoomRadii.surface),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (var i = 0; i < requests.length; i++)
+                          Builder(
+                            key: ValueKey(
+                              'join-request-$i',
+                            ),
+                            builder: (context) {
+                              final member = LoomGroupMember.fromJson(
+                                Map<String, Object?>.from(
+                                  requests[i].first['member'] as Map,
                                 ),
-                                title: Text(
-                                  groups.memberLabel(member),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                subtitle: Text(
-                                  groups.memberCachedAddress(member) ??
-                                      tr(
-                                        context,
-                                        'Wants to join this group',
-                                        'درخواست عضویت در گروه',
-                                      ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (working) const LinearProgressIndicator(),
-                              if (pending)
-                                Wrap(
-                                  alignment: WrapAlignment.end,
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: [
-                                    TextButton(
-                                      onPressed:
-                                          _deciding != null || groups.busy
-                                          ? null
-                                          : () => _decide(
-                                              groups,
-                                              accountRequests,
-                                              false,
-                                            ),
-                                      child: Text(
-                                        tr(context, 'Decline', 'رد کردن'),
-                                      ),
+                              );
+                              final pending = requests[i].any(
+                                (r) => r['status'] == 'pending',
+                              );
+                              final working =
+                                  _deciding == member.accountId;
+                              return Column(
+                                children: [
+                                  Container(
+                                    constraints: const BoxConstraints(
+                                      minHeight: 72,
                                     ),
-                                    FilledButton(
-                                      onPressed:
-                                          _deciding != null || groups.busy
-                                          ? null
-                                          : () => _decide(
-                                              groups,
-                                              accountRequests,
-                                              true,
-                                            ),
-                                      child: Text(
-                                        tr(context, 'Approve', 'تأیید'),
-                                      ),
+                                    padding: const EdgeInsetsDirectional.only(
+                                      start: 14,
+                                      end: 10,
+                                      top: 10,
+                                      bottom: 10,
                                     ),
-                                  ],
-                                )
-                              else
-                                Text(
-                                  tr(
-                                    context,
-                                    'Accepted. Completing membership…',
-                                    'پذیرفته شد؛ در حال تکمیل عضویت…',
+                                    child: Row(
+                                      children: [
+                                        LoomAvatar(
+                                          label: groups.memberLabel(member),
+                                          size: 42,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                groups.memberLabel(member),
+                                                maxLines: 1,
+                                                overflow:
+                                                    TextOverflow.ellipsis,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                groups.memberCachedAddress(
+                                                      member,
+                                                    ) ??
+                                                    tr(
+                                                      context,
+                                                      'Wants to join this group',
+                                                      'درخواست عضویت در گروه',
+                                                    ),
+                                                maxLines: 1,
+                                                overflow:
+                                                    TextOverflow.ellipsis,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall
+                                                    ?.copyWith(
+                                                      color: context.loom
+                                                          .textSecondary,
+                                                    ),
+                                              ),
+                                              if (!pending)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        top: 3,
+                                                      ),
+                                                  child: Text(
+                                                    tr(
+                                                      context,
+                                                      'Accepted. Completing membership…',
+                                                      'پذیرفته شد؛ در حال تکمیل عضویت…',
+                                                    ),
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .labelSmall
+                                                        ?.copyWith(
+                                                          color: context.loom
+                                                              .primary,
+                                                        ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (working)
+                                          const SizedBox.square(
+                                            dimension: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        else if (pending) ...[
+                                          _RequestButton(
+                                            tooltip: tr(
+                                              context,
+                                              'Decline',
+                                              'رد کردن',
+                                            ),
+                                            icon: LoomIcons.close_rounded,
+                                            color: context.loom.critical,
+                                            onPressed:
+                                                _deciding != null || groups.busy
+                                                ? null
+                                                : () => _decide(
+                                                    groups,
+                                                    requests[i],
+                                                    false,
+                                                  ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          _RequestButton(
+                                            tooltip: tr(
+                                              context,
+                                              'Approve',
+                                              'تأیید',
+                                            ),
+                                            icon: LoomIcons.check_rounded,
+                                            color: context.loom.primary,
+                                            onPressed:
+                                                _deciding != null || groups.busy
+                                                ? null
+                                                : () => _decide(
+                                                    groups,
+                                                    requests[i],
+                                                    true,
+                                                  ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                            ],
+                                  if (i < requests.length - 1)
+                                    Padding(
+                                      padding:
+                                          const EdgeInsetsDirectional.only(
+                                            start: 68,
+                                          ),
+                                      child: Divider(
+                                        height: 1,
+                                        color: context.loom.border,
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
                           ),
-                        ),
-                      );
-                    },
+                      ],
+                    ),
                   ),
               ],
             ),
@@ -223,4 +315,32 @@ class _LoomGroupRequestsScreenState extends State<LoomGroupRequestsScreen> {
       ),
     );
   }
+}
+
+/// Small circular decision button (decline / approve) on a tinted disc.
+class _RequestButton extends StatelessWidget {
+  const _RequestButton({
+    required this.tooltip,
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+    tooltip: tooltip,
+    onPressed: onPressed,
+    style: IconButton.styleFrom(
+      backgroundColor: color.withValues(alpha: .10),
+      foregroundColor: color,
+      minimumSize: const Size(38, 38),
+      maximumSize: const Size(38, 38),
+    ),
+    icon: Icon(icon, size: 19),
+  );
 }

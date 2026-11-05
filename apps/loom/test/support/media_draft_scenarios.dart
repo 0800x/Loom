@@ -31,6 +31,10 @@ class FakeRecorder implements VoiceRecorderBackend {
   @override
   Stream<double> get amplitudes => levels.stream;
   @override
+  Future<void> pause() async {}
+  @override
+  Future<void> resume() async {}
+  @override
   Future<File?> stop() async =>
       stopGate == null ? file : await stopGate!.future;
   @override

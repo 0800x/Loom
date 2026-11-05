@@ -322,7 +322,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Dora'), findsOneWidget);
-      await tester.tap(find.widgetWithText(FilledButton, 'Approve'));
+      await tester.tap(find.byTooltip('Approve'));
       await tester.pumpAndSettle();
       expect(groups.decisions, [('d-one', true), ('d-two', true)]);
       expect(find.text('No pending requests'), findsOneWidget);

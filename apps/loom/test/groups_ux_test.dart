@@ -18,7 +18,7 @@ class _Groups extends LoomGroupsController {
         identityLabel: (id) => id == 'i-b' ? 'Bob' : 'Alice',
       );
   @override
-  Future<bool> open() async => true;
+  Future<bool> open({bool quiet = false}) async => true;
   @override
   void setActiveGroup(String? id) {
     activeGroupId = id;

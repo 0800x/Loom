@@ -174,6 +174,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(find.text('آنلاین'), findsNothing);
+      // The preview notice sits under the quick actions, visible on load.
+      expect(find.textContaining('روی همین دستگاه'), findsOneWidget);
       await tester.scrollUntilVisible(
         find.text('عکس و آواتار'),
         200,
@@ -185,7 +187,6 @@ void main() {
             .first,
       );
       await tester.pumpAndSettle();
-      expect(find.textContaining('روی همین دستگاه'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );

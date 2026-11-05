@@ -23,6 +23,7 @@ import '../../media/application/video_note_camera_selection.dart';
 import '../../media/application/media_capabilities.dart';
 import '../../media/application/media_batch_controller.dart';
 import '../../media/presentation/playback_host.dart';
+import '../../media/presentation/compact_playback_bar.dart';
 import '../../media/presentation/hold_record_action.dart';
 import '../../media/application/playback_controller.dart';
 import '../../media/presentation/camera_screen.dart';
@@ -560,9 +561,19 @@ class _CompactLayoutState extends State<_CompactLayout>
                   start: LoomSpacing.sm,
                   end: LoomSpacing.sm,
                   bottom: LoomSpacing.xs + MediaQuery.paddingOf(context).bottom,
-                  child: _BottomNavigation(
-                    selected: widget.selected,
-                    onSelected: widget.onSelected,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Telegram-style docked mini player: slim bar right
+                      // above the navigation, zero footprint while hidden.
+                      const LoomCompactPlaybackBar(
+                        margin: EdgeInsets.only(bottom: 6),
+                      ),
+                      _BottomNavigation(
+                        selected: widget.selected,
+                        onSelected: widget.onSelected,
+                      ),
+                    ],
                   ),
                 ),
             ],
@@ -607,82 +618,105 @@ class _WideLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.loom;
+    // The compact player docks above the composer while a conversation is
+    // open; everywhere else on the desktop shell it floats at the bottom.
+    final playerDocked =
+        selected == 0 && selectedConversation != null && !preview;
     return Scaffold(
-      body: SafeArea(
-        child: Row(
-          children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: AlignmentDirectional.topStart,
-                  end: AlignmentDirectional.bottomEnd,
-                  colors: [palette.surface, palette.surfaceElevated],
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Row(
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
+                      colors: [palette.surface, palette.surfaceElevated],
+                    ),
+                  ),
+                  child: Container(
+                    width: LoomSizing.navRail,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: LoomSpacing.xs,
+                      vertical: LoomSpacing.md,
+                    ),
+                    child: _DesktopNavigation(
+                      selected: selected,
+                      onSelected: onSelected,
+                    ),
+                  ),
                 ),
-              ),
-              child: Container(
-                width: LoomSizing.navRail,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: LoomSpacing.xs,
-                  vertical: LoomSpacing.md,
-                ),
-                child: _DesktopNavigation(
-                  selected: selected,
-                  onSelected: onSelected,
+                VerticalDivider(width: 1, color: palette.border),
+                if (selected == 0) ...[
+                  SizedBox(
+                    width: listWidth.clamp(
+                      260,
+                      MediaQuery.sizeOf(context).width * .36,
+                    ),
+                    child: _ChatList(
+                      preview: preview,
+                      messaging: messaging,
+                      selectedConversationId: selectedConversationId,
+                      onConversationSelected: onOpenConversation,
+                      onNewChat: onNewChat,
+                    ),
+                  ),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.resizeColumn,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onHorizontalDragUpdate: (event) => onResizeList?.call(
+                        event.delta.dx *
+                            (Directionality.of(context) == TextDirection.rtl
+                                ? -1
+                                : 1),
+                      ),
+                      child: _ListResizeHandle(color: palette.border),
+                    ),
+                  ),
+                  Expanded(
+                    child: _ConversationPane(
+                      preview: preview,
+                      drafts: drafts,
+                      messaging: messaging,
+                      conversation: selectedConversation,
+                      onToggleDetails: onToggleDetails,
+                    ),
+                  ),
+                  if (showDetails &&
+                      MediaQuery.sizeOf(context).width >= 1320) ...[
+                    VerticalDivider(width: 1, color: palette.border),
+                    SizedBox(
+                      width: 320,
+                      child: _DetailsPane(
+                        preview: preview,
+                        messaging: messaging,
+                        conversation: selectedConversation,
+                      ),
+                    ),
+                  ],
+                ] else
+                  Expanded(child: _destination(selected, preview, messaging)),
+              ],
+            ),
+          ),
+          if (!playerDocked)
+            PositionedDirectional(
+              bottom: 14,
+              start: 0,
+              end: 0,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: const LoomCompactPlaybackBar(
+                    margin: EdgeInsets.symmetric(horizontal: 24),
+                  ),
                 ),
               ),
             ),
-            VerticalDivider(width: 1, color: palette.border),
-            if (selected == 0) ...[
-              SizedBox(
-                width: listWidth.clamp(
-                  260,
-                  MediaQuery.sizeOf(context).width * .36,
-                ),
-                child: _ChatList(
-                  preview: preview,
-                  messaging: messaging,
-                  selectedConversationId: selectedConversationId,
-                  onConversationSelected: onOpenConversation,
-                  onNewChat: onNewChat,
-                ),
-              ),
-              MouseRegion(
-                cursor: SystemMouseCursors.resizeColumn,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onHorizontalDragUpdate: (event) => onResizeList?.call(
-                    event.delta.dx *
-                        (Directionality.of(context) == TextDirection.rtl
-                            ? -1
-                            : 1),
-                  ),
-                  child: _ListResizeHandle(color: palette.border),
-                ),
-              ),
-              Expanded(
-                child: _ConversationPane(
-                  preview: preview,
-                  drafts: drafts,
-                  messaging: messaging,
-                  conversation: selectedConversation,
-                  onToggleDetails: onToggleDetails,
-                ),
-              ),
-              if (showDetails && MediaQuery.sizeOf(context).width >= 1320) ...[
-                VerticalDivider(width: 1, color: palette.border),
-                SizedBox(
-                  width: 320,
-                  child: _DetailsPane(
-                    preview: preview,
-                    messaging: messaging,
-                    conversation: selectedConversation,
-                  ),
-                ),
-              ],
-            ] else
-              Expanded(child: _destination(selected, preview, messaging)),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -2437,28 +2471,16 @@ class _SettingsPane extends StatelessWidget {
     BuildContext context,
     LoomMessagingSessionController messaging,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showLoomConfirmDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(tr(dialogContext, 'Log out?', 'از حساب خارج شوید؟')),
-        content: Text(
-          tr(
-            dialogContext,
-            'This removes the saved session and refresh credential from this device. Your Loom identity and recovery material stay on the device.',
-            'نشست ذخیره‌شده و اعتبار ورود مجدد از این دستگاه حذف می‌شود. هویت لوم و اطلاعات بازیابی روی دستگاه باقی می‌ماند.',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(tr(dialogContext, 'Cancel', 'لغو')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(tr(dialogContext, 'Log out', 'خروج')),
-          ),
-        ],
+      title: tr(context, 'Log out?', 'از حساب خارج شوید؟'),
+      message: tr(
+        context,
+        'This removes the saved session and refresh credential from this device. Your Loom identity and recovery material stay on the device.',
+        'نشست ذخیره‌شده و اعتبار ورود مجدد از این دستگاه حذف می‌شود. هویت لوم و اطلاعات بازیابی روی دستگاه باقی می‌ماند.',
       ),
+      confirmLabel: tr(context, 'Log out', 'خروج'),
+      destructive: true,
     );
     if (confirmed != true || !context.mounted) {
       return;

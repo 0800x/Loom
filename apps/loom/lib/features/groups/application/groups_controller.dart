@@ -216,25 +216,34 @@ class LoomGroupsController extends ChangeNotifier {
   Future<bool> _operation(
     Future<void> Function(int) action, {
     bool republishProfiles = false,
+    bool quiet = false,
   }) {
     final epoch = _epoch;
+    var contentChanged = false;
+    var reloadRan = false;
     final result = _tail.then((_) async {
       try {
         _guard(epoch);
-        busy = true;
-        error = null;
-        errorCode = null;
-        notifyListeners();
+        if (!quiet) {
+          busy = true;
+          error = null;
+          errorCode = null;
+          notifyListeners();
+        }
         await action(epoch);
         _guard(epoch);
-        await _reload(epoch);
+        reloadRan = true;
+        contentChanged = await _reload(epoch);
         if (republishProfiles && await _republishProfiles(epoch)) {
-          await _reload(epoch);
+          contentChanged = (await _reload(epoch)) || contentChanged;
         }
         _guard(epoch);
         return true;
       } catch (e) {
-        if (!_disposed && epoch == _epoch && !LoomAppLock.instance.locked) {
+        if (!quiet &&
+            !_disposed &&
+            epoch == _epoch &&
+            !LoomAppLock.instance.locked) {
           errorCode = e is LoomGroupProtocolException ? e.code : null;
           error = e is LoomGroupProtocolException
               ? (e.status == 404 && e.code == 'not_found'
@@ -247,8 +256,15 @@ class LoomGroupsController extends ChangeNotifier {
         return false;
       } finally {
         if (!_disposed && epoch == _epoch) {
+          final wasBusy = busy;
           busy = false;
-          notifyListeners();
+          // A quiet (periodic) cycle only fans out when the decrypted
+          // presentation actually changed, or a spinner has to be cleared.
+          // Without this gate the 5-second heartbeat rebuilds the shell and
+          // re-decrypts every group history row twice per cycle.
+          if (!quiet || contentChanged || wasBusy || !reloadRan) {
+            notifyListeners();
+          }
         }
       }
     });
@@ -368,7 +384,7 @@ class LoomGroupsController extends ChangeNotifier {
     }
   }
 
-  Future<bool> open() => _operation((epoch) async {
+  Future<bool> open({bool quiet = false}) => _operation((epoch) async {
     await _initialize(epoch);
     await _session!.sync();
     await _processJoinRequests(epoch);
@@ -378,7 +394,7 @@ class LoomGroupsController extends ChangeNotifier {
       await _session!.ensureKeyPackages();
       _packagesCheckedAt = DateTime.now().toUtc();
     }
-  }, republishProfiles: true);
+  }, republishProfiles: true, quiet: quiet);
   Future<void> _processJoinRequests(int epoch) async {
     for (final group in List<LoomGroupState>.of(_store!.groups)) {
       final actor = group.members
@@ -551,7 +567,9 @@ class LoomGroupsController extends ChangeNotifier {
 
   Future<bool> synchronize() {
     if (busy || LoomAppLock.instance.locked) return Future.value(false);
-    return open();
+    // The periodic heartbeat path is quiet: no spinner, no fan-out unless the
+    // decrypted group content actually changed.
+    return open(quiet: true);
   }
 
   void setActiveGroup(String? id) {
@@ -568,9 +586,53 @@ class LoomGroupsController extends ChangeNotifier {
     onRead?.call(id);
   }
 
-  Future<void> _reload(int epoch) async {
+  /// Signature of the raw inputs [_reload] derives its state from. History
+  /// rows are append-only with a (group, sequence) primary key, so per-group
+  /// row count plus boundary sequences fully determine the decrypted result.
+  String _storeFingerprint() {
+    final store = _store;
+    if (store == null) return '';
+    final buffer = StringBuffer();
+    for (final group in store.groups) {
+      final history = store.history(group.id);
+      buffer
+        ..write('#')
+        ..write(group.id)
+        ..write(':')
+        ..write(group.title)
+        ..write(':')
+        ..write(group.members.length)
+        ..write(':')
+        ..write(history.length)
+        ..write(':')
+        ..write(history.isEmpty ? 0 : history.first.sequence)
+        ..write(':')
+        ..write(history.isEmpty ? 0 : history.last.sequence)
+        ..write(':')
+        ..write(store.readSequence(group.id))
+        ..write(':')
+        ..write(joinRequests[group.id]?.length ?? 0);
+    }
+    buffer
+      ..write('~')
+      ..write(store.outbox.length)
+      ..write(':')
+      ..write(ownDeviceId ?? '');
+    return buffer.toString();
+  }
+
+  String? _reloadFingerprint;
+
+  Future<bool> _reload(int epoch) async {
     final identity = onboarding.committedIdentity;
-    if (_store == null || identity == null) return;
+    if (_store == null || identity == null) return false;
+    // The 5-second heartbeat used to decrypt every history row of every
+    // group even with zero new events. Groups are append-only, so an
+    // unchanged store fingerprint guarantees the same decrypted output.
+    final fingerprint = _storeFingerprint();
+    if (fingerprint == _reloadFingerprint) {
+      return false;
+    }
     final catalogue = _store!.groups,
         next = <String, List<LoomGroupMessage>>{},
         profiles = <String, LoomGroupProfile>{},
@@ -709,6 +771,8 @@ class LoomGroupsController extends ChangeNotifier {
       ..addAll(profileEpochs);
     groups = List.unmodifiable(catalogue);
     messages = Map.unmodifiable(next);
+    _reloadFingerprint = fingerprint;
+    return true;
   }
 
   Future<String?> create(String title, List<String> addresses) async {

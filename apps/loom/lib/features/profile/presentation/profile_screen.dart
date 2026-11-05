@@ -10,6 +10,7 @@ import '../../../dev/preview_data.dart';
 import '../../onboarding/application/onboarding_controller.dart';
 import '../application/avatar_photo.dart';
 import '../application/local_avatar_store.dart';
+import 'profile_common.dart';
 import 'profile_header.dart';
 import 'own_avatar.dart' show loomAvatarColors;
 
@@ -159,6 +160,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final address = widget.preview
         ? LoomPreviewData.profile.address
         : receipt?.address;
+    final username = widget.preview
+        ? LoomPreviewData.profile.username
+        : onboarding?.username.isNotEmpty == true
+        ? '@${onboarding!.username}'
+        : '—';
+    final homeNode = widget.preview
+        ? LoomPreviewData.profile.homeNode
+        : receipt?.homeNode ?? '—';
+    final fingerprint = widget.preview
+        ? LoomPreviewData.profile.fingerprint
+        : identity?.fingerprint ?? '—';
     final canEdit = _avatar != null && !_saving;
     final syncLabel = _avatar?.syncing == true
         ? tr(context, 'Syncing profile…', 'در حال همگام‌سازی پروفایل…')
@@ -180,51 +192,120 @@ class _ProfileScreenState extends State<ProfileScreen> {
         slivers: [
           LoomProfileHeader(name: name, identityId: identity?.identityId),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             sliver: SliverList.list(
               children: [
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
-                  runSpacing: 4,
+                // Telegram-style quick actions: circular tinted icons with
+                // labels, evenly spaced under the hero header.
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceEvenly,
+                    runSpacing: 12,
+                    children: [
+                      ProfileQuickAction(
+                        icon: LoomIcons.add_a_photo_outlined,
+                        label: tr(
+                          context,
+                          _avatar?.photo == null ? 'Set photo' : 'New photo',
+                          _avatar?.photo == null ? 'انتخاب عکس' : 'عکس جدید',
+                        ),
+                        enabled: canEdit,
+                        onTap: _choosePhoto,
+                      ),
+                      ProfileQuickAction(
+                        icon: LoomIcons.edit_outlined,
+                        label: tr(context, 'Edit', 'ویرایش'),
+                        enabled: canEdit,
+                        onTap: () => _editName(name),
+                      ),
+                      ProfileQuickAction(
+                        icon: LoomIcons.qr_code_rounded,
+                        label: tr(context, 'My QR', 'کد QR من'),
+                        enabled: !widget.preview && receipt != null,
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/profile-qr'),
+                      ),
+                    ],
+                  ),
+                ),
+                if (widget.preview || identity == null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(6, 2, 6, 4),
+                    child: Text(
+                      tr(
+                        context,
+                        widget.preview
+                            ? 'Design preview only · changes stay on this device.'
+                            : 'Sign in to personalize your profile.',
+                        widget.preview
+                            ? 'پیش‌نمایش طراحی · تغییرات روی همین دستگاه می‌مانند.'
+                            : 'برای شخصی‌سازی پروفایل وارد حساب شوید.',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.loom.textSecondary,
+                      ),
+                    ),
+                  ),
+                ProfileSection(
+                  title: tr(context, 'Account', 'حساب کاربری'),
                   children: [
-                    TextButton.icon(
-                      onPressed: canEdit ? _choosePhoto : null,
-                      icon: const Icon(LoomIcons.add_a_photo_outlined),
-                      label: Text(tr(context, 'Set photo', 'انتخاب عکس')),
+                    ProfileInfoRow(
+                      icon: LoomIcons.person_outline_rounded,
+                      label: tr(context, 'Username', 'نام کاربری'),
+                      value: username,
                     ),
-                    TextButton.icon(
-                      onPressed: canEdit ? () => _editName(name) : null,
-                      icon: const Icon(LoomIcons.edit_outlined),
-                      label: Text(tr(context, 'Edit info', 'ویرایش اطلاعات')),
-                    ),
-                    IconButton(
-                      tooltip: tr(context, 'My QR', 'کد QR من'),
-                      onPressed: widget.preview || receipt == null
-                          ? null
-                          : () => Navigator.pushNamed(context, '/profile-qr'),
-                      icon: const Icon(LoomIcons.qr_code_rounded),
+                    if (address != null)
+                      ProfileInfoRow(
+                        icon: LoomIcons.link_outlined,
+                        label: tr(context, 'Loom address', 'نشانی لوم'),
+                        value: address,
+                        iconColor: p.primary,
+                        trailing: IconButton(
+                          tooltip: tr(context, 'Copy address', 'کپی نشانی'),
+                          onPressed: () => _copy(address),
+                          icon: const Icon(LoomIcons.copy_outlined, size: 20),
+                        ),
+                        onTap: () => _copy(address),
+                      ),
+                    ProfileInfoRow(
+                      icon: LoomIcons.wifi_tethering_rounded,
+                      label: tr(context, 'Home Node', 'سرور حساب'),
+                      value: homeNode,
+                      showDivider: false,
                     ),
                   ],
                 ),
-                if (address != null)
-                  ListTile(
-                    title: Text(address, textDirection: TextDirection.ltr),
-                    subtitle: Text(tr(context, 'Loom address', 'نشانی لوم')),
-                    trailing: const Icon(LoomIcons.copy_outlined),
-                    onTap: () => _copy(address),
-                  ),
+                // Sync state is a single quiet line with a retry action; it
+                // never blocks the information above it.
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.fromLTRB(6, 10, 6, 0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Flexible(
+                      Icon(
+                        _avatar?.syncError != null
+                            ? LoomIcons.error_outline_rounded
+                            : _avatar?.pendingUpload == true
+                            ? LoomIcons.schedule_rounded
+                            : LoomIcons.check_circle_rounded,
+                        size: 15,
+                        color: _avatar?.syncError != null
+                            ? p.critical
+                            : _avatar?.pendingUpload == true
+                            ? p.warning
+                            : p.textMuted,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
                         child: Text(
                           syncLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.labelMedium
                               ?.copyWith(
-                                color: _avatar?.pendingUpload == true
+                                color: _avatar?.syncError != null
+                                    ? p.critical
+                                    : _avatar?.pendingUpload == true
                                     ? p.warning
                                     : p.textSecondary,
                               ),
@@ -243,7 +324,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
-                _Section(
+                ProfileSection(
                   title: tr(context, 'Photo & avatar', 'عکس و آواتار'),
                   children: [
                     Padding(
@@ -251,41 +332,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            tr(context, 'Make it yours', 'به سلیقه خودت'),
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            tr(
-                              context,
-                              'Your photo, name and avatar color sync with your Home Node and are visible to people who know your Loom address.',
-                              'عکس، نام و رنگ آواتار با سرور شما همگام می‌شوند و افرادی که نشانی لوم شما را دارند آن‌ها را می‌بینند.',
-                            ),
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: p.textSecondary),
-                          ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 4,
+                          Row(
                             children: [
-                              FilledButton.tonalIcon(
-                                onPressed: canEdit ? _choosePhoto : null,
-                                icon: const Icon(
-                                  LoomIcons.add_photo_alternate_outlined,
-                                  size: 19,
-                                ),
-                                label: Text(
+                              Expanded(
+                                child: Text(
                                   tr(
                                     context,
-                                    _avatar?.photo == null
-                                        ? 'Choose photo'
-                                        : 'Change photo',
-                                    _avatar?.photo == null
-                                        ? 'انتخاب عکس'
-                                        : 'تغییر عکس',
+                                    'Your photo, name and avatar color sync with your Home Node and are visible to people who know your Loom address.',
+                                    'عکس، نام و رنگ آواتار با سرور شما همگام می‌شوند و افرادی که نشانی لوم شما را دارند آن‌ها را می‌بینند.',
                                   ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(color: p.textSecondary),
                                 ),
                               ),
                               if (_avatar?.photo != null)
@@ -305,7 +362,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
                           Text(
                             tr(context, 'Initials color', 'رنگ حروف نام'),
                             style: Theme.of(context).textTheme.labelMedium,
@@ -349,54 +406,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                             ],
                           ),
-                          if (widget.preview || identity == null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 12),
-                              child: Text(
-                                tr(
-                                  context,
-                                  widget.preview
-                                      ? 'Design preview only · changes stay on this device.'
-                                      : 'Sign in to personalize your profile.',
-                                  widget.preview
-                                      ? 'پیش‌نمایش طراحی · تغییرات روی همین دستگاه می‌مانند.'
-                                      : 'برای شخصی‌سازی پروفایل وارد حساب شوید.',
-                                ),
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ),
                         ],
                       ),
                     ),
                   ],
                 ),
-                _Section(
-                  title: tr(context, 'Account', 'حساب کاربری'),
-                  children: [
-                    ListTile(
-                      leading: Icon(LoomIcons.edit_rounded, color: p.primary),
-                      title: Text(tr(context, 'Display name', 'نام نمایشی')),
-                      subtitle: Text(name),
-                      onTap: canEdit ? () => _editName(name) : null,
-                    ),
-                    _IdentityValue(
-                      label: tr(context, 'Username', 'نام کاربری'),
-                      value: widget.preview
-                          ? LoomPreviewData.profile.username
-                          : onboarding?.username.isNotEmpty == true
-                          ? '@${onboarding!.username}'
-                          : '—',
-                    ),
-                    _IdentityValue(
-                      label: tr(context, 'Home Node', 'سرور حساب'),
-                      value: widget.preview
-                          ? LoomPreviewData.profile.homeNode
-                          : receipt?.homeNode ?? '—',
-                    ),
-                  ],
-                ),
-                _Section(
-                  title: tr(context, 'Security & devices', 'امنیت و دستگاه‌ها'),
+                ProfileSection(
+                  title: tr(
+                    context,
+                    'Security & personalization',
+                    'امنیت و شخصی‌سازی',
+                  ),
                   children: [
                     LoomSettingsRow(
                       icon: LoomIcons.fingerprint_rounded,
@@ -412,21 +432,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       onTap: () => Navigator.pushNamed(context, '/security'),
                     ),
-                    _IdentityValue(
-                      label: tr(
-                        context,
-                        'Identity fingerprint',
-                        'اثر انگشت هویت',
-                      ),
-                      value: widget.preview
-                          ? LoomPreviewData.profile.fingerprint
-                          : identity?.fingerprint ?? '—',
-                    ),
-                  ],
-                ),
-                _Section(
-                  title: tr(context, 'Personalize Loom', 'شخصی‌سازی لوم'),
-                  children: [
                     LoomSettingsRow(
                       icon: LoomIcons.palette_outlined,
                       title: tr(context, 'Appearance', 'ظاهر'),
@@ -449,6 +454,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 ),
+                ProfileSection(
+                  title: tr(context, 'Identity details', 'جزئیات هویت'),
+                  children: [
+                    ProfileIdentityValue(
+                      label: tr(
+                        context,
+                        'Identity fingerprint',
+                        'اثر انگشت هویت',
+                      ),
+                      value: fingerprint,
+                      showDivider: false,
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -463,60 +482,6 @@ String _colorLabel(BuildContext context, int index) => tr(
   const ['Ocean', 'Violet', 'Jade', 'Coral', 'Amber', 'Slate'][index],
   const ['اقیانوسی', 'بنفش', 'یشمی', 'مرجانی', 'کهربایی', 'خاکستری آبی'][index],
 );
-
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.children});
-  final String title;
-  final List<Widget> children;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 22),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsetsDirectional.only(start: 6, bottom: 8),
-          child: Text(
-            title,
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: context.loom.textSecondary),
-          ),
-        ),
-        LoomSettingsGroup(children: children),
-      ],
-    ),
-  );
-}
-
-class _IdentityValue extends StatelessWidget {
-  const _IdentityValue({required this.label, required this.value});
-  final String label, value;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(16),
-    child: SizedBox(
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: context.loom.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          SelectableText(
-            value,
-            textDirection: TextDirection.ltr,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ],
-      ),
-    ),
-  );
-}
 
 class _DisplayNameDialog extends StatefulWidget {
   const _DisplayNameDialog({required this.initial});

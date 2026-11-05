@@ -339,6 +339,10 @@ class _LoomAppState extends State<LoomApp> with SingleTickerProviderStateMixin {
   /// databases if needed, then tears the current session down IN MEMORY.
   /// Neither account's vaults are deleted, so the StartupGate restores the
   /// target account from its own refresh token.
+  ///
+  /// The gate is rebuilt by popping back to '/' (same pattern as logout):
+  /// without a new gate instance the shell would keep rendering the
+  /// previous account's screen after the in-memory teardown.
   Future<void> switchAccount(String slotId) async {
     final state = await LoomAccountRegistry.load();
     final matches = state.accounts.where((entry) => entry.id == slotId);
@@ -352,6 +356,16 @@ class _LoomAppState extends State<LoomApp> with SingleTickerProviderStateMixin {
       // Open sites surface a descriptive strict-mode error instead.
     }
     onboarding.beginAccountSwitch();
+    _restartAtStartupGate();
+  }
+
+  /// Pops every route and mounts a fresh StartupGate at '/', so the restored
+  /// (or newly onboarded) account session starts from a clean navigation
+  /// stack with rebuilt session controllers.
+  void _restartAtStartupGate() {
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) return;
+    navigator.pushNamedAndRemoveUntil('/', (route) => false);
   }
 
   /// Registers the running account (so the user can always come back to it),
@@ -375,6 +389,8 @@ class _LoomAppState extends State<LoomApp> with SingleTickerProviderStateMixin {
       await LoomDbEncryption.prepareAtStartup();
     } catch (_) {}
     onboarding.beginAccountSwitch();
+    // A fresh gate instance presents the onboarding flow for the new slot.
+    _restartAtStartupGate();
   }
 
   void _onQuickReply(String conversationId, String text) {
@@ -488,6 +504,9 @@ class _LoomAppState extends State<LoomApp> with SingleTickerProviderStateMixin {
     if (_hadCompleteSession && onboarding.status == LoomOnboardingStatus.idle) {
       _hadCompleteSession = false;
       unawaited(LoomPlaybackController.closeAll());
+      // The music library belongs to the account that built it; drop it with
+      // the session so the next account starts with an empty player.
+      unawaited(LoomPlaybackController.instance.clearLibrary());
       unawaited(nearbyDtn.disable());
       final oldMessaging = messaging;
       final oldCalls = calls;

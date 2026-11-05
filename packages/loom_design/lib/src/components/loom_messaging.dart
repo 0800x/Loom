@@ -59,8 +59,10 @@ class LoomChatRow extends StatelessWidget {
     final avatarKey = GlobalKey();
     final previewColor = typing ? p.connectivity : p.textSecondary;
     final radius = BorderRadius.circular(LoomRadii.control);
+    final compact =
+        LoomChatLayoutScope.of(context) == LoomChatDensity.compact;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: LoomSpacing.xxs / 2),
+      padding: EdgeInsets.symmetric(vertical: compact ? 1 : LoomSpacing.xxs / 2),
       child: Semantics(
         selected: selected,
         child: LoomPressable(
@@ -77,12 +79,12 @@ class LoomChatRow extends StatelessWidget {
                 duration: LoomAccessibility.fromContext(context).reduceMotion
                     ? Duration.zero
                     : LoomMotion.component,
-                constraints: const BoxConstraints(
-                  minHeight: LoomSizing.compactRowHeight,
+                constraints: BoxConstraints(
+                  minHeight: compact ? 58 : LoomSizing.compactRowHeight,
                 ),
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: LoomSpacing.sm,
-                  vertical: LoomSpacing.xs,
+                  vertical: compact ? 5 : LoomSpacing.xs,
                 ),
                 decoration: BoxDecoration(
                   color: selected ? p.surfaceElevated : Colors.transparent,
@@ -99,7 +101,13 @@ class LoomChatRow extends StatelessWidget {
                         key: avatarKey,
                         child:
                             avatar ??
-                            LoomAvatar(label: name, presence: presence),
+                            LoomAvatar(
+                              label: name,
+                              size: compact
+                                  ? LoomSizing.compactAvatar
+                                  : LoomSizing.avatar,
+                              presence: presence,
+                            ),
                       ),
                       const SizedBox(width: LoomSpacing.sm),
                       Expanded(
@@ -560,14 +568,14 @@ class LoomMessageBubble extends StatelessWidget {
                       top: grouped
                           ? 2
                           : compact
-                          ? 3
-                          : 7,
+                          ? 2
+                          : 8,
                       bottom: 2,
                     ),
                     padding: content == null
                         ? EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: compact ? 6 : 8,
+                            horizontal: compact ? 10 : 12,
+                            vertical: compact ? 5 : 9,
                           )
                         : presentation == LoomMessagePresentation.voice
                         ? const EdgeInsets.fromLTRB(10, 6, 6, 0)

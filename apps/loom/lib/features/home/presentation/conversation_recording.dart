@@ -30,6 +30,21 @@ class _NativeVoiceBackend implements VoiceRecorderBackend {
   Stream<double> get amplitudes => recorder
       .onAmplitudeChanged(const Duration(milliseconds: 120))
       .map((a) => ((a.current + 60) / 60).clamp(0.0, 1.0).toDouble());
+
+  @override
+  Future<void> pause() async {
+    try {
+      await recorder.pause();
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> resume() async {
+    try {
+      await recorder.resume();
+    } catch (_) {}
+  }
+
   @override
   Future<File?> stop() async {
     final path = await recorder.stop();
@@ -85,6 +100,21 @@ class _VideoNoteBackend implements VoiceRecorderBackend {
 
   @override
   Stream<double> get amplitudes => const Stream.empty();
+
+  @override
+  Future<void> pause() async {
+    try {
+      await camera?.pauseVideoRecording();
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> resume() async {
+    try {
+      await camera?.resumeVideoRecording();
+    } catch (_) {}
+  }
+
   @override
   Future<File?> stop() async {
     final capture = await camera!.stopVideoRecording();
@@ -370,6 +400,21 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
     );
   }
 
+  /// Direct send (locked recording bar): stops capture and uploads without
+  /// opening the review draft — Telegram's "send without listening".
+  Future<void> _sendNow() async {
+    if (_retaking || !_voice.capturing && !_voice.paused) return;
+    await _closePreview();
+    if (!mounted || LoomAppLock.instance.locked) return;
+    await _voice.stop();
+    if (!mounted || LoomAppLock.instance.locked) return;
+    await _voice.send(
+      (file, peaks, duration) => _video
+          ? widget.onVideoSend(file, duration)
+          : widget.onVoiceSend(file, peaks, duration),
+    );
+  }
+
   @override
   void dispose() {
     _gestureEpoch++;
@@ -415,15 +460,29 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
     final camera = _camera.camera;
     final alternateLens = _camera.cameraSelection.alternateLens;
     final capturing = _voice.capturing;
+    final paused = _voice.paused;
+    final reduceMotion = LoomAccessibility.fromContext(context).reduceMotion;
     return Positioned.fill(
       child: Stack(
         children: [
+          // Frosted dark backdrop: the chat stays visible but unreadable, so
+          // overlay controls keep full contrast (Telegram recording style).
           Positioned.fill(
             bottom: math.max(0, size.height - bottom),
             child: IgnorePointer(
               child: FadeTransition(
                 opacity: _previewMotion,
-                child: ColoredBox(color: Colors.black.withValues(alpha: .24)),
+                child: ClipRect(
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(
+                      sigmaX: reduceMotion ? 0 : 18,
+                      sigmaY: reduceMotion ? 0 : 18,
+                    ),
+                    child: ColoredBox(
+                      color: Colors.black.withValues(alpha: .42),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -450,7 +509,7 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
                             : _voice.file != null
                             ? _LocalVideoPreview(
                                 file: _voice.file!,
-                                round: true,
+                                fill: true,
                                 active: _voice.phase == VoicePhase.draft,
                               )
                             : camera?.value.isInitialized == true
@@ -471,10 +530,7 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
                       child: Semantics(
                         liveRegion: true,
                         child: Text(
@@ -496,71 +552,94 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
                                   'Review before sending',
                                   'قبل از ارسال بازبینی کنید',
                                 )
-                              : '${capturing ? tr(context, 'Recording', 'در حال ضبط') : tr(context, 'Video draft', 'پیش‌نویس ویدیو')} · ${mediaTime(_voice.duration)}',
+                              : '${paused ? tr(context, 'Paused', 'متوقف') : capturing ? tr(context, 'Recording', 'در حال ضبط') : tr(context, 'Video draft', 'پیش‌نویس ویدیو')} · ${mediaTime(_voice.duration)}',
                           textAlign: TextAlign.center,
                           maxLines: 2,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            shadows: [Shadow(color: Colors.black45, blurRadius: 8)],
+                          ),
                         ),
                       ),
                     ),
                     if (_voice.phase == VoicePhase.draft)
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          TextButton(
-                            onPressed: _retaking ? null : () => _retake(),
-                            child: Text(tr(context, 'Retake', 'ضبط دوباره')),
-                          ),
-                          if (alternateLens != null)
-                            TextButton.icon(
+                      _OverlayControlsCard(
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 4,
+                          children: [
+                            TextButton(
+                              onPressed: _retaking ? null : () => _retake(),
+                              child: Text(tr(context, 'Retake', 'ضبط دوباره')),
+                            ),
+                            if (alternateLens != null)
+                              TextButton.icon(
+                                onPressed: _retaking
+                                    ? null
+                                    : () => _retake(lens: alternateLens),
+                                icon: const Icon(LoomIcons.cameraswitch_outlined),
+                                label: Text(
+                                  alternateLens == CameraLensDirection.back
+                                      ? tr(
+                                          context,
+                                          'Rear camera',
+                                          'دوربین پشت',
+                                        )
+                                      : tr(
+                                          context,
+                                          'Front camera',
+                                          'دوربین جلو',
+                                        ),
+                                ),
+                              ),
+                            TextButton(
+                              onPressed: _cancel,
+                              child: Text(tr(context, 'Discard', 'حذف')),
+                            ),
+                            FilledButton(
                               onPressed: _retaking
                                   ? null
-                                  : () => _retake(lens: alternateLens),
-                              icon: const Icon(LoomIcons.cameraswitch_outlined),
-                              label: Text(
-                                alternateLens == CameraLensDirection.back
-                                    ? tr(
-                                        context,
-                                        'Retake with rear camera',
-                                        'ضبط دوباره با دوربین پشت',
-                                      )
-                                    : tr(
-                                        context,
-                                        'Retake with front camera',
-                                        'ضبط دوباره با دوربین جلو',
-                                      ),
+                                  : () => unawaited(_sendVoice()),
+                              child: Text(tr(context, 'Send', 'ارسال')),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (capturing || paused)
+                      _OverlayControlsCard(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextButton(
+                              onPressed: _cancel,
+                              child: Text(tr(context, 'Cancel', 'لغو')),
+                            ),
+                            if (_voice.phase == VoicePhase.recording)
+                              TextButton(
+                                onPressed: _voice.lock,
+                                child: Text(tr(context, 'Lock', 'قفل')),
+                              ),
+                            IconButton(
+                              tooltip: paused
+                                  ? tr(context, 'Resume', 'ادامه')
+                                  : tr(context, 'Pause', 'توقف موقت'),
+                              onPressed: () => unawaited(
+                                  paused ? _voice.resume() : _voice.pause()),
+                              icon: Icon(
+                                paused
+                                    ? LoomIcons.play_arrow_rounded
+                                    : LoomIcons.pause_rounded,
                               ),
                             ),
-                          TextButton(
-                            onPressed: _cancel,
-                            child: Text(tr(context, 'Discard', 'حذف')),
-                          ),
-                          FilledButton(
-                            onPressed: _retaking
-                                ? null
-                                : () => unawaited(_sendVoice()),
-                            child: Text(tr(context, 'Send', 'ارسال')),
-                          ),
-                        ],
-                      )
-                    else if (capturing)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TextButton(
-                            onPressed: _cancel,
-                            child: Text(tr(context, 'Cancel', 'لغو')),
-                          ),
-                          if (_voice.phase == VoicePhase.recording)
                             TextButton(
-                              onPressed: _voice.lock,
-                              child: Text(tr(context, 'Lock', 'قفل')),
+                              onPressed: () => unawaited(_voice.stop()),
+                              child: Text(tr(context, 'Stop', 'توقف')),
                             ),
-                          TextButton(
-                            onPressed: () => unawaited(_voice.stop()),
-                            child: Text(tr(context, 'Stop', 'توقف')),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                   ],
                 ),
@@ -678,12 +757,33 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
             Expanded(
               child: _LiveWaveform(peaks: _voice.waveform, color: p.critical),
             ),
-            if (phase == VoicePhase.locked) ...[
+            if (phase == VoicePhase.locked || phase == VoicePhase.paused) ...[
               const SizedBox(width: 6),
-              TextButton.icon(
-                onPressed: () => unawaited(_voice.stop()),
-                icon: const Icon(LoomIcons.stop),
-                label: Text(tr(context, 'Stop', 'توقف')),
+              IconButton(
+                tooltip: _voice.paused
+                    ? tr(context, 'Resume', 'ادامه')
+                    : tr(context, 'Pause', 'توقف موقت'),
+                onPressed: () => unawaited(
+                    _voice.paused ? _voice.resume() : _voice.pause()),
+                icon: Icon(
+                  _voice.paused
+                      ? LoomIcons.play_arrow_rounded
+                      : LoomIcons.pause_rounded,
+                  size: 20,
+                ),
+              ),
+              IconButton(
+                tooltip: tr(
+                  context,
+                  'Send without listening',
+                  'ارسال بدون گوش دادن',
+                ),
+                onPressed: () => unawaited(_sendNow()),
+                style: IconButton.styleFrom(
+                  backgroundColor: p.primary,
+                  foregroundColor: p.onPrimary,
+                ),
+                icon: const Icon(LoomIcons.send_rounded, size: 19),
               ),
             ] else ...[
               const SizedBox(width: 6),
@@ -936,4 +1036,30 @@ class _LiveWaveformPainter extends CustomPainter {
       (peaks.isNotEmpty &&
           old.peaks.isNotEmpty &&
           old.peaks.last != peaks.last);
+}
+
+/// Flat elevated card hosting the recording overlay controls, so buttons stay
+/// readable over the blurred chat backdrop.
+class _OverlayControlsCard extends StatelessWidget {
+  const _OverlayControlsCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: Material(
+        color: p.surfaceElevated,
+        elevation: 6,
+        shadowColor: Colors.black45,
+        borderRadius: BorderRadius.circular(LoomRadii.control),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: child,
+        ),
+      ),
+    );
+  }
 }

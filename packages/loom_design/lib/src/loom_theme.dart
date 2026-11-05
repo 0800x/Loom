@@ -348,10 +348,12 @@ abstract final class LoomTheme {
         backgroundColor: p.surfaceElevated,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(LoomRadii.sheet),
           side: BorderSide(color: p.borderStrong),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         titleTextStyle: base.textTheme.titleLarge?.copyWith(
           color: p.textPrimary,
           fontSize: LoomTypeScale.title,

@@ -278,6 +278,7 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
             items: items,
             caption: widget.draft.caption,
             authorized: widget.authorized,
+            onEdit: _replaceItemWithEdit,
           ),
         ),
       );
@@ -303,14 +304,13 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
     });
   }
 
-  /// Swaps the previewed item's backing file with the editor output. Pending
-  /// batch payloads are replaced in place so the selection order is kept.
-  Future<void> _editPreview(_GalleryItem item) async {
-    if (batch.sending || _singleSending) return;
+  /// Swaps an edited file into the batch; returns the replacement item.
+  Future<_GalleryItem?> _replaceItemWithEdit(_GalleryItem item) async {
+    if (batch.sending || _singleSending) return null;
     final source = await item.resolve();
-    if (!mounted || source == null) return;
+    if (!mounted || source == null) return null;
     final edited = await showLoomImageEditor(context, source: source);
-    if (!mounted || edited == null) return;
+    if (!mounted || edited == null) return null;
     final replacement = _GalleryItem(
       id: item.id,
       kind: item.kind,
@@ -320,6 +320,15 @@ class _AttachmentGalleryState extends State<_AttachmentGallery>
     if (batch.pending.containsKey(item.id)) {
       batch.replace(item.id, replacement);
     }
+    return replacement;
+  }
+
+  /// Swaps the previewed item's backing file with the editor output. Pending
+  /// batch payloads are replaced in place so the selection order is kept.
+  Future<void> _editPreview(_GalleryItem item) async {
+    if (batch.sending || _singleSending) return;
+    final replacement = await _replaceItemWithEdit(item);
+    if (!mounted || replacement == null) return;
     setState(() {
       _previewItem = replacement;
       _previewFile = replacement.resolve();

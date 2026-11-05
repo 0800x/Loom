@@ -1,4 +1,5 @@
 import 'package:loom_next/features/media/application/playback_controller.dart';
+import 'package:loom_next/features/media/presentation/compact_playback_bar.dart';
 import 'package:loom_next/features/media/presentation/playback_host.dart';
 import 'package:loom_design/loom_design.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +28,22 @@ void main() {
           navigatorKey: navigator,
           builder: (context, child) =>
               LoomPlaybackHost(navigatorKey: navigator, child: child!),
-          home: Scaffold(body: TextField(controller: input)),
+          home: Scaffold(
+            body: SafeArea(
+              // The compact bar is docked by the shell in the real app; the
+              // draft + open-details contract lives in the bar itself.
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: TextField(controller: input),
+                  ),
+                  const Spacer(),
+                  const LoomCompactPlaybackBar(),
+                ],
+              ),
+            ),
+          ),
         ),
       );
       await tester.pump(const Duration(milliseconds: 350));

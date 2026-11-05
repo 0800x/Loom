@@ -57,7 +57,7 @@ class _Groups extends LoomGroupsController {
   }
 
   @override
-  Future<bool> open() async => true;
+  Future<bool> open({bool quiet = false}) async => true;
   @override
   Future<bool> sendContent(String id, LoomMessageContent content) async {
     sent = content;
