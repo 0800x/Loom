@@ -114,6 +114,18 @@ radio, media-playback or cross-network call support.
 
 [Capture provenance and image hashes](docs/screenshots/loom-current/provenance.json).
 
+## Interface and design
+
+Loom uses a shared design system, `loom_design`, across its client screens.
+Layered glass surfaces, adaptive blur/refraction and restrained motion form
+the visual language. Rendering quality can step down on slower devices, and
+reduced-motion or reduced-transparency preferences are respected.
+
+The three main appearance modes are **Porcelain** (light), **Midnight** (dark)
+and **Void** (OLED). Shared semantic color roles keep components consistent
+across the messenger and desktop interface. The debug-only **Design Lab**
+renders the component gallery for development.
+
 ## Get started
 
 1. Install Loom on a supported device using a validated project build or release artifact when available.
@@ -231,6 +243,10 @@ connections, or make every blocked service reachable. In particular:
   use the repositories configured for that distribution.
 - Ubuntu ARM64 uses Ubuntu Ports; the built-in APT mirror profile does not
   configure that repository automatically.
+- When a mirror profile must install Docker Engine from distribution packages,
+  the automated fresh-install route covers Ubuntu and Debian 13+. On an older
+  Debian release, provide a working Docker Engine plus Compose v2 first, or
+  use the official package route where your network permits it.
 - Home Node setup is pull-only. It does not locally compile Go, run npm
   installs or build Alpine-based images. Go/npm/Alpine mirror settings belong
   to separate maintainer build workflows, not a magic fix for a blocked GHCR
@@ -597,6 +613,10 @@ Arvan به‌تنهایی نصب را کامل نمی‌کند.
 در سیستم‌عامل‌های غیر از Ubuntu و Debian، بسته‌های میزبان از مخازن از قبل
 تنظیم‌شدهٔ همان توزیع استفاده می‌کنند. Ubuntu ARM64 نیز از Ubuntu Ports
 استفاده می‌کند و پروفایل داخلی این نصب‌کننده آن را خودکار تنظیم نمی‌کند.
+برای نصب تازهٔ Docker Engine با پروفایل میرور، مسیر خودکار روی Ubuntu و
+Debian 13 به بالا پشتیبانی می‌شود. روی Debian قدیمی‌تر، Docker Engine و
+Compose v2 را از قبل آماده کنید یا در صورت دسترسی از مسیر رسمی بسته‌ها استفاده
+کنید.
 
 امضای بسته‌ها، TLS، هش آرشیو سورس و digest ایمیج‌های ثابت غیرفعال نمی‌شوند.
 اگر میرور انتخاب‌شده در دسترس نباشد، نصب متوقف می‌شود؛ نصب‌کننده بی‌صدا
