@@ -344,15 +344,7 @@ Point your domain directly to a Linux server, allow TCP **80/443**, connect over
 SSH and run:
 
 ```bash
-set -euo pipefail
-# Use the published versioned bootstrap and verify its SHA256 before execution.
-: "${LOOM_RELEASE_TAG:?set a published release tag, e.g. v0.3.0-alpha.1}"
-tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
-curl --proto '=https' --tlsv1.2 -fsSLo "$tmp/loom-install.sh" "https://github.com/0800x/Loom/releases/download/$LOOM_RELEASE_TAG/loom-install.sh"
-curl --proto '=https' --tlsv1.2 -fsSLo "$tmp/loom-install.sh.sha256" "https://github.com/0800x/Loom/releases/download/$LOOM_RELEASE_TAG/loom-install.sh.sha256"
-(cd "$tmp" && sha256sum --check loom-install.sh.sha256)
-bash "$tmp/loom-install.sh" --wizard
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/0800x/Loom/main/install.sh -o /tmp/loom-install.sh && bash /tmp/loom-install.sh
 ```
 
 The v0.3.0-alpha.1 release is not published yet (`release/version.json` has
