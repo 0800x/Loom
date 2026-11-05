@@ -4,7 +4,7 @@ umask 077
 
 # Pin the immutable source commit and the bootstrap entrypoint independently.
 # The archive digest is computed from that verified Git object at install time.
-LOOM_INSTALL_REVISION='f51f09f7faf98f815b93cbb71d6a66ae5fb4c6e8'
+LOOM_INSTALL_REVISION='dcf24b7c98748664b89009210c77873f58fc7404'
 LOOM_INSTALL_BOOTSTRAP_SHA256='88a96e7d7267ca5dcc77f9690ab5d44190d9a4e0d50b69881d41d8ec8c7bb83c'
 
 if [[ "${1:-}" == --help || "${1:-}" == -h ]]; then
