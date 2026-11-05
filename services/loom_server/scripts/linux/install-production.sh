@@ -543,7 +543,7 @@ LOOM_MODE=production
 LOOM_HOST=0.0.0.0
 LOOM_PORT=7483
 LOOM_HOST_PORT=7483
-LOOM_IMAGE_TAG=$PREBUILT_RELEASE_COMMIT
+LOOM_IMAGE_TAG=$INSTALL_COMMIT
 LOOM_PROXY_MODE=$PROXY_MODE
 LOOM_PUBLIC_DOMAIN=$DOMAIN
 LOOM_PUBLIC_BASE_URL=https://$DOMAIN
@@ -945,7 +945,7 @@ fi
 loom_download_profile "${DOWNLOAD_PROFILE:-official}"
 if [[ -z "$GO_MIRROR" && -f "$EXISTING_ENV" ]]; then GO_MIRROR="$(read_env_value "$EXISTING_ENV" LOOM_GO_MIRROR)"; fi
 loom_go_mirror "${GO_MIRROR:-profile}"
-ui_info "Using verified prebuilt Node/MinIO images for commit $PREBUILT_RELEASE_COMMIT; installer source is $INSTALL_COMMIT; host-side compilation is disabled"
+ui_info "Using verified prebuilt Node/MinIO images for commit $INSTALL_COMMIT; Manager pin is $PREBUILT_RELEASE_COMMIT; host-side compilation is disabled"
 ui_step 1 7 "Ensuring Docker Engine + Compose v2"
 ensure_docker
 ensure_runtime_tools
@@ -974,12 +974,12 @@ set_env_value "$EXISTING_ENV" LOOM_GO_PROXY "$LOOM_GO_PROXY"
 set_env_value "$EXISTING_ENV" LOOM_GO_MIRROR "$LOOM_GO_MIRROR"
 set_env_value "$EXISTING_ENV" LOOM_NPM_REGISTRY "$LOOM_NPM_REGISTRY"
 set_env_value "$EXISTING_ENV" LOOM_ALPINE_MIRROR "$LOOM_ALPINE_MIRROR"
-set_env_value "$EXISTING_ENV" LOOM_BUILD_COMMIT "$PREBUILT_RELEASE_COMMIT"
-set_env_value "$EXISTING_ENV" LOOM_IMAGE_TAG "$PREBUILT_RELEASE_COMMIT"
+set_env_value "$EXISTING_ENV" LOOM_BUILD_COMMIT "$INSTALL_COMMIT"
+set_env_value "$EXISTING_ENV" LOOM_IMAGE_TAG "$INSTALL_COMMIT"
 set_env_value "$EXISTING_ENV" LOOM_UPDATE_BRANCH "$UPDATE_BRANCH"
 set_env_value "$EXISTING_ENV" LOOM_UPDATE_REPOSITORY "$UPDATE_REPOSITORY"
 set_env_value "$EXISTING_ENV" LOOM_UPDATE_SOURCE_DIR "$UPDATE_SOURCE_DIR"
-export LOOM_BUILD_COMMIT="$PREBUILT_RELEASE_COMMIT"
+export LOOM_BUILD_COMMIT="$INSTALL_COMMIT"
 
 ui_step 5 7 "Checking DNS and host firewall"
 open_firewall_ports
@@ -1009,7 +1009,7 @@ if [[ $NO_START -eq 0 ]]; then
       if(expected && actual!==expected) process.exit(2);
       fetch("http://127.0.0.1:7483/readyz",{signal:AbortSignal.timeout(3000)})
         .then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1));
-    ' "$PREBUILT_RELEASE_COMMIT" >/dev/null 2>&1; then node_ready=1; break; fi
+    ' "$INSTALL_COMMIT" >/dev/null 2>&1; then node_ready=1; break; fi
     sleep 2
   done
   if [[ $node_ready -ne 1 ]]; then
@@ -1027,7 +1027,7 @@ if [[ $NO_START -eq 0 ]]; then
 
   ui_step 7 7 "Verifying public HTTPS certificate"
   verify_https
-  loom_write_install_state "$INSTALL_DIR" "$UPDATE_REPOSITORY" "$UPDATE_BRANCH" "$UPDATE_SOURCE_DIR" "$PREBUILT_RELEASE_COMMIT" "$MANAGER_VERSION"
+  loom_write_install_state "$INSTALL_DIR" "$UPDATE_REPOSITORY" "$UPDATE_BRANCH" "$UPDATE_SOURCE_DIR" "$INSTALL_COMMIT" "$MANAGER_VERSION"
 else
   ui_step 6 7 "Start skipped (--no-start)"
   ui_step 7 7 "Reverse-proxy/TLS setup skipped"

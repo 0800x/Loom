@@ -9,7 +9,7 @@ on:
         default: existing-production-key
   push:
     branches: [main]
-    tags: ['v0.3.0-alpha.1']
+    tags: ['v0.4.0-alpha.1']
 permissions:
   contents: read
 concurrency:
@@ -20,7 +20,7 @@ env:
   CI: 'true'
   FLUTTER_SUPPRESS_ANALYTICS: 'true'
   FLUTTER_VERSION: '3.47.0'
-  LOOM_VERSION: '0.3.0-alpha.1'
+  LOOM_VERSION: '0.4.0-alpha.1'
   XCODE_VERSION: '26.3'
   APPROVED_LOOM_REVISION: ${{ vars.APPROVED_LOOM_REVISION }}
   APPROVED_LOOM_TAG: ${{ vars.APPROVED_LOOM_TAG }}
@@ -116,7 +116,7 @@ jobs:
         run: python scripts/capture-provenance.py docs/screenshots/loom-current
       - uses: actions/upload-artifact@v4
         with:
-          name: Loom-0.3.0-alpha.1-widget-captures
+          name: Loom-0.4.0-alpha.1-widget-captures
           path: docs/screenshots/loom-current/
           if-no-files-found: error
   android:
@@ -241,14 +241,14 @@ jobs:
         if: env.LOOM_ANDROID_ENGINEERING_UNSIGNED != 'true' || github.ref_type != 'tag'
         uses: actions/upload-artifact@v4
         with:
-          name: Loom-0.3.0-alpha.1-android
+          name: Loom-0.4.0-alpha.1-android
           path: dist/
           if-no-files-found: error
       - name: Upload unsigned diagnostics separately from release candidates
         if: env.LOOM_ANDROID_ENGINEERING_UNSIGNED == 'true' && !(github.event_name == 'workflow_dispatch' && inputs.android_signing == 'unsigned-engineering')
         uses: actions/upload-artifact@v4
         with:
-          name: Loom-diagnostics-0.3.0-alpha.1-android-attempt-${{ github.run_attempt }}
+          name: Loom-diagnostics-0.4.0-alpha.1-android-attempt-${{ github.run_attempt }}
           path: dist/
           if-no-files-found: error
       - name: Require signed APKs for the installable candidate
@@ -421,14 +421,14 @@ jobs:
           python scripts/release.py manifest --directory dist --platform '${{ matrix.platform }}' --arch '${{ matrix.arch }}' --signing '${{ matrix.platform == 'macos' && 'adhoc-engineering' || 'unsigned-engineering' }}' --toolchain 'flutter=flutter --version' --toolchain 'rust=rustc --version'
       - uses: actions/upload-artifact@v4
         with:
-          name: Loom-0.3.0-alpha.1-${{ matrix.platform }}-${{ matrix.arch }}
+          name: Loom-0.4.0-alpha.1-${{ matrix.platform }}-${{ matrix.arch }}
           path: dist/
           if-no-files-found: error
       - name: Keep failed payload audit diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: Loom-0.3.0-alpha.1-audit-${{ matrix.platform }}-${{ matrix.arch }}
+          name: Loom-0.4.0-alpha.1-audit-${{ matrix.platform }}-${{ matrix.arch }}
           path: dist/identity-audit.json
           if-no-files-found: ignore
   node:
@@ -463,7 +463,7 @@ jobs:
           python scripts/release.py manifest --directory dist --platform 'node-${{ matrix.os }}' --arch '${{ matrix.arch }}' --signing unsigned-engineering --toolchain 'go=go version'
       - uses: actions/upload-artifact@v4
         with:
-          name: Loom-0.3.0-alpha.1-node-${{ matrix.os }}-${{ matrix.arch }}
+          name: Loom-0.4.0-alpha.1-node-${{ matrix.os }}-${{ matrix.arch }}
           path: dist/
           if-no-files-found: error
   node-images:
@@ -522,7 +522,7 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
-          pattern: Loom-0.3.0-alpha.1-*
+          pattern: Loom-0.4.0-alpha.1-*
           path: candidate
       - name: Verify every artifact manifest before assembly
         shell: bash

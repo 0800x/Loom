@@ -62,7 +62,7 @@ jobs:
       - name: Download the original build artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: Loom-0.3.0-alpha.1-*
+          pattern: Loom-0.4.0-alpha.1-*
           path: source/candidate
           merge-multiple: false
           github-token: ${{ github.token }}
