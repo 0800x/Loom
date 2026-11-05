@@ -652,6 +652,819 @@ dns_preflight() {
   printf '  %-14s %s\n' "Interface IPv4" "${interface_ip:-unknown}"
   printf '  %-14s %s\n' "Outbound IPv4" "${outbound_ip:-unknown}"
   printf '  %-14s %s\n' "DNS A" "${resolved//
+  if [[ "$TLS_MODE" == local ]]; then
+    if ! command -v nginx >/dev/null 2>&1; then load_os_release; loom_packages nginx; fi
+    systemctl enable --now nginx
+    return
+  fi
+  local ready=0
+  if command -v nginx >/dev/null 2>&1 && command -v certbot >/dev/null 2>&1 && certbot plugins 2>/dev/null | grep -qi nginx; then
+    ready=1
+  fi
+  if [[ $ready -eq 0 ]]; then
+    load_os_release
+    case "${ID:-}" in
+      ubuntu|debian|fedora|centos|rhel|rocky|almalinux)
+        loom_packages nginx certbot python3-certbot-nginx
+        ;;
+      arch|manjaro) loom_packages nginx certbot certbot-nginx ;;
+      opensuse-leap|opensuse-tumbleweed|sles) loom_packages nginx certbot python3-certbot-nginx ;;
+      *)
+        echo "Automatic Nginx/Certbot installation supports Ubuntu, Debian and Fedora." >&2
+        exit 1
+        ;;
+    esac
+  fi
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl enable --now nginx
+  elif ! nginx_is_active; then
+    nginx
+  fi
+}
+
+nginx_site_path() {
+  if [[ -d /etc/nginx/sites-available && -d /etc/nginx/sites-enabled ]]; then
+    printf '%s\n' /etc/nginx/sites-available/loom-node.conf
+  else
+    printf '%s\n' /etc/nginx/conf.d/loom-node.conf
+  fi
+}
+
+enable_nginx_site() {
+  local site="$1"
+  if [[ "$site" == /etc/nginx/sites-available/* ]]; then
+    ln -sfn "$site" /etc/nginx/sites-enabled/loom-node.conf
+  fi
+}
+
+check_nginx_domain_conflict() {
+  local conflict=""
+  if [[ -d /etc/nginx/sites-enabled ]]; then
+    conflict="$(grep -RslF "server_name $DOMAIN" /etc/nginx/sites-enabled 2>/dev/null | grep -v '/loom-node.conf$' | head -n1 || true)"
+  fi
+  if [[ -z "$conflict" && -d /etc/nginx/conf.d ]]; then
+    conflict="$(grep -RslF "server_name $DOMAIN" /etc/nginx/conf.d 2>/dev/null | grep -v '/loom-node.conf$' | head -n1 || true)"
+  fi
+  if [[ -n "$conflict" ]]; then
+    echo "Nginx already has another active server block for $DOMAIN: $conflict" >&2
+    echo "Refusing to overwrite an unrelated Nginx site." >&2
+    exit 1
+  fi
+}
+
+write_nginx_http_site() {
+  local site="$1"
+  cat >"$site" <<NGINX_HTTP
+# Managed by Loom Node installer.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $DOMAIN;
+
+    client_max_body_size 100m;
+
+    # Certbot's nginx authenticator temporarily installs its challenge route.
+    # Until TLS is verified, never expose the authenticated API over HTTP.
+    location / { return 503; }
+}
+NGINX_HTTP
+  enable_nginx_site "$site"
+  nginx -t
+  systemctl reload nginx
+}
+
+issue_nginx_certificate() {
+  local cert_args=(certonly --nginx --non-interactive --agree-tos --no-eff-email --keep-until-expiring -d "$DOMAIN")
+  if [[ -n "$CERTBOT_EMAIL" ]]; then
+    cert_args+=(--email "$CERTBOT_EMAIL")
+  else
+    cert_args+=(--register-unsafely-without-email)
+  fi
+  certbot "${cert_args[@]}"
+}
+
+write_nginx_https_site() {
+  local site="$1"
+  local cert_dir="${LOOM_CERT_DIR:-/etc/letsencrypt/live/$DOMAIN}"
+  [[ -s "$cert_dir/fullchain.pem" && -s "$cert_dir/privkey.pem" ]] || return 1
+  cat >"$site" <<NGINX_HTTPS
+# Managed by Loom Node installer.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $DOMAIN;
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name $DOMAIN;
+
+    ssl_certificate $cert_dir/fullchain.pem;
+    ssl_certificate_key $cert_dir/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer" always;
+
+    client_max_body_size 100m;
+
+    location / {
+        proxy_pass http://127.0.0.1:7483;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        proxy_buffering off;
+    }
+}
+NGINX_HTTPS
+  nginx -t
+  systemctl reload nginx
+}
+
+install_certbot_renewal_hook() {
+  install -d -m 0755 /etc/letsencrypt/renewal-hooks/deploy
+  cat >/etc/letsencrypt/renewal-hooks/deploy/loom-nginx-reload.sh <<'HOOK'
+#!/usr/bin/env bash
+set -e
+nginx -t
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl reload nginx
+else
+  nginx -s reload
+fi
+HOOK
+  chmod 0755 /etc/letsencrypt/renewal-hooks/deploy/loom-nginx-reload.sh
+  if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files certbot.timer >/dev/null 2>&1; then
+    systemctl enable --now certbot.timer >/dev/null 2>&1 || true
+  fi
+}
+
+nginx_certificate_is_valid() {
+  local cert_dir="${1:-/etc/letsencrypt/live/$DOMAIN}"
+  [[ -s "$cert_dir/fullchain.pem" && -s "$cert_dir/privkey.pem" ]] || return 1
+  openssl x509 -in "$cert_dir/fullchain.pem" -noout -checkend 0 >/dev/null 2>&1 &&
+    openssl verify -partial_chain -CAfile "$cert_dir/fullchain.pem" \
+      -verify_hostname "$DOMAIN" "$cert_dir/fullchain.pem" >/dev/null 2>&1
+}
+
+configure_nginx_tls() {
+  ensure_nginx_certbot
+  check_nginx_domain_conflict
+  if [[ "$TLS_MODE" == local ]]; then
+    LOOM_CERT_DIR="$INSTALL_DIR/deploy/tls-local"
+    loom_local_certificate "$LOOM_CERT_DIR" "$DOMAIN"
+    local local_site
+    local_site="$(nginx_site_path)"
+    enable_nginx_site "$local_site"
+    write_nginx_https_site "$local_site"
+    ui_ok "Local HTTPS configured; clients must explicitly trust its certificate."
+    return
+  fi
+  local site
+  site="$(nginx_site_path)"
+  # Updates must not remove working HTTPS merely because another Certbot
+  # process holds its lock. The renewal timer maintains existing certificates.
+  if nginx_certificate_is_valid; then
+    enable_nginx_site "$site"
+    write_nginx_https_site "$site"
+    install_certbot_renewal_hook
+    ui_ok "Existing valid Nginx certificate reused for $DOMAIN"
+    return 0
+  fi
+  write_nginx_http_site "$site"
+  ui_info "Requesting/refreshing Let's Encrypt certificate for $DOMAIN through Nginx"
+  # A concurrent issuer may have completed even if this invocation failed.
+  if issue_nginx_certificate || nginx_certificate_is_valid; then
+    if ! nginx_certificate_is_valid; then
+      ui_warn "Certbot finished without a valid certificate for $DOMAIN."
+      return 1
+    fi
+    write_nginx_https_site "$site"
+    install_certbot_renewal_hook
+    ui_ok "Nginx HTTPS is configured for $DOMAIN"
+  else
+    ui_warn "Certbot could not issue the certificate yet."
+    ui_warn "The HTTP bootstrap site returns 503. Check the Certbot error above; if another instance is running, wait for it to finish and retry. Check DNS/firewall when issuance reports a challenge failure."
+    return 1
+  fi
+}
+
+verify_https() {
+  [[ $TLS_WAIT_SECONDS -gt 0 ]] || return 1
+  if [[ "$TLS_MODE" == local ]]; then
+    curl --fail --silent --show-error --connect-timeout 4 --max-time 15 \
+      --cacert "$INSTALL_DIR/deploy/tls-local/fullchain.pem" \
+      --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/readyz" >/dev/null
+    ui_ok 'Local HTTPS and readiness verified against the generated certificate.'
+    return
+  fi
+  local deadline=$((SECONDS + TLS_WAIT_SECONDS))
+  ui_info "Waiting up to ${TLS_WAIT_SECONDS}s for public HTTPS"
+  while (( SECONDS < deadline )); do
+    if curl -fsS --connect-timeout 4 --max-time 8 "https://$DOMAIN/readyz" >/dev/null 2>&1; then
+      local cert
+      cert="$(echo | openssl s_client -servername "$DOMAIN" -connect "$DOMAIN:443" 2>/dev/null | openssl x509 -noout -issuer -enddate 2>/dev/null || true)"
+      ui_ok "HTTPS is ready: https://$DOMAIN"
+      [[ -n "$cert" ]] && printf '%s\n' "$cert" | sed 's/^/  /'
+      return 0
+    fi
+    sleep 5
+  done
+  ui_warn "HTTPS is not verified yet."
+  if [[ "$PROXY_MODE" == "caddy" ]]; then
+    ui_info "Caddy remains running and will keep retrying automatic certificate issuance."
+  else
+    ui_info "Check Nginx, Certbot, DNS and provider/cloud firewall; rerun after fixing DNS if issuance failed."
+  fi
+  return 1
+}
+
+launch_tui() {
+  [[ $NO_TUI -eq 0 && $NO_START -eq 0 ]] || return 0
+  if [[ -r /dev/tty && -w /dev/tty ]]; then
+    ui_info "Launching Loom Node Manager"
+    /usr/local/bin/loom-node </dev/tty >/dev/tty 2>/dev/tty || true
+  else
+    ui_info "Run 'loom-node' in an interactive terminal to open the manager."
+  fi
+}
+
+INSTALL_COMMIT="$VERIFIED_COMMIT"
+if ! [[ "$INSTALL_COMMIT" =~ ^[a-fA-F0-9]{40}$ ]]; then
+  INSTALL_COMMIT="${LOOM_SOURCE_COMMIT:-$(read_env_value "$SOURCE_ROOT/build-info.env" commit)}"
+fi
+if ! [[ "$INSTALL_COMMIT" =~ ^[a-fA-F0-9]{40}$ ]]; then INSTALL_COMMIT=""; fi
+PREBUILT_RELEASE_COMMIT='a96ea6c24f8bc531fa23d34a4f735cd6ba398458'
+[[ "$PREBUILT_RELEASE_COMMIT" =~ ^[a-f0-9]{40}$ ]] || { ui_fail "Invalid prebuilt release pin."; exit 1; }
+SOURCE_BRANCH="$(git -C "$REPO_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+UPDATE_BRANCH="${UPDATE_BRANCH:-$SOURCE_BRANCH}"
+UPDATE_BRANCH="${UPDATE_BRANCH:-$(read_env_value "$SOURCE_ROOT/build-info.env" branch)}"
+UPDATE_BRANCH="${UPDATE_BRANCH:-$(read_env_value "$EXISTING_ENV" LOOM_UPDATE_BRANCH)}"
+UPDATE_BRANCH="${UPDATE_BRANCH:-main}"
+if ! [[ "$UPDATE_REPOSITORY" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$ ]] ||
+   ! [[ "$UPDATE_BRANCH" =~ ^[a-zA-Z0-9_][a-zA-Z0-9_./-]*$ ]] || [[ "$UPDATE_BRANCH" == *..* || "$UPDATE_BRANCH" == */ || "$UPDATE_BRANCH" == *.lock ]]; then
+  ui_fail "Invalid update repository or branch."
+  exit 1
+fi
+if [[ $UPDATE_SOURCE_EXPLICIT -eq 0 && -z "$UPDATE_SOURCE_DIR" && -d "$REPO_ROOT/.git" ]]; then
+  UPDATE_SOURCE_DIR="$REPO_ROOT"
+fi
+MANAGER_VERSION="$(sed -n 's/^const version = "\([^"]*\)"/\1/p' "$MANAGER_SOURCE/main.go" 2>/dev/null || true)"
+MANAGER_VERSION="${MANAGER_VERSION:-$(read_env_value "$SOURCE_ROOT/build-info.env" manager_version)}"
+
+ui_banner
+printf '%bInstallation plan%b\n' "$UI_BOLD" "$UI_RESET"
+printf '  %-14s %s\n' "Install dir" "$INSTALL_DIR"
+printf '  %-14s %s\n' "Domain" "$DOMAIN"
+if [[ $FIRST_INSTALL -eq 1 ]]; then
+  printf '  %-14s %s\n' "Registration" "$REGISTRATION"
+  printf '  %-14s %s\n' "Federation" "$FEDERATION"
+fi
+
+if [[ -z "$DOWNLOAD_PROFILE" && -f "$EXISTING_ENV" ]]; then
+  DOWNLOAD_PROFILE="$(read_env_value "$EXISTING_ENV" LOOM_DOWNLOAD_PROFILE)"
+fi
+loom_download_profile "${DOWNLOAD_PROFILE:-official}"
+if [[ -z "$GO_MIRROR" && -f "$EXISTING_ENV" ]]; then GO_MIRROR="$(read_env_value "$EXISTING_ENV" LOOM_GO_MIRROR)"; fi
+loom_go_mirror "${GO_MIRROR:-profile}"
+ui_info "Using verified prebuilt Node/MinIO images for commit $PREBUILT_RELEASE_COMMIT; installer source is $INSTALL_COMMIT; host-side compilation is disabled"
+ui_step 1 7 "Ensuring Docker Engine + Compose v2"
+ensure_docker
+ensure_runtime_tools
+loom_require_compose_version
+loom_guard_persistent_install "$EXISTING_ENV"
+loom_preserve_storage_image "$INSTALL_DIR"
+
+ui_step 2 7 "Selecting reverse proxy without stealing existing ports"
+select_proxy_mode
+
+ui_step 3 7 "Installing/updating Loom Node bundle and TUI"
+copy_bundle
+
+if [[ $FIRST_INSTALL -eq 1 ]]; then
+  ui_step 4 7 "Generating production configuration and secrets"
+  write_env
+else
+  ui_step 4 7 "Preserving production secrets and updating endpoint configuration"
+  configure_existing_env
+fi
+write_launcher
+set_env_value "$EXISTING_ENV" LOOM_TLS_MODE "$TLS_MODE"
+set_env_value "$EXISTING_ENV" LOOM_DOWNLOAD_PROFILE "$LOOM_DOWNLOAD_PROFILE"
+set_env_value "$EXISTING_ENV" LOOM_DOCKER_PREFIX "$LOOM_DOCKER_PREFIX"
+set_env_value "$EXISTING_ENV" LOOM_GO_PROXY "$LOOM_GO_PROXY"
+set_env_value "$EXISTING_ENV" LOOM_GO_MIRROR "$LOOM_GO_MIRROR"
+set_env_value "$EXISTING_ENV" LOOM_NPM_REGISTRY "$LOOM_NPM_REGISTRY"
+set_env_value "$EXISTING_ENV" LOOM_ALPINE_MIRROR "$LOOM_ALPINE_MIRROR"
+set_env_value "$EXISTING_ENV" LOOM_BUILD_COMMIT "$PREBUILT_RELEASE_COMMIT"
+set_env_value "$EXISTING_ENV" LOOM_IMAGE_TAG "$PREBUILT_RELEASE_COMMIT"
+set_env_value "$EXISTING_ENV" LOOM_UPDATE_BRANCH "$UPDATE_BRANCH"
+set_env_value "$EXISTING_ENV" LOOM_UPDATE_REPOSITORY "$UPDATE_REPOSITORY"
+set_env_value "$EXISTING_ENV" LOOM_UPDATE_SOURCE_DIR "$UPDATE_SOURCE_DIR"
+export LOOM_BUILD_COMMIT="$PREBUILT_RELEASE_COMMIT"
+
+ui_step 5 7 "Checking DNS and host firewall"
+open_firewall_ports
+[[ "$TLS_MODE" == local ]] || dns_preflight || true
+
+compose config --quiet
+
+if [[ $NO_START -eq 0 ]]; then
+  ui_step 6 7 "Pulling prebuilt Loom Node and MinIO images"
+  stop_embedded_caddy_for_nginx
+  if ! compose pull; then
+    ui_fail 'Prebuilt release images could not be downloaded. Check GHCR package visibility and server connectivity.'
+    ui_info 'No local image compilation is attempted. Database credentials and Node identity are left untouched.'
+    exit 1
+  fi
+  if ! compose up -d --wait --wait-timeout 180; then
+    ui_fail 'Container startup failed. No database credentials or identity were reset.'
+    exit 1
+  fi
+  compose ps
+  ui_info "Verifying the running Node revision and local readiness"
+  node_ready=0
+  for ((attempt=0; attempt<45; attempt++)); do
+    if compose exec -T loom-node node -e '
+      const expected=process.argv[1];
+      const actual=require("node:fs").readFileSync("/app/.loom-build-commit","utf8").trim();
+      if(expected && actual!==expected) process.exit(2);
+      fetch("http://127.0.0.1:7483/readyz",{signal:AbortSignal.timeout(3000)})
+        .then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1));
+    ' "$PREBUILT_RELEASE_COMMIT" >/dev/null 2>&1; then node_ready=1; break; fi
+    sleep 2
+  done
+  if [[ $node_ready -ne 1 ]]; then
+    startup_logs="$(compose logs --no-color --tail 100 loom-node 2>/dev/null || true)"
+    ui_fail "$(loom_classify_startup_failure "$startup_logs")"
+    unset startup_logs
+    ui_fail "Node readiness/revision verification failed. Run: sudo loom doctor"
+    exit 1
+  fi
+
+  if [[ "$PROXY_MODE" == "nginx" ]]; then
+    ui_info "Configuring host Nginx reverse proxy and Certbot"
+    configure_nginx_tls
+  fi
+
+  ui_step 7 7 "Verifying public HTTPS certificate"
+  verify_https
+  loom_write_install_state "$INSTALL_DIR" "$UPDATE_REPOSITORY" "$UPDATE_BRANCH" "$UPDATE_SOURCE_DIR" "$PREBUILT_RELEASE_COMMIT" "$MANAGER_VERSION"
+else
+  ui_step 6 7 "Start skipped (--no-start)"
+  ui_step 7 7 "Reverse-proxy/TLS setup skipped"
+fi
+
+printf '\n%b╭──────────────────────────────────────────────╮%b\n' "$UI_GREEN$UI_BOLD" "$UI_RESET"
+[[ $NO_START -eq 0 ]] && install_status='Installation complete' || install_status='Configured only; HTTPS unverified'
+printf '%b│ %-44s │%b\n' "$UI_GREEN$UI_BOLD" "$install_status" "$UI_RESET"
+printf '%b╰──────────────────────────────────────────────╯%b\n' "$UI_GREEN$UI_BOLD" "$UI_RESET"
+printf '  %-14s %s\n' "Home" "$INSTALL_DIR"
+printf '  %-14s %s\n' "Secrets" "$INSTALL_DIR/deploy/.env (mode 0600)"
+if [[ $NO_START -eq 0 ]]; then printf '  %-14s %s\n' "Public URL" "https://$DOMAIN"; else ui_warn 'Containers were not started and HTTPS is unavailable/unverified.'; fi
+printf '  %-14s %s\n' "Manager" "loom-node"
+printf '  %-14s %s\n' "Proxy" "$PROXY_MODE"
+if [[ "$PROXY_MODE" == "caddy" ]]; then
+  printf '  %-14s %s\n' "TLS" "Caddy automatic HTTPS + renewal"
+else
+  printf '  %-14s %s\n' "Upstream" "http://127.0.0.1:7483 (loopback only)"
+  printf '  %-14s %s\n' "TLS" "Nginx + Let's Encrypt/Certbot renewal"
+fi
+if [[ "$REGISTRATION" == "approval" && $FIRST_INSTALL -eq 1 ]]; then
+  ui_info "Registration approvals: loom-node → Registration"
+fi
+if [[ "$FEDERATION" != "disabled" && $FIRST_INSTALL -eq 1 ]]; then
+  ui_warn "Federation routing remains experimental/incomplete in this branch."
+fi
+
+launch_tui
+\n'/, }"
+  if [[ -z "$resolved" ]]; then
+    ui_warn "No IPv4 A record is visible yet. TLS issuance needs DNS to reach this server."
+    return 1
+  fi
+  ui_ok "DNS A record resolves"
+  ui_info "Compare DNS A with the public ingress IP assigned by your VPS provider. Interface and outbound IPv4 may differ behind NAT or proxies."
+}
+
+ensure_nginx_certbot() {
+  if [[ "$TLS_MODE" == local ]]; then
+    if ! command -v nginx >/dev/null 2>&1; then load_os_release; loom_packages nginx; fi
+    systemctl enable --now nginx
+    return
+  fi
+  local ready=0
+  if command -v nginx >/dev/null 2>&1 && command -v certbot >/dev/null 2>&1 && certbot plugins 2>/dev/null | grep -qi nginx; then
+    ready=1
+  fi
+  if [[ $ready -eq 0 ]]; then
+    load_os_release
+    case "${ID:-}" in
+      ubuntu|debian|fedora|centos|rhel|rocky|almalinux)
+        loom_packages nginx certbot python3-certbot-nginx
+        ;;
+      arch|manjaro) loom_packages nginx certbot certbot-nginx ;;
+      opensuse-leap|opensuse-tumbleweed|sles) loom_packages nginx certbot python3-certbot-nginx ;;
+      *)
+        echo "Automatic Nginx/Certbot installation supports Ubuntu, Debian and Fedora." >&2
+        exit 1
+        ;;
+    esac
+  fi
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl enable --now nginx
+  elif ! nginx_is_active; then
+    nginx
+  fi
+}
+
+nginx_site_path() {
+  if [[ -d /etc/nginx/sites-available && -d /etc/nginx/sites-enabled ]]; then
+    printf '%s\n' /etc/nginx/sites-available/loom-node.conf
+  else
+    printf '%s\n' /etc/nginx/conf.d/loom-node.conf
+  fi
+}
+
+enable_nginx_site() {
+  local site="$1"
+  if [[ "$site" == /etc/nginx/sites-available/* ]]; then
+    ln -sfn "$site" /etc/nginx/sites-enabled/loom-node.conf
+  fi
+}
+
+check_nginx_domain_conflict() {
+  local conflict=""
+  if [[ -d /etc/nginx/sites-enabled ]]; then
+    conflict="$(grep -RslF "server_name $DOMAIN" /etc/nginx/sites-enabled 2>/dev/null | grep -v '/loom-node.conf$' | head -n1 || true)"
+  fi
+  if [[ -z "$conflict" && -d /etc/nginx/conf.d ]]; then
+    conflict="$(grep -RslF "server_name $DOMAIN" /etc/nginx/conf.d 2>/dev/null | grep -v '/loom-node.conf$' | head -n1 || true)"
+  fi
+  if [[ -n "$conflict" ]]; then
+    echo "Nginx already has another active server block for $DOMAIN: $conflict" >&2
+    echo "Refusing to overwrite an unrelated Nginx site." >&2
+    exit 1
+  fi
+}
+
+write_nginx_http_site() {
+  local site="$1"
+  cat >"$site" <<NGINX_HTTP
+# Managed by Loom Node installer.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $DOMAIN;
+
+    client_max_body_size 100m;
+
+    # Certbot's nginx authenticator temporarily installs its challenge route.
+    # Until TLS is verified, never expose the authenticated API over HTTP.
+    location / { return 503; }
+}
+NGINX_HTTP
+  enable_nginx_site "$site"
+  nginx -t
+  systemctl reload nginx
+}
+
+issue_nginx_certificate() {
+  local cert_args=(certonly --nginx --non-interactive --agree-tos --no-eff-email --keep-until-expiring -d "$DOMAIN")
+  if [[ -n "$CERTBOT_EMAIL" ]]; then
+    cert_args+=(--email "$CERTBOT_EMAIL")
+  else
+    cert_args+=(--register-unsafely-without-email)
+  fi
+  certbot "${cert_args[@]}"
+}
+
+write_nginx_https_site() {
+  local site="$1"
+  local cert_dir="${LOOM_CERT_DIR:-/etc/letsencrypt/live/$DOMAIN}"
+  [[ -s "$cert_dir/fullchain.pem" && -s "$cert_dir/privkey.pem" ]] || return 1
+  cat >"$site" <<NGINX_HTTPS
+# Managed by Loom Node installer.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $DOMAIN;
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name $DOMAIN;
+
+    ssl_certificate $cert_dir/fullchain.pem;
+    ssl_certificate_key $cert_dir/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer" always;
+
+    client_max_body_size 100m;
+
+    location / {
+        proxy_pass http://127.0.0.1:7483;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        proxy_buffering off;
+    }
+}
+NGINX_HTTPS
+  nginx -t
+  systemctl reload nginx
+}
+
+install_certbot_renewal_hook() {
+  install -d -m 0755 /etc/letsencrypt/renewal-hooks/deploy
+  cat >/etc/letsencrypt/renewal-hooks/deploy/loom-nginx-reload.sh <<'HOOK'
+#!/usr/bin/env bash
+set -e
+nginx -t
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl reload nginx
+else
+  nginx -s reload
+fi
+HOOK
+  chmod 0755 /etc/letsencrypt/renewal-hooks/deploy/loom-nginx-reload.sh
+  if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files certbot.timer >/dev/null 2>&1; then
+    systemctl enable --now certbot.timer >/dev/null 2>&1 || true
+  fi
+}
+
+nginx_certificate_is_valid() {
+  local cert_dir="${1:-/etc/letsencrypt/live/$DOMAIN}"
+  [[ -s "$cert_dir/fullchain.pem" && -s "$cert_dir/privkey.pem" ]] || return 1
+  openssl x509 -in "$cert_dir/fullchain.pem" -noout -checkend 0 >/dev/null 2>&1 &&
+    openssl verify -partial_chain -CAfile "$cert_dir/fullchain.pem" \
+      -verify_hostname "$DOMAIN" "$cert_dir/fullchain.pem" >/dev/null 2>&1
+}
+
+configure_nginx_tls() {
+  ensure_nginx_certbot
+  check_nginx_domain_conflict
+  if [[ "$TLS_MODE" == local ]]; then
+    LOOM_CERT_DIR="$INSTALL_DIR/deploy/tls-local"
+    loom_local_certificate "$LOOM_CERT_DIR" "$DOMAIN"
+    local local_site
+    local_site="$(nginx_site_path)"
+    enable_nginx_site "$local_site"
+    write_nginx_https_site "$local_site"
+    ui_ok "Local HTTPS configured; clients must explicitly trust its certificate."
+    return
+  fi
+  local site
+  site="$(nginx_site_path)"
+  # Updates must not remove working HTTPS merely because another Certbot
+  # process holds its lock. The renewal timer maintains existing certificates.
+  if nginx_certificate_is_valid; then
+    enable_nginx_site "$site"
+    write_nginx_https_site "$site"
+    install_certbot_renewal_hook
+    ui_ok "Existing valid Nginx certificate reused for $DOMAIN"
+    return 0
+  fi
+  write_nginx_http_site "$site"
+  ui_info "Requesting/refreshing Let's Encrypt certificate for $DOMAIN through Nginx"
+  # A concurrent issuer may have completed even if this invocation failed.
+  if issue_nginx_certificate || nginx_certificate_is_valid; then
+    if ! nginx_certificate_is_valid; then
+      ui_warn "Certbot finished without a valid certificate for $DOMAIN."
+      return 1
+    fi
+    write_nginx_https_site "$site"
+    install_certbot_renewal_hook
+    ui_ok "Nginx HTTPS is configured for $DOMAIN"
+  else
+    ui_warn "Certbot could not issue the certificate yet."
+    ui_warn "The HTTP bootstrap site returns 503. Check the Certbot error above; if another instance is running, wait for it to finish and retry. Check DNS/firewall when issuance reports a challenge failure."
+    return 1
+  fi
+}
+
+verify_https() {
+  [[ $TLS_WAIT_SECONDS -gt 0 ]] || return 1
+  if [[ "$TLS_MODE" == local ]]; then
+    curl --fail --silent --show-error --connect-timeout 4 --max-time 15 \
+      --cacert "$INSTALL_DIR/deploy/tls-local/fullchain.pem" \
+      --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/readyz" >/dev/null
+    ui_ok 'Local HTTPS and readiness verified against the generated certificate.'
+    return
+  fi
+  local deadline=$((SECONDS + TLS_WAIT_SECONDS))
+  ui_info "Waiting up to ${TLS_WAIT_SECONDS}s for public HTTPS"
+  while (( SECONDS < deadline )); do
+    if curl -fsS --connect-timeout 4 --max-time 8 "https://$DOMAIN/readyz" >/dev/null 2>&1; then
+      local cert
+      cert="$(echo | openssl s_client -servername "$DOMAIN" -connect "$DOMAIN:443" 2>/dev/null | openssl x509 -noout -issuer -enddate 2>/dev/null || true)"
+      ui_ok "HTTPS is ready: https://$DOMAIN"
+      [[ -n "$cert" ]] && printf '%s\n' "$cert" | sed 's/^/  /'
+      return 0
+    fi
+    sleep 5
+  done
+  ui_warn "HTTPS is not verified yet."
+  if [[ "$PROXY_MODE" == "caddy" ]]; then
+    ui_info "Caddy remains running and will keep retrying automatic certificate issuance."
+  else
+    ui_info "Check Nginx, Certbot, DNS and provider/cloud firewall; rerun after fixing DNS if issuance failed."
+  fi
+  return 1
+}
+
+launch_tui() {
+  [[ $NO_TUI -eq 0 && $NO_START -eq 0 ]] || return 0
+  if [[ -r /dev/tty && -w /dev/tty ]]; then
+    ui_info "Launching Loom Node Manager"
+    /usr/local/bin/loom-node </dev/tty >/dev/tty 2>/dev/tty || true
+  else
+    ui_info "Run 'loom-node' in an interactive terminal to open the manager."
+  fi
+}
+
+INSTALL_COMMIT="$VERIFIED_COMMIT"
+if ! [[ "$INSTALL_COMMIT" =~ ^[a-fA-F0-9]{40}$ ]]; then
+  INSTALL_COMMIT="${LOOM_SOURCE_COMMIT:-$(read_env_value "$SOURCE_ROOT/build-info.env" commit)}"
+fi
+if ! [[ "$INSTALL_COMMIT" =~ ^[a-fA-F0-9]{40}$ ]]; then INSTALL_COMMIT=""; fi
+PREBUILT_RELEASE_COMMIT='a96ea6c24f8bc531fa23d34a4f735cd6ba398458'
+[[ "$PREBUILT_RELEASE_COMMIT" =~ ^[a-f0-9]{40}$ ]] || { ui_fail "Invalid prebuilt release pin."; exit 1; }
+SOURCE_BRANCH="$(git -C "$REPO_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+UPDATE_BRANCH="${UPDATE_BRANCH:-$SOURCE_BRANCH}"
+UPDATE_BRANCH="${UPDATE_BRANCH:-$(read_env_value "$SOURCE_ROOT/build-info.env" branch)}"
+UPDATE_BRANCH="${UPDATE_BRANCH:-$(read_env_value "$EXISTING_ENV" LOOM_UPDATE_BRANCH)}"
+UPDATE_BRANCH="${UPDATE_BRANCH:-main}"
+if ! [[ "$UPDATE_REPOSITORY" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$ ]] ||
+   ! [[ "$UPDATE_BRANCH" =~ ^[a-zA-Z0-9_][a-zA-Z0-9_./-]*$ ]] || [[ "$UPDATE_BRANCH" == *..* || "$UPDATE_BRANCH" == */ || "$UPDATE_BRANCH" == *.lock ]]; then
+  ui_fail "Invalid update repository or branch."
+  exit 1
+fi
+if [[ $UPDATE_SOURCE_EXPLICIT -eq 0 && -z "$UPDATE_SOURCE_DIR" && -d "$REPO_ROOT/.git" ]]; then
+  UPDATE_SOURCE_DIR="$REPO_ROOT"
+fi
+MANAGER_VERSION="$(sed -n 's/^const version = "\([^"]*\)"/\1/p' "$MANAGER_SOURCE/main.go" 2>/dev/null || true)"
+MANAGER_VERSION="${MANAGER_VERSION:-$(read_env_value "$SOURCE_ROOT/build-info.env" manager_version)}"
+
+ui_banner
+printf '%bInstallation plan%b\n' "$UI_BOLD" "$UI_RESET"
+printf '  %-14s %s\n' "Install dir" "$INSTALL_DIR"
+printf '  %-14s %s\n' "Domain" "$DOMAIN"
+if [[ $FIRST_INSTALL -eq 1 ]]; then
+  printf '  %-14s %s\n' "Registration" "$REGISTRATION"
+  printf '  %-14s %s\n' "Federation" "$FEDERATION"
+fi
+
+if [[ -z "$DOWNLOAD_PROFILE" && -f "$EXISTING_ENV" ]]; then
+  DOWNLOAD_PROFILE="$(read_env_value "$EXISTING_ENV" LOOM_DOWNLOAD_PROFILE)"
+fi
+loom_download_profile "${DOWNLOAD_PROFILE:-official}"
+if [[ -z "$GO_MIRROR" && -f "$EXISTING_ENV" ]]; then GO_MIRROR="$(read_env_value "$EXISTING_ENV" LOOM_GO_MIRROR)"; fi
+loom_go_mirror "${GO_MIRROR:-profile}"
+ui_info "Using verified prebuilt Node/MinIO images for commit $PREBUILT_RELEASE_COMMIT; installer source is $INSTALL_COMMIT; host-side compilation is disabled"
+ui_step 1 7 "Ensuring Docker Engine + Compose v2"
+ensure_docker
+ensure_runtime_tools
+loom_require_compose_version
+loom_guard_persistent_install "$EXISTING_ENV"
+loom_preserve_storage_image "$INSTALL_DIR"
+
+ui_step 2 7 "Selecting reverse proxy without stealing existing ports"
+select_proxy_mode
+
+ui_step 3 7 "Installing/updating Loom Node bundle and TUI"
+copy_bundle
+
+if [[ $FIRST_INSTALL -eq 1 ]]; then
+  ui_step 4 7 "Generating production configuration and secrets"
+  write_env
+else
+  ui_step 4 7 "Preserving production secrets and updating endpoint configuration"
+  configure_existing_env
+fi
+write_launcher
+set_env_value "$EXISTING_ENV" LOOM_TLS_MODE "$TLS_MODE"
+set_env_value "$EXISTING_ENV" LOOM_DOWNLOAD_PROFILE "$LOOM_DOWNLOAD_PROFILE"
+set_env_value "$EXISTING_ENV" LOOM_DOCKER_PREFIX "$LOOM_DOCKER_PREFIX"
+set_env_value "$EXISTING_ENV" LOOM_GO_PROXY "$LOOM_GO_PROXY"
+set_env_value "$EXISTING_ENV" LOOM_GO_MIRROR "$LOOM_GO_MIRROR"
+set_env_value "$EXISTING_ENV" LOOM_NPM_REGISTRY "$LOOM_NPM_REGISTRY"
+set_env_value "$EXISTING_ENV" LOOM_ALPINE_MIRROR "$LOOM_ALPINE_MIRROR"
+set_env_value "$EXISTING_ENV" LOOM_BUILD_COMMIT "$PREBUILT_RELEASE_COMMIT"
+set_env_value "$EXISTING_ENV" LOOM_IMAGE_TAG "$PREBUILT_RELEASE_COMMIT"
+set_env_value "$EXISTING_ENV" LOOM_UPDATE_BRANCH "$UPDATE_BRANCH"
+set_env_value "$EXISTING_ENV" LOOM_UPDATE_REPOSITORY "$UPDATE_REPOSITORY"
+set_env_value "$EXISTING_ENV" LOOM_UPDATE_SOURCE_DIR "$UPDATE_SOURCE_DIR"
+export LOOM_BUILD_COMMIT="$PREBUILT_RELEASE_COMMIT"
+
+ui_step 5 7 "Checking DNS and host firewall"
+open_firewall_ports
+[[ "$TLS_MODE" == local ]] || dns_preflight || true
+
+compose config --quiet
+
+if [[ $NO_START -eq 0 ]]; then
+  ui_step 6 7 "Pulling prebuilt Loom Node and MinIO images"
+  stop_embedded_caddy_for_nginx
+  if ! compose pull; then
+    ui_fail 'Prebuilt release images could not be downloaded. Check GHCR package visibility and server connectivity.'
+    ui_info 'No local image compilation is attempted. Database credentials and Node identity are left untouched.'
+    exit 1
+  fi
+  if ! compose up -d --wait --wait-timeout 180; then
+    ui_fail 'Container startup failed. No database credentials or identity were reset.'
+    exit 1
+  fi
+  compose ps
+  ui_info "Verifying the running Node revision and local readiness"
+  node_ready=0
+  for ((attempt=0; attempt<45; attempt++)); do
+    if compose exec -T loom-node node -e '
+      const expected=process.argv[1];
+      const actual=require("node:fs").readFileSync("/app/.loom-build-commit","utf8").trim();
+      if(expected && actual!==expected) process.exit(2);
+      fetch("http://127.0.0.1:7483/readyz",{signal:AbortSignal.timeout(3000)})
+        .then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1));
+    ' "$PREBUILT_RELEASE_COMMIT" >/dev/null 2>&1; then node_ready=1; break; fi
+    sleep 2
+  done
+  if [[ $node_ready -ne 1 ]]; then
+    startup_logs="$(compose logs --no-color --tail 100 loom-node 2>/dev/null || true)"
+    ui_fail "$(loom_classify_startup_failure "$startup_logs")"
+    unset startup_logs
+    ui_fail "Node readiness/revision verification failed. Run: sudo loom doctor"
+    exit 1
+  fi
+
+  if [[ "$PROXY_MODE" == "nginx" ]]; then
+    ui_info "Configuring host Nginx reverse proxy and Certbot"
+    configure_nginx_tls
+  fi
+
+  ui_step 7 7 "Verifying public HTTPS certificate"
+  verify_https
+  loom_write_install_state "$INSTALL_DIR" "$UPDATE_REPOSITORY" "$UPDATE_BRANCH" "$UPDATE_SOURCE_DIR" "$PREBUILT_RELEASE_COMMIT" "$MANAGER_VERSION"
+else
+  ui_step 6 7 "Start skipped (--no-start)"
+  ui_step 7 7 "Reverse-proxy/TLS setup skipped"
+fi
+
+printf '\n%b╭──────────────────────────────────────────────╮%b\n' "$UI_GREEN$UI_BOLD" "$UI_RESET"
+[[ $NO_START -eq 0 ]] && install_status='Installation complete' || install_status='Configured only; HTTPS unverified'
+printf '%b│ %-44s │%b\n' "$UI_GREEN$UI_BOLD" "$install_status" "$UI_RESET"
+printf '%b╰──────────────────────────────────────────────╯%b\n' "$UI_GREEN$UI_BOLD" "$UI_RESET"
+printf '  %-14s %s\n' "Home" "$INSTALL_DIR"
+printf '  %-14s %s\n' "Secrets" "$INSTALL_DIR/deploy/.env (mode 0600)"
+if [[ $NO_START -eq 0 ]]; then printf '  %-14s %s\n' "Public URL" "https://$DOMAIN"; else ui_warn 'Containers were not started and HTTPS is unavailable/unverified.'; fi
+printf '  %-14s %s\n' "Manager" "loom-node"
+printf '  %-14s %s\n' "Proxy" "$PROXY_MODE"
+if [[ "$PROXY_MODE" == "caddy" ]]; then
+  printf '  %-14s %s\n' "TLS" "Caddy automatic HTTPS + renewal"
+else
+  printf '  %-14s %s\n' "Upstream" "http://127.0.0.1:7483 (loopback only)"
+  printf '  %-14s %s\n' "TLS" "Nginx + Let's Encrypt/Certbot renewal"
+fi
+if [[ "$REGISTRATION" == "approval" && $FIRST_INSTALL -eq 1 ]]; then
+  ui_info "Registration approvals: loom-node → Registration"
+fi
+if [[ "$FEDERATION" != "disabled" && $FIRST_INSTALL -eq 1 ]]; then
+  ui_warn "Federation routing remains experimental/incomplete in this branch."
+fi
+
+launch_tui
+\n'/, }"
+  if [[ -z "$resolved" ]]; then
+    ui_warn "No IPv4 A record is visible yet. TLS issuance needs DNS to reach this server."
+    return 1
+  fi
+  ui_ok "DNS A record resolves"
+  ui_info "Compare DNS A with the public ingress IP assigned by your VPS provider. Interface and outbound IPv4 may differ behind NAT or proxies."
+}
+
 ensure_nginx_certbot() {
   if [[ "$TLS_MODE" == local ]]; then
     if ! command -v nginx >/dev/null 2>&1; then load_os_release; loom_packages nginx; fi
