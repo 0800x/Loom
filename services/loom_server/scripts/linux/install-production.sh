@@ -651,7 +651,16 @@ dns_preflight() {
   printf '  %-14s %s\n' "Domain" "$DOMAIN"
   printf '  %-14s %s\n' "Interface IPv4" "${interface_ip:-unknown}"
   printf '  %-14s %s\n' "Outbound IPv4" "${outbound_ip:-unknown}"
-  printf '  %-14s %s\n' "DNS A" "${resolved//
+  printf '  %-14s %s\n' "DNS A" "${resolved:-unknown}"
+  if [[ -z "$resolved" ]]; then
+    ui_warn "No IPv4 A record is visible yet. TLS issuance needs DNS to reach this server."
+    return 1
+  fi
+  ui_ok "DNS A record resolves"
+  ui_info "Compare DNS A with the public ingress IP assigned by your VPS provider. Interface and outbound IPv4 may differ behind NAT or proxies."
+}
+
+ensure_nginx_certbot() {
   if [[ "$TLS_MODE" == local ]]; then
     if ! command -v nginx >/dev/null 2>&1; then load_os_release; loom_packages nginx; fi
     systemctl enable --now nginx
