@@ -31,8 +31,8 @@ for relative in ['services/loom_server/deploy/Dockerfile', 'services/loom_server
                 ), (relative, image)
                 assert lines[index+1].strip() == 'pull_policy: always', relative
                 installer = (root/'services/loom_server/scripts/linux/install-production.sh').read_text()
-                assert 'LOOM_IMAGE_TAG=$INSTALL_COMMIT' in installer, relative
-                assert 'set_env_value "$EXISTING_ENV" LOOM_IMAGE_TAG "$INSTALL_COMMIT"' in installer, relative
+                assert 'LOOM_IMAGE_TAG=$PREBUILT_RELEASE_COMMIT' in installer, relative
+                assert 'set_env_value "$EXISTING_ENV" LOOM_IMAGE_TAG "$PREBUILT_RELEASE_COMMIT"' in installer, relative
             elif relative.endswith('.yml') and image.startswith(('loom-minio-source:', 'loom-node-init-source:', 'loom-node-source:')):
                 assert lines[index+1].strip()=='pull_policy: build', relative
                 block=[]
