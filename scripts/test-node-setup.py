@@ -42,6 +42,10 @@ def reap_pty_child(pid, deadline):
 
 
 class SetupTests(unittest.TestCase):
+    def test_production_installer_passes_bash_syntax_check(self):
+        installer = SETUP.with_name('install-production.sh')
+        result = subprocess.run(['bash', '-n', str(installer)], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
     def test_preview_is_read_only_and_rejects_invalid_choices(self):
         good = subprocess.run(['bash', str(SETUP), '--plan', '--yes', '--domain', 'chat.example.org', '--turn', 'off', '--group-calls', 'off'], capture_output=True, text=True)
         self.assertEqual(good.returncode, 0, good.stderr)
