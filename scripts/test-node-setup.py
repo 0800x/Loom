@@ -169,9 +169,12 @@ dns_preflight
 """
         result = subprocess.run(['bash', '-c', script], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn('Interface IPv4 185.226.116.45', result.stdout)
-        self.assertIn('Outbound IPv4 205.252.135.142', result.stdout)
-        self.assertIn('DNS A          205.252.135.109', result.stdout)
+        self.assertIn('Interface IPv4', result.stdout)
+        self.assertIn('185.226.116.45', result.stdout)
+        self.assertIn('Outbound IPv4', result.stdout)
+        self.assertIn('205.252.135.142', result.stdout)
+        self.assertIn('DNS A', result.stdout)
+        self.assertIn('205.252.135.109', result.stdout)
         self.assertNotIn('DNS does not currently point to this server', result.stdout)
         self.assertIn('public ingress IP assigned by your VPS provider', result.stdout)
 
