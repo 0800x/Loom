@@ -220,14 +220,15 @@ dns_preflight
                 os.environ['TERM'] = 'xterm'
                 os.execvp('bash', ['bash', str(SETUP), '--plan'])
             output, pending = bytearray(), bytearray()
-            prompts = [(b'Download sources  (', b'\n'), (b'HTTPS mode  (', b'\n'), (b'Server hostname or IPv4', b'chat.example.org\n'),
+            prompts = [(b'Download sources  (', b'\n'), (b'HTTPS mode  (', b'\n'), (b'HTTPS proxy  (', b'\n'),
+                       (b'Server hostname or IPv4', b'chat.example.org\n'),
                        (b'Registration  (', b'\x1b[B\n'),
                        (b'Federation  (', b'\x1b[B\n'),
                        (b'Voice calls  (', b'\x1b' if cancel else b'\n'),
                        (b'Video calls  (', b'\x1b[B\n'),
                        (b'Group calls (', b'\x1b[B\n')]
             if cancel:
-                prompts = prompts[:6]
+                prompts = prompts[:7]
             index, deadline = 0, time.monotonic() + 15
             try:
                 while time.monotonic() < deadline:
