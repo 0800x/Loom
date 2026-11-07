@@ -834,7 +834,9 @@ class LoomGroupsController extends ChangeNotifier {
   Future<bool> sendControl(String id, LoomMessageControl control) =>
       sendContent(id, LoomMessageContent(control: control));
 
-  /// Ephemeral typing signal. Fire-and-forget: never queued, never surfaced.
+  /// Ephemeral typing signal. Fire-and-forget at the UI layer: not shown in
+  /// conversation history. MLS transport may retain its encrypted outbox entry
+  /// until the server confirms delivery.
   Future<void> sendTyping(String id) async {
     try {
       if (_session == null) return;

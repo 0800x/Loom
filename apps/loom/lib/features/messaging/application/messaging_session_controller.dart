@@ -1677,8 +1677,10 @@ class LoomMessagingSessionController extends ChangeNotifier
 
   // --- Typing indicator ---------------------------------------------------
 
-  /// Ephemeral best-effort typing signal. Throttled per conversation, never
-  /// persisted, never queued into DTN custody, never surfaces an error.
+  /// Ephemeral best-effort typing signal. Throttled per conversation and never
+  /// persisted as conversation history or queued into DTN custody. Group MLS
+  /// transport may retain its encrypted frame in its delivery outbox until receipt.
+  /// No delivery error is surfaced to the user.
   Future<void> notifyTyping(String conversationId) async {
     if (_disposed || LoomAppLock.instance.locked) {
       return;
