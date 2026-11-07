@@ -217,6 +217,42 @@ void main() {
         (await open(id, stores[1].history(id).single.payload))['content'],
         {'text': 'hello'},
       );
+      final generationBeforeTyping = stores[0].state!.generation;
+      (clients[0] as LostAckClient).loseNextReceipt = true;
+      await expectLater(
+        sessions[0].sendEphemeral(id, {
+          'control': const LoomMessageControl.typing().toMap(),
+        }),
+        throwsA(isA<SocketException>()),
+      );
+      expect(
+        stores[0].state!.generation,
+        generationBeforeTyping + 1,
+        reason: 'An encrypted typing frame must advance and persist the sender ratchet',
+      );
+      expect(stores[0].outbox.single.localPayload, isNull);
+      final typingOperationId = stores[0].outbox.single.id;
+      final typingBody = Map<String, Object?>.of(stores[0].outbox.single.body);
+      await sessions[0].drain();
+      expect(stores[0].outbox, isEmpty);
+      expect(stores[0].state!.generation, generationBeforeTyping + 1);
+      expect(typingOperationId, isNotEmpty);
+      expect(typingBody['operationId'], typingOperationId);
+      await sessions[0].sync();
+      await sessions[1].sync();
+      expect(stores[0].history(id).length, 1);
+      expect(stores[1].history(id).length, 2);
+      expect(
+        (await open(id, stores[1].history(id).last.payload))['content'],
+        {'control': const LoomMessageControl.typing().toMap()},
+      );
+      await sessions[1].send(id, {'text': 'after typing'});
+      await sessions[1].sync();
+      await sessions[0].sync();
+      expect(
+        (await open(id, stores[0].history(id).last.payload))['content'],
+        {'text': 'after typing'},
+      );
       final mutable = <String, Object?>{'text': 'immutable snapshot'};
       final send = sessions[0].send(id, mutable);
       mutable['text'] = 'changed after send';

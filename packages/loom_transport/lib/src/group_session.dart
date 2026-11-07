@@ -498,31 +498,50 @@ class LoomGroupSession {
 
   Future<void> drain() => _serialized(_drain);
 
-  /// Ephemeral control frame (typing). Best-effort by contract: never staged
-  /// in the outbox, never sealed into local history, never retried, and a
-  /// delivery failure is returned to the caller instead of being escalated.
-  /// The sender's own echo is consumed as a hidden control row on the next
-  /// history reload.
+  /// Ephemeral MLS control frame (typing).
+  ///
+  /// It is omitted from local history, but it still advances the MLS sender
+  /// ratchet. Persist that transition with the exact delivery request so a
+  /// timeout can be retried safely and the sender's inbox echo is recognized.
   Future<void> sendEphemeral(
     String groupId,
     Map<String, Object?> content,
-  ) async {
+  ) {
     final normalized = Map<String, Object?>.from(
       jsonDecode(jsonEncode(content)) as Map,
     );
-    final group = store.groups.singleWhere((g) => g.id == groupId);
-    if (!group.members.any((m) => m.deviceId == deviceId)) {
-      throw StateError('No longer a group member');
-    }
-    final result = await _run(
-      'encrypt',
-      groupId: groupId,
-      arguments: {'bytes': utf8.encode(jsonEncode(normalized))},
-    );
-    await client.request('POST', '${_path(groupId)}/messages', {
-      'operationId': _id(),
-      'epoch': result.result['epoch'],
-      'ciphertext': base64Encode((result.result['bytes'] as List).cast<int>()),
+    return _serialized(() async {
+      _idle();
+      final group = store.groups.singleWhere((g) => g.id == groupId);
+      if (!group.members.any((m) => m.deviceId == deviceId)) {
+        throw StateError('No longer a group member');
+      }
+      final version = store.version, operationId = _id();
+      final result = await _run(
+        'encrypt',
+        groupId: groupId,
+        arguments: {'bytes': utf8.encode(jsonEncode(normalized))},
+      );
+      _guard();
+      store.stage(
+        version,
+        result.state,
+        LoomGroupOutbox(
+          id: operationId,
+          groupId: groupId,
+          path: '${_path(groupId)}/messages',
+          body: {
+            'operationId': operationId,
+            'epoch': result.result['epoch'],
+            'ciphertext': base64Encode(
+              (result.result['bytes'] as List).cast<int>(),
+            ),
+          },
+          checkpoint: null,
+          localPayload: null,
+        ),
+      );
+      await _drain();
     });
   }
 

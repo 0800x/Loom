@@ -61,7 +61,14 @@ class LoomNativeMlsCore {
     } finally {
       (request['key'] as List<int>).fillRange(0, 32, 0);
     }
-    if (response['error'] != null) throw StateError('MLS operation rejected');
+    if (response['error'] != null) {
+      final reason = response['reason'];
+      throw StateError(
+        reason is String && reason.isNotEmpty
+            ? 'MLS operation rejected: $reason'
+            : 'MLS operation rejected',
+      );
+    }
     final next = LoomMlsSealedState(
       generation: response['generation'] as int,
       bytes: (response['state'] as List).cast<int>(),

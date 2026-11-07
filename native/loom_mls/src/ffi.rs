@@ -91,10 +91,17 @@ pub unsafe extern "C" fn loom_mls_request(data: *const u8, len: usize) -> *mut O
         }
         match dispatch(std::slice::from_raw_parts(data, len)) {
             Ok(value) => value,
-            Err(_) => json!({"error":"MLS operation rejected"}),
+            Err(reason) => {
+                let reason: String = reason
+                    .chars()
+                    .filter(|character| !character.is_control())
+                    .take(240)
+                    .collect();
+                json!({"error":"MLS operation rejected","reason":reason})
+            }
         }
     }))
-    .unwrap_or_else(|_| json!({"error":"MLS operation rejected"}));
+    .unwrap_or_else(|_| json!({"error":"MLS operation panicked"}));
     let bytes = serde_json::to_vec(&result)
         .unwrap_or_else(|_| b"{\"error\":\"MLS operation rejected\"}".to_vec())
         .into_boxed_slice();
@@ -135,6 +142,25 @@ mod tests {
         next["state"][15] = json!(255);
         assert!(dispatch(&serde_json::to_vec(&next).unwrap()).is_err());
     }
+    #[test]
+    fn ffi_rejection_preserves_a_bounded_safe_diagnostic() {
+        let request = serde_json::to_vec(&json!({
+            "operation":"new",
+            "device":[],
+            "key":vec![3;32],
+            "generation":0
+        })).unwrap();
+        unsafe {
+            let out = loom_mls_request(request.as_ptr(), request.len());
+            assert!(!out.is_null());
+            let bytes = std::slice::from_raw_parts((*out).data, (*out).len);
+            let response: Value = serde_json::from_slice(bytes).unwrap();
+            assert_eq!(response["error"], "MLS operation rejected");
+            assert_eq!(response["reason"], "Invalid device id");
+            loom_mls_release(out);
+        }
+    }
+
     #[test]
     fn malformed_ffi_returns_an_error_and_can_be_released() {
         unsafe {
