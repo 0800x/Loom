@@ -37,6 +37,38 @@ class LoomPlaybackController extends ChangeNotifier
   Duration _lastSystemPosition = Duration.zero;
   LoomMusicSystemPublisher? _systemPublisher;
 
+  // ── Smooth timeline ──────────────────────────────────────────────────────
+  // The decoder reports position at its own cadence (often slower than the
+  // display refresh), which made the slider and waveform advance in visible
+  // steps. A light interpolation clock now extrapolates between decoder
+  // ticks so every consumer of [timeline] glides at ~20 Hz.
+  Timer? _positionClock;
+  Duration _positionAnchor = Duration.zero;
+  DateTime _positionAnchorTime = DateTime.now();
+
+  void _resetPositionAnchor([Duration? value]) {
+    _positionAnchor = value ?? timeline.value;
+    _positionAnchorTime = DateTime.now();
+  }
+
+  void _startPositionClock() {
+    _positionClock ??= Timer.periodic(const Duration(milliseconds: 50), (_) {
+      if (!playing || _blocked) return;
+      final elapsed = DateTime.now().difference(_positionAnchorTime);
+      var next = _positionAnchor +
+          Duration(microseconds: (elapsed.inMicroseconds * speed).round());
+      if (duration > Duration.zero && next > duration) next = duration;
+      if ((next - timeline.value).abs() >= const Duration(milliseconds: 40)) {
+        timeline.value = next;
+      }
+    });
+  }
+
+  void _stopPositionClock() {
+    _positionClock?.cancel();
+    _positionClock = null;
+  }
+
   static Future<void> pauseAll() async {
     ++_focusEpoch;
     await instance.pause();
@@ -228,6 +260,14 @@ class LoomPlaybackController extends ChangeNotifier
         await copy.length(),
       );
       _library.add(result);
+      // Registration can finish after the track already started playing
+      // (chat rows register in the background). Promote the tag-derived
+      // metadata so the player shows the real title, artist and artwork.
+      if (id == sourceId && music) {
+        if (result.title.isNotEmpty) this.title = result.title;
+        if (result.artist.isNotEmpty) this.subtitle = result.artist;
+        artwork ??= result.artwork;
+      }
       // Bound decrypted cache. The active session has a separate private copy.
       while (_library.fold<int>(0, (sum, item) => sum + item.bytes) >
           256 * 1024 * 1024) {
@@ -333,6 +373,27 @@ class LoomPlaybackController extends ChangeNotifier
         music: true,
       );
     }
+  }
+
+  /// Opens a music file that has no message identity (file manager, generic
+  /// attachment): registers it into the library first so tags, artwork and the
+  /// queue behave exactly like chat-shared music. [id] should be stable for
+  /// the same logical file so replays reuse the cached library copy.
+  Future<void> openMusicFile(
+    File file, {
+    required String title,
+    String subtitle = '',
+    String? id,
+  }) async {
+    final trackId = id ?? 'files:${file.absolute.path.hashCode.toRadixString(36)}';
+    final registered = await registerMusic(file, trackId, title, subtitle);
+    await open(
+      file,
+      id: trackId,
+      title: registered?.title ?? title,
+      subtitle: registered?.artist ?? subtitle,
+      music: true,
+    );
   }
 
   void removeFromQueue(String id) {
@@ -601,8 +662,10 @@ class LoomPlaybackController extends ChangeNotifier
       loading = true;
       error = null;
       position = Duration.zero;
+      _resetPositionAnchor(Duration.zero);
       duration = Duration.zero;
       speed = 1;
+      _startPositionClock();
       notifyListeners();
       try {
         if (music) {
@@ -640,13 +703,16 @@ class LoomPlaybackController extends ChangeNotifier
           player.stream.playing.listen((v) {
             if (playing == v) return;
             playing = v;
+            // Pausing stops the extrapolation clock's reference: re-anchor on
+            // every transport change so resuming continues from the decoder's
+            // own position instead of accumulated wall time.
+            _resetPositionAnchor();
             notifyListeners();
           }),
           player.stream.position.listen((v) {
-            if ((v - position).abs() < const Duration(milliseconds: 200)) {
-              return;
-            }
-            position = v;
+            // Ticks only move the anchor; the interpolation clock is the
+            // single writer of [timeline], so chatter never stutters the UI.
+            _resetPositionAnchor(v);
             if ((v - _lastSystemPosition).abs() >= const Duration(seconds: 1)) {
               _lastSystemPosition = v;
               _syncSystem();
@@ -729,6 +795,10 @@ class LoomPlaybackController extends ChangeNotifier
   Future<void> seek(Duration target) async {
     try {
       if (!LoomAppLock.instance.locked) {
+        // Optimistically re-anchor so the smooth clock reflects the seek
+        // immediately instead of extrapolating across it.
+        _resetPositionAnchor(target);
+        timeline.value = target;
         await _player?.seek(target);
       }
     } catch (_) {}
@@ -740,6 +810,7 @@ class LoomPlaybackController extends ChangeNotifier
         : speed == 1.5
         ? 2
         : 1;
+    _resetPositionAnchor();
     try {
       await _player?.setRate(speed);
     } catch (_) {
@@ -763,6 +834,8 @@ class LoomPlaybackController extends ChangeNotifier
     _resumeAfterInterruption = false;
     waveform = const [];
     position = Duration.zero;
+    _resetPositionAnchor(Duration.zero);
+    _stopPositionClock();
     _lastSystemPosition = Duration.zero;
     loading = false;
     error = null;
@@ -778,6 +851,7 @@ class LoomPlaybackController extends ChangeNotifier
       await subscription.cancel();
     }
     _subscriptions.clear();
+    _stopPositionClock();
     final player = _player;
     volume.detach();
     _player = null;

@@ -44,6 +44,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../app/loom_strings.dart';
+import '../../../app/release_metadata.dart';
 import '../../../app/chat_wallpaper.dart';
 import '../../settings/presentation/chat_wallpaper_editor.dart';
 import 'swipe_navigation.dart';
@@ -1411,55 +1412,81 @@ class _ChatListState extends State<_ChatList> {
         ),
         if (MediaQuery.viewInsetsOf(context).bottom == 0)
           Positioned.fill(
-            child: LoomCreateDial(
-              onChat: widget.onNewChat,
-              onGroups: widget.preview
-                  ? null
-                  : () async {
-                      final id = await showLoomNewGroup(context);
-                      if (!mounted || !context.mounted || id == null) return;
-                      widget.onConversationSelected(id);
-                    },
-              onContact: () => Navigator.push<void>(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) => const LoomPeopleScreen(focusSearch: true),
-                ),
-              ),
-              onCall: () => Navigator.push<void>(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) => const LoomPeopleScreen(selectForCall: true),
-                ),
-              ),
-              onSaved: () async {
-                final messenger = widget.messaging;
-                if (messenger == null) {
-                  return;
-                }
-                await messenger.open();
-                await messenger.restoreSavedConversation();
-                final saved = messenger.conversations
-                    .where((c) => c.kind == models.LoomConversationKind.self)
-                    .firstOrNull;
-                if (!mounted || !context.mounted) {
-                  return;
-                }
-                if (saved != null) {
-                  widget.onConversationSelected(saved.id);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        tr(
-                          context,
-                          'Saved messages are not ready. Reopen your account and try again.',
-                          'پیام‌های ذخیره‌شده هنوز آماده نیست. حساب را دوباره باز کنید و تلاش کنید.',
-                        ),
+            child: AnimatedBuilder(
+              animation: LoomPlaybackController.instance,
+              builder: (context, _) {
+                final playback = LoomPlaybackController.instance;
+                final docked = playback.visible &&
+                    playback.music &&
+                    !playback.expanded;
+                // Slide the create dial above the docked mini player with a
+                // 6px gap instead of letting the bar paint over the button.
+                const barFootprint = 58.0;
+                return TweenAnimationBuilder<double>(
+                  tween: Tween(end: docked ? barFootprint : 0),
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, inset, _) => LoomCreateDial(
+                    bottomInset: inset,
+                    onChat: widget.onNewChat,
+                    onGroups: widget.preview
+                        ? null
+                        : () async {
+                            final id = await showLoomNewGroup(context);
+                            if (!mounted ||
+                                !context.mounted ||
+                                id == null) {
+                              return;
+                            }
+                            widget.onConversationSelected(id);
+                          },
+                    onContact: () => Navigator.push<void>(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            const LoomPeopleScreen(focusSearch: true),
                       ),
                     ),
-                  );
-                }
+                    onCall: () => Navigator.push<void>(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            const LoomPeopleScreen(selectForCall: true),
+                      ),
+                    ),
+                    onSaved: () async {
+                      final messenger = widget.messaging;
+                      if (messenger == null) {
+                        return;
+                      }
+                      await messenger.open();
+                      await messenger.restoreSavedConversation();
+                      final saved = messenger.conversations
+                          .where(
+                            (c) => c.kind == models.LoomConversationKind.self,
+                          )
+                          .firstOrNull;
+                      if (!mounted || !context.mounted) {
+                        return;
+                      }
+                      if (saved != null) {
+                        widget.onConversationSelected(saved.id);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              tr(
+                                context,
+                                'Saved messages are not ready. Reopen your account and try again.',
+                                'پیام‌های ذخیره‌شده هنوز آماده نیست. حساب را دوباره باز کنید و تلاش کنید.',
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                );
               },
             ),
           ),
@@ -1787,6 +1814,7 @@ class _LiveMessageBubble extends StatelessWidget {
     this.highlighted = false,
     this.fold,
     this.onReactionTap,
+    this.onQuickTaps,
   });
 
   final LoomVisibleMessage message;
@@ -1800,6 +1828,9 @@ class _LiveMessageBubble extends StatelessWidget {
   final bool grouped, highlighted;
   final LoomMessageFold? fold;
   final ValueChanged<String>? onReactionTap;
+
+  /// Quick gestures: 2 taps send a heart, 3 taps a thumbs-up (toggle).
+  final ValueChanged<int>? onQuickTaps;
 
   @override
   Widget build(BuildContext context) {
@@ -1884,6 +1915,8 @@ class _LiveMessageBubble extends StatelessWidget {
           : displayText,
       onActions: onActions,
       onReply: onReply,
+      onQuickTaps: onQuickTaps,
+      quickReactionEmoji: (count) => count >= 3 ? '👍' : '❤️',
       quotedText: quotedText,
       quotedAuthor: quotedAuthor,
       banner: message.content.forwarded && message.readable
@@ -2152,10 +2185,18 @@ class _SettingsShortcut extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 25),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
             const SizedBox(height: 8),
             Text(
               label,
@@ -2244,6 +2285,18 @@ class _SettingsPane extends StatelessWidget {
           '/settings/about',
         ),
       ],
+      [
+        (
+          LoomIcons.dns_outlined,
+          tr(context, 'Node directory', 'فهرست Node'),
+          '/nodes',
+        ),
+        (
+          LoomIcons.fingerprint_rounded,
+          tr(context, 'Security diagnostics', 'عیب‌یابی امنیت'),
+          '/security',
+        ),
+      ],
     ];
     final username = onboarding?.username.trim();
     final ownId = onboarding?.committedIdentity?.identityId;
@@ -2289,6 +2342,11 @@ class _SettingsPane extends StatelessWidget {
         'Version and app information',
         'نسخه و اطلاعات برنامه',
       ),
+      '/nodes': tr(
+        context,
+        'Inspect or enter a Node endpoint',
+        'بررسی یا ورود نشانی Node',
+      ),
     };
     return ColoredBox(
       color: palette.background,
@@ -2322,49 +2380,84 @@ class _SettingsPane extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              Semantics(
-                button: true,
+              const SizedBox(height: 18),
+
+              // ── Profile hero ───────────────────────────────────────────
+              Material(
+                color: palette.surface,
+                borderRadius: BorderRadius.circular(LoomRadii.surface),
+                clipBehavior: Clip.antiAlias,
                 child: InkWell(
                   key: const ValueKey('settings-profile-card'),
-                  borderRadius: BorderRadius.circular(18),
                   onTap: () => Navigator.pushNamed(context, '/profile'),
                   child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
                       children: [
                         LoomOwnAvatar(
                           name: profileName,
                           identityId: ownId,
-                          size: 88,
+                          size: 64,
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          profileName,
-                          maxLines: 2,
-                          textAlign: TextAlign.center,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        if (username?.isNotEmpty == true) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            '@$username',
-                            key: const ValueKey('settings-username'),
-                            textDirection: TextDirection.ltr,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: palette.textSecondary),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                profileName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              if (username?.isNotEmpty == true) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  '@$username',
+                                  key: const ValueKey('settings-username'),
+                                  textDirection: TextDirection.ltr,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(color: palette.textSecondary),
+                                ),
+                              ],
+                              const SizedBox(height: 5),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    tr(
+                                      context,
+                                      'View profile',
+                                      'مشاهدهٔ پروفایل',
+                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          color: palette.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Icon(
+                                    LoomIcons.chevron_right_rounded,
+                                    size: 14,
+                                    color: palette.primary,
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ],
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -2382,7 +2475,7 @@ class _SettingsPane extends StatelessWidget {
                   Expanded(
                     child: _SettingsShortcut(
                       icon: LoomIcons.edit_rounded,
-                      color: palette.primary,
+                      color: palette.secondary,
                       label: tr(context, 'Edit profile', 'ویرایش پروفایل'),
                       onTap: () => Navigator.pushNamed(context, '/profile'),
                     ),
@@ -2391,7 +2484,7 @@ class _SettingsPane extends StatelessWidget {
                   Expanded(
                     child: _SettingsShortcut(
                       icon: LoomIcons.palette_outlined,
-                      color: palette.primary,
+                      color: palette.info,
                       label: tr(context, 'Appearance', 'ظاهر'),
                       onTap: () =>
                           Navigator.pushNamed(context, '/settings/appearance'),
@@ -2399,17 +2492,21 @@ class _SettingsPane extends StatelessWidget {
                   ),
                 ],
               ),
+
+              // ── Grouped sections ───────────────────────────────────────
               for (
                 var groupIndex = 1;
                 groupIndex < groups.length;
                 groupIndex++
               ) ...[
                 Padding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(16, 24, 16, 10),
+                  padding: const EdgeInsetsDirectional.fromSTEB(16, 26, 16, 10),
                   child: Text(
-                    groupIndex == 1
-                        ? tr(context, 'Preferences', 'تنظیمات شخصی')
-                        : tr(context, 'Account', 'حساب'),
+                    switch (groupIndex) {
+                      1 => tr(context, 'Preferences', 'تنظیمات شخصی'),
+                      2 => tr(context, 'Account', 'حساب'),
+                      _ => tr(context, 'Advanced', 'پیشرفته'),
+                    },
                     style: Theme.of(
                       context,
                     ).textTheme.labelLarge?.copyWith(color: palette.primary),
@@ -2424,6 +2521,10 @@ class _SettingsPane extends StatelessWidget {
                     )
                       LoomSettingsRow(
                         icon: groups[groupIndex][index].$1,
+                        iconColor: _settingsTileTint(
+                          palette,
+                          groups[groupIndex][index].$3,
+                        ),
                         title: groups[groupIndex][index].$2,
                         subtitle: subtitles[groups[groupIndex][index].$3],
                         showDivider: index != groups[groupIndex].length - 1,
@@ -2454,7 +2555,7 @@ class _SettingsPane extends StatelessWidget {
               const SizedBox(height: 24),
               Center(
                 child: Text(
-                  'Loom',
+                  'Loom · v$loomReleaseVersion',
                   style: Theme.of(
                     context,
                   ).textTheme.labelSmall?.copyWith(color: palette.textMuted),
@@ -2466,6 +2567,22 @@ class _SettingsPane extends StatelessWidget {
       ),
     );
   }
+
+  /// Distinct, stable tint per settings tile so sections scan quickly.
+  static Color? _settingsTileTint(LoomPalette palette, String? route) =>
+      switch (route) {
+        '/settings/notifications' => palette.connectivity,
+        '/settings/privacy' => palette.primary,
+        '/settings/storage' => palette.warning,
+        '/settings/chat-folders' => palette.secondary,
+        '/settings/appearance' => palette.info,
+        '/settings/nearby' => palette.connectivity,
+        '/security' => palette.primary,
+        '/settings/language' => palette.info,
+        '/settings/about' => palette.primary,
+        '/nodes' => palette.textSecondary,
+        _ => null,
+      };
 
   static Future<void> _confirmLogout(
     BuildContext context,

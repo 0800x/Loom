@@ -14,10 +14,15 @@ class LoomCreateDial extends StatefulWidget {
     required this.onCall,
     required this.onSaved,
     this.onGroups,
+    this.bottomInset = 0,
     super.key,
   });
   final VoidCallback onChat, onContact, onCall, onSaved;
   final VoidCallback? onGroups;
+
+  /// Extra bottom offset applied while the docked mini player is visible, so
+  /// the create button always floats above it instead of hiding behind it.
+  final double bottomInset;
   @override
   State<LoomCreateDial> createState() => _LoomCreateDialState();
 }
@@ -189,7 +194,7 @@ class _LoomCreateDialState extends State<LoomCreateDial> {
                   ),
                 PositionedDirectional(
                   end: 18,
-                  bottom: 84,
+                  bottom: 84 + widget.bottomInset,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.end,

@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../../app/loom_strings.dart';
 import '../../home/presentation/messenger_shell.dart';
 import '../../media/application/playback_controller.dart';
+import '../../media/presentation/playback_host.dart';
 import '../../messaging/application/encrypted_media.dart';
 
 class LoomGroupAttachment extends StatefulWidget {
@@ -30,6 +31,12 @@ class _LoomGroupAttachmentState extends State<LoomGroupAttachment> {
   Uint8List? _bytes;
   bool _loading = false, _failed = false, _opening = false;
   int _epoch = 0;
+
+  /// Stable library identity for this attachment's audio, so replays reuse
+  /// the cached library copy (tags, artwork, queue) instead of re-copying.
+  late final String _audioId = 'group:${(
+      widget.media['url'] ?? widget.media['name'] ?? 'audio'
+  ).hashCode.toRadixString(36)}';
   @override
   void initState() {
     super.initState();
@@ -146,10 +153,13 @@ class _LoomGroupAttachmentState extends State<LoomGroupAttachment> {
           if (!mounted || epoch != _epoch || LoomAppLock.instance.locked) {
             return;
           }
-          await LoomPlaybackController.instance.open(
+          // Register into the music library (tags, artwork, queue) instead of
+          // an anonymous playback session, so the player actually shows the
+          // track it is playing.
+          await LoomPlaybackController.instance.openMusicFile(
             file,
             title: widget.media['name'] as String? ?? 'Audio',
-            music: true,
+            id: _audioId,
           );
         } finally {
           if (await file.exists()) await file.delete();
@@ -194,10 +204,31 @@ class _LoomGroupAttachmentState extends State<LoomGroupAttachment> {
     }
   }
 
+  /// Toggle when this row's track is already the active music source;
+  /// otherwise download (if needed) and start it.
+  Future<void> _playOrToggle() async {
+    final playback = LoomPlaybackController.instance;
+    if (playback.sourceId == _audioId && playback.error == null) {
+      await playback.toggle();
+      return;
+    }
+    await _open();
+  }
+
   @override
   Widget build(BuildContext context) {
     final kind = widget.media['kind'];
     final bytes = _bytes;
+    if (kind == 'audio' || kind == 'voice') {
+      return _AudioAttachmentCard(
+        name: widget.media['name'] as String? ?? 'Audio',
+        size: widget.media['bytes'] as int? ?? 0,
+        audioId: _audioId,
+        loading: _loading,
+        failed: _failed,
+        onTap: _loading ? null : () => unawaited(_playOrToggle()),
+      );
+    }
     return InkWell(
       onTap: _loading ? null : _open,
       borderRadius: BorderRadius.circular(12),
@@ -248,8 +279,6 @@ class _LoomGroupAttachmentState extends State<LoomGroupAttachment> {
                   Icon(
                     kind == 'image'
                         ? LoomIcons.photo_library_outlined
-                        : kind == 'audio'
-                        ? LoomIcons.play_circle_outline
                         : kind == 'file'
                         ? LoomIcons.download_rounded
                         : LoomIcons.play_circle_outline,
@@ -266,8 +295,6 @@ class _LoomGroupAttachmentState extends State<LoomGroupAttachment> {
                         : widget.media['name'] as String? ??
                               (kind == 'image'
                                   ? tr(context, 'Photo', 'تصویر')
-                                  : kind == 'audio'
-                                  ? tr(context, 'Audio', 'صوت')
                                   : kind == 'file'
                                   ? tr(context, 'File', 'فایل')
                                   : tr(context, 'Video', 'ویدیو')),
@@ -282,6 +309,187 @@ class _LoomGroupAttachmentState extends State<LoomGroupAttachment> {
               style: Theme.of(context).textTheme.labelSmall,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Music-style card for audio attachments: tinted artwork tile, name, size
+/// and a live progress track bound to the shared music controller.
+class _AudioAttachmentCard extends StatelessWidget {
+  const _AudioAttachmentCard({
+    required this.name,
+    required this.size,
+    required this.audioId,
+    required this.loading,
+    required this.failed,
+    required this.onTap,
+  });
+
+  final String name;
+  final int size;
+  final String audioId;
+  final bool loading;
+  final bool failed;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    return LoomPlaybackProgressBuilder(
+      controller: LoomPlaybackController.instance,
+      sourceId: audioId,
+      builder: (context) {
+        final playback = LoomPlaybackController.instance;
+        final active = playback.sourceId == audioId;
+        final progress = active && playback.duration.inMilliseconds > 0
+            ? (playback.position.inMilliseconds /
+                    playback.duration.inMilliseconds)
+                .clamp(0.0, 1.0)
+            : 0.0;
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: LinearGradient(
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
+              colors: [
+                p.primary.withValues(alpha: active ? .16 : .09),
+                p.surfaceElevated,
+              ],
+            ),
+            border: Border.all(color: p.primary.withValues(alpha: .13)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      p.primary.withValues(alpha: .30),
+                      p.secondary.withValues(alpha: .22),
+                    ],
+                  ),
+                ),
+                child: Icon(
+                  LoomIcons.music_note_rounded,
+                  size: 24,
+                  color: p.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      failed
+                          ? tr(context, 'Tap to retry download', 'برای دانلود دوباره بزنید')
+                          : name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: p.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      size > 0
+                          ? '${(size / 1048576).toStringAsFixed(1)} MB'
+                          : tr(context, 'Audio', 'صوت'),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: p.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    SizedBox(
+                      height: 4,
+                      child: LoomWaveform(
+                        waveform: const [],
+                        progress: progress,
+                        foreground: p.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _AudioCardPlayButton(
+                active: active,
+                playing: active && playback.playing,
+                loading: loading || (active && playback.loading),
+                failed: failed,
+                onTap: onTap,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AudioCardPlayButton extends StatelessWidget {
+  const _AudioCardPlayButton({
+    required this.active,
+    required this.playing,
+    required this.loading,
+    required this.failed,
+    required this.onTap,
+  });
+
+  final bool active, playing, loading, failed;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    return Tooltip(
+      message: playing
+          ? tr(context, 'Pause', 'مکث')
+          : tr(context, 'Play', 'پخش'),
+      child: Material(
+        color: failed ? p.critical.withValues(alpha: .14) : p.primary,
+        shape: const CircleBorder(
+          side: BorderSide(color: Colors.transparent),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            width: 42,
+            height: 42,
+            child: Center(
+              child: loading
+                  ? SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: p.onPrimary,
+                      ),
+                    )
+                  : Icon(
+                      failed
+                          ? LoomIcons.refresh_rounded
+                          : playing
+                          ? LoomIcons.pause_rounded
+                          : LoomIcons.play_arrow_rounded,
+                      size: 22,
+                      color: failed ? p.critical : p.onPrimary,
+                    ),
+            ),
+          ),
         ),
       ),
     );

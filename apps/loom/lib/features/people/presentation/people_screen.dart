@@ -13,6 +13,7 @@ import '../../profile/presentation/own_avatar.dart';
 import '../application/people_controller.dart';
 import 'contact_qr_scanner_screen.dart';
 import '../../media/application/media_capabilities.dart';
+import '../../../app/connection_errors.dart';
 
 class LoomPeopleScreen extends StatefulWidget {
   const LoomPeopleScreen({
@@ -164,12 +165,16 @@ class _LoomPeopleScreenState extends State<LoomPeopleScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              messaging.errorMessage ??
-                  tr(
-                    context,
-                    'Could not open this chat. Try again.',
-                    'باز کردن گفتگو ممکن نشد. دوباره تلاش کنید.',
-                  ),
+              messaging.errorMessage == null
+                  ? tr(
+                      context,
+                      'Could not open this chat. Try again.',
+                      'باز کردن گفتگو ممکن نشد. دوباره تلاش کنید.',
+                    )
+                  : loomConnectionErrorLabel(
+                      context,
+                      messaging.errorMessage!,
+                    ),
             ),
           ),
         );

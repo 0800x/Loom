@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart'
     show DragStartBehavior, TapGestureRecognizer;
@@ -284,6 +286,8 @@ class LoomMessageBubble extends StatelessWidget {
     this.banner,
     this.footer,
     this.editedLabel,
+    this.onQuickTaps,
+    this.quickReactionEmoji,
     super.key,
   });
 
@@ -310,6 +314,15 @@ class LoomMessageBubble extends StatelessWidget {
   /// Optional row rendered BELOW the bubble (e.g. reaction chips), aligned
   /// with the bubble side.
   final Widget? footer;
+
+  /// Fires with the tap count (2 = double tap, 3 = triple tap) for quick
+  /// reactions. Sits OUTSIDE the link/photo handlers, so taps that land on a
+  /// link or an openable attachment still go to the child.
+  final ValueChanged<int>? onQuickTaps;
+
+  /// Emoji to burst over the bubble when [onQuickTaps] fires, by tap count.
+  /// Return null to skip the burst for a count.
+  final String? Function(int tapCount)? quickReactionEmoji;
 
   /// Localized "edited" marker shown next to the timestamp.
   final String? editedLabel;
@@ -346,7 +359,7 @@ class LoomMessageBubble extends StatelessWidget {
           .clamp(
             0.0,
             presentation == LoomMessagePresentation.voice
-                ? 260.0
+                ? 300.0
                 : LoomSizing.messageMax,
           )
           .toDouble();
@@ -556,7 +569,10 @@ class LoomMessageBubble extends StatelessWidget {
                   : {CustomSemanticsAction(label: replyLabel): onReply!},
               child: LoomSwipeToReply(
                 onReply: onReply,
-                child: GestureDetector(
+                child: _QuickTapHost(
+                  onQuickTaps: onQuickTaps,
+                  emojiOf: quickReactionEmoji,
+                  child: GestureDetector(
                   onLongPress: onActions,
                   onSecondaryTap: onActions,
                   child: Container(
@@ -604,6 +620,7 @@ class LoomMessageBubble extends StatelessWidget {
                     ),
                   ),
                 ),
+                ),
               ),
             ),
             if (footer != null) footer!,
@@ -624,6 +641,124 @@ final class _MessageDeliveryPresentation {
   final String time;
   final LoomDeliveryState state;
   final String semanticLabel;
+}
+
+/// Counts quick successive taps on a message bubble and reports the count
+/// (2 = double tap, 3 = triple tap). Uses a plain tap recognizer joined in
+/// the same gesture arena, so deeper handlers — links, photo viewers,
+/// selectable text — keep winning their taps.
+class _QuickTapHost extends StatefulWidget {
+  const _QuickTapHost({
+    required this.child,
+    this.onQuickTaps,
+    this.emojiOf,
+  });
+
+  final Widget child;
+  final ValueChanged<int>? onQuickTaps;
+  final String? Function(int tapCount)? emojiOf;
+
+  @override
+  State<_QuickTapHost> createState() => _QuickTapHostState();
+}
+
+class _QuickTapHostState extends State<_QuickTapHost>
+    with SingleTickerProviderStateMixin {
+  int _taps = 0;
+  Timer? _timer;
+  late final AnimationController _burst = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+  );
+  String? _burstEmoji;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _burst.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    if (widget.onQuickTaps == null) return;
+    _taps++;
+    _timer?.cancel();
+    if (_taps >= 3) {
+      _fire(3);
+      return;
+    }
+    // Two taps inside this window are a double tap. A slower single tap does
+    // nothing — single taps belong to links, photos and selection.
+    _timer = Timer(const Duration(milliseconds: 300), () {
+      if (_taps >= 2) {
+        _fire(_taps);
+      } else {
+        _taps = 0;
+      }
+    });
+  }
+
+  void _fire(int count) {
+    _timer?.cancel();
+    _timer = null;
+    _taps = 0;
+    widget.onQuickTaps?.call(count);
+    final emoji = widget.emojiOf?.call(count);
+    if (emoji != null) {
+      HapticFeedback.selectionClick();
+      if (!LoomAccessibility.fromContext(context).reduceMotion) {
+        _burstEmoji = emoji;
+        _burst.forward(from: 0);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.deferToChild,
+      onTapUp: widget.onQuickTaps == null ? null : (_) => _handleTap(),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          widget.child,
+          if (widget.emojiOf != null)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: AnimatedBuilder(
+                  animation: _burst,
+                  builder: (context, _) {
+                    if (_burst.isDismissed ||
+                        _burst.isCompleted ||
+                        _burstEmoji == null) {
+                      return const SizedBox.shrink();
+                    }
+                    final t = _burst.value;
+                    final scale =
+                        0.4 + 1.05 * Curves.easeOutBack.transform(t);
+                    return Center(
+                      child: Opacity(
+                        opacity: (1 - Curves.easeIn.transform(t)).clamp(0, 1),
+                        child: Transform.translate(
+                          offset: Offset(0, -26 * Curves.easeOut.transform(t)),
+                          child: Transform.scale(
+                            scale: scale,
+                            child: Text(
+                              _burstEmoji!,
+                              style: const TextStyle(fontSize: 46),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 _MessageDeliveryPresentation? _deliveryPresentation(String value) {

@@ -11,6 +11,7 @@ import 'onboarding_chrome.dart';
 import 'onboarding_flow.dart';
 import '../../nodes/application/node_share_link.dart';
 import '../../nodes/presentation/node_qr_screen.dart';
+import '../../../app/connection_errors.dart';
 
 class LoomOnboardingNodeSelectionScreen extends StatefulWidget {
   const LoomOnboardingNodeSelectionScreen({super.key});
@@ -363,7 +364,9 @@ class _LoomOnboardingNodeSelectionScreenState
               'Scan its QR, enter an address or choose a verified server.',
               'QR را اسکن کنید، نشانی بدهید یا سرور تأییدشده‌ای انتخاب کنید.',
             ),
-      error: controller.errorMessage,
+      error: controller.errorMessage == null
+          ? null
+          : loomConnectionErrorLabel(context, controller.errorMessage!),
       ctaLabel: canContinue
           ? tr(context, 'Continue with this server', 'ادامه با این سرور')
           : null,
@@ -377,6 +380,23 @@ class _LoomOnboardingNodeSelectionScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // A TLS trust failure has a direct recovery path on this very
+          // screen: importing the server's certificate. Surface it as an
+          // action instead of leaving it buried further down the form.
+          if (loomIsTlsHandshake(controller.errorMessage ?? '')) ...[
+            FilledButton.tonalIcon(
+              onPressed: loading ? null : _trustLocalCertificate,
+              icon: const Icon(LoomIcons.verified_user_outlined),
+              label: Text(
+                tr(
+                  context,
+                  'Import server certificate',
+                  'وارد کردن گواهی سرور',
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           LoomGlassSurface(
             blur: false,
             radius: LoomRadii.surface,

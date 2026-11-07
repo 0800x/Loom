@@ -1935,6 +1935,19 @@ class _ConversationPaneState extends State<_ConversationPane>
                                                       emoji,
                                                     ),
                                                   ),
+                                            onQuickTaps:
+                                                conversation == null ||
+                                                    !message.readable
+                                                ? null
+                                                : (count) => unawaited(
+                                                    messaging.reactToMessage(
+                                                      conversation.id,
+                                                      message,
+                                                      count >= 3
+                                                          ? '👍'
+                                                          : '❤️',
+                                                    ),
+                                                  ),
                                             onReply: message.readable
                                                 ? () => _reply(message)
                                                 : null,

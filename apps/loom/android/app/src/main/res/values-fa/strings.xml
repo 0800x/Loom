@@ -1,2 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources><string name="app_name">لوم</string></resources>
+<resources>
+    <string name="app_name">لوم</string>
+    <string name="loom_quick_reply">پاسخ</string>
+    <string name="loom_stay_connected_title">لوم متصل است</string>
+    <string name="loom_stay_connected_text">در انتظار پیام‌های جدید</string>
+</resources>

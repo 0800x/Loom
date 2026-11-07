@@ -66,24 +66,13 @@ class _DesktopMusicPlayer extends StatelessWidget {
                       valueListenable: playback.timeline,
                       builder: (context, position, _) => Column(
                         children: [
-                          Slider(
-                            value: position.inMilliseconds.toDouble().clamp(
-                              0,
-                              playback.duration.inMilliseconds.toDouble().clamp(
-                                1,
-                                double.infinity,
-                              ),
-                            ),
-                            max: playback.duration.inMilliseconds
-                                .toDouble()
-                                .clamp(1, double.infinity),
-                            onChanged: playback.visible && !playback.loading
-                                ? (value) => unawaited(
-                                    playback.seek(
-                                      Duration(milliseconds: value.round()),
-                                    ),
-                                  )
-                                : null,
+                          // Drag-buffered seek: one decoder seek per gesture
+                          // on release instead of one per slider pixel.
+                          _SeekSlider(
+                            position: position,
+                            duration: playback.duration,
+                            enabled: playback.visible && !playback.loading,
+                            onSeek: playback.seek,
                           ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,

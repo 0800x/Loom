@@ -33,6 +33,7 @@ import '../../connectivity/application/lan_resilience_controller.dart';
 import '../../onboarding/application/onboarding_controller.dart';
 import 'legacy_dtn_mailbox.dart';
 import 'offline_device_directory_cache.dart';
+import '../../../app/connection_errors.dart';
 
 typedef LoomNearbyOpaqueMessageSender =
     Future<void> Function({
@@ -3379,10 +3380,8 @@ class LoomMessagingSessionController extends ChangeNotifier
     notifyListeners();
   }
 
-  String _safeError(Object error) {
-    final text = error.toString().replaceAll(RegExp(r'[\r\n]+'), ' ');
-    return text.length <= 240 ? text : text.substring(0, 240);
-  }
+  String _safeError(Object error) =>
+      loomConnectionErrorCode(error) ?? loomSafeErrorText(error);
 
   @override
   void dispose() {

@@ -93,6 +93,41 @@ class LoomMessageNotificationBridge {
   Future<void> settings() => channel.invokeMethod<void>('openSettings');
   Future<Map<String, Object?>> status() async =>
       await channel.invokeMapMethod<String, Object?>('status') ?? const {};
+
+  // ── Background connection (Android foreground service) ─────────────────
+  // An opt-in keep-alive so the realtime message socket survives the app
+  // being swiped away. Not push: nothing arrives if the process is killed
+  // by the OS or the device restarts.
+  Future<void> startStayConnected() async {
+    try {
+      await channel.invokeMethod<void>('startMessagingService');
+    } on MissingPluginException {
+      /* Unsupported platform. */
+    } on PlatformException {
+      /* OEM restrictions stay authoritative. */
+    }
+  }
+
+  Future<void> stopStayConnected() async {
+    try {
+      await channel.invokeMethod<void>('stopMessagingService');
+    } on MissingPluginException {
+      /* Unsupported platform. */
+    } on PlatformException {
+      /* Best effort. */
+    }
+  }
+
+  Future<bool> stayConnectedRunning() async {
+    try {
+      return await channel.invokeMethod<bool>('messagingServiceRunning') ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
 }
 
 class LoomMessageNotifications with WidgetsBindingObserver {
@@ -122,6 +157,7 @@ class LoomMessageNotifications with WidgetsBindingObserver {
   final LoomMessageNotificationBridge bridge;
   final LoomMessageNotificationPolicy policy;
   bool _disposed = false;
+  bool _permissionNudged = false;
   AppLifecycleState _lifecycle =
       WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
   @override
@@ -131,6 +167,14 @@ class LoomMessageNotifications with WidgetsBindingObserver {
     if (_disposed) return;
     final own = messaging.onboarding.receipt?.address;
     if (own == null) return;
+    // Ask for the OS notification permission once, right after sign-in, so
+    // message notifications actually have a channel to arrive on. The OS
+    // dialog only ever appears once per install; later refusals route the
+    // user to system settings via the Notifications pane.
+    if (!_permissionNudged) {
+      _permissionNudged = true;
+      unawaited(_nudgePermission());
+    }
     for (final conversation in messaging.conversations) {
       final visible =
           !LoomAppLock.instance.locked &&
@@ -164,6 +208,16 @@ class LoomMessageNotifications with WidgetsBindingObserver {
   /// Re-queries the OS state after the permission dialog resolves so the
   /// settings switch reflects reality instead of an optimistic assumption.
   Future<Map<String, Object?>> refreshStatus() => bridge.status();
+
+  Future<void> _nudgePermission() async {
+    try {
+      final status = await bridge.status();
+      if (status['enabled'] == true) return;
+      await bridge.enable();
+    } catch (_) {
+      _permissionNudged = false;
+    }
+  }
 
   void dispose() {
     _disposed = true;

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../app/loom_strings.dart';
 import '../application/node_directory_controller.dart';
 import 'node_qr_screen.dart';
+import '../../../app/connection_errors.dart';
 
 class NodeSelectionScreen extends StatefulWidget {
   const NodeSelectionScreen({super.key});
@@ -338,7 +339,10 @@ class _NodeSelectionScreenState extends State<NodeSelectionScreen> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: LoomSpacing.xs),
                       child: Text(
-                        controller.errorMessage!,
+                        loomConnectionErrorLabel(
+                          context,
+                          controller.errorMessage!,
+                        ),
                         style: Theme.of(
                           context,
                         ).textTheme.labelSmall?.copyWith(color: p.critical),

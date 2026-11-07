@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import '../../../app/release_metadata.dart';
 import 'package:loom_design/loom_design.dart';
@@ -6,13 +7,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../app/loom_strings.dart';
 import 'appearance_panel.dart';
+import '../../accounts/application/account_workspace.dart';
 import '../../calls/application/call_platform_bridge.dart';
 import '../../notifications/application/message_notifications.dart';
+import '../../notifications/application/notification_preferences.dart';
 import '../../messaging/presentation/local_message_cleanup_screen.dart';
 import '../../messaging/application/messaging_session_controller.dart';
+import '../../security/application/db_encryption.dart';
 import '../../security/presentation/app_lock_gate.dart';
 
 enum LoomSettingsSection {
@@ -437,15 +443,25 @@ class _LoomSettingsDetailScreenState extends State<LoomSettingsDetailScreen> {
     _SectionTitle(
       tr(context, 'When the app is closed', 'هنگام بسته‌بودن برنامه'),
     ),
-    _StatusRow(
-      icon: LoomIcons.notifications_off_outlined,
-      title: tr(context, 'Push messages and calls', 'پیام و تماس از طریق Push'),
-      value: tr(context, 'Not available yet', 'هنوز فعال نیست'),
-    ),
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) ...[
+      const _StayConnectedToggle(),
+      _StatusRow(
+        icon: LoomIcons.notifications_off_outlined,
+        title: tr(context, 'Push messages and calls', 'پیام و تماس از طریق Push'),
+        value: tr(context, 'Not available yet', 'هنوز فعال نیست'),
+      ),
+    ] else
+      _StatusRow(
+        icon: LoomIcons.notifications_off_outlined,
+        title: tr(context, 'Push messages and calls', 'پیام و تماس از طریق Push'),
+        value: tr(context, 'Not available yet', 'هنوز فعال نیست'),
+      ),
   ];
 
   List<Widget> _storage(BuildContext context) => [
+    const _StorageUsageCard(),
     _SectionTitle(tr(context, 'On this device', 'روی این دستگاه')),
+    const _DbEncryptionStatusRow(),
     LoomSettingsRow(
       icon: LoomIcons.cleaning_services_outlined,
       title: tr(context, 'Manage local messages', 'مدیریت پیام‌های محلی'),
@@ -502,94 +518,270 @@ class _LoomSettingsDetailScreenState extends State<LoomSettingsDetailScreen> {
     ),
   ];
 
-  List<Widget> _about(BuildContext context) => [
-    _ValueRow(label: tr(context, 'License', 'مجوز'), value: 'GPLv3'),
-    TextButton(
-      onPressed: () => showLicensePage(
-        context: context,
-        applicationName: tr(context, 'Loom', 'لوم'),
+  List<Widget> _about(BuildContext context) {
+    final p = context.loom;
+    return [
+      // ── Brand hero ──────────────────────────────────────────────────────
+      LoomSettingsCard(
+        child: Column(
+          children: [
+            const SizedBox(height: LoomSpacing.sm),
+            const LoomBrandMark(size: 76),
+            const SizedBox(height: LoomSpacing.md),
+            Text(
+              tr(context, 'Loom', 'لوم'),
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -.3,
+              ),
+            ),
+            const SizedBox(height: LoomSpacing.sm),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: p.primary.withValues(alpha: .12),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: p.primary.withValues(alpha: .25),
+                    ),
+                  ),
+                  child: Text(
+                    'v$loomReleaseVersion',
+                    textDirection: TextDirection.ltr,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: p.primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: p.warning.withValues(alpha: .10),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: p.warning.withValues(alpha: .25),
+                    ),
+                  ),
+                  child: Text(
+                    tr(context, loomReleaseChannel, 'آلفا'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: p.warning,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: LoomSpacing.md),
+            Text(
+              tr(
+                context,
+                'Private, resilient communication you can host yourself.',
+                'ارتباط خصوصی و مقاوم که خودتان می‌توانید میزبانی کنید.',
+              ),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: p.textSecondary, fontSize: 13.5),
+            ),
+            const SizedBox(height: LoomSpacing.sm),
+          ],
+        ),
       ),
-      child: Text(tr(context, 'Licenses and attribution', 'مجوزها و انتساب')),
-    ),
-    LoomGlassSurface(
-      liveBackdrop: true,
-      padding: const EdgeInsets.all(LoomSpacing.md),
-      child: FutureBuilder<PackageInfo>(
-        // Read the installed native package, including --build-name/number
-        // overrides. Never substitute a source constant for an unknown build.
-        future: _installedPackage ??= PackageInfo.fromPlatform(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
+      const SizedBox(height: LoomSpacing.lg),
+
+      // ── Highlights ─────────────────────────────────────────────────────
+      _SectionTitle(tr(context, 'Why Loom', 'چرا لوم')),
+      _StatusRow(
+        icon: LoomIcons.https_rounded,
+        title: tr(context, 'End-to-end encryption', 'رمزنگاری سرتاسری'),
+        value: tr(
+          context,
+          'Messages and calls, before they leave your device',
+          'پیام‌ها و تماس‌ها، پیش از خروج از دستگاه',
+        ),
+      ),
+      _StatusRow(
+        icon: LoomIcons.dns_outlined,
+        title: tr(context, 'Your own server', 'سرور خودتان'),
+        value: tr(
+          context,
+          'Community nodes, or host one yourself',
+          'نودهای اجتماعی، یا خودتان یکی میزبانی کنید',
+        ),
+      ),
+      _StatusRow(
+        icon: LoomIcons.near_me_outlined,
+        title: tr(context, 'Works off-grid', 'بدون اینترنت هم کار می‌کند'),
+        value: tr(
+          context,
+          'Nearby delivery over Bluetooth and Wi-Fi',
+          'تحویل نزدیک از طریق بلوتوث و وای‌فای',
+        ),
+      ),
+      _StatusRow(
+        icon: LoomIcons.shield_outlined,
+        title: tr(context, 'No ads, no tracking', 'بدون تبلیغ، بدون ردیابی'),
+        value: tr(
+          context,
+          'Free software under GPLv3',
+          'نرم‌افزار آزاد با مجوز GPLv3',
+        ),
+      ),
+      const SizedBox(height: LoomSpacing.lg),
+
+      // ── Links ──────────────────────────────────────────────────────────
+      _SectionTitle(tr(context, 'Links', 'پیوندها')),
+      LoomSettingsRow(
+        icon: LoomIcons.http_rounded,
+        title: tr(context, 'Source code', 'کد منبع'),
+        subtitle: 'github.com/0800x/Loom',
+        showDivider: true,
+        onTap: () => unawaited(
+          _launchExternal(context, 'https://github.com/0800x/Loom'),
+        ),
+      ),
+      LoomSettingsRow(
+        icon: LoomIcons.send_rounded,
+        title: tr(context, 'Telegram channel', 'کانال تلگرام'),
+        subtitle: 't.me/LoomMessanger',
+        showDivider: true,
+        onTap: () => unawaited(
+          _launchExternal(context, 'https://t.me/LoomMessanger'),
+        ),
+      ),
+      LoomSettingsRow(
+        icon: LoomIcons.open_in_new,
+        title: tr(context, 'Licenses and attribution', 'مجوزها و انتساب'),
+        subtitle: tr(
+          context,
+          'Third-party components and licenses',
+          'اجزای شخص ثالث و مجوزها',
+        ),
+        showDivider: false,
+        onTap: () => showLicensePage(
+          context: context,
+          applicationName: tr(context, 'Loom', 'لوم'),
+          applicationVersion: loomReleaseVersion,
+        ),
+      ),
+      const SizedBox(height: LoomSpacing.lg),
+
+      // ── Installed build ────────────────────────────────────────────────
+      _SectionTitle(tr(context, 'Installed build', 'بیلد نصب‌شده')),
+      LoomSettingsCard(
+        child: FutureBuilder<PackageInfo>(
+          // Read the installed native package, including --build-name/number
+          // overrides. Never substitute a source constant for an unknown build.
+          future: _installedPackage ??= PackageInfo.fromPlatform(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tr(
+                      context,
+                      'Could not read the installed app version.',
+                      'خواندن نسخهٔ نصب‌شدهٔ برنامه ممکن نشد.',
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => setState(() {
+                      _installedPackage = PackageInfo.fromPlatform();
+                    }),
+                    child: Text(tr(context, 'Retry', 'تلاش دوباره')),
+                  ),
+                ],
+              );
+            }
+            final info = snapshot.data;
+            if (info == null) {
+              return LinearProgressIndicator(
+                semanticsLabel: tr(
+                  context,
+                  'Reading installed version',
+                  'در حال خواندن نسخهٔ نصب‌شده',
+                ),
+              );
+            }
+            final version = info.version.isEmpty ? '—' : info.version;
+            final build = info.buildNumber.isEmpty ? '—' : info.buildNumber;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  tr(
-                    context,
-                    'Could not read the installed app version.',
-                    'خواندن نسخهٔ نصب‌شدهٔ برنامه ممکن نشد.',
-                  ),
+                _ValueRow(label: tr(context, 'Version', 'نسخه'), value: version),
+                _ValueRow(
+                  label: tr(context, 'Build number', 'شمارهٔ بیلد'),
+                  value: build,
                 ),
-                TextButton(
-                  onPressed: () => setState(() {
-                    _installedPackage = PackageInfo.fromPlatform();
-                  }),
-                  child: Text(tr(context, 'Retry', 'تلاش دوباره')),
+                _ValueRow(
+                  label: tr(context, 'Package version', 'نسخهٔ پکیج'),
+                  value: info.version.isEmpty
+                      ? '—'
+                      : info.buildNumber.isEmpty
+                      ? info.version
+                      : '\${info.version}+\${info.buildNumber}',
+                ),
+                _ValueRow(
+                  label: tr(context, 'Application ID', 'شناسهٔ برنامه'),
+                  value: info.packageName.isEmpty ? '—' : info.packageName,
                 ),
               ],
             );
-          }
-          final info = snapshot.data;
-          if (info == null) {
-            return LinearProgressIndicator(
-              semanticsLabel: tr(
-                context,
-                'Reading installed version',
-                'در حال خواندن نسخهٔ نصب‌شده',
-              ),
-            );
-          }
-          final version = info.version.isEmpty ? '—' : info.version;
-          final build = info.buildNumber.isEmpty ? '—' : info.buildNumber;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _ValueRow(label: tr(context, 'Version', 'نسخه'), value: version),
-              _ValueRow(
-                label: tr(context, 'Build number', 'شمارهٔ بیلد'),
-                value: build,
-              ),
-              _ValueRow(
-                label: tr(context, 'Package version', 'نسخهٔ پکیج'),
-                value: info.version.isEmpty
-                    ? '—'
-                    : info.buildNumber.isEmpty
-                    ? info.version
-                    : '${info.version}+${info.buildNumber}',
-              ),
-              _ValueRow(
-                label: tr(context, 'Application ID', 'شناسهٔ برنامه'),
-                value: info.packageName.isEmpty ? '—' : info.packageName,
-              ),
-            ],
-          );
-        },
+          },
+        ),
       ),
-    ),
-    const SizedBox(height: LoomSpacing.md),
-    _ValueRow(
-      label: tr(context, 'Status', 'وضعیت'),
-      value: tr(context, loomReleaseChannel, 'آلفا'),
-    ),
-    const SizedBox(height: LoomSpacing.md),
-    _Notice(
-      tr(
-        context,
-        'These numbers identify the app installed on this device. Include the package version when reporting a problem.',
-        'این شماره‌ها مربوط به برنامهٔ نصب‌شده روی همین دستگاه‌اند. هنگام گزارش مشکل، نسخهٔ پکیج را هم ارسال کنید.',
+      const SizedBox(height: LoomSpacing.md),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: _Notice(
+          tr(
+            context,
+            'Copyright © 2026 Loom contributors. GPLv3-only. Include the package version when reporting a problem.',
+            'حق نشر © ۲۰۲۶ مشارکت‌کنندگان لوم. مجوز GPLv3. هنگام گزارش مشکل، نسخهٔ پکیج را هم ارسال کنید.',
+          ),
+        ),
       ),
-    ),
-  ];
+    ];
+  }
+
+  Future<void> _launchExternal(BuildContext context, String url) async {
+    final uri = Uri.parse(url);
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication) &&
+          context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              tr(context, 'Could not open link', 'باز کردن لینک ممکن نشد'),
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              tr(context, 'Could not open link', 'باز کردن لینک ممکن نشد'),
+            ),
+          ),
+        );
+      }
+    }
+  }
 
   List<Widget> _sharedMedia(BuildContext context) => [
     _StatusRow(
@@ -820,6 +1012,88 @@ class _MessageNotificationToggleState extends State<_MessageNotificationToggle>
   }
 }
 
+/// Opt-in Android foreground service that keeps the messaging socket alive
+/// after the app is swiped away, so message notifications keep arriving.
+/// Honest about its limits: it is a keep-alive, not push.
+class _StayConnectedToggle extends StatefulWidget {
+  const _StayConnectedToggle();
+
+  @override
+  State<_StayConnectedToggle> createState() => _StayConnectedToggleState();
+}
+
+class _StayConnectedToggleState extends State<_StayConnectedToggle> {
+  final _store = LoomNotificationPreferencesStore();
+  final _bridge = LoomMessageNotificationBridge();
+  bool? _enabled;
+  bool _working = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+  }
+
+  Future<void> _load() async {
+    try {
+      final preferences = await _store.load();
+      if (!mounted) return;
+      setState(() => _enabled = preferences.stayConnected);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _enabled = false);
+    }
+  }
+
+  Future<void> _toggle(bool value) async {
+    if (_working || _enabled == null) return;
+    setState(() => _working = true);
+    try {
+      await _store.save(LoomNotificationPreferences(stayConnected: value));
+      if (value) {
+        await _bridge.startStayConnected();
+      } else {
+        await _bridge.stopStayConnected();
+      }
+      if (!mounted) return;
+      setState(() => _enabled = value);
+    } catch (_) {
+      await _load();
+    } finally {
+      if (mounted) setState(() => _working = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final on = _enabled == true;
+    return LoomSettingsRow(
+      icon: LoomIcons.sync_rounded,
+      iconColor: context.loom.connectivity,
+      title: tr(context, 'Stay connected', 'اتصال همیشگی'),
+      subtitle: _enabled == null
+          ? tr(context, 'Checking…', 'در حال بررسی…')
+          : on
+          ? tr(
+              context,
+              'On — messages keep arriving for a while after you close Loom',
+              'روشن — پس از بستن لوم هم پیام‌ها به دستتان می‌رسد',
+            )
+          : tr(
+              context,
+              'Keep receiving messages after closing the app',
+              'پس از بستن برنامه هم پیام دریافت کنید',
+            ),
+      showDivider: true,
+      trailing: Switch(
+        value: on,
+        onChanged: _working ? null : _toggle,
+      ),
+      onTap: () => _toggle(!on),
+    );
+  }
+}
+
 /// Device-local search index consent. Turning it off wipes the decrypted
 /// preview index immediately; turning it on starts a bounded back-fill.
 class _LocalSearchToggle extends StatefulWidget {
@@ -916,6 +1190,392 @@ class _BlockedContactsCard extends StatelessWidget {
           const SizedBox(height: 4),
         ],
       ),
+    );
+  }
+}
+
+/// Flat storage summary card for Data & Storage.
+///
+/// Measures the messages database, the other local databases and the media
+/// cache directories, then renders a segmented usage bar with a legend and a
+/// cache-clearing action. Sizes are informational only; nothing is deleted
+/// unless the user presses "Clear media cache".
+class _StorageUsageCard extends StatefulWidget {
+  const _StorageUsageCard();
+
+  @override
+  State<_StorageUsageCard> createState() => _StorageUsageCardState();
+}
+
+class _StorageUsageCardState extends State<_StorageUsageCard> {
+  Future<_StorageBreakdown>? _breakdown;
+  bool _clearing = false;
+
+  /// Mirror of the stale-cache directory list the session controller cleans
+  /// on startup; these are the same directories users can clear manually.
+  static const _cacheDirNames = [
+    'loom_media_view',
+    'loom_media_prepare',
+    'loom_media_record',
+    'loom_media_playback',
+    'loom_music_library',
+    'loom_media_keyboard',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _breakdown = _measure();
+  }
+
+  Future<int> _directorySize(Directory dir) async {
+    var total = 0;
+    try {
+      await for (final entity in dir.list(
+        recursive: true,
+        followLinks: false,
+      )) {
+        if (entity is File) {
+          try {
+            total += await entity.length();
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+    return total;
+  }
+
+  Future<_StorageBreakdown> _measure() async {
+    var messages = 0;
+    var otherDatabases = 0;
+    var mediaCache = 0;
+    try {
+      final support = Directory((await LoomAccountWorkspace.active()).path);
+      if (await support.exists()) {
+        await for (final entity in support.list(followLinks: false)) {
+          if (entity is! File) continue;
+          final name = entity.uri.pathSegments.last;
+          final size = await entity.length();
+          if (name.startsWith('loom-messages-v1.sqlite3')) {
+            messages += size;
+          } else if (name.contains('.sqlite3')) {
+            otherDatabases += size;
+          }
+        }
+      }
+    } catch (_) {
+      // The workspace may be unavailable (locked vault, fresh install);
+      // the card degrades to cache-only numbers instead of failing.
+    }
+    try {
+      final temp = await getTemporaryDirectory();
+      for (final name in _cacheDirNames) {
+        final dir = Directory('${temp.path}${Platform.pathSeparator}$name');
+        if (await dir.exists()) {
+          mediaCache += await _directorySize(dir);
+        }
+      }
+    } catch (_) {}
+    return _StorageBreakdown(
+      messagesDatabase: messages,
+      otherDatabases: otherDatabases,
+      mediaCache: mediaCache,
+    );
+  }
+
+  Future<void> _clearCache() async {
+    if (_clearing) return;
+    setState(() => _clearing = true);
+    try {
+      try {
+        final temp = await getTemporaryDirectory();
+        for (final name in _cacheDirNames) {
+          try {
+            final dir = Directory('${temp.path}${Platform.pathSeparator}$name');
+            if (await dir.exists()) {
+              await dir.delete(recursive: true);
+            }
+          } catch (_) {}
+        }
+      } catch (_) {}
+      setState(() => _breakdown = _measure());
+    } finally {
+      if (mounted) {
+        setState(() => _clearing = false);
+      }
+    }
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    final kb = bytes / 1024;
+    if (kb < 1024) return '${kb.toStringAsFixed(kb < 10 ? 1 : 0)} KB';
+    final mb = kb / 1024;
+    if (mb < 1024) return '${mb.toStringAsFixed(mb < 10 ? 1 : 0)} MB';
+    return '${(mb / 1024).toStringAsFixed(2)} GB';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    final cacheColor = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFFBBF24)
+        : const Color(0xFFD97706);
+    return FutureBuilder<_StorageBreakdown>(
+      future: _breakdown,
+      builder: (context, snapshot) {
+        final data = snapshot.data;
+        final loading = data == null;
+        final messages = data?.messagesDatabase ?? 0;
+        final other = data?.otherDatabases ?? 0;
+        final cache = data?.mediaCache ?? 0;
+        final total = messages + other + cache;
+        double fraction(int part) => total <= 0 ? 0 : part / total;
+        return Container(
+          margin: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 4),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: p.surfaceElevated,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: p.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: p.primary.withAlphaFraction(.12),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Icon(
+                      LoomIcons.storage_outlined,
+                      size: 22,
+                      color: p.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tr(context, 'Storage usage', 'مصرف فضا'),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          loading
+                              ? tr(
+                                  context,
+                                  'Measuring local files…',
+                                  'در حال اندازه‌گیری فایل‌های محلی…',
+                                )
+                              : tr(
+                                  context,
+                                  '${_formatBytes(total)} used by Loom on this device',
+                                  '${_formatBytes(total)} توسط لوم روی این دستگاه',
+                                ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(color: p.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (!loading) ...[
+                const SizedBox(height: 14),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: SizedBox(
+                    height: 8,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: (fraction(messages) * 1000).round() + 1,
+                          child: ColoredBox(color: p.primary),
+                        ),
+                        Expanded(
+                          flex: (fraction(other) * 1000).round() + 1,
+                          child: ColoredBox(
+                            color: p.secondary.withAlphaFraction(.75),
+                          ),
+                        ),
+                        Expanded(
+                          flex: (fraction(cache) * 1000).round() + 1,
+                          child: ColoredBox(color: cacheColor),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _StorageLegendRow(
+                  color: p.primary,
+                  label: tr(
+                    context,
+                    'Messages database',
+                    'پایگاه دادهٔ پیام‌ها',
+                  ),
+                  value: _formatBytes(messages),
+                ),
+                _StorageLegendRow(
+                  color: p.secondary.withAlphaFraction(.75),
+                  label: tr(context, 'Other local data', 'سایر داده‌های محلی'),
+                  value: _formatBytes(other),
+                ),
+                _StorageLegendRow(
+                  color: cacheColor,
+                  label: tr(context, 'Media cache', 'حافظهٔ موقت رسانه'),
+                  value: _formatBytes(cache),
+                  last: true,
+                ),
+                if (cache > 0) ...[
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: TextButton.icon(
+                      onPressed: _clearing ? null : _clearCache,
+                      icon: _clearing
+                          ? const SizedBox.square(
+                              dimension: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(
+                              LoomIcons.delete_outline_rounded,
+                              size: 18,
+                            ),
+                      label: Text(
+                        tr(
+                          context,
+                          'Clear media cache',
+                          'پاک‌سازی حافظهٔ موقت',
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _StorageBreakdown {
+  const _StorageBreakdown({
+    required this.messagesDatabase,
+    required this.otherDatabases,
+    required this.mediaCache,
+  });
+
+  final int messagesDatabase;
+  final int otherDatabases;
+  final int mediaCache;
+}
+
+class _StorageLegendRow extends StatelessWidget {
+  const _StorageLegendRow({
+    required this.color,
+    required this.label,
+    required this.value,
+    this.last = false,
+  });
+
+  final Color color;
+  final String label;
+  final String value;
+  final bool last;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: last ? 0 : 6),
+      child: Row(
+        children: [
+          Container(
+            width: 9,
+            height: 9,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: p.textSecondary),
+            ),
+          ),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Data & Storage row that surfaces the live SQLCipher at-rest state and
+/// deep-links to the Security screen where the one-way toggle lives.
+class _DbEncryptionStatusRow extends StatefulWidget {
+  const _DbEncryptionStatusRow();
+
+  @override
+  State<_DbEncryptionStatusRow> createState() => _DbEncryptionStatusRowState();
+}
+
+class _DbEncryptionStatusRowState extends State<_DbEncryptionStatusRow> {
+  Future<bool>? _enabled;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _enabled ??= LoomDbEncryption.preferenceEnabled();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _enabled,
+      builder: (context, snapshot) {
+        final enabled = snapshot.data;
+        final subtitle = enabled == null
+            ? tr(
+                context,
+                'Encrypted local message history',
+                'تاریخچهٔ محلی رمزگذاری‌شده',
+              )
+            : enabled
+            ? tr(
+                context,
+                'Enabled · messages are encrypted at rest',
+                'فعال · پیام‌ها در حالت سکون رمزگذاری می‌شوند',
+              )
+            : tr(
+                context,
+                'Disabled · messages are stored in plaintext',
+                'غیرفعال · پیام‌ها به‌صورت متنی ذخیره می‌شوند',
+              );
+        return LoomSettingsRow(
+          icon: LoomIcons.lock_outline_rounded,
+          title: tr(context, 'Database encryption', 'رمزگذاری پایگاه داده'),
+          subtitle: subtitle,
+          showDivider: false,
+          onTap: () => Navigator.of(context).pushNamed('/security'),
+        );
+      },
     );
   }
 }

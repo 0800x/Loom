@@ -622,21 +622,27 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
                                 onPressed: _voice.lock,
                                 child: Text(tr(context, 'Lock', 'قفل')),
                               ),
-                            IconButton(
+                            const SizedBox(width: 4),
+                            _OverlayActionButton(
                               tooltip: paused
                                   ? tr(context, 'Resume', 'ادامه')
                                   : tr(context, 'Pause', 'توقف موقت'),
-                              onPressed: () => unawaited(
+                              icon: paused
+                                  ? LoomIcons.play_arrow_rounded
+                                  : LoomIcons.pause_rounded,
+                              onTap: () => unawaited(
                                   paused ? _voice.resume() : _voice.pause()),
-                              icon: Icon(
-                                paused
-                                    ? LoomIcons.play_arrow_rounded
-                                    : LoomIcons.pause_rounded,
-                              ),
                             ),
-                            TextButton(
-                              onPressed: () => unawaited(_voice.stop()),
-                              child: Text(tr(context, 'Stop', 'توقف')),
+                            const SizedBox(width: 10),
+                            _OverlayActionButton(
+                              tooltip: tr(
+                                context,
+                                'Stop and review',
+                                'توقف و بازبینی',
+                              ),
+                              icon: LoomIcons.stop,
+                              solid: true,
+                              onTap: () => unawaited(_voice.stop()),
                             ),
                           ],
                         ),
@@ -695,7 +701,7 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
     final active = _voice.active;
     final p = context.loom;
     final tooltip = phase == VoicePhase.locked
-        ? tr(context, 'Stop and review', 'توقف و بازبینی')
+        ? tr(context, 'Send recording', 'ارسال ضبط')
         : phase == VoicePhase.draft || hasText
         ? tr(context, 'Send', 'ارسال')
         : !LoomMediaCapabilities.cameraCapture
@@ -748,44 +754,46 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
               onPressed: _cancel,
               icon: const Icon(LoomIcons.close),
             ),
-            Icon(LoomIcons.mic, size: 18, color: p.critical),
-            const SizedBox(width: 4),
-            Text(mediaTime(_voice.duration), textDirection: TextDirection.ltr),
-            const SizedBox(width: 10),
-            // Live input level: the already-captured peaks painted as bars,
-            // so the composer shows what is actually being recorded.
-            Expanded(
-              child: _LiveWaveform(peaks: _voice.waveform, color: p.critical),
+            _RecordingPulse(
+              color: p.critical,
+              paused: _voice.paused,
             ),
-            if (phase == VoicePhase.locked || phase == VoicePhase.paused) ...[
-              const SizedBox(width: 6),
-              IconButton(
-                tooltip: _voice.paused
-                    ? tr(context, 'Resume', 'ادامه')
-                    : tr(context, 'Pause', 'توقف موقت'),
-                onPressed: () => unawaited(
-                    _voice.paused ? _voice.resume() : _voice.pause()),
-                icon: Icon(
-                  _voice.paused
-                      ? LoomIcons.play_arrow_rounded
-                      : LoomIcons.pause_rounded,
-                  size: 20,
-                ),
+            const SizedBox(width: 6),
+            Text(
+              mediaTime(_voice.duration),
+              textDirection: TextDirection.ltr,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontFeatures: [const FontFeature.tabularFigures()],
               ),
-              IconButton(
-                tooltip: tr(
-                  context,
-                  'Send without listening',
-                  'ارسال بدون گوش دادن',
-                ),
-                onPressed: () => unawaited(_sendNow()),
-                style: IconButton.styleFrom(
-                  backgroundColor: p.primary,
-                  foregroundColor: p.onPrimary,
-                ),
-                icon: const Icon(LoomIcons.send_rounded, size: 19),
-              ),
-            ] else ...[
+            ),
+            const SizedBox(width: 10),
+          // Live input level: the already-captured peaks painted as bars,
+          // so the composer shows what is actually being recorded. The widget
+          // listens to the draft controller directly and repaints at the
+          // native amplitude cadence (~8 Hz) instead of the 1 Hz text guard.
+          Expanded(
+            child: _LiveWaveform(controller: _voice, color: p.critical),
+          ),
+          if (phase == VoicePhase.locked || phase == VoicePhase.paused) ...[
+            const SizedBox(width: 6),
+            _RecordActionButton(
+              tooltip: _voice.paused
+                  ? tr(context, 'Resume', 'ادامه')
+                  : tr(context, 'Pause', 'توقف موقت'),
+              icon: _voice.paused
+                  ? LoomIcons.play_arrow_rounded
+                  : LoomIcons.pause_rounded,
+              onTap: () => unawaited(
+                  _voice.paused ? _voice.resume() : _voice.pause()),
+            ),
+            const SizedBox(width: 8),
+            _RecordActionButton(
+              tooltip: tr(context, 'Stop and review', 'توقف و بازبینی'),
+              icon: LoomIcons.stop,
+              onTap: () => unawaited(_voice.stop()),
+            ),
+          ] else ...[
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
@@ -893,8 +901,10 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
                       : () {
                           if (phase == VoicePhase.draft) {
                             unawaited(_sendVoice());
-                          } else if (phase == VoicePhase.locked) {
-                            unawaited(_voice.stop());
+                          } else if (phase == VoicePhase.locked ||
+                              phase == VoicePhase.paused) {
+                            // The lock bar owns pause/stop; the circle sends.
+                            unawaited(_sendNow());
                           } else if (!active && hasText) {
                             widget.onSend?.call();
                           } else if (!active &&
@@ -928,16 +938,18 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
                             )
                           : LoomComposerMorph(
                               child: Icon(
-                                phase == VoicePhase.locked
-                                    ? LoomIcons.stop
+                                phase == VoicePhase.locked ||
+                                        phase == VoicePhase.paused
+                                    ? LoomIcons.send_rounded
                                     : phase == VoicePhase.draft || hasText
                                     ? LoomIcons.arrow_upward_rounded
                                     : _video
                                     ? LoomIcons.videocam_rounded
                                     : LoomIcons.mic_rounded,
                                 key: ValueKey(
-                                  phase == VoicePhase.locked
-                                      ? 'stop'
+                                  phase == VoicePhase.locked ||
+                                          phase == VoicePhase.paused
+                                      ? 'send'
                                       : phase == VoicePhase.draft || hasText
                                       ? 'send'
                                       : _video
@@ -961,22 +973,210 @@ class _InlineVoiceComposerState extends State<_InlineVoiceComposer>
 
 /// Live recording level indicator. Mirrors the playback waveform look so the
 /// recorded voice draft and the draft player read as the same material.
-class _LiveWaveform extends StatelessWidget {
-  const _LiveWaveform({required this.peaks, required this.color});
+/// Listens to the draft controller itself so bars glide at the amplitude
+/// stream cadence without rebuilding the surrounding composer.
+class _LiveWaveform extends StatefulWidget {
+  const _LiveWaveform({required this.controller, required this.color});
 
-  final List<double> peaks;
+  final VoiceDraftController controller;
   final Color color;
+
+  @override
+  State<_LiveWaveform> createState() => _LiveWaveformState();
+}
+
+class _LiveWaveformState extends State<_LiveWaveform> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_changed);
+  }
+
+  @override
+  void didUpdateWidget(covariant _LiveWaveform oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_changed);
+      widget.controller.addListener(_changed);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_changed);
+    super.dispose();
+  }
+
+  void _changed() {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     final reduceMotion = LoomAccessibility.fromContext(context).reduceMotion;
+    final peaks = widget.controller.waveform;
     return CustomPaint(
       size: const Size(double.infinity, 26),
       painter: _LiveWaveformPainter(
         peaks: peaks,
-        color: color,
+        color: widget.color,
         baseline: reduceMotion || peaks.isEmpty,
       ),
+    );
+  }
+}
+
+/// A compact circular recording action in the same material language as the
+/// voice-sender button: tinted red for secondary acts (pause, stop-to-review)
+/// and solid red for the primary one.
+class _RecordActionButton extends StatelessWidget {
+  const _RecordActionButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: p.critical.withValues(alpha: .14),
+        shape: const CircleBorder(
+          side: BorderSide(color: Colors.transparent),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            width: 38,
+            height: 38,
+            child: Icon(icon, size: 19, color: p.critical),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Circular action for the dark video-note overlay card.
+class _OverlayActionButton extends StatelessWidget {
+  const _OverlayActionButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onTap,
+    this.solid = false,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool solid;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: solid ? p.critical : Colors.white.withValues(alpha: .16),
+        shape: const CircleBorder(
+          side: BorderSide(color: Colors.transparent),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            width: 38,
+            height: 38,
+            child: Icon(icon, size: 19, color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Pulsing red dot that keeps the recording bar feeling alive while capture
+/// runs, and rests as a hollow ring while paused.
+class _RecordingPulse extends StatefulWidget {
+  const _RecordingPulse({required this.color, required this.paused});
+
+  final Color color;
+  final bool paused;
+
+  @override
+  State<_RecordingPulse> createState() => _RecordingPulseState();
+}
+
+class _RecordingPulseState extends State<_RecordingPulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _motion = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 850),
+  );
+  bool _reduceMotion = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = LoomAccessibility.fromContext(context).reduceMotion;
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(covariant _RecordingPulse oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _sync();
+  }
+
+  void _sync() {
+    if (!widget.paused && !_reduceMotion) {
+      if (!_motion.isAnimating) _motion.repeat(reverse: true);
+    } else {
+      _motion.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _motion.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.paused) {
+      return Container(
+        width: 11,
+        height: 11,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: widget.color.withValues(alpha: .25),
+        ),
+      );
+    }
+    return AnimatedBuilder(
+      animation: _motion,
+      builder: (context, _) {
+        final t = Curves.easeInOut.transform(_motion.value);
+        return Transform.scale(
+          scale: _reduceMotion ? 1 : .8 + .35 * t,
+          child: Container(
+            width: 11,
+            height: 11,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: widget.color.withValues(alpha: .5 + .5 * t),
+            ),
+          ),
+        );
+      },
     );
   }
 }

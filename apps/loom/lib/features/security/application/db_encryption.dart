@@ -121,11 +121,17 @@ abstract final class LoomDbEncryption {
     final temporary = File(temporaryPath);
     if (await temporary.exists()) await temporary.delete();
 
+    // Whether the schema read below succeeded decides what a later failure
+    // means: after a successful read the file is plaintext and only the
+    // export failed; before it, the file is a SQLCipher database that the
+    // stored key could not open (lost key or foreign encrypted database).
+    var plaintextConfirmed = false;
     final plain = sqlite3.open(path);
     try {
       // This read is the discriminator. An encrypted database with a wrong
       // key cannot be treated as plaintext and is never overwritten.
       plain.select('SELECT count(*) FROM sqlite_master');
+      plaintextConfirmed = true;
       final keyHex = LoomSqliteEncryption.keyHex;
       if (keyHex == null) {
         throw StateError('SQLCipher key was not configured');
@@ -142,6 +148,13 @@ abstract final class LoomDbEncryption {
       }
     } catch (_) {
       if (await temporary.exists()) await temporary.delete();
+      if (!plaintextConfirmed) {
+        throw StateError(
+          'The local database is already encrypted, but its stored key did '
+          'not open it. Your chats are still on disk; reinstalling or '
+          'clearing app data would permanently lose them.',
+        );
+      }
       rethrow;
     } finally {
       plain.dispose();
@@ -169,6 +182,13 @@ abstract final class LoomDbEncryption {
     await source.rename(backupPath);
     try {
       await temporary.rename(path);
+      // sqlcipher_export already captured every committed WAL page, so the
+      // stale plaintext WAL/SHM files must not survive beside the new
+      // encrypted database; a foreign -wal would corrupt the first open.
+      for (final suffix in ['-wal', '-shm']) {
+        final leftover = File('$path$suffix');
+        if (await leftover.exists()) await leftover.delete();
+      }
       // The original is removed only after the encrypted copy was verified
       // and moved into the canonical path.
       await backup.delete();

@@ -2,6 +2,7 @@ import 'package:loom_models/loom_models.dart';
 import 'package:flutter/widgets.dart';
 
 import '../data/node_directory_repository.dart';
+import '../../../app/connection_errors.dart';
 
 enum LoomNodeDirectoryState { idle, loading, ready, error }
 
@@ -68,7 +69,8 @@ class LoomNodeDirectoryController extends ChangeNotifier {
       state = LoomNodeDirectoryState.ready;
     } catch (error) {
       state = LoomNodeDirectoryState.error;
-      errorMessage = error.toString();
+      errorMessage =
+          loomConnectionErrorCode(error) ?? loomSafeErrorText(error);
     }
     notifyListeners();
   }
@@ -102,7 +104,8 @@ class LoomNodeDirectoryController extends ChangeNotifier {
       _selectedNodeFreshlyVerified = true;
     } catch (error) {
       _selectedNodeFreshlyVerified = false;
-      errorMessage = error.toString();
+      errorMessage =
+          loomConnectionErrorCode(error) ?? loomSafeErrorText(error);
     }
     notifyListeners();
   }
@@ -150,7 +153,8 @@ class LoomNodeDirectoryController extends ChangeNotifier {
     } catch (error) {
       _selectedNodeFreshlyVerified = false;
       state = LoomNodeDirectoryState.error;
-      errorMessage = error.toString();
+      errorMessage =
+          loomConnectionErrorCode(error) ?? loomSafeErrorText(error);
     }
     notifyListeners();
   }

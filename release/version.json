@@ -1,11 +1,11 @@
 {
   "name": "Loom",
-  "version": "0.4.0-alpha.1",
+  "version": "0.5.0",
   "channel": "alpha",
   "releaseBranch": "main",
   "published": false,
   "components": {
-    "client": "0.4.0+32",
+    "client": "0.5.0+33",
     "node": "0.10.10",
     "terminalManager": "0.8.6",
     "nodeUi": "0.7.1+2"

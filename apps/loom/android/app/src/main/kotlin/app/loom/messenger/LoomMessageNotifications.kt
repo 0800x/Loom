@@ -66,6 +66,9 @@ class LoomMessageNotifications(private val activity: Activity, private val chann
                 }
                 "clearMessage" -> { (call.arguments as? String)?.let { manager.cancel(tag(it), 1) }; result.success(null) }
                 "showMessage" -> { show(call.arguments as? Map<*, *>); result.success(null) }
+                "startMessagingService" -> { MessagingForegroundService.start(activity); result.success(null) }
+                "stopMessagingService" -> { MessagingForegroundService.stop(activity); result.success(null) }
+                "messagingServiceRunning" -> result.success(MessagingForegroundService.isRunning())
                 else -> result.notImplemented()
             }
         } catch (e: Exception) { result.error("notifications_unavailable", "System notifications unavailable", null) }

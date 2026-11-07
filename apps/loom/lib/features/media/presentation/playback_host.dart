@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:ui' show ImageFilter;
+import 'dart:ui' show FontFeature, ImageFilter;
 
 import 'package:loom_design/loom_design.dart';
 import 'package:flutter/material.dart';
@@ -78,6 +78,194 @@ class _SeekSliderState extends State<_SeekSlider> {
               setState(() => _dragValue = null);
             }
           : null,
+    );
+  }
+}
+
+/// A soft circular header action for the fullscreen player's edge buttons.
+class _HeaderAction extends StatelessWidget {
+  const _HeaderAction({
+    required this.tooltip,
+    required this.icon,
+    required this.onTap,
+  });
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: onSurface.withValues(alpha: .09),
+        shape: const CircleBorder(
+          side: BorderSide(color: Colors.transparent),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            width: 42,
+            height: 42,
+            child: Icon(icon, size: 22, color: onSurface.withValues(alpha: .9)),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Pill-shaped seek bar for the fullscreen player. Owns its drag state like
+/// [_SeekSlider]: the thumb cannot be snapped back by position ticks and the
+/// decoder receives a single seek per gesture, on release.
+class _PillSeekSlider extends StatefulWidget {
+  const _PillSeekSlider({
+    required this.position,
+    required this.duration,
+    required this.enabled,
+    required this.onSeek,
+  });
+  final Duration position;
+  final Duration duration;
+  final bool enabled;
+  final ValueChanged<Duration> onSeek;
+  @override
+  State<_PillSeekSlider> createState() => _PillSeekSliderState();
+}
+
+class _PillSeekSliderState extends State<_PillSeekSlider> {
+  double? _dragValue;
+  bool _dragging = false;
+
+  @override
+  void didUpdateWidget(covariant _PillSeekSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.duration != widget.duration) _dragValue = null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    final max = widget.duration.inMilliseconds.toDouble().clamp(
+      1.0,
+      double.infinity,
+    );
+    final value =
+        (_dragValue ?? widget.position.inMilliseconds.toDouble()).clamp(
+          0.0,
+          max,
+        );
+    final fraction = (value / max).clamp(0.0, 1.0);
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return Semantics(
+      label: 'Seek',
+      value: mediaTime(Duration(milliseconds: value.round())),
+      enabled: widget.enabled,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragStart: widget.enabled
+            ? (details) => setState(() {
+                _dragging = true;
+                _dragValue = value;
+              })
+            : null,
+        onHorizontalDragUpdate: widget.enabled
+            ? (details) => setState(
+                () => _dragValue = ((_dragValue ?? 0) +
+                        details.delta.dx /
+                            (context.size?.width ?? 1) *
+                            max)
+                    .clamp(0.0, max),
+              )
+            : null,
+        onHorizontalDragEnd: widget.enabled
+            ? (_) {
+                widget.onSeek(
+                  Duration(milliseconds: (_dragValue ?? 0).round()),
+                );
+                setState(() {
+                  _dragging = false;
+                  _dragValue = null;
+                });
+              }
+            : null,
+        onTapUp: widget.enabled
+            ? (details) {
+                final width = context.size?.width ?? 1;
+                widget.onSeek(
+                  Duration(
+                    milliseconds:
+                        (max * details.localPosition.dx / width).round(),
+                  ),
+                );
+              }
+            : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: SizedBox(
+            height: 14,
+            child: LayoutBuilder(
+              builder: (context, bounds) {
+                final thumb = _dragging ? 18.0 : 13.0;
+                final dx = (bounds.maxWidth - thumb) * fraction;
+                return Stack(
+                  alignment: AlignmentDirectional.centerStart,
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Inactive track.
+                    Container(
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: onSurface.withValues(alpha: .16),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    // Buffered/active fill.
+                    FractionallySizedBox(
+                      widthFactor: fraction == 0 ? 0.001 : fraction,
+                      child: Container(
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: p.primary,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                    // Thumb.
+                    PositionedDirectional(
+                      start: dx,
+                      child: AnimatedContainer(
+                        duration: _dragging
+                            ? Duration.zero
+                            : const Duration(milliseconds: 120),
+                        width: thumb,
+                        height: thumb,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: p.primary,
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.surface,
+                            width: 2.5,
+                          ),
+                          boxShadow: _dragging
+                              ? [
+                                  BoxShadow(
+                                    color: p.primary.withValues(alpha: .4),
+                                    blurRadius: 12,
+                                  ),
+                                ]
+                              : [],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -216,19 +404,21 @@ class LoomAudioTile extends StatelessWidget {
             : 0.0;
         final track = p.track(sourceId ?? '');
         final elapsed = active ? p.position : duration ?? Duration.zero;
+        final playSize = music ? 36.0 : 44.0;
         final play = IconButton(
           tooltip: tr(
             context,
             active && p.playing ? 'Pause' : 'Play',
             active && p.playing ? 'مکث' : 'پخش',
           ),
+          iconSize: music ? 20 : 24,
           style: IconButton.styleFrom(
             foregroundColor: music ? Colors.white : color,
             backgroundColor: music
-                ? Colors.black.withValues(alpha: .35)
+                ? Colors.black.withValues(alpha: .38)
                 : color.withValues(alpha: .12),
-            minimumSize: const Size.square(44),
-            fixedSize: const Size.square(44),
+            minimumSize: Size.square(playSize),
+            fixedSize: Size.square(playSize),
             shape: const CircleBorder(),
           ),
           onPressed: () async {
@@ -323,10 +513,10 @@ class LoomAudioTile extends StatelessWidget {
             duration: _motionDuration(context, 240),
             curve: Curves.easeInOutCubicEmphasized,
             margin: const EdgeInsets.symmetric(vertical: 4),
-            padding: music ? const EdgeInsets.all(12) : EdgeInsets.zero,
+            padding: music ? const EdgeInsets.all(10) : EdgeInsets.zero,
             decoration: music
                 ? BoxDecoration(
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(20),
                     gradient: LinearGradient(
                       begin: AlignmentDirectional.topStart,
                       end: AlignmentDirectional.bottomEnd,
@@ -346,18 +536,18 @@ class LoomAudioTile extends StatelessWidget {
               children: [
                 if (music)
                   SizedBox.square(
-                    dimension: 52,
+                    dimension: 56,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
                         if (artworkBytes != null)
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(14),
                             child: Image.memory(
                               artworkBytes!,
-                              width: 52,
-                              height: 52,
-                              cacheWidth: 128,
+                              width: 56,
+                              height: 56,
+                              cacheWidth: 144,
                               fit: BoxFit.cover,
                               errorBuilder: (_, _, _) =>
                                   const Icon(LoomIcons.music_note_rounded),
@@ -366,7 +556,7 @@ class LoomAudioTile extends StatelessWidget {
                         else
                           _Cover(
                             file: track?.artwork,
-                            size: 52,
+                            size: 56,
                             playing: active && p.playing,
                           ),
                         play,
@@ -397,20 +587,25 @@ class LoomAudioTile extends StatelessWidget {
                                 style: TextStyle(
                                   color: color,
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 14,
+                                  fontSize: 13.5,
                                 ),
                               ),
                             if (music && (track?.artist ?? subtitle).isNotEmpty)
-                              Text(
-                                track?.artist ?? subtitle,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: color.withValues(alpha: .8),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 1),
+                                child: Text(
+                                  track?.artist ?? subtitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: color.withValues(alpha: .75),
+                                  ),
                                 ),
                               ),
+                            if (music) const SizedBox(height: 7),
                             seek,
+                            const SizedBox(height: 3),
                             time,
                           ],
                         ),
@@ -893,39 +1088,9 @@ class _PlaybackDetails extends StatelessWidget {
       controller: p,
       builder: (context) => Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: SafeArea(
-            bottom: false,
-            child: Row(
-              children: [
-                IconButton(
-                  tooltip: tr(context, 'Close', 'بستن'),
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  icon: const Icon(LoomIcons.keyboard_arrow_down_rounded),
-                ),
-                Expanded(
-                  child: Text(
-                    tr(context, 'Now playing', 'در حال پخش'),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                if (p.music)
-                  IconButton(
-                    tooltip: tr(context, 'Queue', 'صف پخش'),
-                    onPressed: () => _queue(context, p),
-                    icon: const Icon(LoomIcons.queue_music_rounded),
-                  )
-                else
-                  const SizedBox(width: 48),
-              ],
-            ),
-          ),
-        ),
-        extendBodyBehindAppBar: true,
+        // The surface route draws its own grabber dead-center at the top, so
+        // the header keeps only edge actions: minimize (left) and queue
+        // (right). No centered title competes with the pull-down handle.
         body: Stack(
           fit: StackFit.expand,
           children: [
@@ -978,21 +1143,38 @@ class _PlaybackDetails extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(
                         24,
-                        64,
+                        56,
                         24,
                         16,
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          Row(
+                            children: [
+                              _HeaderAction(
+                                tooltip: tr(context, 'Close', 'بستن'),
+                                icon: LoomIcons.keyboard_arrow_down_rounded,
+                                onTap: () => Navigator.of(context).maybePop(),
+                              ),
+                              const Spacer(),
+                              if (p.music)
+                                _HeaderAction(
+                                  tooltip: tr(context, 'Queue', 'صف پخش'),
+                                  icon: LoomIcons.queue_music_rounded,
+                                  onTap: () => _queue(context, p),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
                           _Cover(
                             file: p.artwork,
-                            size: (bounds.maxHeight * .32)
-                                .clamp(120, 280)
+                            size: (bounds.maxHeight * .34)
+                                .clamp(140, 300)
                                 .toDouble(),
                             playing: p.playing,
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 26),
                           AnimatedSwitcher(
                             duration: _motionDuration(context, 220),
                             child: Text(
@@ -1002,20 +1184,23 @@ class _PlaybackDetails extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 21,
+                                fontSize: 22,
                                 fontWeight: FontWeight.w700,
+                                height: 1.25,
+                                letterSpacing: -.2,
                               ),
                             ),
                           ),
                           if (p.subtitle.isNotEmpty) ...[
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 5),
                             Text(
                               p.subtitle,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: context.loom.textSecondary,
-                                fontSize: 14,
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
@@ -1046,37 +1231,44 @@ class _PlaybackDetails extends StatelessWidget {
                               ],
                             ),
                           ],
-                          const SizedBox(height: 18),
-                          SliderTheme(
-                            data: SliderTheme.of(context).copyWith(
-                              trackHeight: 3,
-                              thumbShape: const RoundSliderThumbShape(
-                                enabledThumbRadius: 6,
-                              ),
-                            ),
-                            child: _SeekSlider(
-                              position: p.position,
-                              duration: p.duration,
-                              enabled: p.visible,
-                              onSeek: p.seek,
-                            ),
+                          const SizedBox(height: 22),
+                          _PillSeekSlider(
+                            position: p.position,
+                            duration: p.duration,
+                            enabled: p.visible,
+                            onSeek: p.seek,
                           ),
+                          const SizedBox(height: 6),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
                                 mediaTime(p.position),
                                 textDirection: TextDirection.ltr,
-                                style: Theme.of(context).textTheme.labelSmall,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                      fontFeatures: [
+                                        const FontFeature.tabularFigures(),
+                                      ],
+                                    ),
                               ),
                               Text(
                                 mediaTime(p.duration),
                                 textDirection: TextDirection.ltr,
-                                style: Theme.of(context).textTheme.labelSmall,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                      fontFeatures: [
+                                        const FontFeature.tabularFigures(),
+                                      ],
+                                    ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 14),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
@@ -1084,11 +1276,15 @@ class _PlaybackDetails extends StatelessWidget {
                                 IconButton(
                                   tooltip: tr(context, 'Shuffle', 'تصادفی'),
                                   isSelected: p.shuffle,
+                                  iconSize: 22,
+                                  visualDensity: VisualDensity.compact,
                                   onPressed: p.toggleShuffle,
                                   icon: const Icon(LoomIcons.shuffle_rounded),
                                 ),
                               IconButton(
                                 tooltip: tr(context, 'Previous', 'قبلی'),
+                                iconSize: 28,
+                                visualDensity: VisualDensity.compact,
                                 onPressed: p.music
                                     ? p.previous
                                     : () => p.seek(
@@ -1130,6 +1326,8 @@ class _PlaybackDetails extends StatelessWidget {
                               ),
                               IconButton(
                                 tooltip: tr(context, 'Next', 'بعدی'),
+                                iconSize: 28,
+                                visualDensity: VisualDensity.compact,
                                 onPressed: p.music
                                     ? () => p.next()
                                     : () => p.seek(
@@ -1146,6 +1344,8 @@ class _PlaybackDetails extends StatelessWidget {
                                 IconButton(
                                   tooltip: tr(context, 'Repeat', 'تکرار'),
                                   isSelected: p.repeat != 0,
+                                  iconSize: 22,
+                                  visualDensity: VisualDensity.compact,
                                   onPressed: p.cycleRepeat,
                                   icon: Icon(
                                     p.repeat == 2

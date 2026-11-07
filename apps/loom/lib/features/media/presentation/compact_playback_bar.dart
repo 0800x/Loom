@@ -73,6 +73,9 @@ class _CompactPlaybackBarBody extends StatelessWidget {
       elevation: 2,
       shadowColor: p.shadow,
       borderRadius: BorderRadius.circular(14),
+      // The progress hairline spans the full width along the bottom edge;
+      // without clipping it would poke past the rounded bottom corners.
+      clipBehavior: Clip.antiAlias,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

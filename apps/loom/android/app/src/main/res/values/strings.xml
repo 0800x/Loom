@@ -2,4 +2,6 @@
 <resources>
     <string name="app_name">Loom</string>
     <string name="loom_quick_reply">Reply</string>
+    <string name="loom_stay_connected_title">Loom is connected</string>
+    <string name="loom_stay_connected_text">Listening for new messages</string>
 </resources>

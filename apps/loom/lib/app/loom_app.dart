@@ -13,6 +13,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'appearance_preferences.dart';
+import 'loom_strings.dart';
 import '../features/groups/application/groups_controller.dart';
 import '../features/groups/application/group_call_controller.dart';
 import '../features/groups/presentation/group_call_screen.dart';
@@ -23,6 +24,7 @@ import 'package:loom_models/loom_models.dart' show LoomGroupInviteLink;
 import '../features/accounts/application/account_registry.dart';
 import '../features/accounts/presentation/accounts_screen.dart';
 import '../features/notifications/application/message_notifications.dart';
+import '../features/notifications/application/notification_preferences.dart';
 import 'chat_wallpaper.dart';
 import '../features/media/presentation/playback_host.dart';
 import '../features/media/application/playback_controller.dart';
@@ -305,6 +307,20 @@ class _LoomAppState extends State<LoomApp> with SingleTickerProviderStateMixin {
       onOpen: _openNotification,
       onQuickReply: _onQuickReply,
     );
+    // Restore the opt-in background connection before the first frame, so a
+    // user who enabled "Stay connected" keeps receiving notifications after
+    // the process is restarted by the OS.
+    unawaited(
+      LoomNotificationPreferencesStore()
+          .load()
+          .then((preferences) {
+            if (preferences.stayConnected) {
+              return _notifications!.bridge.startStayConnected();
+            }
+            return Future<void>.value();
+          })
+          .catchError((Object _) {}),
+    );
   }
 
   /// Quick replies captured while the app is locked or offline. Keys stay in
@@ -522,6 +538,7 @@ class _LoomAppState extends State<LoomApp> with SingleTickerProviderStateMixin {
   /// Database keys are read only after App Lock has released the secure vault.
   /// No controller that opens a local database may run before this completes.
   Future<void> _activateUnlockedSession() async {
+    _dismissSessionError();
     try {
       // Resolve the selected account's secure-storage namespace before reading
       // App Lock, ratchet or database-encryption preferences.
@@ -550,11 +567,114 @@ class _LoomAppState extends State<LoomApp> with SingleTickerProviderStateMixin {
           library: 'Loom secure session initialization',
         ),
       );
+      // A silent failure here looks exactly like "all chats disappeared":
+      // the shell renders with controllers that never opened. Surface the
+      // reason and a retry action instead of leaving an empty app.
+      _presentSessionError(error);
     }
+  }
+
+  OverlayEntry? _sessionErrorEntry;
+
+  /// Pinned banner that explains why the session could not start. The local
+  /// database and its chats remain untouched on disk in every failure mode.
+  void _presentSessionError(Object error) {
+    final navigator = navigatorKey.currentState;
+    final overlay = navigator?.overlay;
+    if (overlay == null || !mounted) return;
+    _dismissSessionError();
+    final detail = switch (error) {
+      StateError(:final message) => message,
+      FormatException(:final message) => message,
+      _ => error.runtimeType.toString(),
+    };
+    _sessionErrorEntry = OverlayEntry(
+      builder: (context) => PositionedDirectional(
+        start: 12,
+        end: 12,
+        top: 12,
+        child: Material(
+          color: Theme.of(context).colorScheme.errorContainer,
+          elevation: 4,
+          shadowColor: Colors.black54,
+          borderRadius: BorderRadius.circular(14),
+          clipBehavior: Clip.antiAlias,
+          child: SafeArea(
+            top: true,
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Icon(
+                    LoomIcons.error_outline_rounded,
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          tr(
+                            context,
+                            'Session could not start. Your chats are still safe on this device.',
+                            'نشست شروع نشد؛ چت‌های شما همچنان روی این دستگاه امن هستند.',
+                          ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onErrorContainer,
+                              ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          detail,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onErrorContainer,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      _dismissSessionError();
+                      unawaited(_activateUnlockedSession());
+                    },
+                    child: Text(
+                      tr(context, 'Try again', 'تلاش دوباره'),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    overlay.insert(_sessionErrorEntry!);
+  }
+
+  void _dismissSessionError() {
+    _sessionErrorEntry?.remove();
+    _sessionErrorEntry = null;
   }
 
   @override
   void dispose() {
+    _dismissSessionError();
     _groupLinkChannel.setMethodCallHandler(null);
     _themeLerp?.dispose();
     // Notify surviving playback hosts after the locked teardown finishes.

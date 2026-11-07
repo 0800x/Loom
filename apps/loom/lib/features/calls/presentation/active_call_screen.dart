@@ -132,9 +132,11 @@ class _LoomActiveCallScreenState extends State<LoomActiveCallScreen> {
               remote != null &&
               state.remoteVideoAvailable &&
               state.remoteCameraEnabled;
-          return Scaffold(
-            backgroundColor: Colors.black,
-            body: SafeArea(
+          return LoomPullToDismiss(
+            onDismiss: () => Navigator.of(context).maybePop(),
+            child: Scaffold(
+              backgroundColor: Colors.black,
+              body: SafeArea(
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final wrapped = video && constraints.maxWidth < 390;
@@ -294,7 +296,7 @@ class _LoomActiveCallScreenState extends State<LoomActiveCallScreen> {
                         PositionedDirectional(
                           start: 8,
                           end: 8,
-                          top: 8,
+                          top: 4,
                           child: ExcludeSemantics(
                             excluding: !visible,
                             child: IgnorePointer(
@@ -358,6 +360,7 @@ class _LoomActiveCallScreenState extends State<LoomActiveCallScreen> {
                 },
               ),
             ),
+            ),
           );
         },
       ),
@@ -376,47 +379,54 @@ class _TopChrome extends StatelessWidget {
   final VoidCallback onBack;
 
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      LoomPressable(
-        child: IconButton.filledTonal(
-          onPressed: onBack,
-          tooltip: tr(context, 'Back to chats', 'بازگشت به گفتگوها'),
-          icon: const LoomDirectionalIcon(LoomIcons.arrow_back_rounded),
-        ),
-      ),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) {
+    final palette = LoomTheme.darkPalette;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Edge row only: the pull-down grabber (drawn by the route wrapper)
+        // owns the dead centre of this band.
+        Row(
           children: [
-            Text(
-              peerLabel,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: LoomTheme.darkPalette.textPrimary,
-                fontWeight: FontWeight.w700,
+            LoomPressable(
+              child: IconButton.filledTonal(
+                onPressed: onBack,
+                tooltip: tr(context, 'Back to chats', 'بازگشت به گفتگوها'),
+                icon: const LoomDirectionalIcon(
+                  LoomIcons.arrow_back_rounded,
+                ),
               ),
             ),
-            Text(
-              state.answeredAt != null && state.active
-                  ? _duration(state.duration)
-                  : _statusText(context, state),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: LoomTheme.darkPalette.textSecondary,
-                fontSize: 12,
-              ),
-            ),
+            const Spacer(),
+            if (state.quality != LoomCallQuality.unknown)
+              _QualityBadge(quality: state.quality),
           ],
         ),
-      ),
-      if (state.quality != LoomCallQuality.unknown)
-        _QualityBadge(quality: state.quality),
-    ],
-  );
+        const SizedBox(height: 10),
+        Text(
+          peerLabel,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: palette.textPrimary,
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          state.answeredAt != null && state.active
+              ? _duration(state.duration)
+              : _statusText(context, state),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: palette.textSecondary, fontSize: 12.5),
+        ),
+      ],
+    );
+  }
 }
 
 class _CallBackdrop extends StatelessWidget {

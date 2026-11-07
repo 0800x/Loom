@@ -140,6 +140,193 @@ class LoomSurfaceClipper extends CustomClipper<Path> {
       curvedStretch != oldClipper.curvedStretch;
 }
 
+/// A grabber that reads as a control rather than a line: a translucent
+/// capsule well cradles the pill, and on fullscreen surfaces it performs a
+/// single downward nudge when it first appears to teach the pull gesture.
+class LoomGrabHandle extends StatefulWidget {
+  const LoomGrabHandle({super.key, this.hint = false, this.dragging = false});
+
+  /// Play the pull-down teaching nudge once when mounted.
+  final bool hint;
+
+  /// Visually engaged while the user is dragging the surface.
+  final bool dragging;
+  @override
+  State<LoomGrabHandle> createState() => _LoomGrabHandleState();
+}
+
+class _LoomGrabHandleState extends State<LoomGrabHandle>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _nudge = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 850),
+  )..value = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.hint) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (LoomAccessibility.fromContext(context).reduceMotion) return;
+      _nudge.forward(from: 0);
+    });
+  }
+
+  @override
+  void dispose() {
+    _nudge.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final pill = onSurface.withValues(alpha: widget.dragging ? .62 : .38);
+    return AnimatedBuilder(
+      animation: _nudge,
+      builder: (context, child) {
+        final t = _nudge.value;
+        final dy = math.sin(math.pi * t) * 5;
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: child,
+        );
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 7),
+        decoration: BoxDecoration(
+          color: onSurface.withValues(alpha: widget.dragging ? .14 : .09),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: onSurface.withValues(alpha: widget.dragging ? .16 : .10),
+          ),
+        ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          width: widget.dragging ? 42 : 36,
+          height: 5,
+          decoration: BoxDecoration(
+            color: pill,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Pull-to-dismiss for plain routes (call screens): a grabber rides above the
+/// status bar, dragging it follows the finger with rubber-band resistance and
+/// a fling (or crossing the threshold) minimizes the screen.
+class LoomPullToDismiss extends StatefulWidget {
+  const LoomPullToDismiss({
+    required this.child,
+    required this.onDismiss,
+    this.grabberOffset = 4,
+    this.dismissVelocity = 900,
+    super.key,
+  });
+
+  /// Extra distance below the status bar where the grabber floats.
+  final double grabberOffset;
+  final Widget child;
+  final VoidCallback onDismiss;
+  final double dismissVelocity;
+
+  @override
+  State<LoomPullToDismiss> createState() => _LoomPullToDismissState();
+}
+
+class _LoomPullToDismissState extends State<LoomPullToDismiss>
+    with SingleTickerProviderStateMixin {
+  final _offset = ValueNotifier(0.0);
+  double _springFrom = 0;
+  double _raw = 0;
+
+  late final AnimationController _settle = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 240),
+  )..addListener(() {
+    _offset.value = _springFrom *
+        (1 - Curves.easeOutCubic.transform(_settle.value));
+  });
+
+  @override
+  void dispose() {
+    _settle.dispose();
+    _offset.dispose();
+    super.dispose();
+  }
+
+  void _start(DragStartDetails _) {
+    _settle.stop();
+    _raw = 0;
+  }
+
+  void _update(DragUpdateDetails details) {
+    _raw = math.max(0, _raw + details.delta.dy);
+    // Rubber band: the further down, the harder it resists.
+    _offset.value = 130 * (1 - math.exp(-_raw / 160));
+  }
+
+  void _end(DragEndDetails details) {
+    final velocity = details.velocity.pixelsPerSecond.dy;
+    if (_raw > 120 || velocity > widget.dismissVelocity) {
+      _raw = 0;
+      _offset.value = 0;
+      widget.onDismiss();
+      return;
+    }
+    _springFrom = _offset.value;
+    if (_springFrom <= 0) return;
+    _settle.forward(from: 0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final topInset = MediaQuery.paddingOf(context).top + widget.grabberOffset;
+    return Stack(
+      children: [
+        ValueListenableBuilder<double>(
+          valueListenable: _offset,
+          builder: (context, dy, child) =>
+              Transform.translate(offset: Offset(0, dy), child: child),
+          child: widget.child,
+        ),
+        Padding(
+          padding: EdgeInsets.only(top: topInset),
+          child: Align(
+            alignment: AlignmentDirectional.topCenter,
+            child: SizedBox(
+              width: 150,
+              height: 46,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onVerticalDragStart: _start,
+                onVerticalDragUpdate: _update,
+                onVerticalDragEnd: _end,
+                onVerticalDragCancel: () {
+                  _springFrom = _offset.value;
+                  if (_springFrom > 0) _settle.forward(from: 0);
+                },
+                child: Center(
+                  child: ValueListenableBuilder<double>(
+                    valueListenable: _offset,
+                    builder: (context, dy, _) =>
+                        LoomGrabHandle(dragging: dy > 0.5, hint: true),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// Popup lifetime, barrier, keyboard focus, back handling and reverse animation
 /// belong to Navigator. A header drag can interrupt and reverse the same clock.
 class LoomSurfaceRoute<T> extends PopupRoute<T> {
@@ -290,16 +477,13 @@ class LoomSurfaceRoute<T> extends PopupRoute<T> {
                               if (_interactive.value) _settle();
                             },
                             child: SizedBox(
-                              height: 28,
+                              height: 34,
                               width: double.infinity,
                               child: Center(
-                                child: Container(
-                                  width: 36,
-                                  height: 4,
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).dividerColor,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
+                                child: ValueListenableBuilder<bool>(
+                                  valueListenable: _interactive,
+                                  builder: (context, interactive, _) =>
+                                      LoomGrabHandle(dragging: interactive),
                                 ),
                               ),
                             ),
@@ -309,10 +493,10 @@ class LoomSurfaceRoute<T> extends PopupRoute<T> {
                     ),
                     if (fullscreen)
                       Positioned(
-                        top: media.padding.top,
-                        left: viewport.width / 2 - 32,
-                        width: 64,
-                        height: 44,
+                        top: media.padding.top + 2,
+                        left: viewport.width / 2 - 90,
+                        width: 180,
+                        height: 46,
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
                           onVerticalDragStart: _start,
@@ -322,13 +506,12 @@ class LoomSurfaceRoute<T> extends PopupRoute<T> {
                             if (_interactive.value) _settle();
                           },
                           child: Center(
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.onSurface
-                                    .withValues(alpha: .35),
-                                borderRadius: BorderRadius.circular(4),
+                            child: ValueListenableBuilder<bool>(
+                              valueListenable: _interactive,
+                              builder: (context, interactive, _) => LoomGrabHandle(
+                                hint: true,
+                                dragging: interactive,
                               ),
-                              child: const SizedBox(width: 30, height: 4),
                             ),
                           ),
                         ),

@@ -458,7 +458,10 @@ class _LoomGroupCallScreenState extends State<LoomGroupCallScreen> {
     final group = calls.groups.groups
         .where((g) => g.id == widget.groupId)
         .firstOrNull;
-    return Scaffold(
+    return LoomPullToDismiss(
+      grabberOffset: 60,
+      onDismiss: () => Navigator.maybePop(context),
+      child: Scaffold(
       appBar: LoomGlassAppBar(
         leading: active
             ? IconButton(
@@ -717,6 +720,7 @@ class _LoomGroupCallScreenState extends State<LoomGroupCallScreen> {
                   ),
                 ),
               ),
+      ),
       ),
     );
   }

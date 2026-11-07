@@ -10,95 +10,208 @@ Future<Duration?> _chooseLocation(
 }) => Navigator.push<Duration>(
   context,
   MaterialPageRoute(
-    builder: (context) => Scaffold(
+    builder: (_) => _LocationShareSheet(point: point, live: live),
+  ),
+);
+
+/// Full-bleed map with a floating bottom card: current-position summary,
+/// duration pills for live sharing and one primary action. Flat surfaces,
+/// no glassmorphism, Telegram-style layout.
+class _LocationShareSheet extends StatefulWidget {
+  const _LocationShareSheet({required this.point, required this.live});
+
+  final LatLng point;
+  final bool live;
+  @override
+  State<_LocationShareSheet> createState() => _LocationShareSheetState();
+}
+
+class _LocationShareSheetState extends State<_LocationShareSheet> {
+  Duration _duration = const Duration(minutes: 15);
+
+  static const _durations = <(Duration, String, String)>[
+    (Duration(minutes: 15), '15 minutes', '۱۵ دقیقه'),
+    (Duration(hours: 1), '1 hour', '۱ ساعت'),
+    (Duration(hours: 8), '8 hours', '۸ ساعت'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.loom;
+    final coordinates =
+        '${widget.point.latitude.toStringAsFixed(5)}, '
+        '${widget.point.longitude.toStringAsFixed(5)}';
+    return Scaffold(
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 12, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      tr(
-                        context,
-                        live ? 'Live location' : 'Share location',
-                        live ? 'موقعیت زنده' : 'اشتراک موقعیت',
-                      ),
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: tr(context, 'Close', 'بستن'),
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(LoomIcons.close),
-                  ),
-                ],
+            _LocationMap(point: widget.point),
+            PositionedDirectional(
+              top: 10,
+              start: 12,
+              child: Material(
+                color: p.surfaceElevated,
+                elevation: 2,
+                shadowColor: p.shadow,
+                shape: const CircleBorder(),
+                clipBehavior: Clip.antiAlias,
+                child: IconButton(
+                  tooltip: tr(context, 'Close', 'بستن'),
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(LoomIcons.close),
+                ),
               ),
             ),
-            Expanded(child: _LocationMap(point: point)),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
+            PositionedDirectional(
+              start: 12,
+              end: 12,
+              bottom: 12,
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: p.surfaceElevated,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: p.border),
+                ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      tr(context, 'Your current location', 'موقعیت فعلی شما'),
-                      style: Theme.of(context).textTheme.titleMedium,
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: p.primary.withAlphaFraction(.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            widget.live
+                                ? LoomIcons.share_location_outlined
+                                : LoomIcons.location_on_outlined,
+                            color: p.primary,
+                            size: 21,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                tr(
+                                  context,
+                                  widget.live ? 'Live location' : 'Share location',
+                                  widget.live ? 'موقعیت زنده' : 'اشتراک موقعیت',
+                                ),
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                coordinates,
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(color: p.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Text(
-                      live
-                          ? tr(
-                              context,
-                              'Updates while Loom is open; stops on lock or leaving the app.',
-                              'تا وقتی لوم باز است به‌روز می‌شود؛ با قفل یا خروج متوقف می‌شود.',
-                            )
-                          : tr(
-                              context,
-                              'Send a pin that your contact can open in Maps.',
-                              'ارسال موقعیت قابل باز کردن در نقشه برای مخاطب',
-                            ),
-                      style: Theme.of(context).textTheme.bodySmall,
+                      tr(
+                        context,
+                        widget.live
+                            ? 'Updates while Loom is open; stops on lock or leaving the app.'
+                            : 'Send a pin that your contact can open in Maps.',
+                        widget.live
+                            ? 'تا وقتی لوم باز است به‌روز می‌شود؛ با قفل یا خروج متوقف می‌شود.'
+                            : 'ارسال موقعیت قابل باز کردن در نقشه برای مخاطب',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: p.textSecondary,
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    if (live)
+                    if (widget.live) ...[
+                      const SizedBox(height: 12),
                       Row(
                         children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(
-                                context,
-                                const Duration(minutes: 15),
-                              ),
-                              child: Text(
-                                tr(context, '15 minutes', '۱۵ دقیقه'),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: FilledButton(
-                              onPressed: () => Navigator.pop(
-                                context,
-                                const Duration(hours: 1),
-                              ),
-                              child: Text(tr(context, '1 hour', '۱ ساعت')),
-                            ),
-                          ),
+                          for (var i = 0; i < _durations.length; i++) ...[
+                            if (i > 0) const SizedBox(width: 8),
+                            Expanded(child: Builder(builder: (context) {
+                              final entry = _durations[i];
+                              final selected = _duration == entry.$1;
+                              return Material(
+                                color: selected
+                                    ? p.primary.withAlphaFraction(.14)
+                                    : p.surfaceMuted,
+                                borderRadius: BorderRadius.circular(12),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () =>
+                                      setState(() => _duration = entry.$1),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 9,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: selected
+                                            ? p.primary
+                                            : Colors.transparent,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          tr(context, entry.$2, entry.$3),
+                                          textAlign: TextAlign.center,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.labelMedium?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: selected
+                                                ? p.primary
+                                                : p.textPrimary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            })),
+                          ],
                         ],
-                      )
-                    else
-                      FilledButton.icon(
-                        onPressed: () => Navigator.pop(context, Duration.zero),
-                        icon: const Icon(LoomIcons.send_rounded),
-                        label: Text(
-                          tr(context, 'Send location', 'ارسال موقعیت'),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(46),
+                      ),
+                      onPressed: () =>
+                          Navigator.pop(context, widget.live ? _duration : Duration.zero),
+                      icon: Icon(
+                        widget.live
+                            ? LoomIcons.near_me_outlined
+                            : LoomIcons.send_rounded,
+                      ),
+                      label: Text(
+                        tr(
+                          context,
+                          widget.live
+                              ? 'Share live location'
+                              : 'Send current location',
+                          widget.live ? 'اشتراک موقعیت زنده' : 'ارسال موقعیت فعلی',
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -106,9 +219,9 @@ Future<Duration?> _chooseLocation(
           ],
         ),
       ),
-    ),
-  ),
-);
+    );
+  }
+}
 
 class _LocationMap extends StatefulWidget {
   const _LocationMap({required this.point, this.interactive = true});
@@ -851,6 +964,14 @@ class _RichMessageContentState extends State<_RichMessageContent> {
     final own =
         widget.message.record.senderAddress.toLowerCase() ==
         widget.messaging?.onboarding.receipt?.address.toLowerCase();
+    final p = context.loom;
+    final remainingMin =
+        live && location['stopped'] != true
+        ? (((location['until'] as int? ?? 0) -
+                  DateTime.now().millisecondsSinceEpoch) /
+              60000)
+            .ceil()
+        : 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -858,14 +979,84 @@ class _RichMessageContentState extends State<_RichMessageContent> {
           onTap: () => _openLocation(point),
           child: SizedBox(
             height: 190,
-            child: IgnorePointer(
-              child: _LocationMap(point: point, interactive: false),
+            child: Stack(
+              children: [
+                IgnorePointer(
+                  child: _LocationMap(point: point, interactive: false),
+                ),
+                if (live && location['stopped'] != true)
+                  PositionedDirectional(
+                    top: 10,
+                    start: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: p.primary,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            remainingMin > 0
+                                ? tr(
+                                    context,
+                                    'LIVE · $remainingMin min',
+                                    'زنده · $remainingMin دقیقه',
+                                  )
+                                : tr(context, 'LIVE', 'زنده'),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: .3,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                PositionedDirectional(
+                  bottom: 10,
+                  end: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: p.surfaceElevated.withAlphaFraction(.92),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: p.border),
+                    ),
+                    child: Text(
+                      '${point.latitude.toStringAsFixed(4)}, '
+                      '${point.longitude.toStringAsFixed(4)}',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: p.textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
         if (live)
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 6, 10, 30),
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 26),
             child: LoomLocationStatus(
               location: location,
               foreground: context.loom.textPrimary,
