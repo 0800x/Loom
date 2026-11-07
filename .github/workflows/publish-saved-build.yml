@@ -32,7 +32,7 @@ jobs:
           set -euo pipefail
           [[ "$SOURCE_RUN_ID" =~ ^[0-9]+$ ]] || { echo "Invalid Actions run ID" >&2; exit 1; }
           run_json="$(gh api "repos/0800x/Loom/actions/runs/$SOURCE_RUN_ID")"
-          [[ "$(jq -r '.workflow_id' <<< "$run_json")" == "385961443" ]] || { echo "This is not a Loom release-build run" >&2; exit 1; }
+          [[ "$(jq -r '.path' <<< "$run_json")" == ".github/workflows/loom-alpha.yml" ]] || { echo "This is not a Loom release-build run" >&2; exit 1; }
           [[ "$(jq -r '.head_branch' <<< "$run_json")" == "main" ]] || { echo "Source build was not created from main" >&2; exit 1; }
           [[ "$(jq -r '.event' <<< "$run_json")" == "push" ]] || { echo "Expected a main push build" >&2; exit 1; }
           [[ "$(jq -r '.status' <<< "$run_json")" == "completed" ]] || { echo "Source build is not complete" >&2; exit 1; }
@@ -62,7 +62,7 @@ jobs:
       - name: Download the original build artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: Loom-0.4.0-alpha.1-*
+          pattern: Loom-0.5.0-*
           path: source/candidate
           merge-multiple: false
           github-token: ${{ github.token }}
