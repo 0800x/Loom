@@ -47,7 +47,7 @@ def preflight():
     actual = re.search(r'const version = "([^"]+)"', (ROOT / 'tools/loom_node_manager/main.go').read_text()).group(1)
     if actual != expected['terminalManager']:
         raise ValueError('Manager version mismatch')
-    if not re.fullmatch(r'0\.4\.\d+-alpha\.\d+', v['version']) or v['published'] is not False:
+    if v.get('channel') != 'alpha' or not re.fullmatch(r'0\.\d+\.\d+(?:-alpha\.\d+)?', v['version']) or v['published'] is not False:
         raise ValueError('Unexpected alpha release metadata')
     if 'GNU GENERAL PUBLIC LICENSE' not in (ROOT / 'LICENSE').read_text():
         raise ValueError('GPL license missing')
