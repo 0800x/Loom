@@ -7,6 +7,10 @@ on:
         description: Completed Loom release-build run whose verified artifacts should be published
         required: true
         type: string
+      validation_run_id:
+        description: Successful validate-only run proving the source build remains valid
+        required: true
+        type: string
 
 permissions:
   actions: read
@@ -27,6 +31,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
         shell: bash
         run: |
           set -euo pipefail
@@ -37,12 +42,40 @@ jobs:
           [[ "$(jq -r '.head_branch' <<< "$run_json")" == "main" ]] || { echo "Source build was not created from main" >&2; exit 1; }
           [[ "$(jq -r '.event' <<< "$run_json")" == "push" ]] || { echo "Expected a main push build" >&2; exit 1; }
           [[ "$(jq -r '.status' <<< "$run_json")" == "completed" ]] || { echo "Source build is not complete" >&2; exit 1; }
-          bad_jobs="$(gh api "repos/0800x/Loom/actions/runs/$SOURCE_RUN_ID/jobs?per_page=100" --jq '[.jobs[] | select(.name != "draft") | select(.conclusion != "success") | .name] | join(", ")')"
-          [[ -z "$bad_jobs" ]] || { echo "Build jobs did not all succeed: $bad_jobs" >&2; exit 1; }
+          bad_build_jobs="$(gh api "repos/0800x/Loom/actions/runs/$SOURCE_RUN_ID/jobs?per_page=100" --jq '[.jobs[] | select(.name != "draft" and .name != "validate") | select(.conclusion != "success") | .name] | join(", ")')"
+          [[ -z "$bad_build_jobs" ]] || { echo "Platform build jobs did not all succeed: $bad_build_jobs" >&2; exit 1; }
+
+          [[ "$VALIDATION_RUN_ID" =~ ^[0-9]+$ ]] || { echo "Invalid validation run ID" >&2; exit 1; }
+          [[ "$VALIDATION_RUN_ID" != "$SOURCE_RUN_ID" ]] || { echo "Source and validation run IDs must differ" >&2; exit 1; }
+          validation_json="$(gh api "repos/0800x/Loom/actions/runs/$VALIDATION_RUN_ID")"
+          validation_workflow_path="$(jq -r '.path' <<< "$validation_json" | cut -d@ -f1)"
+          [[ "$validation_workflow_path" == ".github/workflows/loom-alpha.yml" ]] || { echo "Validation run is not a Loom release workflow" >&2; exit 1; }
+          [[ "$(jq -r '.head_branch' <<< "$validation_json")" == "main" ]] || { echo "Validation was not run from main" >&2; exit 1; }
+          [[ "$(jq -r '.event' <<< "$validation_json")" == "workflow_dispatch" ]] || { echo "Validation must be manually dispatched" >&2; exit 1; }
+          [[ "$(jq -r '.status' <<< "$validation_json")" == "completed" ]] || { echo "Validation run is not complete" >&2; exit 1; }
+          validation_revision="$(jq -r '.head_sha' <<< "$validation_json")"
+          [[ "$validation_revision" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid validation revision" >&2; exit 1; }
+
+          validation_jobs="$(gh api "repos/0800x/Loom/actions/runs/$VALIDATION_RUN_ID/jobs?per_page=100")"
+          validation_preflight="$(jq -r '[.jobs[] | select(.name == "preflight")][0].conclusion // ""' <<< "$validation_jobs")"
+          validation_conclusion="$(jq -r '[.jobs[] | select(.name == "validate")][0].conclusion // ""' <<< "$validation_jobs")"
+          unexpected_jobs="$(jq -r '[.jobs[] | select(.name != "preflight" and .name != "validate") | select(.conclusion != "skipped") | .name] | join(", ")' <<< "$validation_jobs")"
+          [[ "$validation_preflight" == "success" ]] || { echo "Validation preflight did not succeed" >&2; exit 1; }
+          [[ "$validation_conclusion" == "success" ]] || { echo "The standalone validate job did not succeed" >&2; exit 1; }
+          [[ -z "$unexpected_jobs" ]] || { echo "Validation run unexpectedly executed build jobs: $unexpected_jobs" >&2; exit 1; }
+
+          comparison="$(gh api "repos/0800x/Loom/compare/$revision...$validation_revision")"
+          comparison_status="$(jq -r '.status' <<< "$comparison")"
+          comparison_behind="$(jq -r '.behind_by' <<< "$comparison")"
+          [[ "$comparison_status" == "ahead" || "$comparison_status" == "identical" ]] || { echo "Validation revision is not based on the source build" >&2; exit 1; }
+          [[ "$comparison_behind" == "0" ]] || { echo "Source build is not an ancestor of the validation revision" >&2; exit 1; }
+          bad_changed_files="$(jq -r '[.files[].filename | select(. != "packages/loom_transport/test/group_session_integration_test.dart" and . != "release/DRAFT.md" and . != ".github/workflows/loom-alpha.yml" and . != ".github/workflows/publish-saved-build.yml")] | join(", ")' <<< "$comparison")"
+          [[ -z "$bad_changed_files" ]] || { echo "Unexpected product-source changes after the saved build: $bad_changed_files" >&2; exit 1; }
+
           revision="$(jq -r '.head_sha' <<< "$run_json")"
           [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid source revision" >&2; exit 1; }
           echo "revision=$revision" >> "$GITHUB_OUTPUT"
-          echo "Reusing verified artifacts from run $SOURCE_RUN_ID at $revision"
+          echo "Reusing verified artifacts from run $SOURCE_RUN_ID at $revision after successful validation run $VALIDATION_RUN_ID at $validation_revision"
 
       - name: Checkout the exact built source
         uses: actions/checkout@v5
@@ -79,6 +112,9 @@ jobs:
         run: |
           python scripts/assemble-release.py candidate release-assets
           python scripts/create-bootstrap.py release-assets
+
+      - name: Use the current release notes
+        run: cp publisher/release/DRAFT.md source/release/DRAFT.md
 
       - name: Publish the saved build
         working-directory: source
