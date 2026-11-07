@@ -279,7 +279,7 @@ void main() {
       expect(stores[0].outbox, isEmpty);
       await sessions[0].sync();
       await sessions[1].sync();
-      expect(stores[1].history(id).length, 3);
+      expect(stores[1].history(id).length, 5);
       // Reopen SQLite and rebuild the stateless native bridge with its sealed state.
       sessions[1].close();
       stores[1].close();
