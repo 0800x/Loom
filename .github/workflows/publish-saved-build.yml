@@ -32,7 +32,8 @@ jobs:
           set -euo pipefail
           [[ "$SOURCE_RUN_ID" =~ ^[0-9]+$ ]] || { echo "Invalid Actions run ID" >&2; exit 1; }
           run_json="$(gh api "repos/0800x/Loom/actions/runs/$SOURCE_RUN_ID")"
-          [[ "$(jq -r '.path' <<< "$run_json")" == ".github/workflows/loom-alpha.yml" ]] || { echo "This is not a Loom release-build run" >&2; exit 1; }
+          workflow_path="$(jq -r '.path' <<< "$run_json" | cut -d@ -f1)"
+          [[ "$workflow_path" == ".github/workflows/loom-alpha.yml" ]] || { echo "This is not a Loom release-build run" >&2; exit 1; }
           [[ "$(jq -r '.head_branch' <<< "$run_json")" == "main" ]] || { echo "Source build was not created from main" >&2; exit 1; }
           [[ "$(jq -r '.event' <<< "$run_json")" == "push" ]] || { echo "Expected a main push build" >&2; exit 1; }
           [[ "$(jq -r '.status' <<< "$run_json")" == "completed" ]] || { echo "Source build is not complete" >&2; exit 1; }
