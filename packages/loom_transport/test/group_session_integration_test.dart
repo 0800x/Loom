@@ -221,7 +221,7 @@ void main() {
       (clients[0] as LostAckClient).loseNextReceipt = true;
       await expectLater(
         sessions[0].sendEphemeral(id, {
-          'control': const LoomMessageControl.typing().toMap(),
+          'control': <escape>{'op': 'typing'}</escape>,
         }),
         throwsA(isA<SocketException>()),
       );
@@ -244,7 +244,7 @@ void main() {
       expect(stores[1].history(id).length, 2);
       expect(
         (await open(id, stores[1].history(id).last.payload))['content'],
-        {'control': const LoomMessageControl.typing().toMap()},
+        {'control': <escape>{'op': 'typing'}</escape>},
       );
       await sessions[1].send(id, {'text': 'after typing'});
       await sessions[1].sync();

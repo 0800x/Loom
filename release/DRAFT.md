@@ -1,5 +1,13 @@
 Loom / لوم 0.3.0-alpha.1
 
+## Fixes in this build
+
+- **Android release build:** fixed the foreground-service notification intent flags assignment in Kotlin by using `Intent.setFlags(...)`, resolving the `'val' cannot be reassigned` compilation error.
+- **MLS group messaging:** serialized ephemeral typing frames with all other MLS operations and atomically persisted the advanced sealed MLS state together with the exact encrypted outbox request. Retries now reuse the same operation ID and ciphertext after an uncertain delivery result.
+- **MLS self-echo handling:** record successful ephemeral message receipts so the sender's own inbox echo is skipped instead of being processed as a second inbound MLS message. Typing controls remain excluded from local conversation history.
+- **Native MLS diagnostics:** preserve a bounded, sanitized native rejection reason across the FFI boundary and expose it to Dart instead of returning only a generic rejection.
+- **Regression coverage:** added a three-device integration scenario for a lost typing receipt, outbox recovery, self-echo handling, and a subsequent normal group message.
+
 The first alpha brings conversations, MLS groups, attachments and media,
 English/Persian layouts and multiple delivery paths. A guided Home Node installer
 sets up HTTPS, storage and selected voice/video/group-call services. Node Manager
