@@ -47,6 +47,9 @@ jobs:
 
           [[ "$VALIDATION_RUN_ID" =~ ^[0-9]+$ ]] || { echo "Invalid validation run ID" >&2; exit 1; }
           [[ "$VALIDATION_RUN_ID" != "$SOURCE_RUN_ID" ]] || { echo "Source and validation run IDs must differ" >&2; exit 1; }
+          revision="$(jq -r '.head_sha' <<< "$run_json")"
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid source revision" >&2; exit 1; }
+
           validation_json="$(gh api "repos/0800x/Loom/actions/runs/$VALIDATION_RUN_ID")"
           validation_workflow_path="$(jq -r '.path' <<< "$validation_json" | cut -d@ -f1)"
           [[ "$validation_workflow_path" == ".github/workflows/loom-alpha.yml" ]] || { echo "Validation run is not a Loom release workflow" >&2; exit 1; }
@@ -72,8 +75,6 @@ jobs:
           bad_changed_files="$(jq -r '[.files[].filename | select(. != "packages/loom_transport/test/group_session_integration_test.dart" and . != "release/DRAFT.md" and . != ".github/workflows/loom-alpha.yml" and . != ".github/workflows/publish-saved-build.yml")] | join(", ")' <<< "$comparison")"
           [[ -z "$bad_changed_files" ]] || { echo "Unexpected product-source changes after the saved build: $bad_changed_files" >&2; exit 1; }
 
-          revision="$(jq -r '.head_sha' <<< "$run_json")"
-          [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid source revision" >&2; exit 1; }
           echo "revision=$revision" >> "$GITHUB_OUTPUT"
           echo "Reusing verified artifacts from run $SOURCE_RUN_ID at $revision after successful validation run $VALIDATION_RUN_ID at $validation_revision"
 
