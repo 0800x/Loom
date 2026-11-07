@@ -2,6 +2,11 @@ name: Loom release builds
 on:
   workflow_dispatch:
     inputs:
+      build_target:
+        description: Build only Android, or run the complete release pipeline
+        type: choice
+        options: [android-only, full-release]
+        default: full-release
       android_signing:
         description: Android signing mode (existing protected keystore required for signed builds)
         type: choice
@@ -36,6 +41,7 @@ jobs:
           python-version: '3.12'
       - run: python scripts/release.py preflight
   validate:
+    if: github.event_name != 'workflow_dispatch' || inputs.build_target != 'android-only'
     needs: preflight
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -260,6 +266,7 @@ jobs:
             exit 1
           fi
   desktop:
+    if: github.event_name != 'workflow_dispatch' || inputs.build_target != 'android-only'
     needs: preflight
     strategy:
       fail-fast: false
@@ -432,6 +439,7 @@ jobs:
           path: dist/identity-audit.json
           if-no-files-found: ignore
   node:
+    if: github.event_name != 'workflow_dispatch' || inputs.build_target != 'android-only'
     needs: preflight
     runs-on: ubuntu-24.04
     strategy:
@@ -467,6 +475,7 @@ jobs:
           path: dist/
           if-no-files-found: error
   node-images:
+    if: github.event_name != 'workflow_dispatch' || inputs.build_target != 'android-only'
     needs: preflight
     runs-on: ubuntu-24.04
     permissions:
@@ -511,7 +520,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=loom-minio
   draft:
     needs: [validate, android, desktop, node, node-images]
-    if: github.repository == '0800x/Loom' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    if: github.repository == '0800x/Loom' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.build_target != 'android-only'))
     runs-on: ubuntu-24.04
     environment: loom-alpha-publishing
     permissions:
