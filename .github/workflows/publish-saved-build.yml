@@ -120,6 +120,6 @@ jobs:
       - name: Publish the saved build
         working-directory: source
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.LOOM_RELEASE_TOKEN }}
           LOOM_BUILD_REVISION: ${{ steps.source.outputs.revision }}
         run: python ../publisher/scripts/create-draft.py release-assets
