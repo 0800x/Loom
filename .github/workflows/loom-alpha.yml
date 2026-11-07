@@ -3,9 +3,9 @@ on:
   workflow_dispatch:
     inputs:
       build_target:
-        description: Build only Android, or run the complete release pipeline
+        description: Run validation only, build only Android, or run the full release pipeline
         type: choice
-        options: [android-only, full-release]
+        options: [validate-only, android-only, full-release]
         default: full-release
       android_signing:
         description: Android signing mode (existing protected keystore required for signed builds)
@@ -126,6 +126,7 @@ jobs:
           path: docs/screenshots/loom-current/
           if-no-files-found: error
   android:
+    if: github.event_name != 'workflow_dispatch' || inputs.build_target != 'validate-only'
     needs: preflight
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -266,7 +267,7 @@ jobs:
             exit 1
           fi
   desktop:
-    if: github.event_name != 'workflow_dispatch' || inputs.build_target != 'android-only'
+    if: github.event_name != 'workflow_dispatch' || inputs.build_target == 'full-release'
     needs: preflight
     strategy:
       fail-fast: false
@@ -439,7 +440,7 @@ jobs:
           path: dist/identity-audit.json
           if-no-files-found: ignore
   node:
-    if: github.event_name != 'workflow_dispatch' || inputs.build_target != 'android-only'
+    if: github.event_name != 'workflow_dispatch' || inputs.build_target == 'full-release'
     needs: preflight
     runs-on: ubuntu-24.04
     strategy:
@@ -475,7 +476,7 @@ jobs:
           path: dist/
           if-no-files-found: error
   node-images:
-    if: github.event_name != 'workflow_dispatch' || inputs.build_target != 'android-only'
+    if: github.event_name != 'workflow_dispatch' || inputs.build_target == 'full-release'
     needs: preflight
     runs-on: ubuntu-24.04
     permissions:
@@ -520,7 +521,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=loom-minio
   draft:
     needs: [validate, android, desktop, node, node-images]
-    if: github.repository == '0800x/Loom' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.build_target != 'android-only'))
+    if: github.repository == '0800x/Loom' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.build_target == 'full-release'))
     runs-on: ubuntu-24.04
     environment: loom-alpha-publishing
     permissions:
