@@ -126,9 +126,9 @@ notes = (release.ROOT / 'release/DRAFT.md').read_text()
 if not is_tag:
     notes = (
         'Alpha preview for revision `' + revision + '`.\n\n'
-        'Android APKs labeled unsigned-engineering cannot be installed as-is. '
-        'Windows/Linux artifacts are unsigned. macOS is ad-hoc signed, '
-        'without Developer ID or notarization. No production signing key is generated.\n\n'
+        'Android APK filenames and manifests identify whether each build uses the existing protected production keystore or unsigned-engineering mode; unsigned-engineering APKs are not installable as-is. '
+        'Windows/Linux desktop artifacts are unsigned. macOS packages are ad-hoc signed, '
+        'without Developer ID or notarization. The pipeline never creates a new production signing key.\n\n'
         + notes
     )
 publish_or_verify(tag, title, assets, notes, primary_extra)
