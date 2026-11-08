@@ -200,7 +200,7 @@ class _GroupMiniCallBarState extends State<_GroupMiniCallBar> {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: context.loom.textSecondary,
-                      fontFeatures: [FontFeature.tabularFigures()],
+                      fontFeatures: [const FontFeature.tabularFigures()],
                     ),
                   ),
                 ],
@@ -1291,7 +1291,7 @@ class _GroupCallTitleWithDurationState
         maxLines: 1,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: context.loom.connectivity,
-          fontFeatures: [FontFeature.tabularFigures()],
+          fontFeatures: [const FontFeature.tabularFigures()],
         ),
       ),
     ],
@@ -1348,7 +1348,7 @@ class _GroupCallVerificationChip extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.w700,
               letterSpacing: 3,
-              fontFeatures: const [FontFeature.tabularFigures()],
+              fontFeatures: [const FontFeature.tabularFigures()],
             ),
           ),
           if (emoji.isNotEmpty) ...[
