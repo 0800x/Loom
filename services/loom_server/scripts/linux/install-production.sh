@@ -427,6 +427,73 @@ download_release_asset() {
   return "$status"
 }
 
+resolve_node_image_release() {
+  local work version selection release_tag manifest_digest
+  version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1],encoding="utf-8"))["version"])' "$REPO_ROOT/release/version.json")"
+  work="$(mktemp -d)"
+  trap 'rm -rf -- "$work"; trap - RETURN' RETURN
+  ui_info "Resolving the latest published Node/MinIO images for Loom $version"
+  download_release_asset "https://api.github.com/repos/0800x/Loom/releases?per_page=100" "$work/releases.json"
+
+  selection="$(python3 - "$work/releases.json" "$version" <<'PY'
+import json,re,sys
+path,version=sys.argv[1:]
+with open(path,encoding="utf-8") as f:
+    releases=json.load(f)
+if not isinstance(releases,list):
+    raise SystemExit("GitHub releases API returned an unexpected response")
+pattern=re.compile(r"^preview-"+re.escape(version)+r"-([0-9a-f]{12})$")
+required=("BUILD-MANIFEST.json",
+          "Loom-node-linux-amd64-build-manifest.json",
+          "Loom-node-linux-arm64-build-manifest.json")
+matches=[]
+for release in releases:
+    if release.get("draft"):
+        continue
+    tag=release.get("tag_name","")
+    match=pattern.fullmatch(tag)
+    if not match:
+        continue
+    commit=release.get("target_commitish","")
+    if not re.fullmatch(r"[0-9a-f]{40}",commit) or not commit.startswith(match.group(1)):
+        continue
+    assets={a.get("name"):a for a in release.get("assets",[]) if isinstance(a,dict)}
+    if any(name not in assets for name in required):
+        continue
+    digest=assets[required[0]].get("digest","")
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}",digest):
+        continue
+    matches.append((release.get("published_at") or release.get("created_at") or "",
+                    tag,commit,digest))
+if not matches:
+    raise SystemExit(f"No published full Loom {version} release with verified Node manifests was found")
+_,tag,commit,digest=max(matches,key=lambda item:item[0])
+print(tag)
+print(commit)
+print(digest)
+PY
+)"
+  mapfile -t selected <<< "$selection"
+  [[ "${#selected[@]}" -eq 3 ]] || { echo 'Could not resolve a complete published Node/MinIO image release.' >&2; exit 1; }
+  release_tag="${selected[0]}"
+  NODE_IMAGE_COMMIT="${selected[1]}"
+  manifest_digest="${selected[2]#sha256:}"
+
+  download_release_asset "https://github.com/0800x/Loom/releases/download/$release_tag/BUILD-MANIFEST.json" "$work/BUILD-MANIFEST.json"
+  printf '%s  %s\n' "$manifest_digest" "$work/BUILD-MANIFEST.json" | sha256sum --check --status - || {
+    echo 'Node/MinIO release build manifest SHA256 verification failed.' >&2
+    exit 1
+  }
+  python3 - "$work/BUILD-MANIFEST.json" "$NODE_IMAGE_COMMIT" <<'PY'
+import json,re,sys
+path,commit=sys.argv[1:]
+m=json.load(open(path,encoding="utf-8"))
+if m.get("revision") != commit or not re.fullmatch(r"[0-9a-f]{40}",m.get("revision","")):
+    raise SystemExit("Node/MinIO image release manifest does not match the selected immutable revision")
+PY
+  ui_ok "Resolved published Node/MinIO image revision ${NODE_IMAGE_COMMIT:0:12} from $release_tag"
+}
+
 build_or_install_manager() {
   local target="$INSTALL_DIR/bin/loom-node-manager"
   local work release_version release_tag manager_asset manifest_asset expected_sha version_output goarch manager_commit manifest_sha256 channel_sha256 selection
@@ -495,7 +562,6 @@ PY
   manager_commit="${selected[2]}"
   manifest_sha256="${selected[3]#sha256:}"
   channel_sha256="${selected[4]#sha256:}"
-  PREBUILT_RELEASE_COMMIT="$manager_commit"
 
   manager_asset="Loom-$release_version-manager-linux-$goarch"
   manifest_asset="Loom-node-linux-$goarch-build-manifest.json"
@@ -539,6 +605,7 @@ write_launcher() {
 }
 
 copy_bundle() {
+  resolve_node_image_release
   install -d -m 0755 "$INSTALL_DIR" "$INSTALL_DIR/deploy" "$INSTALL_DIR/scripts/linux" "$INSTALL_DIR/bin"
   install -m 0644 "$SOURCE_ROOT/package.json" "$INSTALL_DIR/package.json"
   install -m 0644 "$SOURCE_ROOT/package-lock.json" "$INSTALL_DIR/package-lock.json"
@@ -968,7 +1035,6 @@ if ! [[ "$INSTALL_COMMIT" =~ ^[a-fA-F0-9]{40}$ ]]; then
   INSTALL_COMMIT="${LOOM_SOURCE_COMMIT:-$(read_env_value "$SOURCE_ROOT/build-info.env" commit)}"
 fi
 if ! [[ "$INSTALL_COMMIT" =~ ^[a-fA-F0-9]{40}$ ]]; then INSTALL_COMMIT=""; fi
-PREBUILT_RELEASE_COMMIT=''
 SOURCE_BRANCH="$(git -C "$REPO_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
 UPDATE_BRANCH="${UPDATE_BRANCH:-$SOURCE_BRANCH}"
 UPDATE_BRANCH="${UPDATE_BRANCH:-$(read_env_value "$SOURCE_ROOT/build-info.env" branch)}"
@@ -1000,7 +1066,7 @@ fi
 loom_download_profile "${DOWNLOAD_PROFILE:-official}"
 if [[ -z "$GO_MIRROR" && -f "$EXISTING_ENV" ]]; then GO_MIRROR="$(read_env_value "$EXISTING_ENV" LOOM_GO_MIRROR)"; fi
 loom_go_mirror "${GO_MIRROR:-profile}"
-ui_info "Using verified prebuilt Node/MinIO images; latest matching Manager release will be resolved during setup; installer source is $INSTALL_COMMIT; host-side compilation is disabled"
+ui_info "Using verified prebuilt Node/MinIO images; image release is resolved from published manifests during setup; installer source is $INSTALL_COMMIT; host-side compilation is disabled"
 ui_step 1 7 "Ensuring Docker Engine + Compose v2"
 ensure_docker
 ensure_runtime_tools
@@ -1029,12 +1095,12 @@ set_env_value "$EXISTING_ENV" LOOM_GO_PROXY "$LOOM_GO_PROXY"
 set_env_value "$EXISTING_ENV" LOOM_GO_MIRROR "$LOOM_GO_MIRROR"
 set_env_value "$EXISTING_ENV" LOOM_NPM_REGISTRY "$LOOM_NPM_REGISTRY"
 set_env_value "$EXISTING_ENV" LOOM_ALPINE_MIRROR "$LOOM_ALPINE_MIRROR"
-set_env_value "$EXISTING_ENV" LOOM_BUILD_COMMIT "$INSTALL_COMMIT"
-set_env_value "$EXISTING_ENV" LOOM_IMAGE_TAG "$INSTALL_COMMIT"
+set_env_value "$EXISTING_ENV" LOOM_BUILD_COMMIT "$NODE_IMAGE_COMMIT"
+set_env_value "$EXISTING_ENV" LOOM_IMAGE_TAG "$NODE_IMAGE_COMMIT"
 set_env_value "$EXISTING_ENV" LOOM_UPDATE_BRANCH "$UPDATE_BRANCH"
 set_env_value "$EXISTING_ENV" LOOM_UPDATE_REPOSITORY "$UPDATE_REPOSITORY"
 set_env_value "$EXISTING_ENV" LOOM_UPDATE_SOURCE_DIR "$UPDATE_SOURCE_DIR"
-export LOOM_BUILD_COMMIT="$INSTALL_COMMIT"
+export LOOM_BUILD_COMMIT="$NODE_IMAGE_COMMIT"
 
 ui_step 5 7 "Checking DNS and host firewall"
 open_firewall_ports
@@ -1064,7 +1130,7 @@ if [[ $NO_START -eq 0 ]]; then
       if(expected && actual!==expected) process.exit(2);
       fetch("http://127.0.0.1:7483/readyz",{signal:AbortSignal.timeout(3000)})
         .then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1));
-    ' "$INSTALL_COMMIT" >/dev/null 2>&1; then node_ready=1; break; fi
+    ' "$NODE_IMAGE_COMMIT" >/dev/null 2>&1; then node_ready=1; break; fi
     sleep 2
   done
   if [[ $node_ready -ne 1 ]]; then
@@ -1082,7 +1148,7 @@ if [[ $NO_START -eq 0 ]]; then
 
   ui_step 7 7 "Verifying public HTTPS certificate"
   verify_https
-  loom_write_install_state "$INSTALL_DIR" "$UPDATE_REPOSITORY" "$UPDATE_BRANCH" "$UPDATE_SOURCE_DIR" "$INSTALL_COMMIT" "$MANAGER_VERSION"
+  loom_write_install_state "$INSTALL_DIR" "$UPDATE_REPOSITORY" "$UPDATE_BRANCH" "$UPDATE_SOURCE_DIR" "$NODE_IMAGE_COMMIT" "$MANAGER_VERSION"
 else
   ui_step 6 7 "Start skipped (--no-start)"
   ui_step 7 7 "Reverse-proxy/TLS setup skipped"
