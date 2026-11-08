@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' show FontFeature;
 
 import 'package:loom_calls/loom_calls.dart';
 import 'package:loom_design/loom_design.dart';

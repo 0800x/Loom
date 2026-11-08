@@ -16,7 +16,10 @@ import (
 var publisherChannelVersion = "0.2.0-alpha.1"
 
 func publisherChannelURL() string {
-	return "https://github.com/0800x/Loom/releases/download/v" + publisherChannelVersion + "/node-channel.json"
+	if !validCommit(buildCommit) {
+		return ""
+	}
+	return "https://github.com/0800x/Loom/releases/download/node-manager-" + publisherChannelVersion + "-" + buildCommit[:12] + "/node-channel.json"
 }
 const updatePolicyPath = "/etc/loom/update-policy"
 
@@ -71,6 +74,9 @@ func publisherPolicyEnabled(path string) (bool, error) {
 }
 
 func fetchPublisherRelease() (publisherRelease, error) {
+	if publisherChannelURL() == "" {
+		return publisherRelease{}, fmt.Errorf("trusted publisher channel unavailable; this Manager build has no immutable source revision")
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	cmd := updateCommand(ctx, "curl", "--proto", "=https", "--tlsv1.2", "--fail", "--silent", "--show-error", "--max-time", "15", "--max-filesize", "4096", "--max-redirs", "0", publisherChannelURL())

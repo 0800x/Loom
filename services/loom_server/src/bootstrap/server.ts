@@ -248,6 +248,7 @@ export class LoomNodeServer {
       upstreamTemplate: process.env.LOOM_TILE_CACHE_UPSTREAM ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       directory: process.env.LOOM_TILE_CACHE_DIR ?? join(config.dataDirectory, 'tile-cache'),
       maxZoom: Number(process.env.LOOM_TILE_CACHE_MAX_ZOOM ?? 17),
+      allowPrefetch: process.env.LOOM_TILE_CACHE_ALLOW_PREFETCH === 'true',
     });
     this.server.maxConnections = 1024;
     this.server.requestTimeout = 30_000;
@@ -894,6 +895,7 @@ export class LoomNodeServer {
       if (url.pathname === '/admin/v1/maps/warm') {
         if (!this.adminAuthorized(request)) return json(response, 401, { error: 'unauthorized' });
         if (method !== 'POST') return json(response, 405, { error: 'method_not_allowed' });
+        if (!this.tileCache.prefetchEnabled()) return json(response, 403, { error: 'tile_prefetch_disabled_for_provider' });
         const body = await readJson(request, 4096);
         const minZoom = Number(body.minZoom ?? 0), maxZoom = Number(body.maxZoom ?? 10);
         if (!Number.isSafeInteger(minZoom) || !Number.isSafeInteger(maxZoom) || minZoom < 0 || maxZoom > 19 || minZoom > maxZoom)

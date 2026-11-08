@@ -3,9 +3,9 @@ on:
   workflow_dispatch:
     inputs:
       build_target:
-        description: Run validation only, build only Android, or run the full release pipeline
+        description: Validate, build Android, build/publish only Node, or run the full release pipeline
         type: choice
-        options: [validate-only, android-only, full-release]
+        options: [validate-only, android-only, node-only, full-release]
         default: full-release
       android_signing:
         description: Android signing mode (existing protected keystore required for signed builds)
@@ -42,7 +42,7 @@ jobs:
           python-version: '3.12'
       - run: python scripts/release.py preflight
   validate:
-    if: github.event_name != 'workflow_dispatch' || inputs.build_target != 'android-only'
+    if: (github.event_name == 'push' && (github.ref_type == 'tag' || contains(github.event.head_commit.message || '', '[full-release]'))) || (github.event_name == 'workflow_dispatch' && inputs.build_target != 'android-only' && inputs.build_target != 'node-only')
     needs: preflight
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -127,7 +127,7 @@ jobs:
           path: docs/screenshots/loom-current/
           if-no-files-found: error
   android:
-    if: github.event_name != 'workflow_dispatch' || inputs.build_target != 'validate-only'
+    if: (github.event_name == 'push' && (github.ref_type == 'tag' || contains(github.event.head_commit.message || '', '[full-release]'))) || (github.event_name == 'workflow_dispatch' && inputs.build_target != 'validate-only' && inputs.build_target != 'node-only')
     needs: preflight
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -268,7 +268,7 @@ jobs:
             exit 1
           fi
   desktop:
-    if: github.event_name != 'workflow_dispatch' || inputs.build_target == 'full-release'
+    if: (github.event_name == 'push' && (github.ref_type == 'tag' || contains(github.event.head_commit.message || '', '[full-release]'))) || (github.event_name == 'workflow_dispatch' && inputs.build_target == 'full-release')
     needs: preflight
     strategy:
       fail-fast: false
@@ -441,7 +441,7 @@ jobs:
           path: dist/identity-audit.json
           if-no-files-found: ignore
   node:
-    if: github.event_name != 'workflow_dispatch' || inputs.build_target == 'full-release'
+    if: (github.event_name == 'push' && contains(github.event.head_commit.message || '', '[node-only]')) || (github.event_name == 'push' && (github.ref_type == 'tag' || contains(github.event.head_commit.message || '', '[full-release]'))) || (github.event_name == 'workflow_dispatch' && (inputs.build_target == 'full-release' || inputs.build_target == 'node-only'))
     needs: preflight
     runs-on: ubuntu-24.04
     strategy:
@@ -477,7 +477,7 @@ jobs:
           path: dist/
           if-no-files-found: error
   node-images:
-    if: github.event_name != 'workflow_dispatch' || inputs.build_target == 'full-release'
+    if: (github.event_name == 'push' && contains(github.event.head_commit.message || '', '[node-only]')) || (github.event_name == 'push' && (github.ref_type == 'tag' || contains(github.event.head_commit.message || '', '[full-release]'))) || (github.event_name == 'workflow_dispatch' && (inputs.build_target == 'full-release' || inputs.build_target == 'node-only'))
     needs: preflight
     runs-on: ubuntu-24.04
     permissions:
@@ -520,9 +520,71 @@ jobs:
             LOOM_RELEASE_VERSION=${{ env.LOOM_VERSION }}
           cache-from: type=gha,scope=loom-minio
           cache-to: type=gha,mode=max,scope=loom-minio
+  node-check:
+    if: (github.event_name == 'push' && contains(github.event.head_commit.message || '', '[node-only]')) || (github.event_name == 'workflow_dispatch' && inputs.build_target == 'node-only')
+    needs: preflight
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.2'
+          cache-dependency-path: tools/loom_node_manager/go.sum
+      - name: Server contract tests
+        working-directory: services/loom_server
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm test
+      - name: Node Manager tests and static analysis
+        working-directory: tools/loom_node_manager
+        run: |
+          go test -mod=readonly ./...
+          go vet -mod=readonly ./...
+      - name: Release metadata tests
+        run: |
+          python scripts/test-build-metadata.py
+          python scripts/test-release.py
+
+  node-publish:
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message || '', '[node-only]')) || (github.event_name == 'workflow_dispatch' && inputs.build_target == 'node-only' && github.ref == 'refs/heads/main')
+    needs: [node, node-images, node-check]
+    runs-on: ubuntu-24.04
+    environment: loom-alpha-publishing
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Loom-${{ env.LOOM_VERSION }}-node-*
+          path: candidate
+      - name: Assemble only the verified Node Manager release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          for ARCH in amd64 arm64; do
+            SOURCE="candidate/Loom-$LOOM_VERSION-node-linux-$ARCH"
+            cp "$SOURCE/Loom-$LOOM_VERSION-manager-linux-$ARCH" release-assets/
+            cp "$SOURCE/build-manifest.json" "release-assets/Loom-node-linux-$ARCH-build-manifest.json"
+          done
+          python scripts/create-bootstrap.py release-assets
+          printf '{"revision":"%s"}\n' "$GITHUB_SHA" > release-assets/BUILD-MANIFEST.json
+      - name: Publish the matching Node Manager channel without rebuilding client apps
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/create-draft.py release-assets --manager-only
+
   draft:
     needs: [validate, android, desktop, node, node-images]
-    if: github.repository == '0800x/Loom' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.build_target == 'full-release'))
+    if: github.repository == '0800x/Loom' && ((github.event_name == 'push' && (github.ref_type == 'tag' || contains(github.event.head_commit.message || '', '[full-release]'))) || (github.event_name == 'workflow_dispatch' && inputs.build_target == 'full-release'))
     runs-on: ubuntu-24.04
     environment: loom-alpha-publishing
     permissions:

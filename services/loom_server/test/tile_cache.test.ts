@@ -46,6 +46,7 @@ test('tile math covers country bounds and counts tiles', () => {
   assert.equal(ranges[0].x1, 0);
   const count = totalTiles(ranges);
   assert.ok(count > 0 && count < 5000);
+  assert.ok(ranges.every((range) => range.y0 <= range.y1), 'XYZ rows run from north to south');
   assert.ok(supportedCountries().includes('ir'));
   assert.equal(countryBounds('XX'), null);
 });
@@ -115,6 +116,48 @@ test('tile cache serves hits, fetches misses and rejects invalid tiles', async (
   }
 });
 
+test('bulk prefetch is disabled by default and always blocked for public OSM tiles', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'loom-tiles-policy-'));
+  const disabled = new LoomTileCacheService({
+    upstreamTemplate: 'https://tiles.example.org/{z}/{x}/{y}.png',
+    directory: dir,
+  });
+  assert.equal(disabled.prefetchEnabled(), false);
+  await assert.rejects(() => disabled.warm([51.0, 35.0, 51.4, 35.4], 8, 8, 'ir'), /tile_prefetch_disabled_for_provider/);
+  const osm = new LoomTileCacheService({
+    upstreamTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    directory: dir,
+    allowPrefetch: true,
+  });
+  assert.equal(osm.prefetchEnabled(), false);
+  await assert.rejects(() => osm.warm([51.0, 35.0, 51.4, 35.4], 8, 8, 'ir'), /tile_prefetch_disabled_for_provider/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('Google tile endpoints are rejected as cache sources', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'loom-tiles-google-'));
+  assert.throws(() => new LoomTileCacheService({
+    upstreamTemplate: 'https://maps.googleapis.com/maps/api/{z}/{x}/{y}.png',
+    directory: dir,
+  }), /tile_provider_caching_not_permitted/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('warm-up rejects a request that exceeds the bounded tile budget', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'loom-tiles-budget-'));
+  const cache = new LoomTileCacheService({
+    upstreamTemplate: 'https://tiles.example.org/{z}/{x}/{y}.png',
+    directory: dir,
+    maxZoom: 19,
+    allowPrefetch: true,
+  });
+  await assert.rejects(
+    () => cache.warm([-180, -85, 180, 85], 0, 19, null),
+    /tile_warmup_limit_exceeded/,
+  );
+  rmSync(dir, { recursive: true, force: true });
+});
+
 test('warm-up job caches the requested bounds and reports progress', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'loom-tiles-warm-'));
   const { server } = upstreamServer();
@@ -124,6 +167,7 @@ test('warm-up job caches the requested bounds and reports progress', async () =>
     upstreamTemplate: `http://127.0.0.1:${address.port}/tiles/{z}/{x}/{y}.png`,
     directory: dir,
     warmDelayMs: 0,
+    allowPrefetch: true,
   });
   try {
     const job = await cache.warm([51.0, 35.0, 51.4, 35.4], 8, 9, 'ir');
@@ -159,7 +203,7 @@ test('warm-up job caches the requested bounds and reports progress', async () =>
 test('existing cached files are served even when upstream is down', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'loom-tiles-stale-'));
   mkdirSync(join(dir, '2', '1'), { recursive: true });
-  writeFileSync(join(dir, '2', '1', '2.png'), pngBytes);
+  writeFileSync(join(dir, '2', '1', '2.tile'), pngBytes);
   // Point at a closed port: only the pre-seeded file must still be served.
   const cache = new LoomTileCacheService({
     upstreamTemplate: 'https://127.0.0.1:1/tiles/{z}/{x}/{y}.png',
@@ -180,6 +224,6 @@ test('existing cached files are served even when upstream is down', async () => 
   assert.equal(await cache.serve(2, 1, 2, response), true);
   assert.equal(state.headers['x-loom-tile'], 'hit');
   const body = Buffer.concat(chunks);
-  assert.equal(readFileSync(join(dir, '2', '1', '2.png')).toString('base64'), body.toString('base64'));
+  assert.equal(readFileSync(join(dir, '2', '1', '2.tile')).toString('base64'), body.toString('base64'));
   rmSync(dir, { recursive: true, force: true });
 });

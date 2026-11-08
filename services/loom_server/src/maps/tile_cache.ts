@@ -1,7 +1,8 @@
-import { mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises';
-import { createReadStream } from 'node:fs';
+import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import type { ServerResponse } from 'node:http';
+
+const TILE_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export interface LoomTileCacheOptions {
   /** XYZ template of the upstream raster basemap, e.g.
@@ -15,6 +16,8 @@ export interface LoomTileCacheOptions {
   fetchTimeoutMs?: number;
   warmConcurrency?: number;
   warmDelayMs?: number;
+  /** Explicit operator opt-in for providers whose terms permit bulk prefetch. */
+  allowPrefetch?: boolean;
 }
 
 export interface TileWarmJob {
@@ -48,8 +51,9 @@ export function tileRanges(
       z,
       x0: clamp(Math.floor(((west + 180) / 360) * n), 0, n - 1),
       x1: clamp(Math.floor(((east + 180) / 360) * n), 0, n - 1),
-      y0: clamp(tileY(south), 0, n - 1),
-      y1: clamp(tileY(north), 0, n - 1),
+      // XYZ rows increase southward: north is the first row, south the last.
+      y0: clamp(tileY(north), 0, n - 1),
+      y1: clamp(tileY(south), 0, n - 1),
     });
   }
   return ranges;
@@ -153,6 +157,7 @@ export class LoomTileCacheService {
   private readonly fetchTimeoutMs: number;
   private readonly warmConcurrency: number;
   private readonly warmDelayMs: number;
+  private readonly allowPrefetch: boolean;
   private job: TileWarmJob | null = null;
   private bytesCached = 0;
 
@@ -164,6 +169,11 @@ export class LoomTileCacheService {
       throw new Error('invalid_tile_upstream_template');
     }
     this.upstreamTemplate = options.upstreamTemplate;
+    const upstreamHost = new URL(options.upstreamTemplate.replaceAll('{z}', '0').replaceAll('{x}', '0').replaceAll('{y}', '0')).hostname.toLowerCase();
+    if (upstreamHost === 'google.com' || upstreamHost.endsWith('.google.com') ||
+        upstreamHost === 'googleapis.com' || upstreamHost.endsWith('.googleapis.com')) {
+      throw new Error('tile_provider_caching_not_permitted');
+    }
     this.directory = resolve(options.directory);
     this.maxTileBytes = options.maxTileBytes ?? 1_048_576;
     this.minZoom = options.minZoom ?? 0;
@@ -171,6 +181,22 @@ export class LoomTileCacheService {
     this.fetchTimeoutMs = options.fetchTimeoutMs ?? 15_000;
     this.warmConcurrency = options.warmConcurrency ?? 2;
     this.warmDelayMs = options.warmDelayMs ?? 40;
+    this.allowPrefetch = options.allowPrefetch === true;
+  }
+
+  /** Bulk prefetch is opt-in and forbidden for providers whose published terms prohibit it. */
+  prefetchEnabled(): boolean {
+    if (!this.allowPrefetch) return false;
+    let host: string;
+    try {
+      host = new URL(this.upstreamTemplate.replaceAll('{z}', '0').replaceAll('{x}', '0').replaceAll('{y}', '0')).hostname.toLowerCase();
+    } catch {
+      return false;
+    }
+    if (host === 'tile.openstreetmap.org' || host.endsWith('.tile.openstreetmap.org') ||
+        host === 'google.com' || host.endsWith('.google.com') ||
+        host === 'googleapis.com' || host.endsWith('.googleapis.com')) return false;
+    return true;
   }
 
   validTile(z: number, x: number, y: number): boolean {
@@ -179,7 +205,7 @@ export class LoomTileCacheService {
   }
 
   private path(z: number, x: number, y: number): string {
-    return join(this.directory, String(z), String(x), `${y}.png`);
+    return join(this.directory, String(z), String(x), `${y}.tile`);
   }
 
   /** Serves a tile from cache, fetching it from upstream on a miss. Returns
@@ -189,23 +215,29 @@ export class LoomTileCacheService {
     const file = this.path(z, x, y);
     let info;
     try { info = await stat(file); } catch { info = null; }
-    if (info != null && info.isFile()) {
-      const settled = new Promise<void>((resolveStream, rejectStream) => {
-        const source = createReadStream(file);
-        response.writeHead(200, {
-          'content-type': 'image/png',
-          'content-length': String(info.size),
-          'cache-control': 'public, max-age=604800',
-          'x-content-type-options': 'nosniff',
-          'x-loom-tile': 'hit',
-        });
-        source.once('error', rejectStream);
-        response.once('close', () => resolveStream());
-        response.once('finish', () => resolveStream());
-        source.pipe(response);
-      });
-      try { await settled; } catch { response.destroy(); }
-      return true;
+    if (info != null && info.isFile() && Date.now() - info.mtimeMs <= TILE_CACHE_TTL_MS) {
+      try {
+        const cached = await readFile(file);
+        const type = cached.byteLength <= this.maxTileBytes ? sniffImageType(cached) : null;
+        if (type != null) {
+          response.writeHead(200, {
+            'content-type': type,
+            'content-length': String(cached.byteLength),
+            'cache-control': 'public, max-age=604800',
+            'x-content-type-options': 'nosniff',
+            'x-loom-tile': 'hit',
+          });
+          response.end(cached);
+          return true;
+        }
+        await rm(file, { force: true });
+      } catch {
+        await rm(file, { force: true }).catch(() => undefined);
+      }
+    } else if (info != null && info.isFile()) {
+      // Upstream cache headers are not persisted by this cache; use the
+      // provider policy's seven-day fallback rather than retaining tiles forever.
+      await rm(file, { force: true }).catch(() => undefined);
     }
     const fetched = await this.fetch(z, x, y);
     if (fetched == null) return false;
@@ -231,7 +263,7 @@ export class LoomTileCacheService {
       const upstream = await fetch(url, {
         signal: controller.signal,
         redirect: 'error',
-        headers: { 'user-agent': 'Loom-Home-Node-Tile-Cache/1.0' },
+        headers: { 'user-agent': 'Loom-Home-Node/0.6.0 (+https://github.com/0800x/Loom)' },
       });
       if (!upstream.ok) return null;
       const buffer = new Uint8Array(await upstream.arrayBuffer());
@@ -248,16 +280,21 @@ export class LoomTileCacheService {
 
   /** Starts (or replaces) a background warm-up job for a bounding box. */
   async warm(bounds: [number, number, number, number], minZoom: number, maxZoom: number, country: string | null): Promise<TileWarmJob> {
+    if (!this.prefetchEnabled()) throw new Error('tile_prefetch_disabled_for_provider');
     const clampedMin = Math.max(this.minZoom, minZoom);
     const clampedMax = Math.min(this.maxZoom, maxZoom);
     if (clampedMin > clampedMax) throw new Error('invalid_zoom_range');
     const ranges = tileRanges(bounds, clampedMin, clampedMax);
+    const total = totalTiles(ranges);
+    // Bound both queue memory and upstream load even for a malicious or
+    // accidental world-scale request from an authenticated operator.
+    if (!Number.isSafeInteger(total) || total > 50_000) throw new Error('tile_warmup_limit_exceeded');
     const job: TileWarmJob = {
       country,
       bounds,
       minZoom: clampedMin,
       maxZoom: clampedMax,
-      total: totalTiles(ranges),
+      total,
       done: 0,
       failed: 0,
       startedAt: new Date().toISOString(),
@@ -282,12 +319,16 @@ export class LoomTileCacheService {
         const file = this.path(z, x, y);
         try {
           const info = await stat(file);
-          if (info.isFile()) {
+          if (info.isFile() && Date.now() - info.mtimeMs <= TILE_CACHE_TTL_MS) {
             job.done++;
             continue;
           }
+          if (info.isFile()) await rm(file, { force: true });
         } catch { /* not cached yet */ }
         const fetched = await this.fetch(z, x, y);
+        // A newer warm-up or purge may have replaced this job while the
+        // upstream request was in flight; never repopulate a cancelled cache.
+        if (this.job !== job) return;
         if (fetched == null) {
           job.failed++;
         } else {
@@ -313,12 +354,14 @@ export class LoomTileCacheService {
       bytesCached: this.bytesCached,
       directory: this.directory,
       upstream: this.upstreamTemplate,
+      prefetchEnabled: this.prefetchEnabled(),
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
     };
   }
 
   async purge(): Promise<void> {
+    if (this.job) this.job.running = false;
     this.job = null;
     await rm(this.directory, { recursive: true, force: true });
     this.bytesCached = 0;

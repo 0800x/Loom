@@ -8,6 +8,21 @@ import (
 	"testing"
 )
 
+func TestPublisherChannelURLUsesTheMatchingImmutableManagerRelease(t *testing.T) {
+	oldVersion, oldCommit := publisherChannelVersion, buildCommit
+	defer func() { publisherChannelVersion, buildCommit = oldVersion, oldCommit }()
+	publisherChannelVersion = "0.6.0"
+	buildCommit = strings.Repeat("a", 40)
+	want := "https://github.com/0800x/Loom/releases/download/node-manager-0.6.0-" + strings.Repeat("a", 12) + "/node-channel.json"
+	if got := publisherChannelURL(); got != want {
+		t.Fatalf("publisher URL = %q, want %q", got, want)
+	}
+	buildCommit = ""
+	if got := publisherChannelURL(); got != "" {
+		t.Fatalf("publisher URL without immutable build revision = %q", got)
+	}
+}
+
 func TestPublisherMetadataIsBoundToLoomAndImmutableSource(t *testing.T) {
 	valid := publisherRelease{Schema: 1, Repository: defaultUpdateRepository, Branch: "main", Revision: strings.Repeat("a", 40), SHA256: strings.Repeat("b", 64), Sequence: 2}
 	body, _ := json.Marshal(valid)

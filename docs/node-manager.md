@@ -48,6 +48,37 @@ Use **↑/↓** (or **j/k**) to select, **Tab / Shift+Tab** to change focus and
 An unavailable probe is not a healthy result. Diagnose the reported service,
 certificate or identity failure before changing trust or retrying delivery.
 
+## Maps and tile caching
+
+The **Maps** page reads the Node's persistent raster tile cache, reports disk
+usage and warm-up progress, and can start country-bounded warm-up jobs or purge
+the cache. Tiles requested by active map viewports are cached under the Node data
+directory, which is mounted on the persistent `loom-node-data` Docker volume.
+
+Bulk prefetch is **disabled by default**. The standard OpenStreetMap tile server
+does not permit country/area prefetching or offline downloads, and Google map
+tiles are not a permitted cache source. Normal interactive tile requests can
+still use the Node cache. To enable warm-up, configure a provider whose licence
+explicitly allows bulk downloads and offline caching, set its XYZ template in
+`LOOM_TILE_CACHE_UPSTREAM`, and set
+`LOOM_TILE_CACHE_ALLOW_PREFETCH=true` in the protected Node `.env`, then recreate the `loom-node` container so it reloads the environment. The server
+still blocks the known OSM standard and Google tile hosts. Do not enable this
+flag merely to bypass a provider's terms.
+
+Country warm-up currently offers Iran, Germany and Turkey at zoom levels 0–10.
+Use a licensed/self-hosted tile source for offline map packages; this cache is
+not a substitute for a complete vector/raster tile server.
+
+### One-time upgrade from older Managers
+
+Manager builds older than 0.8.7 contain a stale publisher-channel URL and cannot
+discover the fixed channel themselves. The Node Manager release now also ships
+the integrity-pinned `loom-install.sh` bootstrap. Download that asset from the
+matching `node-manager-<Loom-version>-<commit12>` release and run it on the
+existing Linux Node host. It preserves the existing Node data volume, identity
+and production secrets while replacing the Manager and runtime with the
+verified release.
+
 ## Federation
 
 Federation lets people on separate Home Nodes exchange direct conversations.

@@ -57,11 +57,13 @@ type model struct {
 	help bool
 	logService string
 	logTail int
+	mapsCache mapsCacheStatus
+	mapsCacheError string
 }
 
 var pages = []string{
 	"Overview", "Services", "Users", "Registration", "Federation", "Federation Queue",
-	"Calls", "Groups", "Public page", "Network & TLS", "Database", "Storage", "Security", "Logs", "Backup", "Maintenance", "Updates",
+	"Calls", "Groups", "Public page", "Network & TLS", "Database", "Storage", "Maps", "Security", "Logs", "Backup", "Maintenance", "Updates",
 }
 
 var (
@@ -81,7 +83,7 @@ func federationStatusCmd(mgr manager) tea.Cmd { return func() tea.Msg { v, err :
 func federationQueueCmd(mgr manager) tea.Cmd { return func() tea.Msg { v, err := mgr.readFederationQueue(); return federationQueueMsg{v, err} } }
 func usersCmd(mgr manager) tea.Cmd { return func() tea.Msg { v, err := mgr.readAdminUsers(); return usersMsg{v, err} } }
 func systemStatsCmd() tea.Cmd { return func() tea.Msg { return systemStatsMsg(readSystemStats()) } }
-func refreshAllCmd(mgr manager) tea.Cmd { return tea.Batch(refreshCmd(mgr), federationStatusCmd(mgr), federationQueueCmd(mgr), usersCmd(mgr), groupsCmd(mgr,""), systemStatsCmd()) }
+func refreshAllCmd(mgr manager) tea.Cmd { return tea.Batch(refreshCmd(mgr), federationStatusCmd(mgr), federationQueueCmd(mgr), usersCmd(mgr), groupsCmd(mgr,""), systemStatsCmd(), mapsCacheCmd(mgr)) }
 func actionCmd(mgr manager, name string, args ...string) tea.Cmd { return func() tea.Msg { out, err := mgr.composeCommand(args...).CombinedOutput(); return actionMsg{name, strings.TrimSpace(string(out)), err} } }
 func registrationActionCmd(mgr manager, name, requestID, operation string) tea.Cmd { return func() tea.Msg { out, err := mgr.registrationCommand(requestID, operation).CombinedOutput(); return actionMsg{name, strings.TrimSpace(string(out)), err} } }
 func settingActionCmd(mgr manager, name, key, value string) tea.Cmd { return func() tea.Msg { out, err := mgr.setRuntimeSetting(key, value); return actionMsg{name, strings.TrimSpace(out), err} } }
@@ -193,6 +195,17 @@ func (m model) actions() []action {
 			{label:"Clean expired sessions",hint:"delete only sessions beyond refresh lifetime",kind:"cleanup-sessions"},
 			{label:"Restart PostgreSQL",hint:"restart database service",kind:"compose",args:[]string{"restart","postgres"},dangerous:true},
 		}
+	case "Maps":
+		actions := []action{{label:"Refresh map cache",hint:"read persistent tile-cache usage and warm-up progress",kind:"maps-refresh"}}
+		if m.mapsCache.PrefetchEnabled {
+			actions = append(actions,
+				action{label:"Warm Iran · zoom 0–10",hint:"prefetch only when the configured provider explicitly permits it",kind:"maps-warm",args:[]string{"ir","0","10"}},
+				action{label:"Warm Germany · zoom 0–10",hint:"prefetch only when the configured provider explicitly permits it",kind:"maps-warm",args:[]string{"de","0","10"}},
+				action{label:"Warm Turkey · zoom 0–10",hint:"prefetch only when the configured provider explicitly permits it",kind:"maps-warm",args:[]string{"tr","0","10"}},
+			)
+		}
+		actions = append(actions, action{label:"Purge map cache",hint:"permanently delete cached raster tiles from the Node data volume",kind:"maps-purge",dangerous:true})
+		return actions
 	case "Storage":
 		return []action{{label:"Verify storage",hint:"refresh MinIO/S3 health and bucket probe",kind:"refresh"},{label:"Restart MinIO",hint:"restart object storage service",kind:"compose",args:[]string{"restart","minio"},dangerous:true}}
 	case "Security":
@@ -236,6 +249,16 @@ func (m model) execute(a action) (tea.Model, tea.Cmd) {
  case "group-cleanup": m.busy=true; return m,cleanupGroupPackagesCmd(m.mgr)
  case "groups-page": if len(a.args)!=1 { return m,nil }; m.groupsAfter=a.args[0]; m.groupsLoading=true; m.row=0; m.groupDetail=nil; return m,groupsCmd(m.mgr,m.groupsAfter)
  case "refresh": return m, requestStatusRefreshCmd()
+	case "maps-refresh": return m, mapsCacheCmd(m.mgr)
+	case "maps-warm":
+		if len(a.args) != 3 { return m, nil }
+		minZoom, minErr := strconv.Atoi(a.args[1]); maxZoom, maxErr := strconv.Atoi(a.args[2])
+		if minErr != nil || maxErr != nil { m.message = "Invalid map zoom range."; return m, nil }
+		m.busy = true
+		return m, mapsWarmCmd(m.mgr, a.args[0], minZoom, maxZoom)
+	case "maps-purge":
+		m.busy = true
+		return m, mapsPurgeCmd(m.mgr)
 	case "check-group-calls": m.busy=true;return m,func()tea.Msg{err:=m.mgr.mediaCommand("verify-group-calls");out:="";if err==nil{out="Private media API reachable. Test calls between two networks to verify media ports."};return actionMsg{"Group media check",out,err}}
     case "configure-group-calls": return m.openGroupCallsForm(),nil
     case "disable-group-calls": values:=groupCallsEnv(m.mgr.envPath);limit,_:=strconv.Atoi(values["LOOM_GROUP_CALLS_MAX_PARTICIPANTS"]);m.busy=true;return m,groupCallsApplyCmd(m.mgr,groupCallsSetup{values["LOOM_GROUP_CALLS_PUBLIC_IP"],limit,values["LOOM_VIDEO_CALLS_ENABLED"]=="true"},false)
@@ -308,6 +331,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
   if msg.err!=nil { m.message="Group details unavailable." } else if msg.detail.ID==msg.id { m.groupDetail=&msg.detail }
  case usersMsg: if msg.err!=nil{m.usersError=msg.err.Error()}else{m.users=msg.users;m.usersError=""};if pages[m.page]=="Users"&&m.row>=len(m.users){m.row=0}
 	case systemStatsMsg: m.system=systemStats(msg)
+	case mapsCacheMsg:
+		if msg.err != nil { m.mapsCacheError = msg.err.Error() } else { m.mapsCache = msg.status; m.mapsCacheError = "" }
 	case actionMsg: m.busy=false;if msg.err!=nil{m.message=fmt.Sprintf("%s failed: %v",msg.name,msg.err);if strings.TrimSpace(msg.output)!=""{m.message+="\n"+strings.TrimSpace(msg.output)}}else{m.message=msg.name+" completed.";if strings.TrimSpace(msg.output)!=""{m.message+="\n"+strings.TrimSpace(msg.output)}};return m,requestStatusRefreshCmd()
 	case terminalFinishedMsg: if msg.err!=nil{m.message=msg.name+" exited with error: "+msg.err.Error()}else{m.message=msg.name+" closed."};return m,requestStatusRefreshCmd()
 	}
@@ -341,7 +366,7 @@ func (m model) logsView()string{return titleStyle.Render("Logs")+"\n\n"+fact("So
 func (m model) backupView()string{return titleStyle.Render("Backup")+"\n\n"+warnStyle.Render("Disabled until atomic backup/restore exists")+"\n\n"+dimStyle.Render("A valid backup must cover PostgreSQL, object storage and the Node identity together. The console refuses partial fake-safety backups.")}
 func (m model) maintenanceView()string{return titleStyle.Render("Maintenance")+"\n\n"+warnStyle.Render("Disruptive operations")+"\n\n"+dimStyle.Render("Rebuild, recreate, image pulls and service stops require explicit confirmation. Persistent volumes are not removed by these controls.")}
 func (m model) updatesView()string{var b strings.Builder;b.WriteString(titleStyle.Render("Updates")+"\n\n");state:=m.update.State;if state=="up_to_date"{state="Latest version installed"};if state=="update_available"{state="New update available"};if state=="unavailable"&&m.update.Detail!=""{state="Update check unavailable"};b.WriteString(fact("State",state));b.WriteString(fact("Installed commit",shortCommit(m.update.InstalledCommit)));if m.update.AvailableCommit!=""{b.WriteString(fact("Latest commit",shortCommit(m.update.AvailableCommit)))};b.WriteString(fact("Repository",m.update.Repository));b.WriteString(fact("Branch",m.update.Branch));b.WriteString(fact("Installation","Install update (explicit action)"));if m.update.Detail!=""{b.WriteString("\n"+dimStyle.Render(m.update.Detail))};b.WriteString("\n\n"+dimStyle.Render("Update status refreshes automatically every 60 seconds by comparing commit SHAs. Installation requires an explicit Install update action."));return b.String()}
-func (m model) pageView()string{switch pages[m.page]{case"Overview":return m.overviewView();case"Services":return m.servicesView();case"Users":return m.usersView();case"Registration":return m.registrationView();case"Federation":return m.federationView();case"Federation Queue":return m.queueView();case"Calls":return m.callsView();case"Groups":return m.groupsView();case"Public page":return m.publicPageView();case"Network & TLS":return m.networkView();case"Database":return m.databaseView();case"Storage":return m.storageView();case"Security":return m.securityView();case"Logs":return m.logsView();case"Backup":return m.backupView();case"Maintenance":return m.maintenanceView();case"Updates":return m.updatesView()};return""}
+func (m model) pageView()string{switch pages[m.page]{case"Overview":return m.overviewView();case"Services":return m.servicesView();case"Users":return m.usersView();case"Registration":return m.registrationView();case"Federation":return m.federationView();case"Federation Queue":return m.queueView();case"Calls":return m.callsView();case"Groups":return m.groupsView();case"Public page":return m.publicPageView();case"Network & TLS":return m.networkView();case"Database":return m.databaseView();case"Storage":return m.storageView();case"Maps":return m.mapsView();case"Security":return m.securityView();case"Logs":return m.logsView();case"Backup":return m.backupView();case"Maintenance":return m.maintenanceView();case"Updates":return m.updatesView()};return""}
 func (m model) actionsView()string{actions:=m.actions();if len(actions)==0{return""};var b strings.Builder;b.WriteString("\n\n"+titleStyle.Render("Contextual controls")+"\n");for i,a:=range actions{prefix:="  ";label:="[ "+a.label+" ]";if a.disabled{label=dimStyle.Render("[ "+a.label+" ]")};if i==m.actionCursor{prefix="> ";if m.focus==focusActions&&!a.disabled{label=selStyle.Render(" "+a.label+" ")}};fmt.Fprintf(&b,"%s%s\n  %s\n",prefix,label,dimStyle.Render(a.hint))};return b.String()}
 func (m model) helpView()string{return titleStyle.Render("Keyboard help")+"\n\n↑/↓  move inside the focused panel\nTab / Shift+Tab  switch sidebar, table and controls\nEnter  open section / move to controls / activate selected control\nEsc  return focus to sidebar or close modal\nr  refresh all operational data\n?  toggle this help\nq  quit\n\n"+dimStyle.Render("Destructive controls require y/n confirmation. Harmless switches do not.")}
 func (m model) View()tea.View{content:=m.pageView()+m.actionsView();contentWidth:=m.width-34;if contentWidth<72{contentWidth=72};body:=lipgloss.JoinHorizontal(lipgloss.Top,m.navView(),contentStyle.Width(contentWidth).Render(content));var b strings.Builder;b.WriteString(panelStyle.Render(m.header()+body));if m.help{b.WriteString("\n\n"+contentStyle.Width(min(contentWidth,82)).Render(m.helpView()))}else if m.confirm!=nil{b.WriteString("\n\n"+warnStyle.Render("Confirm destructive action")+"\n"+titleStyle.Render(m.confirm.label)+"\n"+dimStyle.Render(m.confirm.hint)+"\n"+warnStyle.Render("[y] confirm   [n/Esc] cancel"))}else if m.busy{b.WriteString("\n\n"+warnStyle.Render("Working…"))}else if strings.TrimSpace(m.message)!=""{b.WriteString("\n\n"+m.message)};b.WriteString("\n\n"+dimStyle.Render("↑/↓ move  •  Tab/Shift+Tab focus  •  Enter open/activate  •  Esc back  •  r refresh  •  ? help  •  q quit"));v:=tea.NewView(b.String());v.AltScreen=true;return v}
