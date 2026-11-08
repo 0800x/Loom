@@ -69,6 +69,16 @@ Country warm-up currently offers Iran, Germany and Turkey at zoom levels 0–10.
 Use a licensed/self-hosted tile source for offline map packages; this cache is
 not a substitute for a complete vector/raster tile server.
 
+### One-time upgrade from older Managers
+
+Manager builds older than 0.8.7 contain a stale publisher-channel URL and cannot
+discover the fixed channel themselves. The Node Manager release now also ships
+the integrity-pinned `loom-install.sh` bootstrap. Download that asset from the
+matching `node-manager-<Loom-version>-<commit12>` release and run it on the
+existing Linux Node host. It preserves the existing Node data volume, identity
+and production secrets while replacing the Manager and runtime with the
+verified release.
+
 ## Federation
 
 Federation lets people on separate Home Nodes exchange direct conversations.
