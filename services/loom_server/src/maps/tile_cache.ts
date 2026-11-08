@@ -213,7 +213,7 @@ export class LoomTileCacheService {
     const file = this.path(z, x, y);
     let info;
     try { info = await stat(file); } catch { info = null; }
-    if (info != null && info.isFile()) {
+    if (info != null && info.isFile() && Date.now() - info.mtimeMs <= TILE_CACHE_TTL_MS) {
       try {
         const cached = await readFile(file);
         const type = cached.byteLength <= this.maxTileBytes ? sniffImageType(cached) : null;
@@ -232,6 +232,10 @@ export class LoomTileCacheService {
       } catch {
         await rm(file, { force: true }).catch(() => undefined);
       }
+    } else if (info != null && info.isFile()) {
+      // Upstream cache headers are not persisted by this cache; use the
+      // provider policy's seven-day fallback rather than retaining tiles forever.
+      await rm(file, { force: true }).catch(() => undefined);
     }
     const fetched = await this.fetch(z, x, y);
     if (fetched == null) return false;
@@ -313,10 +317,11 @@ export class LoomTileCacheService {
         const file = this.path(z, x, y);
         try {
           const info = await stat(file);
-          if (info.isFile()) {
+          if (info.isFile() && Date.now() - info.mtimeMs <= TILE_CACHE_TTL_MS) {
             job.done++;
             continue;
           }
+          if (info.isFile()) await rm(file, { force: true });
         } catch { /* not cached yet */ }
         const fetched = await this.fetch(z, x, y);
         if (fetched == null) {

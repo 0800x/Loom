@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -42,7 +43,7 @@ type mapsCacheMsg struct {
 
 func (m manager) internalAdminPost(path string, body []byte) (string, error) {
 	const script = `const path=process.argv[1],body=process.argv[2],token=process.env.LOOM_ADMIN_TOKEN;if(!token){console.error('admin token missing in container');process.exit(2)}fetch('http://127.0.0.1:7483'+path,{method:'POST',signal:AbortSignal.timeout(15000),headers:{authorization:'Bearer '+token,'content-type':'application/json'},body}).then(async r=>{const text=await r.text();if(!r.ok){console.error(text);process.exit(3)}console.log(text)}).catch(e=>{console.error(e.message);process.exit(4)})`
-	return probeOutput("docker", m.composeArgs("exec", "-T", "loom-node", "node", "-e", script, path, string(body))...)
+	return probeOutputTimeout(60*time.Second, "docker", m.composeArgs("exec", "-T", "loom-node", "node", "-e", script, path, string(body))...)
 }
 
 func (m manager) readMapsCache() (mapsCacheStatus, error) {

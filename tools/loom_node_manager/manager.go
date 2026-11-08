@@ -243,7 +243,11 @@ func (m manager) recentNodeLogs(tail int) string {
 }
 
 func probeOutput(name string, args ...string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	return probeOutputTimeout(8*time.Second, name, args...)
+}
+
+func probeOutputTimeout(timeout time.Duration, name string, args ...string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	output, err := exec.CommandContext(ctx, name, args...).CombinedOutput()
 	if ctx.Err() != nil {
