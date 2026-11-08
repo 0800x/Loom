@@ -2,9 +2,10 @@
 import json
 import os
 from pathlib import Path
-import subprocess
 import shutil
+import subprocess
 import tempfile
+import time
 
 ROOT = Path(__file__).resolve().parents[1]
 hook = ROOT / 'scripts/prepare-android-package-config.gradle'
@@ -47,11 +48,68 @@ with tempfile.TemporaryDirectory(prefix='loom-gradle-init-') as folder:
     command = [str(wrapper), '--offline', '--no-daemon', '--console=plain',
                '-I', str(hook), '-p', str(android), 'help', ':flutter-tooling:help']
 
+    TRANSIENT_GRADLE_ERRORS = (
+        'http response code: 500',
+        'http response code: 502',
+        'http response code: 503',
+        'http response code: 504',
+        'http/2 500',
+        'http/2 502',
+        'http/2 503',
+        'http/2 504',
+        'read timed out',
+        'connection reset',
+        'connection timed out',
+        'unknownhostexception',
+        'temporary failure in name resolution',
+    )
+
+    def output_text(value):
+        if isinstance(value, bytes):
+            return value.decode(errors='replace')
+        return value or ''
+
     def run(expected_success):
-        result = subprocess.run(command, env=environment, capture_output=True, text=True, timeout=180)
-        if (result.returncode == 0) != expected_success:
-            raise RuntimeError('Gradle scope regression failed:\n' + (result.stdout + result.stderr)[-6000:])
-        return result.stdout + result.stderr
+        max_attempts = 3
+        for attempt in range(1, max_attempts + 1):
+            try:
+                result = subprocess.run(
+                    command, env=environment, capture_output=True,
+                    text=True, timeout=240
+                )
+                output = result.stdout + result.stderr
+                succeeded = result.returncode == 0
+                transient = (
+                    not succeeded
+                    and any(marker in output.lower() for marker in TRANSIENT_GRADLE_ERRORS)
+                )
+            except subprocess.TimeoutExpired as error:
+                output = output_text(error.stdout) + output_text(error.stderr)
+                succeeded = False
+                transient = True
+
+            if transient:
+                if attempt == max_attempts:
+                    raise RuntimeError(
+                        f'Gradle hit a transient download/timeout failure after {max_attempts} attempts:\\n'
+                        + output[-6000:]
+                    )
+                delay = 5 * attempt
+                print(
+                    f'Gradle download/network failure (attempt {attempt}/{max_attempts}); '
+                    f'retrying in {delay}s...',
+                    flush=True,
+                )
+                time.sleep(delay)
+                continue
+
+            if succeeded != expected_success:
+                raise RuntimeError(
+                    'Gradle scope regression failed:\\n' + output[-6000:]
+                )
+            return output
+
+        raise AssertionError('Unreachable Gradle retry state')
 
     output = run(True)
     if ':flutter-tooling:help' not in output:
