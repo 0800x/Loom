@@ -399,36 +399,40 @@ jobs:
             Move-Item -LiteralPath $temporary -Destination $destination -Force
             Write-Host "Downloaded and verified archive: $($archive.File)"
           }
+      - name: Pre-fetch verified Windows WebRTC archive
+        if: matrix.platform == 'windows'
+        working-directory: apps/loom
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          flutter pub get
+          $packageConfigPath = (Resolve-Path '.dart_tool/package_config.json').Path
+          $packageConfigUri = [System.Uri]::new($packageConfigPath)
+          $package = (Get-Content $packageConfigPath -Raw | ConvertFrom-Json).packages | Where-Object { $_.name -eq 'flutter_webrtc' } | Select-Object -First 1
+          if (-not $package) { throw 'flutter_webrtc package is missing from the resolved package config' }
+          $packageUri = [System.Uri]::new($packageConfigUri, [string]$package.rootUri)
+          $downloads = Join-Path $packageUri.LocalPath 'third_party/downloads'
+          New-Item -ItemType Directory -Force -Path $downloads | Out-Null
+          $file = 'libwebrtc-win-x64-release.zip'
+          $url = 'https://github.com/webrtc-sdk/libwebrtc/releases/download/libwebrtc.m150.7871.02/libwebrtc-win-x64-release.zip'
+          $expected = '9965311ca3d4c0c81eefd9b93c76a176a5fd8421454bb599845e198f2e6798d3'
+          $destination = Join-Path $downloads $file
+          $temporary = "$destination.part"
+          Remove-Item -LiteralPath $temporary -Force -ErrorAction SilentlyContinue
+          & curl.exe --http1.1 --fail --location --silent --show-error --retry 5 --retry-all-errors --retry-delay 4 --connect-timeout 20 --max-time 600 --user-agent 'Loom-CI/1.0' --output $temporary $url
+          if ($LASTEXITCODE -ne 0) { throw "WebRTC download failed: $file" }
+          $actual = (Get-FileHash -LiteralPath $temporary -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) {
+            Remove-Item -LiteralPath $temporary -Force
+            throw "WebRTC checksum mismatch: expected $expected, received $actual"
+          }
+          Move-Item -LiteralPath $temporary -Destination $destination -Force
+          Write-Host "Downloaded and SHA-256 verified WebRTC archive: $file"
       - name: Build complete client
         if: matrix.platform != 'macos'
         working-directory: apps/loom
         run: |
           flutter pub get
-          if ('${{ matrix.platform }}' -eq 'windows') {
-            $ErrorActionPreference = 'Stop'
-            $packageConfigPath = (Resolve-Path '.dart_tool/package_config.json').Path
-            $packageConfigUri = [System.Uri]::new($packageConfigPath)
-            $package = (Get-Content $packageConfigPath -Raw | ConvertFrom-Json).packages | Where-Object { $_.name -eq 'flutter_webrtc' } | Select-Object -First 1
-            if (-not $package) { throw 'flutter_webrtc package is missing from the resolved package config' }
-            $packageUri = [System.Uri]::new($packageConfigUri, [string]$package.rootUri)
-            $downloads = Join-Path $packageUri.LocalPath 'third_party/downloads'
-            New-Item -ItemType Directory -Force -Path $downloads | Out-Null
-            $file = 'libwebrtc-win-x64-release.zip'
-            $url = 'https://github.com/webrtc-sdk/libwebrtc/releases/download/libwebrtc.m150.7871.02/libwebrtc-win-x64-release.zip'
-            $expected = '9965311ca3d4c0c81eefd9b93c76a176a5fd8421454bb599845e198f2e6798d3'
-            $destination = Join-Path $downloads $file
-            $temporary = "$destination.part"
-            Remove-Item -LiteralPath $temporary -Force -ErrorAction SilentlyContinue
-            & curl.exe --http1.1 --fail --location --silent --show-error --retry 5 --retry-all-errors --retry-delay 4 --connect-timeout 20 --max-time 600 --user-agent 'Loom-CI/1.0' --output $temporary $url
-            if ($LASTEXITCODE -ne 0) { throw "WebRTC download failed: $file" }
-            $actual = (Get-FileHash -LiteralPath $temporary -Algorithm SHA256).Hash.ToLowerInvariant()
-            if ($actual -ne $expected) {
-              Remove-Item -LiteralPath $temporary -Force
-              throw "WebRTC checksum mismatch: expected $expected, received $actual"
-            }
-            Move-Item -LiteralPath $temporary -Destination $destination -Force
-            Write-Host "Downloaded and SHA-256 verified WebRTC archive: $file"
-          }
           python ../../scripts/prepare-native-package-config.py .
           dart --packages=.dart_tool/package_config.json ../../scripts/check-native-package-config.dart .dart_tool/package_config.json
           flutter build ${{ matrix.platform }} --no-pub --release --split-debug-info="${{ runner.temp }}/loom-symbols/${{ matrix.platform }}-${{ matrix.arch }}"
