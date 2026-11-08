@@ -124,6 +124,8 @@ manager_names = [
     f'Loom-node-linux-amd64-build-manifest.json',
     f'Loom-node-linux-arm64-build-manifest.json',
     'node-channel.json',
+    'loom-install.sh',
+    'loom-install.sh.sha256',
 ]
 manager_assets = [directory / name for name in manager_names]
 missing = [path.name for path in manager_assets if not path.is_file()]
@@ -145,8 +147,8 @@ if not manager_only:
 manager_component_version = release.version()['components']['terminalManager']
 manager_notes = (
     'Loom Node Manager ' + manager_component_version + ' for Loom ' + version + ', built from source revision `' + revision + '`.\n\n'
-    'The Home Node installer downloads these verified binaries and pulls prebuilt Node and MinIO images from GHCR.\n'
-    'It does not compile Go or build Docker images on the target server.'
+    'The release includes the verified Home Node installer bootstrap, Node Manager binaries and build manifests.\n'
+    'The installer pulls prebuilt Node and MinIO images from GHCR; it does not compile Go or build Docker images on the target server.'
 )
 publish_or_verify(
     manager_tag,
