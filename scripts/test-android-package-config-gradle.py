@@ -91,7 +91,7 @@ with tempfile.TemporaryDirectory(prefix='loom-gradle-init-') as folder:
             if transient:
                 if attempt == max_attempts:
                     raise RuntimeError(
-                        f'Gradle hit a transient download/timeout failure after {max_attempts} attempts:\\n'
+                        f'Gradle hit a transient download/timeout failure after {max_attempts} attempts:\n'
                         + output[-6000:]
                     )
                 delay = 5 * attempt
@@ -105,7 +105,7 @@ with tempfile.TemporaryDirectory(prefix='loom-gradle-init-') as folder:
 
             if succeeded != expected_success:
                 raise RuntimeError(
-                    'Gradle scope regression failed:\\n' + output[-6000:]
+                    'Gradle scope regression failed:\n' + output[-6000:]
                 )
             return output
 
