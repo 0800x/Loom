@@ -36,6 +36,7 @@ func TestMapsWarmActionsRequireProviderPrefetchPermission(t *testing.T) {
 		t.Fatalf("warm actions exposed while prefetch is disabled: %d", got)
 	}
 	m.mapsCache.PrefetchEnabled = true
+	m.mapsCache.Directory = "/app/data/tile-cache"
 	if got := countWarm(); got != 3 {
 		t.Fatalf("warm actions = %d, want 3", got)
 	}
