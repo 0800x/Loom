@@ -5,7 +5,7 @@
 
 **پیام‌رسانی با چند مسیر تحویل**
 
-نسخهٔ مخزن: `0.3.0-alpha.1` · مجوز: GPLv3-only
+نسخهٔ مخزن: `0.6.0` (آلفا، منتشرنشده) · مجوز: GPLv3-only
 
 [راهنمای کامل فارسی](README.md#persian-home-node-guide) · [English README](README.md) · [کانال تلگرام](https://t.me/LoomMessanger)
 
