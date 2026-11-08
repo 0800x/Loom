@@ -433,10 +433,10 @@ build_or_install_manager() {
   # The Node runtime/source revision is newer than the latest published Manager payload.
   # Manager sources are unchanged since this published build; keep this pin separate from INSTALL_COMMIT.
   manager_commit="$PREBUILT_RELEASE_COMMIT"
-  channel_sha256='1796595eb15b7380b5dbd6e789a9f1d753b5f922bf4c0519c906940778049672'
+  channel_sha256='0246b66c045f73f6834d2eff3239d3c6cc081140b684cdb731c7b3c64c3af202'
   case "$(uname -m)" in
-    x86_64|amd64) goarch=amd64; manifest_sha256='76f7f52a4e2ad37703bb24eae14f5a49ad439344f410247739379e8a9cb0e885' ;;
-    aarch64|arm64) goarch=arm64; manifest_sha256='b46d8acbbfe77ec26f38295220ec60ce93d3d759917f1a9c581e8430ecb6c7c9' ;;
+    x86_64|amd64) goarch=amd64; manifest_sha256='72be641e80c566f1776db9cfe653a2d76268bb492154bb05a08c432fd1368aa2' ;;
+    aarch64|arm64) goarch=arm64; manifest_sha256='c4a20a016fea180a591e6e4d1c5077cc55493cda8767d26d6e17b819d502d944' ;;
     *) echo "Unsupported CPU architecture for Node Manager: $(uname -m)" >&2; exit 1 ;;
   esac
   [[ "$manager_commit" =~ ^[a-f0-9]{40}$ ]] || { echo 'A pinned prebuilt Manager commit is required.' >&2; exit 1; }
@@ -912,7 +912,7 @@ if ! [[ "$INSTALL_COMMIT" =~ ^[a-fA-F0-9]{40}$ ]]; then
   INSTALL_COMMIT="${LOOM_SOURCE_COMMIT:-$(read_env_value "$SOURCE_ROOT/build-info.env" commit)}"
 fi
 if ! [[ "$INSTALL_COMMIT" =~ ^[a-fA-F0-9]{40}$ ]]; then INSTALL_COMMIT=""; fi
-PREBUILT_RELEASE_COMMIT='a96ea6c24f8bc531fa23d34a4f735cd6ba398458'
+PREBUILT_RELEASE_COMMIT='7d604d498045cb1a1aa565314da3516946feeed5'
 [[ "$PREBUILT_RELEASE_COMMIT" =~ ^[a-f0-9]{40}$ ]] || { ui_fail "Invalid prebuilt release pin."; exit 1; }
 SOURCE_BRANCH="$(git -C "$REPO_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
 UPDATE_BRANCH="${UPDATE_BRANCH:-$SOURCE_BRANCH}"
