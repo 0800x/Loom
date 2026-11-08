@@ -1291,7 +1291,7 @@ class _GroupCallTitleWithDurationState
         maxLines: 1,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: context.loom.connectivity,
-          fontFeatures: const [FontFeature.tabularFigures()],
+          fontFeatures: [FontFeature.tabularFigures()],
         ),
       ),
     ],
