@@ -148,6 +148,8 @@ void main() {
       expect(find.text('Delete this message'), findsNothing);
       await tester.tap(find.byTooltip('Conversation menu'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Chat settings'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Delete chat from this device'));
       await tester.pumpAndSettle();
       expect(find.text('Delete chat?'), findsOneWidget);
