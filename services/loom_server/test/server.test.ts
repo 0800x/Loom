@@ -276,7 +276,7 @@ test('server info, device-bound auth, opaque messaging and sync work in easy mod
     assert.equal(infoResponse.status, 200);
     const info = await infoResponse.json() as Record<string, unknown>;
     assert.equal(info.domain, 'localhost');
-    assert.equal(info.serverVersion, '0.10.10');
+    assert.equal(info.serverVersion, '0.10.11');
     assert.equal(info.protocolVersion, 'loom-node-v1');
     assert.ok((info.protocol as string[]).includes('Loom-MLS-v1'));
     assert.ok((info.capabilities as string[]).includes('mls-groups-home-node'));

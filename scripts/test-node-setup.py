@@ -117,10 +117,10 @@ cat "$DEST"
     def test_prebuilt_runtime_release_is_separate_from_installer_source_revision(self):
         installer = SETUP.with_name('install-production.sh').read_text()
         self.assertIn("PREBUILT_RELEASE_COMMIT='a96ea6c24f8bc531fa23d34a4f735cd6ba398458'", installer)
-        self.assertIn('LOOM_IMAGE_TAG=$PREBUILT_RELEASE_COMMIT', installer)
-        self.assertIn('set_env_value "$EXISTING_ENV" LOOM_BUILD_COMMIT "$PREBUILT_RELEASE_COMMIT"', installer)
-        self.assertIn('Using verified prebuilt Node/MinIO images for commit $PREBUILT_RELEASE_COMMIT', installer)
-        self.assertNotIn('LOOM_IMAGE_TAG=$INSTALL_COMMIT', installer)
+        self.assertIn('manager_commit="$PREBUILT_RELEASE_COMMIT"', installer)
+        self.assertIn('set_env_value "$EXISTING_ENV" LOOM_BUILD_COMMIT "$INSTALL_COMMIT"', installer)
+        self.assertIn('Manager pin is $PREBUILT_RELEASE_COMMIT', installer)
+        self.assertIn('set_env_value "$EXISTING_ENV" LOOM_IMAGE_TAG "$INSTALL_COMMIT"', installer)
     def test_easy_stop_and_start_cover_the_complete_stack_without_deleting_data(self):
         cli = SETUP.with_name('loom-cli.sh').read_text()
         self.assertIn('start|stop)', cli)
@@ -145,7 +145,7 @@ EXISTING_ENV=/path/that/does/not/exist
 nginx_is_active(){ return 1; }
 port_in_use(){ return 0; }
 ui_info(){ :; }
-ui_ok(){ :; }
+ui_ok(){ echo "$*"; }
 """
         allowed = subprocess.run(['bash', '-c', base + '\nloom_caddy_container_running(){ return 0; }; select_proxy_mode'], capture_output=True, text=True)
         self.assertEqual(allowed.returncode, 0, allowed.stderr)

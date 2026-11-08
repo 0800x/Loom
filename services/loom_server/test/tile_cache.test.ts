@@ -203,7 +203,7 @@ test('warm-up job caches the requested bounds and reports progress', async () =>
 test('existing cached files are served even when upstream is down', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'loom-tiles-stale-'));
   mkdirSync(join(dir, '2', '1'), { recursive: true });
-  writeFileSync(join(dir, '2', '1', '2.png'), pngBytes);
+  writeFileSync(join(dir, '2', '1', '2.tile'), pngBytes);
   // Point at a closed port: only the pre-seeded file must still be served.
   const cache = new LoomTileCacheService({
     upstreamTemplate: 'https://127.0.0.1:1/tiles/{z}/{x}/{y}.png',
@@ -224,6 +224,6 @@ test('existing cached files are served even when upstream is down', async () => 
   assert.equal(await cache.serve(2, 1, 2, response), true);
   assert.equal(state.headers['x-loom-tile'], 'hit');
   const body = Buffer.concat(chunks);
-  assert.equal(readFileSync(join(dir, '2', '1', '2.png')).toString('base64'), body.toString('base64'));
+  assert.equal(readFileSync(join(dir, '2', '1', '2.tile')).toString('base64'), body.toString('base64'));
   rmSync(dir, { recursive: true, force: true });
 });
