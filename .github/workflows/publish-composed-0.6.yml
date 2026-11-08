@@ -47,7 +47,6 @@ jobs:
           CLIENT_SOURCE_RUN_ID: ${{ inputs.client_source_run_id }}
           NODE_SOURCE_RUN_ID: ${{ inputs.node_source_run_id }}
           VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
-          GITHUB_SHA: ${{ github.sha }}
         run: |
           python scripts/release.py preflight
           python scripts/verify-composed-release-runs.py
@@ -79,7 +78,6 @@ jobs:
           CLIENT_SOURCE_RUN_ID: ${{ inputs.client_source_run_id }}
           NODE_SOURCE_RUN_ID: ${{ inputs.node_source_run_id }}
           VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
-          GITHUB_SHA: ${{ github.sha }}
         run: |
           python scripts/assemble_composed_candidate.py source-clients source-nodes candidate
           python scripts/assemble-release.py candidate release-assets
