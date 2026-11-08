@@ -429,24 +429,77 @@ download_release_asset() {
 
 build_or_install_manager() {
   local target="$INSTALL_DIR/bin/loom-node-manager"
-  local work release_version release_tag manager_asset manifest_asset expected_sha version_output goarch manager_commit manifest_sha256 channel_sha256
-  # The Node runtime/source revision is newer than the latest published Manager payload.
-  # Manager sources are unchanged since this published build; keep this pin separate from INSTALL_COMMIT.
-  manager_commit="$PREBUILT_RELEASE_COMMIT"
-  channel_sha256='0246b66c045f73f6834d2eff3239d3c6cc081140b684cdb731c7b3c64c3af202'
+  local work release_version release_tag manager_asset manifest_asset expected_sha version_output goarch manager_commit manifest_sha256 channel_sha256 selection
   case "$(uname -m)" in
-    x86_64|amd64) goarch=amd64; manifest_sha256='72be641e80c566f1776db9cfe653a2d76268bb492154bb05a08c432fd1368aa2' ;;
-    aarch64|arm64) goarch=arm64; manifest_sha256='c4a20a016fea180a591e6e4d1c5077cc55493cda8767d26d6e17b819d502d944' ;;
+    x86_64|amd64) goarch=amd64 ;;
+    aarch64|arm64) goarch=arm64 ;;
     *) echo "Unsupported CPU architecture for Node Manager: $(uname -m)" >&2; exit 1 ;;
   esac
-  [[ "$manager_commit" =~ ^[a-f0-9]{40}$ ]] || { echo 'A pinned prebuilt Manager commit is required.' >&2; exit 1; }
-  release_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "$REPO_ROOT/release/version.json")"
-  release_tag="node-manager-$release_version-${manager_commit:0:12}"
-  manager_asset="Loom-$release_version-manager-linux-$goarch"
-  manifest_asset="Loom-node-linux-$goarch-build-manifest.json"
+
+  # Resolve the newest published Manager build that matches this source
+  # bundle's Loom version. GitHub's immutable release metadata supplies the
+  # source commit and SHA-256 digests for the manifest/channel assets.
+  release_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1],encoding="utf-8"))["version"])' "$REPO_ROOT/release/version.json")"
   work="$(mktemp -d)"
   trap 'rm -rf -- "$work"; trap - RETURN' RETURN
-  ui_info "Downloading verified prebuilt Node Manager for linux/$goarch (build ${manager_commit:0:12})"
+  ui_info "Resolving the latest published Node Manager for Loom $release_version (linux/$goarch)"
+  download_release_asset "https://api.github.com/repos/0800x/Loom/releases?per_page=100" "$work/releases.json"
+
+  selection="$(python3 - "$work/releases.json" "$release_version" "$goarch" <<'PY'
+import json,re,sys
+path,version,arch=sys.argv[1:]
+with open(path,encoding="utf-8") as f:
+    releases=json.load(f)
+if not isinstance(releases,list):
+    raise SystemExit("GitHub releases API returned an unexpected response")
+tag_pattern=re.compile(r"^node-manager-"+re.escape(version)+r"-([0-9a-f]{12})$")
+required=(f"Loom-{version}-manager-linux-{arch}",
+          f"Loom-node-linux-{arch}-build-manifest.json",
+          "node-channel.json")
+matches=[]
+for release in releases:
+    if release.get("draft"):
+        continue
+    tag=release.get("tag_name","")
+    match=tag_pattern.fullmatch(tag)
+    if not match:
+        continue
+    commit=release.get("target_commitish","")
+    if not re.fullmatch(r"[0-9a-f]{40}",commit) or not commit.startswith(match.group(1)):
+        continue
+    assets={a.get("name"):a for a in release.get("assets",[]) if isinstance(a,dict)}
+    if any(name not in assets for name in required):
+        continue
+    manifest_digest=assets[required[1]].get("digest","")
+    channel_digest=assets[required[2]].get("digest","")
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}",manifest_digest):
+        continue
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}",channel_digest):
+        continue
+    matches.append((release.get("published_at") or release.get("created_at") or "",
+                    tag,commit,manifest_digest,channel_digest))
+if not matches:
+    raise SystemExit(f"No published, verifiable Node Manager release was found for Loom {version} and linux/{arch}")
+_,tag,commit,manifest_digest,channel_digest=max(matches,key=lambda item:item[0])
+print(version)
+print(tag)
+print(commit)
+print(manifest_digest)
+print(channel_digest)
+PY
+)"
+  mapfile -t selected <<< "$selection"
+  [[ "${#selected[@]}" -eq 5 ]] || { echo 'Could not resolve a complete published Node Manager release.' >&2; exit 1; }
+  release_version="${selected[0]}"
+  release_tag="${selected[1]}"
+  manager_commit="${selected[2]}"
+  manifest_sha256="${selected[3]#sha256:}"
+  channel_sha256="${selected[4]#sha256:}"
+  PREBUILT_RELEASE_COMMIT="$manager_commit"
+
+  manager_asset="Loom-$release_version-manager-linux-$goarch"
+  manifest_asset="Loom-node-linux-$goarch-build-manifest.json"
+  ui_info "Downloading verified Node Manager $MANAGER_VERSION for linux/$goarch (build ${manager_commit:0:12})"
   download_release_asset "https://github.com/0800x/Loom/releases/download/$release_tag/$manager_asset" "$work/manager"
   download_release_asset "https://github.com/0800x/Loom/releases/download/$release_tag/$manifest_asset" "$work/manifest.json"
   download_release_asset "https://github.com/0800x/Loom/releases/download/$release_tag/node-channel.json" "$work/node-channel.json"
@@ -456,18 +509,21 @@ build_or_install_manager() {
 import json,re,sys
 path,name,commit,version,arch=sys.argv[1:]
 m=json.load(open(path,encoding='utf-8'))
-if (m.get('revision'),m.get('version'),m.get('platform'),m.get('architecture')) != (commit,version,'node-linux',arch): raise SystemExit('Manager manifest does not match pinned Manager release')
+if (m.get('revision'),m.get('version'),m.get('platform'),m.get('architecture')) != (commit,version,'node-linux',arch):
+    raise SystemExit('Manager manifest does not match the selected published release')
 item=next((x for x in m.get('files',[]) if x.get('name')==name),None)
-if not item or not re.fullmatch(r'[0-9a-f]{64}',item.get('sha256','')): raise SystemExit('Manager SHA256 missing')
+if not item or not re.fullmatch(r'[0-9a-f]{64}',item.get('sha256','')):
+    raise SystemExit('Node Manager SHA256 is missing from its manifest')
 print(item['sha256'])
 PY
   )"
-  printf '%s  %s\n' "$expected_sha" "$work/manager" | sha256sum --check --status - || { echo 'Node Manager SHA256 verification failed.' >&2; exit 1; }
+  printf '%s  %s\n' "$expected_sha" "$work/manager" | sha256sum --check --status - || { echo 'Node Manager binary SHA256 verification failed.' >&2; exit 1; }
   python3 - "$work/node-channel.json" "$manager_commit" <<'PY'
 import json,re,sys
 path,commit=sys.argv[1:]
 m=json.load(open(path,encoding='utf-8'))
-if m.get('schema') != 1 or m.get('repository') != '0800x/Loom' or m.get('branch') != 'main' or m.get('revision') != commit or not re.fullmatch(r'[0-9a-f]{64}',m.get('sha256','')) or not isinstance(m.get('sequence'),int) or m['sequence'] < 1: raise SystemExit('Pinned Manager channel metadata is invalid')
+if m.get('schema') != 1 or m.get('repository') != '0800x/Loom' or m.get('branch') != 'main' or m.get('revision') != commit or not re.fullmatch(r'[0-9a-f]{64}',m.get('sha256','')) or not isinstance(m.get('sequence'),int) or m['sequence'] < 1:
+    raise SystemExit('Published Manager channel metadata is invalid')
 PY
   chmod 0755 "$work/manager"
   version_output="$("$work/manager" --version 2>&1)"
@@ -475,7 +531,7 @@ PY
   loom_install_manager_binary "$work/manager" "$target"
   install -d -m 0755 "$INSTALL_DIR/release"
   install -m 0644 "$work/node-channel.json" "$INSTALL_DIR/release/node-channel.json"
-  ui_ok 'Installed verified prebuilt Loom Node Manager'
+  ui_ok "Installed verified prebuilt Loom Node Manager from $release_tag"
 }
 
 write_launcher() {
@@ -912,7 +968,7 @@ if ! [[ "$INSTALL_COMMIT" =~ ^[a-fA-F0-9]{40}$ ]]; then
   INSTALL_COMMIT="${LOOM_SOURCE_COMMIT:-$(read_env_value "$SOURCE_ROOT/build-info.env" commit)}"
 fi
 if ! [[ "$INSTALL_COMMIT" =~ ^[a-fA-F0-9]{40}$ ]]; then INSTALL_COMMIT=""; fi
-PREBUILT_RELEASE_COMMIT='7d604d498045cb1a1aa565314da3516946feeed5'
+PREBUILT_RELEASE_COMMIT=''
 [[ "$PREBUILT_RELEASE_COMMIT" =~ ^[a-f0-9]{40}$ ]] || { ui_fail "Invalid prebuilt release pin."; exit 1; }
 SOURCE_BRANCH="$(git -C "$REPO_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
 UPDATE_BRANCH="${UPDATE_BRANCH:-$SOURCE_BRANCH}"
@@ -945,7 +1001,7 @@ fi
 loom_download_profile "${DOWNLOAD_PROFILE:-official}"
 if [[ -z "$GO_MIRROR" && -f "$EXISTING_ENV" ]]; then GO_MIRROR="$(read_env_value "$EXISTING_ENV" LOOM_GO_MIRROR)"; fi
 loom_go_mirror "${GO_MIRROR:-profile}"
-ui_info "Using verified prebuilt Node/MinIO images for commit $INSTALL_COMMIT; Manager pin is $PREBUILT_RELEASE_COMMIT; host-side compilation is disabled"
+ui_info "Using verified prebuilt Node/MinIO images; latest matching Manager release will be resolved during setup; installer source is $INSTALL_COMMIT; host-side compilation is disabled"
 ui_step 1 7 "Ensuring Docker Engine + Compose v2"
 ensure_docker
 ensure_runtime_tools
