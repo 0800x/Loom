@@ -7,7 +7,7 @@
 
 Encrypted messaging · Self-hosted Home Nodes · Android Nearby
 
-**Repository version:** 0.3.0-alpha.1 · **License:** GPL-3.0-only
+**Repository version:** 0.6.0 (alpha, unpublished) · **License:** GPL-3.0-only
 
 [Get started](#get-started) · [Host a Home Node](#host-a-home-node) · [Documentation](docs/README.md) · [Screenshots](#screenshots) · [Persian guide](#persian-home-node-guide) · [Telegram](https://t.me/LoomMessanger)
 </div>
@@ -134,7 +134,7 @@ renders the component gallery for development.
 4. Add a contact and start a conversation, or create a group on your Home Node.
 5. Test messages and calls between devices on different networks before inviting other users.
 
-The repository currently identifies version **0.3.0-alpha.1** as an unpublished
+The repository currently identifies version **0.6.0** as an unpublished
 alpha snapshot. The Home Node bootstrap is available directly from the
 repository's **main** branch and pins a specific source revision; it does not
 require a versioned release asset. Client binaries and release availability
@@ -433,7 +433,7 @@ Third-party components retain their own licenses.
 خودتان را روی VPS یا سرور شخصی اجرا کنید، اطلاعات حساب و پیوست‌ها را نگه دارید
 و کاربران را از طریق لینک یا QR به نود متصل کنید.
 
-**وضعیت پروژه:** نسخهٔ مخزن `0.3.0-alpha.1` و در مرحلهٔ آلفاست. این نسخه
+**وضعیت پروژه:** نسخهٔ مخزن `0.6.0` و در مرحلهٔ آلفاست. این نسخه
 هنوز ممیزی امنیتی مستقل ندارد؛ برای آزمایش و استفادهٔ غیرحیاتی مناسب‌تر است.
 از عبارت «رمزگذاری‌شده» نباید نتیجه گرفت که ناشناس هستید یا اپراتور هیچ
 اطلاعاتی نمی‌بیند. زمان اتصال، حساب و فرادادهٔ مسیریابی همچنان قابل مشاهده‌اند.
