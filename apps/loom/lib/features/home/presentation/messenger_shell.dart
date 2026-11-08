@@ -1577,7 +1577,7 @@ class _FolderConversationPage extends StatelessWidget {
                 latest.record.senderAddress.toLowerCase();
         final rowDelivery = mine
             ? _designDelivery(latest.record.deliveryState)
-            : models.LoomDeliveryState.none;
+            : LoomDeliveryState.none;
         final rowPreview =
             latest?.text ??
             (conversation.kind == models.LoomConversationKind.direct
@@ -1711,7 +1711,7 @@ class _FolderConversationPage extends StatelessWidget {
                 : _TypingAwareChatRow(
                     session: messaging!,
                     conversationId: conversation.id,
-                    build: chatRow,
+                    rowBuilder: chatRow,
                   ),
           ),
         );
@@ -2746,7 +2746,7 @@ class _TypingAwareChatRow extends StatelessWidget {
   const _TypingAwareChatRow({
     required this.session,
     required this.conversationId,
-    required this.build,
+    required this.rowBuilder,
   });
 
   final LoomMessagingSessionController session;
@@ -2754,7 +2754,7 @@ class _TypingAwareChatRow extends StatelessWidget {
   final LoomChatRow Function({
     required String typingLabel,
     required bool typing,
-  }) build;
+  }) rowBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -2762,7 +2762,7 @@ class _TypingAwareChatRow extends StatelessWidget {
       valueListenable: session.typingPeers,
       builder: (context, _, __) {
         final peers = session.typingPeersFor(conversationId);
-        return build(
+        return rowBuilder(
           typingLabel: typingRowLabel(context, peers.keys),
           typing: peers.isNotEmpty,
         );
