@@ -44,6 +44,12 @@ def require_revision_on_main(source_revision):
         raise ValueError('Build revision is not an ancestor of the current main branch')
 
 
+def require_current_main(source_revision):
+    current = api_json('repos/' + REPOSITORY + '/git/ref/heads/main')['object']['sha']
+    if current != source_revision:
+        raise ValueError('Preview build is stale; only the current main HEAD may publish')
+
+
 def resolve_tag_commit(tag):
     ref = api_json('repos/' + REPOSITORY + '/git/ref/tags/' + tag)
     target = ref['object']
@@ -98,6 +104,7 @@ else:
     if os.getenv('GITHUB_REF_NAME') != 'main':
         raise ValueError('Preview releases require main')
     require_revision_on_main(revision)
+    require_current_main(revision)
     tag = 'preview-' + release.version()['version'] + '-' + revision[:12]
     title = 'Loom ' + release.version()['version'] + ' — Alpha Preview'
     primary_extra = ['--target', revision]
