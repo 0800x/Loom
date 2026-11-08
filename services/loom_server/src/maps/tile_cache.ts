@@ -2,6 +2,8 @@ import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path';
 import type { ServerResponse } from 'node:http';
 
+const TILE_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
 export interface LoomTileCacheOptions {
   /** XYZ template of the upstream raster basemap, e.g.
    * `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. */
