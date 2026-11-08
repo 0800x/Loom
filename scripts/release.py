@@ -37,6 +37,9 @@ def preflight():
     v = version()
     if v.get('protocolNamespace') != 'Loom' or v.get('compatibilityEpoch') != 1 or v.get('acceptsEarlierNamespace') is not False:
         raise ValueError('Unexpected protocol compatibility epoch')
+    workflow_version = os.getenv('LOOM_VERSION')
+    if workflow_version and workflow_version != v['version']:
+        raise ValueError(f'Workflow version mismatch: {workflow_version} != {v["version"]}')
     expected = v['components']
     for key, path in [('client', 'apps/loom/pubspec.yaml'), ('nodeUi', 'apps/loom_node_ui/pubspec.yaml')]:
         actual = re.search(r'^version:\s*(\S+)', (ROOT / path).read_text(), re.M).group(1)
