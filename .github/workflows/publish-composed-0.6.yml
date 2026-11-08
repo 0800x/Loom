@@ -43,11 +43,11 @@ jobs:
 
       - name: Verify saved source runs, current validation and component provenance
         env:
-          GH_TOKEN: \${{ secrets.LOOM_RELEASE_TOKEN }}
-          CLIENT_SOURCE_RUN_ID: \${{ inputs.client_source_run_id }}
-          NODE_SOURCE_RUN_ID: \${{ inputs.node_source_run_id }}
-          VALIDATION_RUN_ID: \${{ inputs.validation_run_id }}
-          GITHUB_SHA: \${{ github.sha }}
+          GH_TOKEN: ${{ secrets.LOOM_RELEASE_TOKEN }}
+          CLIENT_SOURCE_RUN_ID: ${{ inputs.client_source_run_id }}
+          NODE_SOURCE_RUN_ID: ${{ inputs.node_source_run_id }}
+          VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
+          GITHUB_SHA: ${{ github.sha }}
         run: |
           python scripts/release.py preflight
           python scripts/verify-composed-release-runs.py
@@ -58,9 +58,9 @@ jobs:
           pattern: Loom-0.6.0-*
           path: source-clients
           merge-multiple: false
-          github-token: \${{ github.token }}
-          repository: \${{ github.repository }}
-          run-id: \${{ inputs.client_source_run_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.client_source_run_id }}
 
       - name: Download the existing Node artifacts with map-cache support
         uses: actions/download-artifact@v4
@@ -68,25 +68,25 @@ jobs:
           pattern: Loom-0.6.0-node-*
           path: source-nodes
           merge-multiple: false
-          github-token: \${{ github.token }}
-          repository: \${{ github.repository }}
-          run-id: \${{ inputs.node_source_run_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.node_source_run_id }}
 
       - name: Compose and verify the saved platform artifacts
         env:
           CLIENT_BUILD_REVISION: ab1701beb926cbfe00f11199185282799a9d65d7
           NODE_BUILD_REVISION: 751ec9e0cd110b6d74aaa3a0dd9a62846ee52f4f
-          CLIENT_SOURCE_RUN_ID: \${{ inputs.client_source_run_id }}
-          NODE_SOURCE_RUN_ID: \${{ inputs.node_source_run_id }}
-          VALIDATION_RUN_ID: \${{ inputs.validation_run_id }}
-          GITHUB_SHA: \${{ github.sha }}
+          CLIENT_SOURCE_RUN_ID: ${{ inputs.client_source_run_id }}
+          NODE_SOURCE_RUN_ID: ${{ inputs.node_source_run_id }}
+          VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
+          GITHUB_SHA: ${{ github.sha }}
         run: |
           python scripts/assemble_composed_candidate.py source-clients source-nodes candidate
           python scripts/assemble-release.py candidate release-assets
 
       - name: Reuse the already-published Node Manager bootstrap and verify its payload
         env:
-          GH_TOKEN: \${{ secrets.LOOM_RELEASE_TOKEN }}
+          GH_TOKEN: ${{ secrets.LOOM_RELEASE_TOKEN }}
         run: |
           set -euo pipefail
           tag="node-manager-0.6.0-751ec9e0cd11"
@@ -109,6 +109,6 @@ jobs:
 
       - name: Publish Loom 0.6.0 without rebuilding client or Node packages
         env:
-          GH_TOKEN: \${{ secrets.LOOM_RELEASE_TOKEN }}
-          LOOM_BUILD_REVISION: \${{ github.sha }}
+          GH_TOKEN: ${{ secrets.LOOM_RELEASE_TOKEN }}
+          LOOM_BUILD_REVISION: ${{ github.sha }}
         run: python scripts/create-draft.py release-assets
