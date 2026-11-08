@@ -14,8 +14,16 @@ LoomGroupOutbox pending(String id, {bool commit = false}) => LoomGroupOutbox(
   checkpoint: commit ? sealed(1) : null,
   localPayload: 'encrypted-local-history',
 );
+const memberJson = {
+  'accountId': 'acc_owner',
+  'deviceId': 'dev_owner',
+  'identityId': 'id_owner',
+  'role': 'owner',
+  'mlsSignatureKey': 'key',
+  'mlsSignature': 'signature',
+};
 void main() {
-  test('state CAS and exact ciphertext outbox commit together; failed stage rolls back', () {
+  test('state CAS commits with each queued message; a pending commit blocks new staging', () {
     final store = LoomGroupStore.openInMemory();
     addTearDown(store.close);
     store.saveState(0, sealed(1));
@@ -26,11 +34,23 @@ void main() {
       'operationId': 'one',
       'ciphertext': 'opaque',
     });
-    expect(() => store.stage(2, sealed(3), pending('two')), throwsStateError);
-    expect(store.version, 2);
-    expect(store.state!.generation, 2);
+    // Application messages may queue up while the device is offline.
+    store.stage(2, sealed(3), pending('two'));
+    expect(store.version, 3);
+    expect(store.state!.generation, 3);
+    expect(store.outbox.length, 2);
+    // The state CAS still rejects stale writers.
     expect(() => store.saveState(1, sealed(9)), throwsStateError);
-    expect(store.state!.generation, 2);
+    expect(store.state!.generation, 3);
+    store.acknowledge('one', sequence: 4);
+    store.acknowledge('two', sequence: 5);
+    // A commit may be staged on top of queued messages, but while it is
+    // pending nothing else may be staged: its acknowledgement rewrites the
+    // sealed state.
+    store.stage(3, sealed(4), pending('commit', commit: true));
+    expect(store.outbox.single.checkpoint, isNotNull);
+    expect(() => store.stage(4, sealed(5), pending('three')), throwsStateError);
+    expect(store.version, 4);
   });
   test('acknowledgement records self echo and encrypted history in the same transaction', () {
     final store = LoomGroupStore.openInMemory();
@@ -60,5 +80,31 @@ void main() {
     expect(store.state!.generation, 1);
     expect(store.failed('group').single.payload, 'encrypted-local-history');
     expect(store.outbox, isEmpty);
+  });
+  test('a quarantined inbox event advances the cursor without touching state', () {
+    final store = LoomGroupStore.openInMemory();
+    addTearDown(store.close);
+    store.saveState(0, sealed(1));
+    final group = LoomGroupState.fromJson({
+      'id': 'group',
+      'title': 'Friends',
+      'epoch': 1,
+      'revision': 1,
+      'sequence': 2,
+      'members': [memberJson],
+    });
+    store.acknowledgeEcho(group, 2);
+    expect(store.quarantine('group', 5, 'Bad state: undecryptable'), isTrue);
+    expect(store.cursor('group'), 5);
+    expect(store.quarantineCount('group'), 1);
+    expect(store.quarantined('group').single.sequence, 5);
+    expect(store.quarantined('group').single.reason, 'Bad state: undecryptable');
+    // Already-past events are a no-op, and unknown groups cannot be skipped.
+    expect(store.quarantine('group', 3, 'late duplicate'), isTrue);
+    expect(store.cursor('group'), 5);
+    expect(store.quarantineCount('group'), 1);
+    expect(store.quarantine('other', 1, 'unknown group'), isFalse);
+    // The sealed state is untouched by quarantining.
+    expect(store.state!.generation, 1);
   });
 }

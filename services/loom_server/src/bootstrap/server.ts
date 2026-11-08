@@ -2,11 +2,13 @@ import { LoomClientAddressPolicy } from '../security/client_address.ts';
 import { GroupCallService } from '../calls/group_call_service.ts';
 import { GroupCallGateway } from '../calls/group_call_gateway.ts';
 import { GroupStore, GroupError } from '../groups/group_store.ts';
-import { LoomRateLimiter, RateLimitError, endpointClass } from '../security/rate_limiter.ts';
+import { LoomAdmissionGate, LoomRateLimiter, RateLimitError, endpointClass } from '../security/rate_limiter.ts';
 import { serveEncryptedAttachment } from '../attachments/download.ts';
+import { LoomTileCacheService, countryBounds, parseTilePath, supportedCountries } from '../maps/tile_cache.ts';
 import { LocalRoutingWorker } from '../messaging/local_routing_worker.ts';
 import { validateProfileUpdate } from '../profile/profile.ts';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+import { join } from 'node:path';
 import { timingSafeEqual } from 'node:crypto';
 import { runningBuildCommit, serverVersion } from '../build_info.ts';
 import type { Duplex } from 'node:stream';
@@ -133,6 +135,10 @@ function requireRegistrationIdentity(body: Record<string, unknown>): void {
 export class LoomNodeServer {
   private readonly clientAddresses = new LoomClientAddressPolicy(process.env.LOOM_TRUSTED_PROXY_CIDRS);
   private readonly limiter = new LoomRateLimiter();
+  /** Downloads stream whole attachment bodies and may legitimately run for
+   * minutes; they get their own bounded gate so the shared 32-slot admission
+   * pool stays available for API traffic. */
+  private readonly downloads = new LoomAdmissionGate(16);
   private publicSnapshot?: Promise<PublicNodeStatus>;
   private publicSnapshotAt = 0;
   private publicQr?: Promise<string>;
@@ -186,6 +192,7 @@ export class LoomNodeServer {
   private readonly accountRealtime: LoomAccountRealtimeService;
   private readonly server: Server;
   private readonly lanDiscovery: LoomLanDiscoveryResponder;
+  private readonly tileCache: LoomTileCacheService;
   private readonly localRouting: LocalRoutingWorker;
   private startedAt = Date.now();
 
@@ -235,6 +242,13 @@ export class LoomNodeServer {
     });
     this.server.on('upgrade', (request, socket, head) => void this.handleUpgrade(request, socket, head));
     this.lanDiscovery = new LoomLanDiscoveryResponder(config, this.identity);
+    // Optional OSM-compatible tile cache for the in-app maps. Off unless an
+    // upstream template is configured; see deploy/.env.example.
+    this.tileCache = new LoomTileCacheService({
+      upstreamTemplate: process.env.LOOM_TILE_CACHE_UPSTREAM ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      directory: process.env.LOOM_TILE_CACHE_DIR ?? join(config.dataDirectory, 'tile-cache'),
+      maxZoom: Number(process.env.LOOM_TILE_CACHE_MAX_ZOOM ?? 17),
+    });
     this.server.maxConnections = 1024;
     this.server.requestTimeout = 30_000;
     this.server.headersTimeout = 15_000;
@@ -429,13 +443,21 @@ export class LoomNodeServer {
     let release: (() => void) | undefined;
     try {
       const url = new URL(request.url ?? '/', 'http://localhost');
+      // Health probes stay answerable even while admission control is
+      // saturated: they are cheap, unauthenticated and exist precisely so
+      // orchestrators see the truth instead of a 429.
+      const healthProbe = url.pathname === '/healthz' || url.pathname === '/readyz';
       const [scope, quota] = endpointClass(url.pathname);
       const ip = this.clientAddresses.address(request);
       this.limiter.consume('ip', ip, 1200);
       this.limiter.consume(scope, ip, quota);
       const credential = bearerToken(request);
       if (credential) this.limiter.consume(scope + ':token', credential, quota);
-      release = this.limiter.enter();
+      // Attachment bodies stream for the entire download, so a slow or
+      // suspended mobile client must never pin one of the shared admission
+      // slots: downloads use their own bounded gate and an idle deadline.
+      const download = request.method === 'GET' && /^\/api\/v1\/attachments\/att_[a-f0-9]{64}$/.test(url.pathname);
+      release = healthProbe ? undefined : download ? this.downloads.enter() : this.limiter.enter();
       await this.handle(request, response);
     } catch (error) {
       if (response.headersSent) { response.destroy(); return; }
@@ -491,6 +513,15 @@ export class LoomNodeServer {
         return response.end(svg);
       }
       if (method === 'GET' && url.pathname === '/healthz') return text(response, 200, 'ok\n');
+      // Public OSM-compatible tile cache for the in-app maps. Raster
+      // basemap only; the upstream template is operator-configured.
+      if (method === 'GET' && url.pathname.startsWith('/tiles/')) {
+        const tile = parseTilePath(url.pathname);
+        if (!tile) return json(response, 404, { error: 'not_found' });
+        const served = await this.tileCache.serve(tile[0], tile[1], tile[2], response);
+        if (!served && !response.headersSent) return json(response, 404, { error: 'tile_unavailable' });
+        return;
+      }
       if (method === 'GET' && url.pathname === '/readyz') {
         const d = await this.diagnostics();
         const storage = d.storage as Record<string, Record<string, unknown>>;
@@ -854,6 +885,39 @@ export class LoomNodeServer {
         if (!this.adminAuthorized(request)) return json(response, 401, { error: 'unauthorized' });
         if (method !== 'GET') return json(response, 405, { error: 'method_not_allowed' });
         return json(response, 200, await this.diagnostics());
+      }
+      if (url.pathname === '/admin/v1/maps/status') {
+        if (!this.adminAuthorized(request)) return json(response, 401, { error: 'unauthorized' });
+        if (method !== 'GET') return json(response, 405, { error: 'method_not_allowed' });
+        return json(response, 200, { ...this.tileCache.status(), disk: await this.tileCache.diskUsage() });
+      }
+      if (url.pathname === '/admin/v1/maps/warm') {
+        if (!this.adminAuthorized(request)) return json(response, 401, { error: 'unauthorized' });
+        if (method !== 'POST') return json(response, 405, { error: 'method_not_allowed' });
+        const body = await readJson(request, 4096);
+        const minZoom = Number(body.minZoom ?? 0), maxZoom = Number(body.maxZoom ?? 10);
+        if (!Number.isSafeInteger(minZoom) || !Number.isSafeInteger(maxZoom) || minZoom < 0 || maxZoom > 19 || minZoom > maxZoom)
+          return json(response, 400, { error: 'invalid_zoom_range' });
+        let bounds: [number, number, number, number] | null = null;
+        let country: string | null = null;
+        if (typeof body.country === 'string') {
+          country = body.country.trim().toLowerCase();
+          bounds = countryBounds(country);
+          if (!bounds) return json(response, 400, { error: 'unsupported_country', supported: supportedCountries() });
+        } else if (Array.isArray(body.bbox) && body.bbox.length === 4 && body.bbox.every((v) => typeof v === 'number' && Number.isFinite(v))) {
+          const [west, south, east, north] = body.bbox as [number, number, number, number];
+          if (west < -180 || east > 180 || south < -85 || north > 85 || west >= east || south >= north)
+            return json(response, 400, { error: 'invalid_bbox' });
+          bounds = [west, south, east, north];
+        }
+        if (!bounds) return json(response, 400, { error: 'country_or_bbox_required' });
+        return json(response, 202, { job: await this.tileCache.warm(bounds, minZoom, maxZoom, country) });
+      }
+      if (url.pathname === '/admin/v1/maps/purge') {
+        if (!this.adminAuthorized(request)) return json(response, 401, { error: 'unauthorized' });
+        if (method !== 'POST') return json(response, 405, { error: 'method_not_allowed' });
+        await this.tileCache.purge();
+        return json(response, 200, { purged: true });
       }
       if (url.pathname === '/admin/v1/registrations') {
         if (!this.adminAuthorized(request)) return json(response, 401, { error: 'unauthorized' });

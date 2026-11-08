@@ -550,29 +550,44 @@ class _LoomGroupCallScreenState extends State<LoomGroupCallScreen> {
       ),
       body: SafeArea(
         child: active && call != null
-            ? LoomGroupCallSurface(
-                call: call,
-                ownId: calls.ownParticipantId,
-                admin: admin,
-                owner: role == 'owner',
-                joining:
-                    calls.phase == LoomGroupCallPhase.joining ||
-                    calls.media?.connected != true,
-                busy: calls.busy,
-                microphone: calls.media?.microphoneEnabled ?? false,
-                camera: calls.media?.cameraEnabled ?? false,
-                speaker: calls.speakerEnabled,
-                speakers: calls.media?.speakers ?? {},
-                video: (id) => calls.media?.video(id),
-                error: calls.error,
-                onMicrophone: () => unawaited(calls.toggleMicrophone()),
-                onCamera: () => unawaited(calls.toggleCamera()),
-                onSwitchCamera: () => unawaited(calls.switchCamera()),
-                onSpeaker: calls.media?.supportsSpeakerphone == true
-                    ? () => unawaited(calls.toggleSpeaker())
-                    : null,
-                onLeave: () => unawaited(calls.leave()),
-                onControl: (a, p) => unawaited(_control(a, target: p)),
+            ? Column(
+                children: [
+                  if (calls.phase == LoomGroupCallPhase.connected &&
+                      calls.encryptionDigits != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: _GroupCallVerificationChip(
+                        digits: calls.encryptionDigits!,
+                        emoji: calls.encryptionEmoji ?? const [],
+                      ),
+                    ),
+                  Expanded(
+                    child: LoomGroupCallSurface(
+                      call: call,
+                      ownId: calls.ownParticipantId,
+                      admin: admin,
+                      owner: role == 'owner',
+                      joining:
+                          calls.phase == LoomGroupCallPhase.joining ||
+                          calls.media?.connected != true,
+                      busy: calls.busy,
+                      microphone: calls.media?.microphoneEnabled ?? false,
+                      camera: calls.media?.cameraEnabled ?? false,
+                      speaker: calls.speakerEnabled,
+                      speakers: calls.media?.speakers ?? {},
+                      video: (id) => calls.media?.video(id),
+                      error: calls.error,
+                      onMicrophone: () => unawaited(calls.toggleMicrophone()),
+                      onCamera: () => unawaited(calls.toggleCamera()),
+                      onSwitchCamera: () => unawaited(calls.switchCamera()),
+                      onSpeaker: calls.media?.supportsSpeakerphone == true
+                          ? () => unawaited(calls.toggleSpeaker())
+                          : null,
+                      onLeave: () => unawaited(calls.leave()),
+                      onControl: (a, p) => unawaited(_control(a, target: p)),
+                    ),
+                  ),
+                ],
               )
             : Align(
                 alignment: Alignment.topCenter,
@@ -1281,4 +1296,67 @@ class _GroupCallTitleWithDurationState
       ),
     ],
   );
+}
+
+/// Compact encryption verification pill shown while a group call is
+/// connected. Every member derives the same digits and emoji from the
+/// exported MLS group call key; mismatching values mean the media path is
+/// intercepted and the call should be ended.
+class _GroupCallVerificationChip extends StatelessWidget {
+  const _GroupCallVerificationChip({
+    required this.digits,
+    required this.emoji,
+  });
+
+  final String digits;
+  final List<String> emoji;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlphaFraction(.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withAlphaFraction(.12)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            LoomIcons.lock_outline_rounded,
+            size: 13,
+            color: Colors.white70,
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              tr(
+                context,
+                'Encryption check — everyone must see:',
+                'تأیید رمزنگاری — همه باید ببینند:',
+              ),
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white60, fontSize: 11),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            digits,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 3,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+          if (emoji.isNotEmpty) ...[
+            const SizedBox(width: 5),
+            Text(emoji.join(' '), style: const TextStyle(fontSize: 13)),
+          ],
+        ],
+      ),
+    );
+  }
 }

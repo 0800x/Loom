@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'package:loom_calls/loom_calls.dart' show LoomCallVerification;
 import 'package:loom_crypto_bridge/loom_crypto_bridge.dart';
 import 'package:loom_models/loom_models.dart';
 import 'package:loom_protocol/loom_protocol.dart';
@@ -48,6 +49,12 @@ class LoomGroupCallController extends ChangeNotifier {
 
   /// Client-side join instant; powers the in-call duration readout.
   DateTime? connectedAt;
+
+  /// End-to-end encryption check derived from the exported MLS group call
+  /// key: every legitimate member derives the same digits and emoji at the
+  /// same epoch and can compare them inside the call.
+  String? encryptionDigits;
+  List<String>? encryptionEmoji;
   Duration get connectedDuration => connectedAt == null
       ? Duration.zero
       : DateTime.now().difference(connectedAt!);
@@ -151,6 +158,12 @@ class LoomGroupCallController extends ChangeNotifier {
       call = selected;
       key = await groups.exportCallKey(id, selected.id, selected.epoch);
       _guard(generation);
+      final verification = await LoomCallVerification.fromGroupCallKey(
+        selected.id,
+        key,
+      );
+      encryptionDigits = verification.digits;
+      encryptionEmoji = verification.emoji;
       _connectingKey = key;
       final joined = await groups.callRequest(id, 'join', {
         'callId': selected.id,
@@ -452,6 +465,8 @@ class LoomGroupCallController extends ChangeNotifier {
       call = null;
       activeGroupId = null;
       ownParticipantId = null;
+      encryptionDigits = null;
+      encryptionEmoji = null;
       busy = false;
       phase = LoomGroupCallPhase.idle;
       if (!_disposed) {

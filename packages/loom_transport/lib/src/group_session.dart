@@ -90,8 +90,13 @@ class LoomGroupSession {
       'mls_${List<int>.generate(24, (_) => _random.nextInt(256)).map((b) => b.toRadixString(16).padLeft(2, '0')).join()}';
   String _path(String id) => '/api/v1/groups/${Uri.encodeComponent(id)}';
   void _idle() {
-    if (store.outbox.isNotEmpty)
-      throw StateError('Finish pending group delivery first');
+    // Native MLS operations serialize through one sealed state. Only an
+    // undelivered commit invalidates follow-up staging (its receipt rewrites
+    // the state afterwards), while queued messages, typing frames and
+    // key-package publications acknowledge without touching the state and
+    // may accumulate while the device is offline.
+    if (store.outbox.any((pending) => pending.checkpoint != null))
+      throw StateError('Finish pending group commit first');
   }
 
   void _metadata(String title, List<LoomGroupMember> members) {
@@ -328,12 +333,14 @@ class LoomGroupSession {
       _idle();
       _metadata(title, members);
       await _syncGroup(groupId);
-      final old = store.groups.singleWhere((g) => g.id == groupId);
+      final old = store.groups.where((g) => g.id == groupId).firstOrNull;
+      if (old == null) throw StateError('Unknown group');
       final fresh = await client.get(groupId);
       if (fresh.sequence != store.cursor(groupId) ||
           fresh.revision != old.revision)
         throw StateError('Group changed; synchronize before editing');
-      final actor = old.members.singleWhere((m) => m.deviceId == deviceId);
+      final actor = old.members.where((m) => m.deviceId == deviceId).firstOrNull;
+      if (actor == null) throw StateError('No longer a group member');
       if (actor.role == 'member')
         throw StateError('Group administrator required');
       final added = members
@@ -405,7 +412,8 @@ class LoomGroupSession {
         _idle();
         await _syncGroup(groupId);
         _idle();
-        final group = store.groups.singleWhere((g) => g.id == groupId);
+        final group = store.groups.where((g) => g.id == groupId).firstOrNull;
+        if (group == null) throw StateError('Unknown group');
         if (group.epoch != epoch ||
             !group.members.any(
               (m) => m.deviceId == deviceId && m.accountId == accountId,
@@ -442,12 +450,16 @@ class LoomGroupSession {
     content = Map<String, Object?>.from(jsonDecode(jsonEncode(content)) as Map);
     return _serialized(() async {
       _idle();
-      final group = store.groups.singleWhere((g) => g.id == groupId);
+      final group = store.groups.where((g) => g.id == groupId).firstOrNull;
+      if (group == null) throw StateError('Unknown group');
       if (!group.members.any((m) => m.deviceId == deviceId))
         throw StateError('No longer a group member');
       final profileEvent = content.containsKey('groupProfile');
       if (profileEvent) {
-        final actor = group.members.singleWhere((m) => m.deviceId == deviceId);
+        final actor = group.members
+            .where((m) => m.deviceId == deviceId)
+            .firstOrNull;
+        if (actor == null) throw StateError('No longer a group member');
         if (actor.role == 'member')
           throw StateError('Group administrator required');
         if (content.length != 1 || content['groupProfile'] is! Map) {
@@ -512,7 +524,8 @@ class LoomGroupSession {
     );
     return _serialized(() async {
       _idle();
-      final group = store.groups.singleWhere((g) => g.id == groupId);
+      final group = store.groups.where((g) => g.id == groupId).firstOrNull;
+      if (group == null) throw StateError('Unknown group');
       if (!group.members.any((m) => m.deviceId == deviceId)) {
         throw StateError('No longer a group member');
       }
@@ -620,8 +633,26 @@ class LoomGroupSession {
     var more = true;
     while (more) {
       final page = await client.inbox(groupId, store.cursor(groupId));
-      for (final raw in page['events'] as List)
-        await _apply(groupId, Map<String, Object?>.from(raw as Map));
+      for (final raw in page['events'] as List) {
+        final event = Map<String, Object?>.from(raw as Map);
+        try {
+          await _apply(groupId, event);
+        } on Object catch (error) {
+          // A single malformed or undecryptable member message must not
+          // permanently break this group's sync: application messages never
+          // change the epoch, so the event can be quarantined and later
+          // events still apply. Structural problems (welcome/commit/sequence
+          // gaps) keep failing loudly — they need a proper resync.
+          if (event['kind'] != 'message' ||
+              !store.quarantine(
+                groupId,
+                event['sequence'] as int,
+                '$error',
+              )) {
+            rethrow;
+          }
+        }
+      }
       more = page['hasMore'] == true;
       if (more && (page['events'] as List).isEmpty)
         throw StateError('Empty group sync page');
@@ -700,7 +731,10 @@ class LoomGroupSession {
       );
       final profileEvent = content.containsKey('groupProfile');
       if (profileEvent) {
-        final actor = state.members.singleWhere((m) => m.deviceId == sender);
+        final actor = state.members
+            .where((m) => m.deviceId == sender)
+            .firstOrNull;
+        if (actor == null) throw StateError('MLS sender mismatch');
         LoomGroupProfile? profile;
         if (actor.role != 'member' && content['groupProfile'] is Map) {
           try {
@@ -725,8 +759,10 @@ class LoomGroupSession {
     } else if (kind == 'commit') {
       final commit = Map<String, Object?>.from(result.result['Commit'] as Map);
       final sender = utf8.decode((commit['sender'] as List).cast<int>());
-      final actor = previous!.members.singleWhere((m) => m.deviceId == sender);
-      if (sender != event['senderDeviceId'] || actor.role == 'member')
+      final actor = previous!.members
+          .where((m) => m.deviceId == sender)
+          .firstOrNull;
+      if (actor == null || sender != event['senderDeviceId'] || actor.role == 'member')
         throw StateError('Unauthorized group commit');
     }
     _guard();

@@ -9,6 +9,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_webrtc: 1.6.2+hotfix.3
+  cryptography: ^2.9.0
   loom_models:
     path: ../loom_models
   loom_protocol:

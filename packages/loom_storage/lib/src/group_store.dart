@@ -39,6 +39,9 @@ class LoomGroupStore {
     _db.execute(
       'CREATE TABLE IF NOT EXISTS mls_read(group_id TEXT PRIMARY KEY,sequence INTEGER NOT NULL)',
     );
+    _db.execute(
+      'CREATE TABLE IF NOT EXISTS mls_quarantine(group_id TEXT NOT NULL,sequence INTEGER NOT NULL,reason TEXT NOT NULL,recorded_at TEXT NOT NULL,PRIMARY KEY(group_id,sequence))',
+    );
   }
   final Database _db;
   static LoomGroupStore openFile(String path) {
@@ -125,11 +128,12 @@ class LoomGroupStore {
             (sequence: r['sequence'] as int, payload: r['payload'] as String),
       )
       .toList();
-  void _transaction(void Function() action) {
+  T _transaction<T>(T Function() action) {
     _db.execute('BEGIN IMMEDIATE');
     try {
-      action();
+      final result = action();
       _db.execute('COMMIT');
+      return result;
     } catch (_) {
       _db.execute('ROLLBACK');
       rethrow;
@@ -155,8 +159,12 @@ class LoomGroupStore {
     LoomMlsSealedState next,
     LoomGroupOutbox outbox,
   ) => _transaction(() {
-    if (this.outbox.isNotEmpty)
-      throw StateError('Resolve pending MLS delivery first');
+    // Commit deliveries rewrite the sealed state when their receipt is
+    // accepted, so they must stay exclusive. Queued messages, typing frames
+    // and key-package publications acknowledge without touching the state and
+    // may accumulate while the device is offline.
+    if (this.outbox.any((pending) => pending.checkpoint != null))
+      throw StateError('Resolve pending MLS commit first');
     _writeState(expectedVersion, next);
     _db.execute('INSERT INTO mls_outbox VALUES(?,?,?,?,?,?)', [
       outbox.id,
@@ -200,13 +208,15 @@ class LoomGroupStore {
   /// Only after an authoritative 409 rejects the immutable request. Network
   /// timeouts and unknown outcomes must retain and retry the exact outbox.
   void rejectCommit(String id, int expectedVersion) => _transaction(() {
-    final pending = outbox.singleWhere((o) => o.id == id);
+    final pending = outbox.where((o) => o.id == id).firstOrNull;
+    if (pending == null) throw StateError('Unknown MLS outbox item');
     if (pending.checkpoint == null) throw StateError('No commit checkpoint');
     _writeState(expectedVersion, pending.checkpoint!);
     _db.execute('DELETE FROM mls_outbox WHERE id=?', [id]);
   });
   void rejectMessage(String id) => _transaction(() {
-    final pending = outbox.singleWhere((o) => o.id == id);
+    final pending = outbox.where((o) => o.id == id).firstOrNull;
+    if (pending == null) throw StateError('Unknown MLS outbox item');
     if (pending.checkpoint != null)
       throw StateError('Not an application message');
     _db.execute('INSERT INTO mls_failed VALUES(?,?,?)', [
@@ -254,8 +264,11 @@ class LoomGroupStore {
   }) => _transaction(() {
     if (sequence <= cursor(group.id))
       throw StateError('MLS event already applied');
-    if (outbox.isNotEmpty)
-      throw StateError('Resolve pending MLS delivery first');
+    // Receiving inbox events composes with queued messages; only an
+    // undelivered commit rewrites the state on acknowledgement and therefore
+    // conflicts with this write.
+    if (outbox.any((pending) => pending.checkpoint != null))
+      throw StateError('Resolve pending MLS commit first');
     _writeState(expectedVersion, next);
     _catalogue(group, sequence);
     if (encryptedPayload != null)
@@ -265,6 +278,49 @@ class LoomGroupStore {
         encryptedPayload,
       ]);
   });
+
+  /// Records a rejected inbox event and advances the sync cursor past it, so
+  /// one malformed or undecryptable member message cannot permanently break
+  /// the whole group. Returns false when the group is unknown locally and the
+  /// event cannot be skipped meaningfully.
+  bool quarantine(String groupId, int sequence, String reason) =>
+      _transaction(() {
+        if (sequence <= cursor(groupId)) return true;
+        if (_db
+            .select('SELECT 1 FROM mls_catalogue WHERE id=?', [groupId])
+            .isEmpty)
+          return false;
+        _db.execute(
+          'INSERT INTO mls_quarantine VALUES(?,?,?,?) ON CONFLICT(group_id,sequence) DO UPDATE SET reason=excluded.reason,recorded_at=excluded.recorded_at',
+          [groupId, sequence, reason, DateTime.now().toUtc().toIso8601String()],
+        );
+        _db.execute(
+          'UPDATE mls_catalogue SET cursor=? WHERE id=?',
+          [sequence, groupId],
+        );
+        return true;
+      });
+
+  List<({int sequence, String reason, String recordedAt})> quarantined(
+    String groupId,
+  ) => _db
+      .select(
+        'SELECT sequence,reason,recorded_at FROM mls_quarantine WHERE group_id=? ORDER BY sequence',
+        [groupId],
+      )
+      .map(
+        (r) => (
+          sequence: r['sequence'] as int,
+          reason: r['reason'] as String,
+          recordedAt: r['recorded_at'] as String,
+        ),
+      )
+      .toList();
+  int quarantineCount(String groupId) =>
+      _db.select(
+        'SELECT COUNT(*) value FROM mls_quarantine WHERE group_id=?',
+        [groupId],
+      ).firstOrNull?['value'] as int? ?? 0;
 
   /// Self echoes were already advanced by send/commit; only their cursor moves.
   void acknowledgeEcho(LoomGroupState group, int sequence) => _transaction(() {

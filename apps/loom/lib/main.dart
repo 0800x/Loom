@@ -12,6 +12,7 @@ import 'package:video_player_media_kit/video_player_media_kit.dart';
 import 'app/loom_app.dart';
 import 'features/accounts/application/account_registry.dart';
 import 'features/connectivity/application/default_network_generation_monitor.dart';
+import 'features/messaging/application/map_tile_preferences.dart';
 import 'features/nodes/application/local_https_trust.dart';
 import 'features/security/application/experimental_ratchet.dart';
 import 'features/security/application/sqlcipher_loader.dart';
@@ -21,6 +22,7 @@ final LoomDefaultNetworkGenerationMonitor _defaultNetworkMonitor =
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  unawaited(LoomMapTilePreferences.instance.load());
   try {
     final rejected = await LoomLocalHttpsTrust.load();
     if (rejected > 0) {

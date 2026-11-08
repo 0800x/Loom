@@ -1526,6 +1526,19 @@ class _ConversationPaneState extends State<_ConversationPane>
       case 'call':
         unawaited(_call());
         break;
+      case 'settings':
+        if (conversation != null && messaging != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => LoomConversationSettingsScreen(
+                conversation: conversation,
+                messaging: messaging,
+              ),
+            ),
+          );
+        }
+        break;
       case 'wallpaper':
         final target = widget.conversation;
         Navigator.push(
@@ -2318,12 +2331,12 @@ class _ConversationPaneState extends State<_ConversationPane>
                             ? Duration.zero
                             : LoomMotion.component,
                         alignment: Alignment.bottomCenter,
-                        child: _TypingIndicator(
-                          peers: preview || conversation == null
-                              ? const {}
-                              : messaging?.typingPeersFor(conversation.id) ??
-                                    const {},
-                        ),
+                        child: preview || conversation == null || messaging == null
+                            ? const _TypingIndicator(peers: {})
+                            : _LiveTypingIndicator(
+                                session: messaging,
+                                conversationId: conversation.id,
+                              ),
                       ),
                       if (_uploading)
                         Padding(
@@ -2543,6 +2556,28 @@ class _MessageDayLabel extends StatelessWidget {
           child: Text(label, style: Theme.of(context).textTheme.labelSmall),
         ),
       ),
+    );
+  }
+}
+
+/// Typing chip driven by the controller's dedicated ephemeral typing
+/// listenable, so incoming typing frames update the chip without rebuilding
+/// the whole conversation pane.
+class _LiveTypingIndicator extends StatelessWidget {
+  const _LiveTypingIndicator({
+    required this.session,
+    required this.conversationId,
+  });
+
+  final LoomMessagingSessionController session;
+  final String conversationId;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<Map<String, Map<String, DateTime>>>(
+      valueListenable: session.typingPeers,
+      builder: (context, _, __) =>
+          _TypingIndicator(peers: session.typingPeersFor(conversationId)),
     );
   }
 }

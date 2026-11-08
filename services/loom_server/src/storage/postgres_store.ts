@@ -28,7 +28,7 @@ export class PostgresStore {
 
   static async connect(databaseUrl: string): Promise<PostgresStore> {
     const module = await import('pg') as unknown as { Pool: new (options: Record<string, unknown>) => PgPool };
-    const pool = new module.Pool({ connectionString: databaseUrl, max: 20, idleTimeoutMillis: 30_000, connectionTimeoutMillis: 10_000, ssl: databaseUrl.includes('sslmode=disable') ? false : undefined });
+    const pool = new module.Pool({ connectionString: databaseUrl, max: 40, idleTimeoutMillis: 30_000, connectionTimeoutMillis: 10_000, statement_timeout: 30_000, lock_timeout: 10_000, idle_in_transaction_session_timeout: 30_000, ssl: databaseUrl.includes('sslmode=disable') ? false : undefined });
     const store = new PostgresStore(pool);
     await store.migrate();
     return store;

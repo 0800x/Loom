@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import 'incoming_ice_buffer.dart';
+import 'call_verification.dart';
 
 class LoomCallSnapshot {
   const LoomCallSnapshot({
@@ -29,6 +30,8 @@ class LoomCallSnapshot {
     this.endReason,
     this.reconnectAttempts = 0,
     this.error,
+    this.encryptionDigits,
+    this.encryptionEmoji,
   });
 
   final LoomCallLifecycle lifecycle;
@@ -50,6 +53,12 @@ class LoomCallSnapshot {
   final LoomCallEndReason? endReason;
   final int reconnectAttempts;
   final Object? error;
+
+  /// End-to-end encryption check code derived from the negotiated DTLS
+  /// certificates once the connection is established. Both participants see
+  /// the same value and can compare it verbally.
+  final String? encryptionDigits;
+  final List<String>? encryptionEmoji;
 
   bool get active => switch (lifecycle) {
     LoomCallLifecycle.preparing ||
@@ -87,6 +96,8 @@ class LoomCallSnapshot {
     int? reconnectAttempts,
     Object? error,
     bool clearError = false,
+    String? encryptionDigits,
+    List<String>? encryptionEmoji,
   }) => LoomCallSnapshot(
     lifecycle: lifecycle ?? this.lifecycle,
     kind: kind ?? this.kind,
@@ -107,6 +118,8 @@ class LoomCallSnapshot {
     endReason: endReason ?? this.endReason,
     reconnectAttempts: reconnectAttempts ?? this.reconnectAttempts,
     error: clearError ? null : error ?? this.error,
+    encryptionDigits: encryptionDigits ?? this.encryptionDigits,
+    encryptionEmoji: encryptionEmoji ?? this.encryptionEmoji,
   );
 }
 
@@ -478,6 +491,7 @@ class LoomCallEngine extends ChangeNotifier {
               clearError: true,
             ),
           );
+          unawaited(_deriveEncryptionCode());
           _startStats();
           break;
         case RTCPeerConnectionState.RTCPeerConnectionStateDisconnected:
@@ -675,6 +689,39 @@ class LoomCallEngine extends ChangeNotifier {
           sdpMLineIndex: candidate.sdpMLineIndex,
         );
       }
+    }
+  }
+
+  /// Derives the short encryption verification code from the negotiated
+  /// DTLS-SRTP certificates once the peer connection is established. This is
+  /// a display-only safety indicator: both participants must see the same
+  /// digits and emoji, otherwise a man in the middle terminates the DTLS
+  /// handshake with its own certificate. Failures are silently ignored — the
+  /// label simply stays in its generic "encrypted" state.
+  Future<void> _deriveEncryptionCode() async {
+    final peer = _peer;
+    if (peer == null || _state.encryptionDigits != null) return;
+    try {
+      final local = await peer.getLocalDescription();
+      final remote = await peer.getRemoteDescription();
+      final verification = await LoomCallVerification.fromDtlsFingerprints(
+        localSdp: local?.sdp,
+        remoteSdp: remote?.sdp,
+      );
+      if (verification == null ||
+          _disposed ||
+          _peer != peer ||
+          !_state.active) {
+        return;
+      }
+      _set(
+        _state.copyWith(
+          encryptionDigits: verification.digits,
+          encryptionEmoji: verification.emoji,
+        ),
+      );
+    } catch (_) {
+      // Verification display is best effort; the call itself is unaffected.
     }
   }
 

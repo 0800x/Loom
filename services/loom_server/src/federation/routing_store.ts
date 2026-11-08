@@ -533,7 +533,7 @@ export class FederationRoutingStore {
       const ins = db.prepare(`INSERT OR IGNORE INTO federation_inbox(event_id,origin_node_id,payload_hash,received_at) VALUES(?,?,?,?)`).run(envelope.eventId, envelope.originNodeId, hash, now);
       if (Number(ins.changes) === 0) {
         db.exec('COMMIT');
-        void this.increment('duplicate_events_rejected');
+        this.increment('duplicate_events_rejected').catch(error => console.error('[loom-node] federation metric update failed:', error));
         return { duplicate: true };
       }
       const recipient = parseLoomAddress(envelope.recipientAddresses[0]);
@@ -575,7 +575,7 @@ export class FederationRoutingStore {
       const payload = { id: messageId, clientId: envelope.payload.clientId, conversationId, senderAddress: envelope.senderAddress, type: envelope.payload.type, ciphertext: envelope.payload.ciphertext, protocolVersion: envelope.payload.protocolVersion, replyToMessageId: envelope.payload.replyToMessageId ?? null, metadata: envelope.payload.metadata ?? {}, serverOrder: order, createdAt: (envelope.payload.createdAt ?? envelope.createdAt) };
       db.prepare(`INSERT INTO events(event_id,account_id,kind,event_order,payload_json,created_at) VALUES(?,?,?,?,?,?)`).run(`evt_${randomUUID()}`, accountId, 'message.created', eventOrder, JSON.stringify(payload), now);
       db.exec('COMMIT');
-      void this.increment('received_events_total');
+      this.increment('received_events_total').catch(error => console.error('[loom-node] federation metric update failed:', error));
       return { duplicate: false, conversationId, messageId };
     } catch (e) {
       try { db.exec('ROLLBACK'); } catch { }

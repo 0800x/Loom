@@ -1,8 +1,5 @@
 part of 'messenger_shell.dart';
 
-// CARTO requires an operator-supplied public basemap key; default stays OSM.
-const _loomCartoBasemapKey = String.fromEnvironment('LOOM_CARTO_BASEMAP_KEY');
-
 Future<Duration?> _chooseLocation(
   BuildContext context,
   LatLng point, {
@@ -255,66 +252,79 @@ class _LocationMapState extends State<_LocationMap> {
     borderRadius: BorderRadius.circular(20),
     child: Stack(
       children: [
-        FlutterMap(
-          mapController: _controller,
-          options: MapOptions(
-            initialCenter: widget.point,
-            initialZoom: 15,
-            interactionOptions: InteractionOptions(
-              flags: widget.interactive
-                  ? InteractiveFlag.all & ~InteractiveFlag.rotate
-                  : InteractiveFlag.none,
+        ListenableBuilder(
+          listenable: LoomMapTilePreferences.instance,
+          builder: (context, _) => FlutterMap(
+            mapController: _controller,
+            options: MapOptions(
+              initialCenter: widget.point,
+              initialZoom: 15,
+              interactionOptions: InteractionOptions(
+                flags: widget.interactive
+                    ? InteractiveFlag.all & ~InteractiveFlag.rotate
+                    : InteractiveFlag.none,
+              ),
+              onMapReady: () => _ready = true,
+              onPositionChanged: (_, gesture) {
+                if (gesture) {
+                  _follow = false;
+                }
+              },
             ),
-            onMapReady: () => _ready = true,
-            onPositionChanged: (_, gesture) {
-              if (gesture) {
-                _follow = false;
-              }
-            },
-          ),
-          children: [
-            ColorFiltered(
-              colorFilter:
-                  _loomCartoBasemapKey.isEmpty &&
-                      Theme.of(context).brightness == Brightness.dark
-                  ? const ColorFilter.matrix([
-                      -.17008,
-                      -.57216,
-                      -.05776,
-                      0,
-                      204,
-                      -.17008,
-                      -.57216,
-                      -.05776,
-                      0,
-                      204,
-                      -.17008,
-                      -.57216,
-                      -.05776,
-                      0,
-                      204,
-                      0,
-                      0,
-                      0,
-                      1,
-                      0,
-                    ])
-                  : const ColorFilter.mode(
-                      Colors.transparent,
-                      BlendMode.srcOver,
+            children: [
+              Builder(
+                builder: (context) {
+                  final dark = Theme.of(context).brightness == Brightness.dark;
+                  final source = LoomMapTilePreferences.instance.resolve(
+                    dark: dark,
+                  );
+                  final effective =
+                      dark && source.darkUrlTemplate != null
+                      ? source.darkUrlTemplate!
+                      : source.urlTemplate;
+                  return ColorFiltered(
+                    colorFilter:
+                        source.invertInDark &&
+                            dark &&
+                            source.darkUrlTemplate == null
+                        ? const ColorFilter.matrix([
+                            -.17008,
+                            -.57216,
+                            -.05776,
+                            0,
+                            204,
+                            -.17008,
+                            -.57216,
+                            -.05776,
+                            0,
+                            204,
+                            -.17008,
+                            -.57216,
+                            -.05776,
+                            0,
+                            204,
+                            0,
+                            0,
+                            0,
+                            1,
+                            0,
+                          ])
+                        : const ColorFilter.mode(
+                            Colors.transparent,
+                            BlendMode.srcOver,
+                          ),
+                    child: TileLayer(
+                      urlTemplate: effective,
+                      userAgentPackageName: 'Loom',
+                      errorTileCallback: (_, _, _) {
+                        if (mounted && !_tilesFailed) {
+                          setState(() => _tilesFailed = true);
+                        }
+                      },
                     ),
-              child: TileLayer(
-                urlTemplate: _loomCartoBasemapKey.isEmpty
-                    ? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-                    : 'https://a.basemaps.cartocdn.com/${Theme.of(context).brightness == Brightness.dark ? 'dark_all' : 'rastertiles/voyager'}/{z}/{x}/{y}.png?key=${Uri.encodeComponent(_loomCartoBasemapKey)}',
-                userAgentPackageName: 'Loom',
-                errorTileCallback: (_, _, _) {
-                  if (mounted && !_tilesFailed) {
-                    setState(() => _tilesFailed = true);
-                  }
+                  );
                 },
               ),
-            ),
             MarkerLayer(
               markers: [
                 Marker(
@@ -346,22 +356,15 @@ class _LocationMapState extends State<_LocationMap> {
             RichAttributionWidget(
               attributions: [
                 TextSourceAttribution(
-                  _loomCartoBasemapKey.isEmpty
-                      ? 'OpenStreetMap contributors'
-                      : 'OpenStreetMap contributors · CARTO',
+                  LoomMapTilePreferences.instance.resolve().attribution,
                   onTap: () => launchUrl(
                     Uri.parse('https://www.openstreetmap.org/copyright'),
                   ),
                 ),
-                if (_loomCartoBasemapKey.isNotEmpty)
-                  TextSourceAttribution(
-                    'CARTO',
-                    onTap: () =>
-                        launchUrl(Uri.parse('https://carto.com/attributions')),
-                  ),
               ],
             ),
           ],
+          ),
         ),
         if (_tilesFailed)
           Positioned(
@@ -1299,8 +1302,10 @@ class _LocalVideoPreviewState extends State<_LocalVideoPreview>
         builder: (context, value, _) => Stack(
           fit: StackFit.expand,
           children: [
+            // Contain instead of cover: the preview must never crop the
+            // recorded content, whatever aspect ratio the encoder produced.
             FittedBox(
-              fit: BoxFit.cover,
+              fit: BoxFit.contain,
               child: SizedBox(
                 width: value.size.width,
                 height: value.size.height,

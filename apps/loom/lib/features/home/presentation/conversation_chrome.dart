@@ -125,6 +125,8 @@ class _ConversationHeader extends StatelessWidget {
               label: tr(context, 'Conversation menu', 'منوی گفتگو'),
               heading: name,
               onSelected: onMenu,
+              // Intentionally slim: everything else lives in the chat
+              // settings screen so the menu stays glanceable.
               items: [
                 if (onCall != null)
                   (
@@ -138,30 +140,18 @@ class _ConversationHeader extends StatelessWidget {
                   tr(context, 'Search messages', 'جستجوی پیام‌ها'),
                 ),
                 (
+                  'settings',
+                  LoomIcons.settings_outlined,
+                  tr(context, 'Chat settings', 'تنظیمات گفتگو'),
+                ),
+                (
                   'details',
-                  LoomIcons.info_outline_rounded,
-                  tr(context, 'Conversation details', 'جزئیات گفتگو'),
-                ),
-                (
-                  'wallpaper',
-                  LoomIcons.wallpaper_rounded,
-                  tr(context, 'Chat wallpaper', 'پس‌زمینهٔ گفتگو'),
-                ),
-                (
-                  'appearance',
-                  LoomIcons.palette_outlined,
-                  tr(context, 'Appearance', 'ظاهر'),
-                ),
-                if (conversation != null)
-                  ..._conversationManagementItems(
-                    context,
-                    conversation!,
-                    archived,
-                  ),
-                (
-                  'guide',
-                  LoomIcons.help_outline_rounded,
-                  tr(context, 'Message status guide', 'راهنمای وضعیت پیام'),
+                  conversation?.kind == models.LoomConversationKind.group
+                      ? LoomIcons.groups_outlined
+                      : LoomIcons.info_outline_rounded,
+                  conversation?.kind == models.LoomConversationKind.group
+                      ? tr(context, 'Group info', 'اطلاعات گروه')
+                      : tr(context, 'Conversation details', 'جزئیات گفتگو'),
                 ),
               ],
             ),

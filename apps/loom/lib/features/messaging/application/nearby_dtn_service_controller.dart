@@ -120,6 +120,7 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
   Future<void>? _loopFuture;
   Future<void> _radioTail = Future<void>.value();
   Completer<void>? _roundWake;
+  Completer<void>? _activeProximityRoundYield;
   StreamSubscription<LoomDefaultNetworkSnapshot>? _networkSubscription;
   bool _priorityRoundRequested = false;
   bool _enabled = false;
@@ -129,6 +130,55 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
   int _lifecycleGeneration = 0;
 
   bool get enabled => _enabled;
+
+  /// Best-effort Internet-availability hint used to direct the proximity
+  /// gateway roles. Only the Android default-network monitor reports real
+  /// transports today; on unknown platforms the round keeps the symmetric
+  /// advertise-and-scan behavior.
+  bool? _internetUpstreamHint() {
+    final snapshot = LoomDefaultNetworkGeneration.current;
+    switch (snapshot.transportClass) {
+      case 'none':
+        return false;
+      case 'wifi':
+      case 'cellular':
+      case 'ethernet':
+      case 'vpn':
+        // A transport that failed validation may be a captive portal; keep
+        // both roles rather than guessing wrong in either direction.
+        return snapshot.validated == false ? null : true;
+      default:
+        return null;
+    }
+  }
+
+  /// Registers the abort signal for the proximity round that is about to
+  /// run, retiring any stale signal left behind by an interrupted round.
+  Future<void> _beginActiveProximityRound() {
+    final previous = _activeProximityRoundYield;
+    if (previous != null && !previous.isCompleted) {
+      previous.complete();
+    }
+    final next = Completer<void>();
+    _activeProximityRoundYield = next;
+    return next.future;
+  }
+
+  void _endActiveProximityRound(Future<void> signal) {
+    final active = _activeProximityRoundYield;
+    if (active != null && identical(active.future, signal)) {
+      _activeProximityRoundYield = null;
+    }
+  }
+
+  /// Hands the Nearby radio back from a passive recipient advertisement so
+  /// an on-demand Nearby send or shutdown does not wait out the full window.
+  void _abortActiveProximityRound() {
+    final active = _activeProximityRoundYield;
+    if (active != null && !active.isCompleted) {
+      active.complete();
+    }
+  }
 
   static bool shouldAutoRecover(LoomNearbyDtnServiceStatus value) =>
       value == LoomNearbyDtnServiceStatus.error;
@@ -297,6 +347,7 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
     if (_disposed && _runtime == null) return;
     final lifecycleGeneration = ++_lifecycleGeneration;
     _enabled = false;
+    _abortActiveProximityRound();
     _wakeLoop();
     _stopObservingLifecycle();
     _signer = null;
@@ -366,6 +417,9 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
       serviceState: status.name,
     );
 
+    // An on-demand custody uplink needs the radio now; cut any passive
+    // recipient advertisement window short instead of queueing behind it.
+    _abortActiveProximityRound();
     _priorityRoundRequested = true;
     _wakeLoop();
 
@@ -403,6 +457,9 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
 
     Object? lastError;
     final ordered = _orderedBearers(supportedBearers);
+    // The radio is needed for the actual send now; a passive recipient
+    // advertisement window must not add seconds of dead air first.
+    _abortActiveProximityRound();
     for (final bearer in ordered) {
       if (!_isCurrentLifecycle(lifecycleGeneration) || !_enabled) {
         throw StateError('Nearby messaging mode stopped during send');
@@ -547,7 +604,13 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
         final maintenance = ordered.isEmpty
             ? <LoomNearbyBearer>[]
             : [ordered[(maintenanceIndex ~/ 2) % ordered.length]];
-        final runMessageGateway = maintenanceIndex++ % 2 == 0;
+        // An offline device cannot relay for anyone, so it never spends a
+        // maintenance slot advertising the legacy Internet-gateway service;
+        // it dedicates every slot to its recipient rendezvous instead, which
+        // is what makes reverse (Internet-to-Nearby) delivery discoverable.
+        final upstreamHint = _internetUpstreamHint();
+        final runMessageGateway =
+            maintenanceIndex++ % 2 == 0 && upstreamHint != false;
         for (final bearer in maintenance) {
           if (!_enabled ||
               !_isCurrentLifecycle(lifecycleGeneration) ||
@@ -707,48 +770,59 @@ final class LoomNearbyDtnServiceController extends ChangeNotifier
     if (identity == null || receipt == null || node == null) return;
     final supportPath = await _supportPathProvider();
     if (!_isCurrentLifecycle(lifecycleGeneration)) return;
-    final round = await LoomProximityGatewayRoundRunner().run(
-      radio: runtime.radioFor(bearer),
-      bearer: bearer,
-      signer: signer,
-      recipientIdentityId: identity.identityId,
-      recipientDeviceId: receipt.deviceId,
-      recipientNodeId: node.nodeId,
-      recipientNodeDomain: receipt.homeNode,
-      acceptLegacyDelivery: (delivery) async {
-        final accepted = await LoomNearbyLegacyDeliveryIntake.acceptOnce(
-          applicationSupportPath: supportPath,
-          ownAddress: receipt.address,
-          delivery: delivery,
-        );
-        if (!accepted) return false;
-        final callback = onLocalInboxChanged;
-        if (callback != null) await callback();
-        final clientId = delivery.event.payload['clientId'];
-        // The signed recipient receipt means the message is readable. A relay
-        // custody ACK alone must not light up the sender's second tick.
-        return clientId is String &&
-            canConfirmLegacyDelivery?.call(clientId) == true;
-      },
-      acceptV2Packet: (packet) =>
-          LoomLegacyDtnDeliveryIntake.acceptGatewayPacket(
+    final upstream = _internetUpstreamHint();
+    final yieldSignal = _beginActiveProximityRound();
+    try {
+      final round = await LoomProximityGatewayRoundRunner().run(
+        radio: runtime.radioFor(bearer),
+        bearer: bearer,
+        signer: signer,
+        recipientIdentityId: identity.identityId,
+        recipientDeviceId: receipt.deviceId,
+        recipientNodeId: node.nodeId,
+        recipientNodeDomain: receipt.homeNode,
+        acceptLegacyDelivery: (delivery) async {
+          final accepted = await LoomNearbyLegacyDeliveryIntake.acceptOnce(
             applicationSupportPath: supportPath,
             ownAddress: receipt.address,
-            identityId: identity.identityId,
-            deviceId: receipt.deviceId,
-            deviceSecurity: LoomDeviceSecurityCoreV1(),
-            packet: packet,
-          ),
-      scanTimeout: const Duration(seconds: 3),
-      advertisementLifetime: const Duration(seconds: 12),
-      maxCandidates: 4,
-      claimLimit: 20,
-    );
-    if (_isCurrentLifecycle(lifecycleGeneration)) {
-      lastProximityRound = round;
-      // Gateway intake writes the legacy inbox directly, outside the DTN sweep.
-      final callback = onLocalInboxChanged;
-      if (callback != null) await callback();
+            delivery: delivery,
+          );
+          if (!accepted) return false;
+          final callback = onLocalInboxChanged;
+          if (callback != null) await callback();
+          final clientId = delivery.event.payload['clientId'];
+          // The signed recipient receipt means the message is readable. A relay
+          // custody ACK alone must not light up the sender's second tick.
+          return clientId is String &&
+              canConfirmLegacyDelivery?.call(clientId) == true;
+        },
+        acceptV2Packet: (packet) =>
+            LoomLegacyDtnDeliveryIntake.acceptGatewayPacket(
+              applicationSupportPath: supportPath,
+              ownAddress: receipt.address,
+              identityId: identity.identityId,
+              deviceId: receipt.deviceId,
+              deviceSecurity: LoomDeviceSecurityCoreV1(),
+              packet: packet,
+            ),
+        hasInternetUpstream: upstream,
+        yieldSignal: yieldSignal,
+        // An online gateway scans for most of the maintenance slot; an
+        // offline recipient holds its rendezvous advertisement for the full
+        // window instead, so an online peer scanning later still finds it.
+        scanTimeout: const Duration(seconds: 10),
+        advertisementLifetime: const Duration(seconds: 16),
+        maxCandidates: 4,
+        claimLimit: 20,
+      );
+      if (_isCurrentLifecycle(lifecycleGeneration)) {
+        lastProximityRound = round;
+        // Gateway intake writes the legacy inbox directly, outside the DTN sweep.
+        final callback = onLocalInboxChanged;
+        if (callback != null) await callback();
+      }
+    } finally {
+      _endActiveProximityRound(yieldSignal);
     }
   }
 

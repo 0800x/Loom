@@ -414,9 +414,13 @@ class LoomAudioTile extends StatelessWidget {
           iconSize: music ? 20 : 24,
           style: IconButton.styleFrom(
             foregroundColor: music ? Colors.white : color,
+            // Frosted glass over the artwork instead of a flat black disc.
             backgroundColor: music
-                ? Colors.black.withValues(alpha: .38)
+                ? Colors.white.withValues(alpha: .24)
                 : color.withValues(alpha: .12),
+            side: music
+                ? BorderSide(color: Colors.white.withValues(alpha: .35))
+                : null,
             minimumSize: Size.square(playSize),
             fixedSize: Size.square(playSize),
             shape: const CircleBorder(),
@@ -505,7 +509,11 @@ class LoomAudioTile extends StatelessWidget {
               ? mediaTime(elapsed)
               : '',
           textDirection: TextDirection.ltr,
-          style: TextStyle(fontSize: 11, color: color.withValues(alpha: .85)),
+          style: TextStyle(
+            fontSize: 11,
+            color: color.withValues(alpha: .85),
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
         );
         // Playback tint animates inside the chat list: own repaint layer.
         return RepaintBoundary(
@@ -513,50 +521,66 @@ class LoomAudioTile extends StatelessWidget {
             duration: _motionDuration(context, 240),
             curve: Curves.easeInOutCubicEmphasized,
             margin: const EdgeInsets.symmetric(vertical: 4),
-            padding: music ? const EdgeInsets.all(10) : EdgeInsets.zero,
+            padding: music ? const EdgeInsets.all(12) : EdgeInsets.zero,
             decoration: music
                 ? BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(18),
                     gradient: LinearGradient(
                       begin: AlignmentDirectional.topStart,
                       end: AlignmentDirectional.bottomEnd,
                       colors: [
                         context.loom.primary.withValues(
-                          alpha: active ? .16 : .08,
+                          alpha: active ? .22 : .12,
                         ),
                         context.loom.surfaceElevated,
                       ],
                     ),
                     border: Border.all(
-                      color: context.loom.primary.withValues(alpha: .12),
+                      color: context.loom.primary.withValues(alpha: .18),
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: context.loom.shadow.withValues(alpha: .25),
+                        blurRadius: 12,
+                        spreadRadius: -5,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   )
                 : null,
             child: Row(
               children: [
                 if (music)
                   SizedBox.square(
-                    dimension: 56,
+                    dimension: 64,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
                         if (artworkBytes != null)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: Image.memory(
-                              artworkBytes!,
-                              width: 56,
-                              height: 56,
-                              cacheWidth: 144,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) =>
-                                  const Icon(LoomIcons.music_note_rounded),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: .18),
+                              ),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Image.memory(
+                                artworkBytes!,
+                                width: 64,
+                                height: 64,
+                                cacheWidth: 160,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) =>
+                                    const Icon(LoomIcons.music_note_rounded),
+                              ),
                             ),
                           )
                         else
                           _Cover(
                             file: track?.artwork,
-                            size: 56,
+                            size: 64,
                             playing: active && p.playing,
                           ),
                         play,

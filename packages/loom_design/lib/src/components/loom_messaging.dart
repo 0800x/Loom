@@ -364,11 +364,14 @@ class LoomMessageBubble extends StatelessWidget {
           )
           .toDouble();
       final radius = BorderRadius.only(
-        topLeft: Radius.circular(grouped && !mine ? 6 : 20),
-        topRight: Radius.circular(grouped && mine ? 6 : 20),
-        bottomLeft: Radius.circular(mine ? 20 : 6),
-        bottomRight: Radius.circular(mine ? 6 : 20),
+        topLeft: Radius.circular(grouped && !mine ? 8 : 22),
+        topRight: Radius.circular(grouped && mine ? 8 : 22),
+        bottomLeft: Radius.circular(mine ? 22 : 8),
+        bottomRight: Radius.circular(mine ? 8 : 22),
       );
+      final reduceMotion = LoomAccessibility.fromContext(
+        context,
+      ).reduceMotion;
       final metadata = Wrap(
         alignment: WrapAlignment.end,
         crossAxisAlignment: WrapCrossAlignment.center,
@@ -575,7 +578,12 @@ class LoomMessageBubble extends StatelessWidget {
                   child: GestureDetector(
                   onLongPress: onActions,
                   onSecondaryTap: onActions,
-                  child: Container(
+                  child: LoomPressable(
+                    child: AnimatedContainer(
+                    duration: reduceMotion
+                        ? Duration.zero
+                        : LoomMotion.component,
+                    curve: LoomMotion.standard,
                     constraints: BoxConstraints(
                       maxWidth: maxWidth,
                       minHeight: onActions != null || onReply != null ? 48 : 0,
@@ -590,25 +598,59 @@ class LoomMessageBubble extends StatelessWidget {
                     ),
                     padding: content == null
                         ? EdgeInsets.symmetric(
-                            horizontal: compact ? 10 : 12,
-                            vertical: compact ? 5 : 9,
+                            horizontal: compact ? 12 : 14,
+                            vertical: compact ? 6 : 10,
                           )
                         : presentation == LoomMessagePresentation.voice
                         ? const EdgeInsets.fromLTRB(10, 6, 6, 0)
                         : EdgeInsets.zero,
                     decoration: BoxDecoration(
-                      color: round || sticker
+                      // Outgoing bubbles carry a soft accent gradient, like
+                      // modern messengers; incoming ones sit on a hairline
+                      // bordered elevated surface so they stay defined over
+                      // wallpapers in both light and dark themes.
+                      gradient:
+                          mine && !round && !sticker
+                          ? LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color.alphaBlend(
+                                  p.primary.withValues(alpha: .27),
+                                  p.surfaceElevated,
+                                ),
+                                Color.alphaBlend(
+                                  p.primary.withValues(alpha: .15),
+                                  p.surfaceElevated,
+                                ),
+                              ],
+                            )
+                          : null,
+                      color:
+                          round || sticker
                           ? Colors.transparent
                           : mine
-                          ? Color.alphaBlend(
-                              p.primary.withValues(alpha: .16),
-                              p.surfaceElevated,
-                            )
+                          ? null
                           : p.surfaceElevated,
                       borderRadius: radius,
                       border: highlighted
                           ? Border.all(color: p.info, width: 2)
+                          : !mine && !round && !sticker
+                          ? Border.all(
+                              color: p.border.withValues(alpha: .6),
+                            )
                           : null,
+                      boxShadow:
+                          round || sticker
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: p.shadow.withValues(alpha: .30),
+                                blurRadius: 14,
+                                spreadRadius: -6,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
                     ),
                     clipBehavior: round || sticker ? Clip.none : Clip.antiAlias,
                     child: DefaultTextStyle.merge(
@@ -620,9 +662,10 @@ class LoomMessageBubble extends StatelessWidget {
                     ),
                   ),
                 ),
-                ),
               ),
             ),
+          ),
+        ),
             if (footer != null) footer!,
           ],
         ),

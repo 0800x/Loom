@@ -55,6 +55,14 @@ services:
       org.loom.installation: /opt/loom-node
     restart: unless-stopped
     env_file: .env
+    environment:
+      # Behind the bundled Caddy (or any reverse proxy on the Docker bridge)
+      # every client shares the proxy's container IP. Without trusting that
+      # proxy range, all clients collapse into ONE per-IP rate-limit bucket
+      # (30 auth/min and 30 websocket upgrades/min for the whole node), which
+      # self-locks the node after reconnect bursts. 172.16.0.0/12 covers the
+      # default Docker bridge networks and is not Internet-routable.
+      LOOM_TRUSTED_PROXY_CIDRS: ${LOOM_TRUSTED_PROXY_CIDRS:-172.16.0.0/12}
     depends_on:
       postgres:
         condition: service_healthy

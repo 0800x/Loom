@@ -178,6 +178,19 @@ class NodeDetailScreen extends StatelessWidget {
                       label: Text(tr(context, 'Save Node', 'ذخیره Node')),
                     ),
                     OutlinedButton.icon(
+                      onPressed: () => _confirmForgetNode(context, controller),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: p.critical,
+                        side: BorderSide(
+                          color: p.critical.withValues(alpha: .4),
+                        ),
+                      ),
+                      icon: const Icon(LoomIcons.delete_outline_rounded),
+                      label: Text(
+                        tr(context, 'Remove Node', 'حذف Node از این دستگاه'),
+                      ),
+                    ),
+                    OutlinedButton.icon(
                       onPressed: () async {
                         await Clipboard.setData(
                           ClipboardData(text: node.domain),
@@ -314,6 +327,50 @@ Future<void> _showNodeStatus(
     ],
   ),
 );
+
+/// Destructive, but strictly local: forgets this device's directory
+/// selection (chosen node, live info and pending verification). Accounts
+/// already registered on a node keep working until their own account data
+/// is removed.
+Future<void> _confirmForgetNode(
+  BuildContext context,
+  LoomNodeDirectoryController controller,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(tr(context, 'Remove Node?', 'حذف Node؟')),
+      content: Text(
+        tr(
+          context,
+          'This forgets the selected Node on this device: the directory choice, live status and any unfinished verification are cleared. Accounts already signed in keep their own Home Node.',
+          'انتخاب Node از این دستگاه پاک می‌شود: انتخاب فعلی، وضعیت زنده و تأیید نیمه‌کاره. حساب‌هایی که وارد شده‌اند Node خانگی خود را نگه می‌دارند.',
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: Text(
+            MaterialLocalizations.of(dialogContext).cancelButtonLabel,
+          ),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(dialogContext).colorScheme.error,
+          ),
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: Text(tr(context, 'Remove', 'حذف')),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+  controller.forgetSelection();
+  if (context.mounted) {
+    Navigator.popUntil(context, (route) => route.isFirst);
+    Navigator.pushReplacementNamed(context, '/nodes');
+  }
+}
 
 class _VerificationPill extends StatelessWidget {
   const _VerificationPill({required this.verified});

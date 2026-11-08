@@ -8,7 +8,7 @@ export interface EncryptedAttachmentReader {
 
 /** URL is a 256-bit capability carried inside E2EE. No attachment key,
  * MIME/filename, credentials or plaintext is exposed by this endpoint. */
-export async function serveEncryptedAttachment(request: IncomingMessage, response: ServerResponse, pathname: string, store: EncryptedAttachmentReader): Promise<boolean> {
+export async function serveEncryptedAttachment(request: IncomingMessage, response: ServerResponse, pathname: string, store: EncryptedAttachmentReader, idleTimeoutMs = 30_000): Promise<boolean> {
   const match = /^\/api\/v1\/attachments\/(att_[a-f0-9]{64})$/.exec(pathname);
   if (request.method !== 'GET' || !match) return false;
   const stored = await store.read(match[1]);
@@ -18,6 +18,13 @@ export async function serveEncryptedAttachment(request: IncomingMessage, respons
     return true;
   }
   response.writeHead(200, { 'content-type': 'application/octet-stream', 'content-length': stored.bytes, 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', 'content-disposition': 'attachment' });
+  // A suspended or dead client (backgrounded mobile app, dropped NAT) must
+  // not pin the download slot forever: destroy the response once the socket
+  // has been idle for `idleTimeoutMs`. Every written chunk resets the timer.
+  if (idleTimeoutMs > 0) {
+    response.setTimeout(idleTimeoutMs, () => { response.destroy(); });
+    response.once('close', () => { response.setTimeout(0); });
+  }
   try { await pipeline(stored.body, response); }
   catch { response.destroy(); }
   return true;

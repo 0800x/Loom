@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show FontFeature;
 
 import 'package:loom_calls/loom_calls.dart';
 import 'package:loom_design/loom_design.dart';
@@ -529,29 +530,88 @@ class _CallBackdrop extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 16),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 5,
-                  children: [
-                    const Icon(
-                      LoomIcons.lock_outline_rounded,
-                      size: 14,
-                      color: Colors.white60,
-                    ),
-                    Text(
-                      tr(context, 'Encrypted call', 'تماس رمزگذاری‌شده'),
-                      style: const TextStyle(
-                        color: Colors.white60,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                AnimatedSwitcher(
+                  duration: LoomAccessibility.fromContext(context).reduceMotion
+                      ? Duration.zero
+                      : LoomMotion.component,
+                  child: _encryptionLabel(context, state),
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Once the DTLS handshake completes, the generic "encrypted call" label
+  /// is replaced by a short verification code: both participants must see
+  /// the same four digits and emoji, otherwise the media path is intercepted.
+  Widget _encryptionLabel(BuildContext context, LoomCallSnapshot state) {
+    final digits = state.encryptionDigits;
+    final emoji = state.encryptionEmoji;
+    if (state.lifecycle != LoomCallLifecycle.connected ||
+        digits == null ||
+        emoji == null) {
+      return Wrap(
+        key: const ValueKey<String>('encrypted-generic'),
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 5,
+        children: [
+          const Icon(
+            LoomIcons.lock_outline_rounded,
+            size: 14,
+            color: Colors.white60,
+          ),
+          Text(
+            tr(context, 'Encrypted call', 'تماس رمزگذاری‌شده'),
+            style: const TextStyle(color: Colors.white60, fontSize: 12),
+          ),
+        ],
+      );
+    }
+    return Container(
+      key: const ValueKey<String>('encrypted-code'),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlphaFraction(.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withAlphaFraction(.12)),
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 7,
+        children: [
+          const Icon(
+            LoomIcons.lock_outline_rounded,
+            size: 14,
+            color: Colors.white70,
+          ),
+          Text(
+            tr(
+              context,
+              'Encryption check — compare with your peer:',
+              'تأیید رمزنگاری — با طرف مقابلت مقایسه کن:',
+            ),
+            style: const TextStyle(color: Colors.white60, fontSize: 12),
+          ),
+          Text(
+            digits,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 3,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
+          ),
+          Text(
+            emoji.join(' '),
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+          ),
+        ],
       ),
     );
   }

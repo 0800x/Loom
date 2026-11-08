@@ -33,3 +33,17 @@ async function shutdown(signal: string): Promise<void> {
 }
 process.on('SIGINT', () => void shutdown('SIGINT'));
 process.on('SIGTERM', () => void shutdown('SIGTERM'));
+
+// A fire-and-forget metrics write or any forgotten `.catch()` must never take
+// the whole node down: unhandled rejections are logged and suppressed, and a
+// truly uncaught exception triggers an orderly shutdown instead of an abrupt
+// exit in the middle of a database transaction.
+process.on('unhandledRejection', (reason) => {
+  console.error('[loom-node] unhandled promise rejection (suppressed):', reason);
+});
+process.on('uncaughtException', (error) => {
+  console.error('[loom-node] uncaught exception, shutting down:', error);
+  const hardExit = setTimeout(() => process.exit(1), 10_000);
+  hardExit.unref?.();
+  void shutdown('uncaughtException');
+});

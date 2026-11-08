@@ -85,6 +85,8 @@ final class LoomProximityGatewayRoundRunner {
     required String recipientNodeDomain,
     required LoomProximityLegacyDeliveryAcceptor acceptLegacyDelivery,
     LoomProximityV2PacketAcceptor? acceptV2Packet,
+    bool? hasInternetUpstream,
+    Future<void>? yieldSignal,
     Duration scanTimeout = const Duration(seconds: 5),
     Duration advertisementLifetime = const Duration(seconds: 12),
     int maxCandidates = 4,
@@ -93,46 +95,64 @@ final class LoomProximityGatewayRoundRunner {
     if (!radio.supportedBearers.contains(bearer)) {
       throw StateError('Nearby radio does not support ${bearer.name}');
     }
-    if (scanTimeout <= Duration.zero ||
-        advertisementLifetime <= Duration.zero) {
+    if (advertisementLifetime <= Duration.zero) {
       throw ArgumentError('Proximity gateway round durations must be positive');
     }
+
+    // Internet-directed role split for the reverse (Internet-to-Nearby)
+    // last mile. A device that cannot reach any Node can never act as a
+    // gateway, so it only advertises its recipient rendezvous and waits for
+    // a nearby online device to connect. A device with a live upstream does
+    // not need last-mile delivery for itself, so it scans for offline
+    // recipients and carries their traffic instead of advertising. Unknown
+    // connectivity keeps the historical symmetric behavior.
+    final serveAsRecipient = hasInternetUpstream != true;
+    final seekGatewayCandidates = hasInternetUpstream != false;
+
     if (maxCandidates < 1 || maxCandidates > 16) {
       throw ArgumentError.value(maxCandidates, 'maxCandidates');
     }
     if (claimLimit < 1 || claimLimit > 50) {
       throw ArgumentError.value(claimLimit, 'claimLimit');
     }
+    if (seekGatewayCandidates && scanTimeout <= Duration.zero) {
+      throw ArgumentError('Proximity gateway round durations must be positive');
+    }
 
     final gatewayBearer = _gatewayBearer(bearer);
     final now = _clock().toUtc();
+    final windowDeadline = now.add(advertisementLifetime);
     final advertisement = LoomNearbyAdvertisement(
       protocolVersion: 1,
       rendezvousId: '$_proximityRendezvousPrefix${_rendezvousIdFactory()}',
       bearers: <LoomNearbyBearer>[bearer],
-      expiresAt: now.add(advertisementLifetime),
+      expiresAt: windowDeadline,
     );
-    final advertising = await radio.advertise(advertisement);
+    LoomNearbyAdvertisingSession? advertising;
+    StreamSubscription<LoomNearbyLink>? incomingSubscription;
     final inboundTasks = <Future<int>>[];
     var failed = 0;
-    final incomingSubscription = advertising.incomingLinks.listen((link) {
-      final task =
-          _serveRecipient(
-            link: link,
-            signer: signer,
-            recipientIdentityId: recipientIdentityId,
-            recipientDeviceId: recipientDeviceId,
-            recipientNodeId: recipientNodeId,
-            recipientNodeDomain: recipientNodeDomain,
-            bearer: gatewayBearer,
-            acceptLegacyDelivery: acceptLegacyDelivery,
-            acceptV2Packet: acceptV2Packet,
-          ).catchError((Object _) {
-            failed++;
-            return 0;
-          });
-      inboundTasks.add(task);
-    });
+    if (serveAsRecipient) {
+      advertising = await radio.advertise(advertisement);
+      incomingSubscription = advertising.incomingLinks.listen((link) {
+        final task =
+            _serveRecipient(
+              link: link,
+              signer: signer,
+              recipientIdentityId: recipientIdentityId,
+              recipientDeviceId: recipientDeviceId,
+              recipientNodeId: recipientNodeId,
+              recipientNodeDomain: recipientNodeDomain,
+              bearer: gatewayBearer,
+              acceptLegacyDelivery: acceptLegacyDelivery,
+              acceptV2Packet: acceptV2Packet,
+            ).catchError((Object _) {
+              failed++;
+              return 0;
+            });
+        inboundTasks.add(task);
+      });
+    }
 
     var discovered = 0;
     var connected = 0;
@@ -142,37 +162,50 @@ final class LoomProximityGatewayRoundRunner {
     var packetsAccepted = 0;
     final seenHandles = <String>{};
     try {
-      await for (final candidate in radio.scan(timeout: scanTimeout)) {
-        if (discovered >= maxCandidates) break;
-        if (candidate.bearer != bearer ||
-            candidate.advertisement.protocolVersion != 1 ||
-            !candidate.advertisement.rendezvousId.startsWith(
-              _proximityRendezvousPrefix,
-            ) ||
-            !candidate.advertisement.expiresAt.isAfter(_clock().toUtc()) ||
-            !seenHandles.add(candidate.nativeHandle)) {
-          continue;
+      if (seekGatewayCandidates) {
+        await for (final candidate in radio.scan(timeout: scanTimeout)) {
+          if (discovered >= maxCandidates) break;
+          if (candidate.bearer != bearer ||
+              candidate.advertisement.protocolVersion != 1 ||
+              !candidate.advertisement.rendezvousId.startsWith(
+                _proximityRendezvousPrefix,
+              ) ||
+              !candidate.advertisement.expiresAt.isAfter(_clock().toUtc()) ||
+              !seenHandles.add(candidate.nativeHandle)) {
+            continue;
+          }
+          discovered++;
+          try {
+            final link = await radio.connect(candidate);
+            connected++;
+            final result = await _actAsGateway(
+              link: link,
+              signer: signer,
+              claimLimit: claimLimit,
+            );
+            packetsOffered += result.$1;
+            packetsAccepted += result.$2;
+            legacyOffered += result.$3;
+            legacyAccepted += result.$4;
+          } catch (_) {
+            failed++;
+          }
         }
-        discovered++;
-        try {
-          final link = await radio.connect(candidate);
-          connected++;
-          final result = await _actAsGateway(
-            link: link,
-            signer: signer,
-            claimLimit: claimLimit,
-          );
-          packetsOffered += result.$1;
-          packetsAccepted += result.$2;
-          legacyOffered += result.$3;
-          legacyAccepted += result.$4;
-        } catch (_) {
-          failed++;
+      }
+      // Hold the recipient rendezvous for its full declared lifetime instead
+      // of closing it as soon as the local scan ends. The advertisement used
+      // to disappear after the short scan window, so a nearby online gateway
+      // that started scanning a few seconds later could never discover this
+      // recipient and reverse delivery looked simply broken in the field.
+      if (serveAsRecipient) {
+        final remaining = windowDeadline.difference(_clock().toUtc());
+        if (remaining > Duration.zero) {
+          await _serveRecipientWindow(remaining, yieldSignal);
         }
       }
     } finally {
-      await advertising.close();
-      await incomingSubscription.cancel();
+      await advertising?.close();
+      await incomingSubscription?.cancel();
     }
 
     var inboundSessions = 0;
@@ -194,6 +227,24 @@ final class LoomProximityGatewayRoundRunner {
       inboundSessions: inboundSessions,
       failedEncounters: failed,
     );
+  }
+
+  /// Waits out the recipient advertisement window. [yieldSignal] lets the
+  /// caller hand the radio back early when higher-priority work (for example
+  /// an on-demand Nearby send) needs the bearer.
+  Future<void> _serveRecipientWindow(
+    Duration remaining,
+    Future<void>? yieldSignal,
+  ) async {
+    if (yieldSignal == null) {
+      await Future<void>.delayed(remaining);
+      return;
+    }
+    final aborted = yieldSignal.then<void>((_) {}, onError: (Object _) {});
+    await Future.any<void>(<Future<void>>[
+      Future<void>.delayed(remaining),
+      aborted,
+    ]);
   }
 
   Future<(int, int, int, int)> _actAsGateway({

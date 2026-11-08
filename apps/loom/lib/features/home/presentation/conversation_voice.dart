@@ -363,8 +363,26 @@ class _RoundVideoMessageState extends State<_RoundVideoMessage>
                     return Stack(
                       fit: StackFit.expand,
                       children: [
+                        // Round video notes must never crop their content:
+                        // the video letterboxes inside the circular frame on
+                        // a soft dark gradient instead of cover-filling and
+                        // cutting off the sides (Telegram-style notes are
+                        // square-normalized, so nothing is letterboxed there).
+                        if (widget.round)
+                          const DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: RadialGradient(
+                                colors: [
+                                  Color.fromRGBO(255, 255, 255, .07),
+                                  Colors.black,
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          const ColoredBox(color: Colors.black),
                         FittedBox(
-                          fit: widget.round ? BoxFit.cover : BoxFit.contain,
+                          fit: BoxFit.contain,
                           child: SizedBox(
                             width: value.size.width,
                             height: value.size.height,

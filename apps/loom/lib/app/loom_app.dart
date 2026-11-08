@@ -62,6 +62,7 @@ import '../features/security/application/db_encryption.dart';
 import '../features/security/application/experimental_ratchet.dart';
 import '../features/settings/presentation/nearby_diagnostics_screen.dart';
 import '../features/settings/presentation/nearby_mode_screen.dart';
+import '../features/settings/presentation/maps_settings_screen.dart';
 import '../features/settings/presentation/settings_detail_screen.dart';
 
 class LoomApp extends StatefulWidget {
@@ -964,6 +965,8 @@ class _LoomAppState extends State<LoomApp> with SingleTickerProviderStateMixin {
                               _settings(LoomSettingsSection.storage),
                           '/settings/appearance': (_) =>
                               _settings(LoomSettingsSection.appearance),
+                          '/settings/maps': (_) =>
+                              const LoomMapsSettingsScreen(),
                           '/settings/nearby': (_) =>
                               LoomNearbyModeScreen(controller: nearbyDtn),
                           '/settings/nearby-diagnostics': (_) =>

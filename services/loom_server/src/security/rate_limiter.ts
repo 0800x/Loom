@@ -7,22 +7,60 @@ export class RateLimitError extends Error {
 
 type Bucket = { tokens: number; updatedAt: number; limit: number };
 
-/** Process-local token buckets. Exact entries never evict active quota history.
- * Once exact capacity is reached, new subjects use a fixed number of shared,
- * conservatively charged overflow buckets. Collisions can throttle unrelated
- * subjects, but cannot reset an exhausted subject or grow memory without bound.
+/** Bounded concurrency admission gate. `enter()` throws a short-retry
+ * RateLimitError while saturated and every release is idempotent. */
+export class LoomAdmissionGate {
+  private active = 0;
+  private readonly maxConcurrent: number;
+  constructor(maxConcurrent: number) {
+    if (!Number.isSafeInteger(maxConcurrent) || maxConcurrent < 1) throw new Error('invalid_admission_capacity');
+    this.maxConcurrent = maxConcurrent;
+  }
+  enter(): () => void {
+    if (this.active >= this.maxConcurrent) throw new RateLimitError(1);
+    this.active++;
+    let released = false;
+    return () => { if (!released) { released = true; this.active--; } };
+  }
+  get busy(): number { return this.active; }
+}
+
+/** Process-local token buckets. Exact entries evict only after being idle
+ * long enough to have fully refilled (see `sweep`); once exact capacity is
+ * reached anyway, new subjects use a fixed number of shared, conservatively
+ * charged overflow buckets. Collisions can throttle unrelated subjects, but
+ * cannot reset an exhausted subject or grow memory without bound.
  */
 export class LoomRateLimiter {
   private buckets = new Map<string, Bucket>();
   private readonly bucketKey = randomBytes(32);
   private overflow: Array<Bucket | undefined>;
-  private active = 0;
+  private readonly gate: LoomAdmissionGate;
+  private readonly idleMs: number;
   private maxEntries: number;
-  private maxConcurrent: number;
-  constructor(maxEntries = 10000, maxConcurrent = 32, overflowEntries = 256) {
+  constructor(maxEntries = 10000, maxConcurrent = 32, overflowEntries = 256, idleMs = 600_000) {
     if (![maxEntries, maxConcurrent, overflowEntries].every(n => Number.isSafeInteger(n) && n > 0)) throw new Error('invalid_rate_limiter_capacity');
-    this.maxEntries = maxEntries; this.maxConcurrent = maxConcurrent;
+    if (!Number.isSafeInteger(idleMs) || idleMs < 0) throw new Error('invalid_rate_limiter_idle_window');
+    this.maxEntries = maxEntries;
+    this.gate = new LoomAdmissionGate(maxConcurrent);
+    this.idleMs = idleMs;
     this.overflow = new Array(overflowEntries);
+  }
+  /** Evict exact buckets that have been idle long enough to have fully
+   * refilled. Rotating credentials (Internet scanners sending random bearer
+   * tokens, or the 15-minute client access-token rotation) otherwise fill the
+   * exact map once and degrade every new subject into the shared overflow
+   * shards until the process is restarted. */
+  private sweep(now = Date.now()): void {
+    if (this.idleMs <= 0 || this.buckets.size === 0) return;
+    for (const [key, bucket] of this.buckets) {
+      const idle = now - bucket.updatedAt;
+      if (idle < this.idleMs) continue;
+      // The bucket is never re-consumed, so its refill must be computed here:
+      // only a bucket that has effectively fully refilled may be discarded.
+      const effective = Math.min(bucket.limit, bucket.tokens + idle * bucket.limit / 60000);
+      if (effective + 1e-9 >= bucket.limit) this.buckets.delete(key);
+    }
   }
   consume(scope: string, subject: string, limit: number, now = Date.now()): void {
     if (!Number.isSafeInteger(limit) || limit < 1 || !Number.isFinite(now)) throw new Error('invalid_rate_limiter_quota');
@@ -30,6 +68,7 @@ export class LoomRateLimiter {
     const key = digest.toString('hex');
     let bucket = this.buckets.get(key);
     if (!bucket) {
+      if (this.buckets.size >= this.maxEntries) this.sweep(now);
       if (this.buckets.size < this.maxEntries) {
         bucket = { tokens: limit, updatedAt: now, limit };
         this.buckets.set(key, bucket);
@@ -54,12 +93,8 @@ export class LoomRateLimiter {
     if (bucket.tokens + 1e-9 < 1) throw new RateLimitError(Math.max(1, Math.ceil((1 - bucket.tokens) * 60 / bucket.limit)));
     bucket.tokens = Math.max(0, bucket.tokens - 1);
   }
-  enter(): () => void {
-    if (this.active >= this.maxConcurrent) throw new RateLimitError(1);
-    this.active++;
-    let released = false;
-    return () => { if (!released) { released = true; this.active--; } };
-  }
+  enter(): () => void { return this.gate.enter(); }
+  get busy(): number { return this.gate.busy; }
 }
 
 export function endpointClass(path: string): [string, number] {

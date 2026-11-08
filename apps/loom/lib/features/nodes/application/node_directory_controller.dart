@@ -158,6 +158,21 @@ class LoomNodeDirectoryController extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  /// Clears the locally selected node (directory choice, live info and any
+  /// pending verification). Accounts already committed to a node keep their
+  /// own Home Node reference; this only forgets this device's selection.
+  void forgetSelection() {
+    selectedNode = null;
+    selectedEndpoint = null;
+    selectedLiveInfo = null;
+    _selectedNodeFreshlyVerified = false;
+    errorMessage = null;
+    state = nodes.isEmpty
+        ? LoomNodeDirectoryState.idle
+        : LoomNodeDirectoryState.ready;
+    notifyListeners();
+  }
 }
 
 class LoomNodeDirectoryScope

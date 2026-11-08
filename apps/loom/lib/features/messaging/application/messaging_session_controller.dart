@@ -242,6 +242,9 @@ class LoomMessagingSessionController extends ChangeNotifier
     messageFolds = const {};
     _groupFolds.clear();
     _typing.clear();
+    _typingSignature = null;
+    _publishTyping();
+    _decryptedTextCache.clear();
     _groupMessageSources.clear();
     notifyListeners();
   }
@@ -293,6 +296,24 @@ class LoomMessagingSessionController extends ChangeNotifier
   final _typing = <String, Map<String, DateTime>>{};
   Timer? _typingSweeper;
   final _lastTypingSent = <String, DateTime>{};
+  String? _typingSignature;
+
+  /// Ephemeral typing state published on its own listenable. Typing frames
+  /// used to fan out through the general ChangeNotifier, which rebuilt the
+  /// whole messenger shell several times per second while two people typed
+  /// quickly at each other. The typing chip and conversation rows listen to
+  /// this value directly instead.
+  final ValueNotifier<Map<String, Map<String, DateTime>>> typingPeers =
+      ValueNotifier<Map<String, Map<String, DateTime>>>(const {});
+
+  // Decrypted-text cache keyed by message client id. Every refresh used to
+  // re-decrypt the visible window of every conversation, so each realtime
+  // event (including ephemeral typing frames) cost hundreds of decrypt
+  // operations and read as UI lag. Entries expire so trust/pin changes and
+  // newly imported historical keys are picked up within minutes.
+  static const _decryptCacheTtl = Duration(minutes: 3);
+  static const _decryptCacheLimit = 6000;
+  final _decryptedTextCache = <String, _CachedDecrypt>{};
   bool _searchEnabled = true;
   final LoomSearchPreferencesStore _searchPreferences =
       LoomSearchPreferencesStore();
@@ -327,7 +348,22 @@ class LoomMessagingSessionController extends ChangeNotifier
       }
     }
     _scheduleTypingSweeper();
-    notifyListeners();
+    _publishTyping();
+  }
+
+  /// Publishes the typing snapshot only when it actually changed, so the
+  /// typing UI never rebuilds for identical state.
+  void _publishTyping() {
+    final signature = _typing.entries
+        .map((entry) => '${entry.key}=${entry.value.length}')
+        .join(';');
+    if (signature == _typingSignature) return;
+    _typingSignature = signature;
+    typingPeers.value = Map.unmodifiable(
+      _typing.map(
+        (conversationId, peers) => MapEntry(conversationId, Map.unmodifiable(peers)),
+      ),
+    );
   }
 
   void _scheduleTypingSweeper() {
@@ -343,7 +379,7 @@ class LoomMessagingSessionController extends ChangeNotifier
         if (peers.length != before) changed = true;
       }
       _typing.removeWhere((_, peers) => peers.isEmpty);
-      if (changed) notifyListeners();
+      if (changed) _publishTyping();
       if (_typing.isNotEmpty) _scheduleTypingSweeper();
     });
   }
@@ -808,7 +844,10 @@ class LoomMessagingSessionController extends ChangeNotifier
   /// Cheap signature of everything the messenger shell renders from this
   /// controller: session status, conversation rows and their unread/pin
   /// flags, the visible message window per conversation (count, newest and
-  /// oldest order, delivery of the newest message) and typing peers.
+  /// oldest order), the delivery states of the newest messages and the
+  /// reaction/edit folds. Typing state is intentionally excluded: it is
+  /// published on [typingPeers] so ephemeral typing frames never rebuild
+  /// the whole shell.
   String _presentationFingerprint() {
     final buffer = StringBuffer()
       ..write(status.name)
@@ -843,16 +882,36 @@ class LoomMessagingSessionController extends ChangeNotifier
         ..write(':')
         ..write(last.record.createdOrder)
         ..write(':')
-        ..write(last.record.clientId)
-        ..write(':')
-        ..write(last.record.deliveryState.name);
-    }
-    for (final entry in _typing.entries) {
-      buffer
-        ..write('~')
-        ..write(entry.key)
-        ..write(':')
-        ..write(entry.value.length);
+        ..write(last.record.clientId);
+      // Delivery receipts for messages other than the newest one must still
+      // change the signature, or a second tick would wait for the next event.
+      final tail = messages.length <= 6
+          ? messages
+          : messages.sublist(messages.length - 6);
+      for (final message in tail) {
+        buffer
+          ..write('^')
+          ..write(message.record.clientId)
+          ..write(':')
+          ..write(message.record.deliveryState.name);
+      }
+      final folds = messageFolds[conversation.id];
+      if (folds != null && folds.isNotEmpty) {
+        for (final entry in folds.entries) {
+          final fold = entry.value;
+          buffer
+            ..write('&')
+            ..write(entry.key)
+            ..write(':')
+            ..write(fold.reactions.map((reaction) => reaction.emoji).join(','))
+            ..write(':')
+            ..write(fold.editedText?.length ?? -1)
+            ..write(':')
+            ..write(fold.editedText?.hashCode ?? 0)
+            ..write(':')
+            ..write(fold.deletedForEveryone ? 1 : 0);
+        }
+      }
     }
     return buffer.toString();
   }
@@ -873,6 +932,27 @@ class LoomMessagingSessionController extends ChangeNotifier
     }
     _notifiedFingerprint = fingerprint;
     super.notifyListeners();
+  }
+
+  Timer? _realtimeNotifyTimer;
+  bool _realtimeNotifyPending = false;
+
+  /// Coalesces realtime-event fan-out. A burst of events (a fast exchange of
+  /// messages plus delivery receipts) applies immediately but rebuilds the
+  /// shell at most once per interval; ephemeral typing frames do not reach
+  /// this path's signature at all and update [typingPeers] only.
+  void _scheduleRealtimeNotify() {
+    if (_disposed) {
+      return;
+    }
+    _realtimeNotifyPending = true;
+    _realtimeNotifyTimer ??= Timer(const Duration(milliseconds: 120), () {
+      _realtimeNotifyTimer = null;
+      if (_realtimeNotifyPending) {
+        _realtimeNotifyPending = false;
+        notifyIfPresentationChanged();
+      }
+    });
   }
 
   Future<void> retryQueuedMessages() async {
@@ -2773,7 +2853,7 @@ class LoomMessagingSessionController extends ChangeNotifier
           _engine?.applyRealtimeEvent(event);
           await _refreshLocal();
           if (!_disposed && expectedEpoch == _realtimeEpoch) {
-            notifyListeners();
+            _scheduleRealtimeNotify();
             _receiptFuture ??= _acknowledgeReadableMessages().whenComplete(
               () => _receiptFuture = null,
             );
@@ -2926,19 +3006,31 @@ class LoomMessagingSessionController extends ChangeNotifier
         if (conversation.kind == LoomConversationKind.self &&
             identity != null &&
             record.protocolVersion == LoomSelfMessageCodec.protocolVersion) {
-          try {
+          final cached = _cachedDecryptFor(record);
+          if (cached != null) {
             messages.add(
-              LoomVisibleMessage(
-                record: record,
-                text: await _selfMessageCodec.decryptText(
-                  identityId: identity.identityId,
-                  conversationId: conversation.id,
-                  envelope: record.ciphertext,
-                ),
-                readable: true,
-              ),
+              cached.readable
+                  ? LoomVisibleMessage(
+                      record: record,
+                      text: cached.text,
+                      readable: true,
+                    )
+                  : _unreadable(record),
+            );
+            continue;
+          }
+          try {
+            final text = await _selfMessageCodec.decryptText(
+              identityId: identity.identityId,
+              conversationId: conversation.id,
+              envelope: record.ciphertext,
+            );
+            _rememberDecrypt(record, text: text, readable: true);
+            messages.add(
+              LoomVisibleMessage(record: record, text: text, readable: true),
             );
           } catch (_) {
+            _rememberDecrypt(record, text: '', readable: false);
             messages.add(_unreadable(record));
           }
           continue;
@@ -2949,6 +3041,19 @@ class LoomMessagingSessionController extends ChangeNotifier
             receipt != null &&
             record.protocolVersion == LoomDirectMessageCodec.protocolVersion &&
             _directCodec != null) {
+          final cached = _cachedDecryptFor(record);
+          if (cached != null) {
+            messages.add(
+              cached.readable
+                  ? LoomVisibleMessage(
+                      record: record,
+                      text: cached.text,
+                      readable: true,
+                    )
+                  : _unreadable(record),
+            );
+            continue;
+          }
           try {
             final header = _directCodec!.inspect(record.ciphertext);
             if (header.senderAddress.toLowerCase() !=
@@ -3017,21 +3122,20 @@ class LoomMessagingSessionController extends ChangeNotifier
             if (senderBundle == null) {
               throw StateError('Sender device key is unavailable or revoked');
             }
+            final text = await _decryptDirectTextForLocalHistory(
+              record: record,
+              conversationId: conversation.id,
+              identity: identity,
+              receipt: receipt,
+              senderBundle: senderBundle,
+              historicalDeviceIds: historicalDeviceIds,
+            );
+            _rememberDecrypt(record, text: text, readable: true);
             messages.add(
-              LoomVisibleMessage(
-                record: record,
-                text: await _decryptDirectTextForLocalHistory(
-                  record: record,
-                  conversationId: conversation.id,
-                  identity: identity,
-                  receipt: receipt,
-                  senderBundle: senderBundle,
-                  historicalDeviceIds: historicalDeviceIds,
-                ),
-                readable: true,
-              ),
+              LoomVisibleMessage(record: record, text: text, readable: true),
             );
           } catch (_) {
+            _rememberDecrypt(record, text: '', readable: false);
             messages.add(_unreadable(record));
           }
           continue;
@@ -3062,6 +3166,7 @@ class LoomMessagingSessionController extends ChangeNotifier
       );
       for (final clientId in ephemeralRows) {
         _store?.purgeEphemeralMessage(clientId);
+        _decryptedTextCache.remove(clientId);
       }
       _absorbTyping(
         conversation.id,
@@ -3376,6 +3481,39 @@ class LoomMessagingSessionController extends ChangeNotifier
         readable: false,
       );
 
+  /// Returns the cached decrypt result for a record when the ciphertext is
+  /// unchanged and the entry has not expired. [record] is fresh from the
+  /// store each refresh, so delivery-state and fold updates still flow.
+  _CachedDecrypt? _cachedDecryptFor(LoomMessageRecord record) {
+    final cached = _decryptedTextCache[record.clientId];
+    if (cached == null) return null;
+    if (cached.ciphertext != record.ciphertext) {
+      _decryptedTextCache.remove(record.clientId);
+      return null;
+    }
+    if (DateTime.now().difference(cached.cachedAt) > _decryptCacheTtl) {
+      _decryptedTextCache.remove(record.clientId);
+      return null;
+    }
+    return cached;
+  }
+
+  void _rememberDecrypt(
+    LoomMessageRecord record, {
+    required String text,
+    required bool readable,
+  }) {
+    if (_decryptedTextCache.length >= _decryptCacheLimit) {
+      _decryptedTextCache.clear();
+    }
+    _decryptedTextCache[record.clientId] = _CachedDecrypt(
+      ciphertext: record.ciphertext,
+      text: text,
+      readable: readable,
+      cachedAt: DateTime.now(),
+    );
+  }
+
   void _setError(String value) {
     status = LoomMessagingSessionStatus.error;
     errorMessage = value;
@@ -3395,6 +3533,11 @@ class LoomMessagingSessionController extends ChangeNotifier
     _disposed = true;
     _engine?.dispose();
     ++_realtimeEpoch;
+    _realtimeNotifyTimer?.cancel();
+    _realtimeNotifyTimer = null;
+    _typingSweeper?.cancel();
+    _typingSweeper = null;
+    _decryptedTextCache.clear();
     unawaited(_networkSubscription?.cancel());
     _networkSubscription = null;
     unawaited(_realtimeSubscription?.cancel());
@@ -3406,8 +3549,25 @@ class LoomMessagingSessionController extends ChangeNotifier
     _store = null;
     _securityStore = null;
     _peerIdentityStore = null;
+    typingPeers.dispose();
     super.dispose();
   }
+}
+
+/// One cached decryption result. Keyed by message client id; the ciphertext
+/// is stored so an edited or re-encrypted row invalidates its entry.
+final class _CachedDecrypt {
+  const _CachedDecrypt({
+    required this.ciphertext,
+    required this.text,
+    required this.readable,
+    required this.cachedAt,
+  });
+
+  final String ciphertext;
+  final String text;
+  final bool readable;
+  final DateTime cachedAt;
 }
 
 final class _LoomSendFallbackMessagingApi implements LoomMessagingApi {

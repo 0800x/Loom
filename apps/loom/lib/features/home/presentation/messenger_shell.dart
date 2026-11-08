@@ -54,6 +54,7 @@ import '../../calls/application/call_session_controller.dart';
 import '../../calls/presentation/calls_screen.dart';
 import '../../chat_folders/application/chat_folder_controller.dart';
 import '../../chat_folders/presentation/chat_folder_labels.dart';
+import '../../messaging/application/map_tile_preferences.dart';
 import '../../messaging/application/messaging_session_controller.dart';
 import '../../messaging/application/message_fold.dart';
 import '../../onboarding/application/logout_service.dart';
@@ -82,6 +83,7 @@ part 'conversation_recording.dart';
 part 'conversation_gallery.dart';
 part 'conversation_gallery_preview.dart';
 part 'conversation_shared_media.dart';
+part 'conversation_settings_screen.dart';
 
 /// The production Loom shell.
 ///
@@ -1573,11 +1575,62 @@ class _FolderConversationPage extends StatelessWidget {
             latest != null &&
             messaging?.onboarding.receipt?.address.toLowerCase() ==
                 latest.record.senderAddress.toLowerCase();
-        // Live typing state from the ephemeral protocol events; the row falls
-        // back to its preview as soon as the last peer goes quiet.
-        final typingPeers =
-            messaging?.typingPeersFor(conversation.id) ??
-            const <String, DateTime>{};
+        final rowDelivery = mine
+            ? _designDelivery(latest.record.deliveryState)
+            : models.LoomDeliveryState.none;
+        final rowPreview =
+            latest?.text ??
+            (conversation.kind == models.LoomConversationKind.direct
+                ? tr(context, 'End-to-end encrypted', 'رمزگذاری سرتاسری')
+                : tr(
+                    context,
+                    'Encrypted conversation',
+                    'گفتگوی رمزگذاری‌شده',
+                  ));
+        final rowTime =
+            latest == null ? '' : _shortTime(latest.record.createdAt);
+        final rowSelected =
+            MediaQuery.sizeOf(context).width >= LoomBreakpoints.expanded &&
+            selectedConversationId == conversation.id;
+        // Typing state no longer flows through the controller's general
+        // notifications; the row below subscribes to the ephemeral snapshot
+        // so a typing burst rebuilds only this row, not the whole shell.
+        LoomChatRow chatRow({
+          required String typingLabel,
+          required bool typing,
+        }) => LoomChatRow(
+              key: ValueKey(conversation.id),
+              draftLabel: tr(context, 'Draft', 'پیش‌نویس'),
+              typingLabel: typingLabel,
+              typing: typing,
+              name: _conversationTitle(context, conversation),
+              avatar: conversation.kind == models.LoomConversationKind.group
+                  ? LoomGroupAvatar(
+                      groupId: conversation.id,
+                      label: _conversationTitle(context, conversation),
+                      groups: messaging?.groupsController,
+                    )
+                  : LoomOwnAvatar(
+                      name: _conversationTitle(context, conversation),
+                      size: LoomSizing.avatar,
+                      identityId:
+                          conversation.kind == models.LoomConversationKind.self
+                          ? messaging?.onboarding.committedIdentity?.identityId
+                          : messaging?.peerIdentityId(conversation.peerAddress),
+                    ),
+              preview: rowPreview,
+              time: rowTime,
+              unread: conversation.unreadCount,
+              presence: false,
+              muted: conversation.isMuted,
+              pinned: conversation.isPinned,
+              delivery: rowDelivery,
+              selected: rowSelected,
+              onTapWithOrigin: (origin) {
+                onConversationOrigin?.call(conversation.id, origin);
+                onConversationSelected(conversation.id);
+              },
+            );
         return Builder(
           builder: (rowContext) => GestureDetector(
             onSecondaryTapDown: messaging == null
@@ -1653,52 +1706,13 @@ class _FolderConversationPage extends StatelessWidget {
                       }
                     }
                   },
-            child: LoomChatRow(
-              key: ValueKey(conversation.id),
-              draftLabel: tr(context, 'Draft', 'پیش‌نویس'),
-              typingLabel: typingRowLabel(context, typingPeers.keys),
-              typing: typingPeers.isNotEmpty,
-              name: _conversationTitle(context, conversation),
-              avatar: conversation.kind == models.LoomConversationKind.group
-                  ? LoomGroupAvatar(
-                      groupId: conversation.id,
-                      label: _conversationTitle(context, conversation),
-                      groups: messaging?.groupsController,
-                    )
-                  : LoomOwnAvatar(
-                      name: _conversationTitle(context, conversation),
-                      size: LoomSizing.avatar,
-                      identityId:
-                          conversation.kind == models.LoomConversationKind.self
-                          ? messaging?.onboarding.committedIdentity?.identityId
-                          : messaging?.peerIdentityId(conversation.peerAddress),
-                    ),
-              preview:
-                  latest?.text ??
-                  (conversation.kind == models.LoomConversationKind.direct
-                      ? tr(context, 'End-to-end encrypted', 'رمزگذاری سرتاسری')
-                      : tr(
-                          context,
-                          'Encrypted conversation',
-                          'گفتگوی رمزگذاری‌شده',
-                        )),
-              time: latest == null ? '' : _shortTime(latest.record.createdAt),
-              unread: conversation.unreadCount,
-              presence: false,
-              muted: conversation.isMuted,
-              pinned: conversation.isPinned,
-              delivery: mine
-                  ? _designDelivery(latest.record.deliveryState)
-                  : LoomDeliveryState.none,
-              selected:
-                  MediaQuery.sizeOf(context).width >=
-                      LoomBreakpoints.expanded &&
-                  selectedConversationId == conversation.id,
-              onTapWithOrigin: (origin) {
-                onConversationOrigin?.call(conversation.id, origin);
-                onConversationSelected(conversation.id);
-              },
-            ),
+            child: messaging == null
+                ? chatRow(typingLabel: '', typing: false)
+                : _TypingAwareChatRow(
+                    session: messaging!,
+                    conversationId: conversation.id,
+                    build: chatRow,
+                  ),
           ),
         );
       },
@@ -1920,22 +1934,31 @@ class _LiveMessageBubble extends StatelessWidget {
       quotedText: quotedText,
       quotedAuthor: quotedAuthor,
       banner: message.content.forwarded && message.readable
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  LoomIcons.ios_share_rounded,
-                  size: 12,
-                  color: context.loom.textMuted,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  tr(context, 'Forwarded', 'فوروارد شده'),
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: context.loom.textMuted.withValues(alpha: .10),
+                borderRadius: BorderRadius.circular(7),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    LoomIcons.ios_share_rounded,
+                    size: 11,
                     color: context.loom.textMuted,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  Text(
+                    tr(context, 'Forwarded', 'فوروارد شده'),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: context.loom.textMuted,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: .2,
+                    ),
+                  ),
+                ],
+              ),
             )
           : null,
       footer: footer,
@@ -2263,6 +2286,11 @@ class _SettingsPane extends StatelessWidget {
           '/settings/appearance',
         ),
         (
+          LoomIcons.map_outlined,
+          tr(context, 'Maps', 'نقشه‌ها'),
+          '/settings/maps',
+        ),
+        (
           LoomIcons.near_me_outlined,
           tr(context, 'Nearby', 'نزدیک'),
           '/settings/nearby',
@@ -2325,6 +2353,11 @@ class _SettingsPane extends StatelessWidget {
         context,
         'Theme and glass effects',
         'تم و جلوه‌های شیشه‌ای',
+      ),
+      '/settings/maps': tr(
+        context,
+        'Basemap source for location sharing',
+        'منبع نقشه برای اشتراک موقعیت',
       ),
       '/settings/nearby': tr(
         context,
@@ -2703,6 +2736,39 @@ String _deliveryLabel(BuildContext context, models.LoomDeliveryState state) =>
 String _shortTime(DateTime value) {
   final local = value.toLocal();
   return '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+}
+
+/// Rebuilds only the typing presentation of one chat-list row when the
+/// controller's ephemeral typing snapshot changes, instead of routing typing
+/// frames through the controller's general notifications and rebuilding the
+/// whole messenger shell several times per second.
+class _TypingAwareChatRow extends StatelessWidget {
+  const _TypingAwareChatRow({
+    required this.session,
+    required this.conversationId,
+    required this.build,
+  });
+
+  final LoomMessagingSessionController session;
+  final String conversationId;
+  final LoomChatRow Function({
+    required String typingLabel,
+    required bool typing,
+  }) build;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<Map<String, Map<String, DateTime>>>(
+      valueListenable: session.typingPeers,
+      builder: (context, _, __) {
+        final peers = session.typingPeersFor(conversationId);
+        return build(
+          typingLabel: typingRowLabel(context, peers.keys),
+          typing: peers.isNotEmpty,
+        );
+      },
+    );
+  }
 }
 
 /// Chat-list label for the ephemeral typing events. Names come straight from
