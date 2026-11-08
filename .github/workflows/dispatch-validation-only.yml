@@ -1,4 +1,5 @@
 name: Dispatch Loom validation only
+# One-shot helper: dispatch validation without rebuilding release packages.
 on:
   push:
     branches: [main]
