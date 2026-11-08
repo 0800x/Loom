@@ -18,8 +18,9 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: loom-alpha-${{ github.ref }}
-  # Let an in-flight build finish and publish its matching immutable release.
+  # Keep same-version builds serialized while allowing a new version to build
+  # alongside an older in-flight release pipeline.
+  group: loom-alpha-v0.6.0-${{ github.ref }}
   cancel-in-progress: false
 env:
   CI: 'true'
