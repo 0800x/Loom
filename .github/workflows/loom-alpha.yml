@@ -18,10 +18,10 @@ on:
 permissions:
   contents: read
 concurrency:
-  # Keep same-version builds serialized while allowing a new version to build
-  # alongside an older in-flight release pipeline.
+  # Cancel stale same-version builds when a newer full-release commit arrives.
+  # The version-specific group still allows a different version to build alongside.
   group: loom-alpha-v0.6.0-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 env:
   CI: 'true'
   FLUTTER_SUPPRESS_ANALYTICS: 'true'
