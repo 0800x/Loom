@@ -1348,7 +1348,7 @@ class _GroupCallVerificationChip extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.w700,
               letterSpacing: 3,
-              fontFeatures: [const FontFeature.tabularFigures()],
+              fontFeatures: [FontFeature.tabularFigures()],
             ),
           ),
           if (emoji.isNotEmpty) ...[
