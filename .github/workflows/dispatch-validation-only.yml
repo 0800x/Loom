@@ -1,5 +1,6 @@
 name: Dispatch Loom validation only
 # One-shot helper: dispatch validation without rebuilding release packages.
+# Re-run after updating the conversation deletion UX test.
 on:
   push:
     branches: [main]
