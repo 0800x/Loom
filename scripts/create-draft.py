@@ -7,6 +7,7 @@ commits cannot create stale releases.
 """
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -61,10 +62,10 @@ def resolve_tag_commit(tag):
     return target['sha']
 
 
-def verify_release(info, tag, assets):
+def verify_release(info, tag, assets, expected_revision):
     if info['tag_name'] != tag or info['draft'] or not info['prerelease']:
         raise ValueError('Release is not the expected published prerelease: ' + tag)
-    if resolve_tag_commit(tag) != revision:
+    if resolve_tag_commit(tag) != expected_revision:
         raise ValueError('Release tag points to a different source revision: ' + tag)
     expected = {path.name: 'sha256:' + release.sha(path) for path in assets}
     actual = {item['name']: item.get('digest') for item in info.get('assets', [])}
@@ -75,7 +76,8 @@ def verify_release(info, tag, assets):
             raise ValueError('Published release asset digest mismatch: ' + name)
 
 
-def publish_or_verify(tag, title, assets, notes, extra):
+def publish_or_verify(tag, title, assets, notes, extra, expected_revision=None):
+    expected_revision = expected_revision or revision
     releases = api_json('repos/' + REPOSITORY + '/releases?per_page=100')
     existing = next((item for item in releases if item['tag_name'] == tag), None)
     if existing is None:
@@ -90,8 +92,27 @@ def publish_or_verify(tag, title, assets, notes, extra):
         existing = next((item for item in releases if item['tag_name'] == tag), None)
         if existing is None:
             raise ValueError('GitHub did not return the newly created release: ' + tag)
-    verify_release(existing, tag, assets)
+    verify_release(existing, tag, assets, expected_revision)
     print('Published and verified prerelease: ' + existing['html_url'])
+    return existing
+
+
+def verify_existing_release(tag, expected_revision, expected_names):
+    releases = api_json('repos/' + REPOSITORY + '/releases?per_page=100')
+    existing = next((item for item in releases if item['tag_name'] == tag), None)
+    if existing is None:
+        raise ValueError('Expected previously published Node Manager release is missing: ' + tag)
+    if existing['draft'] or not existing['prerelease']:
+        raise ValueError('Existing Node Manager release is not a published prerelease: ' + tag)
+    if resolve_tag_commit(tag) != expected_revision:
+        raise ValueError('Existing Node Manager release points to an unexpected source revision')
+    actual = {item['name']: item.get('digest') for item in existing.get('assets', [])}
+    if set(actual) != set(expected_names):
+        raise ValueError('Existing Node Manager release asset names do not match the expected set')
+    for name, digest in actual.items():
+        if not isinstance(digest, str) or not re.fullmatch(r'sha256:[0-9a-f]{64}', digest):
+            raise ValueError('Existing Node Manager release has no valid SHA-256 digest: ' + name)
+    print('Reused and verified existing Node Manager release: ' + existing['html_url'])
     return existing
 
 
@@ -117,7 +138,11 @@ if not assets:
 # Validate the manager payload before publishing either release. This prevents
 # a primary prerelease from being published when the installer payload is absent.
 version = release.version()['version']
-manager_tag = 'node-manager-' + version + '-' + revision[:12]
+manager_revision = manifest.get('node_manager_revision', revision)
+if not re.fullmatch(r'[0-9a-f]{40}', manager_revision):
+    raise ValueError('Invalid Node Manager source revision in release manifest')
+require_revision_on_main(manager_revision)
+manager_tag = 'node-manager-' + version + '-' + manager_revision[:12]
 manager_names = [
     f'Loom-{version}-manager-linux-amd64',
     f'Loom-{version}-manager-linux-arm64',
@@ -133,6 +158,19 @@ if missing:
     raise ValueError('Missing prebuilt Node Manager release assets: ' + ', '.join(missing))
 
 notes = (release.ROOT / 'release/DRAFT.md').read_text()
+provenance = manifest.get('provenance')
+if provenance:
+    client = provenance['client']
+    node = provenance['node']
+    validation = provenance['validation']
+    notes = (
+        '## Verified build provenance\n\n'
+        + '- Client distributions: revision `' + client['revision'] + '` (Actions run `' + str(client['run_id']) + '`).\n'
+        + '- Home Node and Node Manager: revision `' + node['revision'] + '` (Actions run `' + str(node['run_id']) + '`).\n'
+        + '- Final validation: revision `' + validation['revision'] + '` (validate-only run `' + str(validation['run_id']) + '`).\n\n'
+        + 'The publisher reused the verified platform artifacts; it did not rebuild Android, Windows, macOS, or Linux client packages. The client source changes after its recorded build revision are limited to non-behavioral analyzer cleanups.\n\n'
+        + notes
+    )
 if not is_tag:
     notes = (
         'Alpha preview for revision `' + revision + '`.\n\n'
@@ -142,18 +180,22 @@ if not is_tag:
         + notes
     )
 if not manager_only:
-    publish_or_verify(tag, title, assets, notes, primary_extra)
+    publish_or_verify(tag, title, assets, notes, primary_extra, expected_revision=revision)
 
 manager_component_version = release.version()['components']['terminalManager']
 manager_notes = (
-    'Loom Node Manager ' + manager_component_version + ' for Loom ' + version + ', built from source revision `' + revision + '`.\n\n'
+    'Loom Node Manager ' + manager_component_version + ' for Loom ' + version + ', built from source revision `' + manager_revision + '`.\n\n'
     'The release includes the verified Home Node installer bootstrap, Node Manager binaries and build manifests.\n'
     'The installer pulls prebuilt Node and MinIO images from GHCR; it does not compile Go or build Docker images on the target server.'
 )
-publish_or_verify(
-    manager_tag,
-    'Loom Node Manager ' + manager_component_version + ' — Loom ' + version + ' (' + revision[:12] + ')',
-    manager_assets,
-    manager_notes,
-    ['--target', revision],
-)
+if manifest.get('reuse_node_manager_release', False):
+    verify_existing_release(manager_tag, manager_revision, manager_names)
+else:
+    publish_or_verify(
+        manager_tag,
+        'Loom Node Manager ' + manager_component_version + ' — Loom ' + version + ' (' + manager_revision[:12] + ')',
+        manager_assets,
+        manager_notes,
+        ['--target', manager_revision],
+        expected_revision=manager_revision,
+    )

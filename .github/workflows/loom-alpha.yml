@@ -57,6 +57,8 @@ jobs:
           python scripts/release.py preflight
           python scripts/test-release.py
           python scripts/test-release-assembly.py
+          python scripts/test-composed-candidate.py
+          python -m py_compile scripts/verify-composed-release-runs.py scripts/assemble_composed_candidate.py
           python scripts/test-build-metadata.py
           python scripts/test-native-package-config.py
           python scripts/test-macos-debug-symbols.py

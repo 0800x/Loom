@@ -1,0 +1,114 @@
+name: Publish composed Loom 0.6.0
+on:
+  workflow_dispatch:
+    inputs:
+      validation_run_id:
+        description: Successful Loom release builds run with build_target=validate-only on the current main HEAD
+        required: true
+        type: string
+      client_source_run_id:
+        description: Existing successful Android and desktop artifact run (fixed source revision)
+        required: true
+        default: "42455845161"
+        type: string
+      node_source_run_id:
+        description: Existing successful Node-only artifact run (fixed source revision)
+        required: true
+        default: "42458504636"
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: loom-composed-0.6.0-publisher
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == '0800x/Loom' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: loom-alpha-publishing
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify saved source runs, current validation and component provenance
+        env:
+          GH_TOKEN: \${{ secrets.LOOM_RELEASE_TOKEN }}
+          CLIENT_SOURCE_RUN_ID: \${{ inputs.client_source_run_id }}
+          NODE_SOURCE_RUN_ID: \${{ inputs.node_source_run_id }}
+          VALIDATION_RUN_ID: \${{ inputs.validation_run_id }}
+          GITHUB_SHA: \${{ github.sha }}
+        run: |
+          python scripts/release.py preflight
+          python scripts/verify-composed-release-runs.py
+
+      - name: Download the existing Android and desktop artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: Loom-0.6.0-*
+          path: source-clients
+          merge-multiple: false
+          github-token: \${{ github.token }}
+          repository: \${{ github.repository }}
+          run-id: \${{ inputs.client_source_run_id }}
+
+      - name: Download the existing Node artifacts with map-cache support
+        uses: actions/download-artifact@v4
+        with:
+          pattern: Loom-0.6.0-node-*
+          path: source-nodes
+          merge-multiple: false
+          github-token: \${{ github.token }}
+          repository: \${{ github.repository }}
+          run-id: \${{ inputs.node_source_run_id }}
+
+      - name: Compose and verify the saved platform artifacts
+        env:
+          CLIENT_BUILD_REVISION: ab1701beb926cbfe00f11199185282799a9d65d7
+          NODE_BUILD_REVISION: 751ec9e0cd110b6d74aaa3a0dd9a62846ee52f4f
+          CLIENT_SOURCE_RUN_ID: \${{ inputs.client_source_run_id }}
+          NODE_SOURCE_RUN_ID: \${{ inputs.node_source_run_id }}
+          VALIDATION_RUN_ID: \${{ inputs.validation_run_id }}
+          GITHUB_SHA: \${{ github.sha }}
+        run: |
+          python scripts/assemble_composed_candidate.py source-clients source-nodes candidate
+          python scripts/assemble-release.py candidate release-assets
+
+      - name: Reuse the already-published Node Manager bootstrap and verify its payload
+        env:
+          GH_TOKEN: \${{ secrets.LOOM_RELEASE_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="node-manager-0.6.0-751ec9e0cd11"
+          mkdir -p node-manager-assets
+          gh release download "$tag" --repo 0800x/Loom --dir node-manager-assets
+
+          cmp node-manager-assets/Loom-0.6.0-manager-linux-amd64 \
+            source-nodes/Loom-0.6.0-node-linux-amd64/Loom-0.6.0-manager-linux-amd64
+          cmp node-manager-assets/Loom-0.6.0-manager-linux-arm64 \
+            source-nodes/Loom-0.6.0-node-linux-arm64/Loom-0.6.0-manager-linux-arm64
+          cmp node-manager-assets/Loom-node-linux-amd64-build-manifest.json \
+            source-nodes/Loom-0.6.0-node-linux-amd64/build-manifest.json
+          cmp node-manager-assets/Loom-node-linux-arm64-build-manifest.json \
+            source-nodes/Loom-0.6.0-node-linux-arm64/build-manifest.json
+
+          cp node-manager-assets/node-channel.json release-assets/
+          cp node-manager-assets/loom-install.sh release-assets/
+          cp node-manager-assets/loom-install.sh.sha256 release-assets/
+          python scripts/release.py checksums release-assets
+
+      - name: Publish Loom 0.6.0 without rebuilding client or Node packages
+        env:
+          GH_TOKEN: \${{ secrets.LOOM_RELEASE_TOKEN }}
+          LOOM_BUILD_REVISION: \${{ github.sha }}
+        run: python scripts/create-draft.py release-assets
