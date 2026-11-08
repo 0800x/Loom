@@ -326,6 +326,9 @@ export class LoomTileCacheService {
           if (info.isFile()) await rm(file, { force: true });
         } catch { /* not cached yet */ }
         const fetched = await this.fetch(z, x, y);
+        // A newer warm-up or purge may have replaced this job while the
+        // upstream request was in flight; never repopulate a cancelled cache.
+        if (this.job !== job) return;
         if (fetched == null) {
           job.failed++;
         } else {
@@ -358,6 +361,7 @@ export class LoomTileCacheService {
   }
 
   async purge(): Promise<void> {
+    if (this.job) this.job.running = false;
     this.job = null;
     await rm(this.directory, { recursive: true, force: true });
     this.bytesCached = 0;
