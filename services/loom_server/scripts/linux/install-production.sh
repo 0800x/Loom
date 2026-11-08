@@ -969,7 +969,6 @@ if ! [[ "$INSTALL_COMMIT" =~ ^[a-fA-F0-9]{40}$ ]]; then
 fi
 if ! [[ "$INSTALL_COMMIT" =~ ^[a-fA-F0-9]{40}$ ]]; then INSTALL_COMMIT=""; fi
 PREBUILT_RELEASE_COMMIT=''
-[[ "$PREBUILT_RELEASE_COMMIT" =~ ^[a-f0-9]{40}$ ]] || { ui_fail "Invalid prebuilt release pin."; exit 1; }
 SOURCE_BRANCH="$(git -C "$REPO_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
 UPDATE_BRANCH="${UPDATE_BRANCH:-$SOURCE_BRANCH}"
 UPDATE_BRANCH="${UPDATE_BRANCH:-$(read_env_value "$SOURCE_ROOT/build-info.env" branch)}"
