@@ -229,7 +229,7 @@ jobs:
               --user-agent "Loom-CI/1.0" \
               --header "Accept: application/octet-stream" \
               --output "$temporary" "$MEDIA_KIT_RELEASE/$filename"
-            printf '%s  %s\\n' "$expected_md5" "$temporary" | md5sum --check --status
+            printf '%s  %s\n' "$expected_md5" "$temporary" | md5sum --check --status
             mv "$temporary" "$destination"
             echo "Verified media-kit artifact: $filename"
           }
