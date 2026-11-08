@@ -58,7 +58,7 @@ class ReleaseAssembly(unittest.TestCase):
         self.assertIn("if info['tag_name'] != tag or info['draft'] or not info['prerelease']:", publisher)
         self.assertNotIn("'--draft'", publisher)
         workflow = (release.ROOT / '.github/workflows/loom-alpha.yml').read_text()
-        self.assertIn('cancel-in-progress: false', workflow)
+        self.assertIn('cancel-in-progress: true', workflow)
 
     def test_release_publication_can_resume_after_partial_success(self):
         publisher = (release.ROOT / 'scripts/create-draft.py').read_text()
