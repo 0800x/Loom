@@ -99,7 +99,7 @@ else:
         raise ValueError('Preview releases require main')
     require_revision_on_main(revision)
     tag = 'preview-' + release.version()['version'] + '-' + revision[:12]
-    title = 'Loom ' + release.version()['version'] + ' — alpha preview'
+    title = 'Loom ' + release.version()['version'] + ' — Alpha Preview'
     primary_extra = ['--target', revision]
 
 assets = sorted(path for path in directory.iterdir() if path.is_file())
@@ -133,14 +133,15 @@ if not is_tag:
     )
 publish_or_verify(tag, title, assets, notes, primary_extra)
 
+manager_component_version = release.version()['components']['terminalManager']
 manager_notes = (
-    'Public prebuilt Loom Node Manager binaries for source revision `' + revision + '`.\n\n'
+    'Loom Node Manager ' + manager_component_version + ' for Loom ' + version + ', built from source revision `' + revision + '`.\n\n'
     'The Home Node installer downloads these verified binaries and pulls prebuilt Node and MinIO images from GHCR.\n'
     'It does not compile Go or build Docker images on the target server.'
 )
 publish_or_verify(
     manager_tag,
-    'Loom Node Manager ' + version + ' (' + revision[:12] + ')',
+    'Loom Node Manager ' + manager_component_version + ' — Loom ' + version + ' (' + revision[:12] + ')',
     manager_assets,
     manager_notes,
     ['--target', revision],
