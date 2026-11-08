@@ -19,8 +19,13 @@ class ReleaseSafety(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'only in 0800x/Loom'): release.preflight()
 
     def test_exact_tag_requires_revision_approval(self):
-        with patch.dict(os.environ, {'GITHUB_REF_TYPE': 'tag', 'GITHUB_REPOSITORY': '0800x/Loom', 'GITHUB_REF_NAME': 'v0.5.0'}, clear=True):
+        with patch.dict(os.environ, {'GITHUB_REF_TYPE': 'tag', 'GITHUB_REPOSITORY': '0800x/Loom', 'GITHUB_REF_NAME': 'v' + release.version()['version']}, clear=True):
             with self.assertRaisesRegex(ValueError, 'explicit approval'): release.preflight()
+
+    def test_workflow_version_must_match_release_metadata(self):
+        with patch.dict(os.environ, {'LOOM_VERSION': '0.5.0'}, clear=True):
+            with self.assertRaisesRegex(ValueError, 'Workflow version mismatch'):
+                release.preflight()
 
     def test_audit_accepts_feature_home_imports(self):
         with tempfile.TemporaryDirectory() as t:
