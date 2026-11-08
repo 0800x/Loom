@@ -70,6 +70,12 @@ class ReleaseAssembly(unittest.TestCase):
         self.assertIn('require_revision_on_main(revision)', publisher)
         self.assertIn('/compare/', publisher)
 
+    def test_composed_publisher_reuses_the_existing_node_manager_revision(self):
+        publisher = (release.ROOT / 'scripts/create-draft.py').read_text()
+        self.assertIn("manager_revision = manifest.get('node_manager_revision', revision)", publisher)
+        self.assertIn("verify_existing_release(manager_tag, manager_revision, manager_names)", publisher)
+        self.assertIn("'reuse_node_manager_release', False", publisher)
+
     def test_saved_build_publisher_reuses_existing_artifacts(self):
         workflow = (release.ROOT / '.github/workflows/publish-saved-build.yml').read_text()
         self.assertIn('workflow_dispatch:', workflow)
