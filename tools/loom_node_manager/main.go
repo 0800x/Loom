@@ -10,7 +10,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-const version = "0.8.6"
+const version = "0.8.7"
 
 // Set by the production installer. A checkout's HEAD is not proof that the
 // running binary or container was built from that revision.

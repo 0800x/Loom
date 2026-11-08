@@ -36,7 +36,7 @@ func waitUpdateEventCmd(events <-chan tea.Msg) tea.Cmd { return func() tea.Msg {
 func updateLabel(status updateStatus) string { if status.AvailableVersion != "" { return status.AvailableVersion + " • " + shortCommit(status.AvailableCommit) }; return shortCommit(status.AvailableCommit) }
 func updateCheckTickCmd() tea.Cmd { return tea.Tick(updateCheckInterval, func(time.Time) tea.Msg { return updateCheckTickMsg{} }) }
 func systemStatsTickCmd() tea.Cmd { return tea.Tick(2*time.Second, func(time.Time) tea.Msg { return systemStatsTickMsg{} }) }
-func (m dashboardModel) Init() tea.Cmd { return tea.Batch(dashboardStatusCmd(m.inner.mgr, true, m.inner.groupsAfter), dashboardTLSCmd(m.inner.mgr), systemStatsCmd(), checkUpdateCmd(m.inner.mgr), updateCheckTickCmd(), systemStatsTickCmd(), dashboardStatusTickCmd(), dashboardTLSTickCmd()) }
+func (m dashboardModel) Init() tea.Cmd { return tea.Batch(dashboardStatusCmd(m.inner.mgr, true, m.inner.groupsAfter), dashboardTLSCmd(m.inner.mgr), systemStatsCmd(), mapsCacheCmd(m.inner.mgr), checkUpdateCmd(m.inner.mgr), updateCheckTickCmd(), systemStatsTickCmd(), dashboardStatusTickCmd(), dashboardTLSTickCmd()) }
 
 func (m dashboardModel) startUpdate() (dashboardModel, tea.Cmd) {
 	selected := m.inner.update
@@ -69,7 +69,9 @@ func (m dashboardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, dashboardStatusTickCmd()
 		}
 		m.refreshBusy = true
-		return m, tea.Batch(dashboardStatusCmd(m.inner.mgr, pages[m.inner.page] == "Users", m.inner.groupsAfter), dashboardStatusTickCmd())
+		commands := []tea.Cmd{dashboardStatusCmd(m.inner.mgr, pages[m.inner.page] == "Users", m.inner.groupsAfter), dashboardStatusTickCmd()}
+		if pages[m.inner.page] == "Maps" { commands = append(commands, mapsCacheCmd(m.inner.mgr)) }
+		return m, tea.Batch(commands...)
 	case dashboardStatusMsg:
 		m.refreshBusy = false
 		busy, message, selectedID := m.inner.busy, m.inner.message, m.inner.selectedRowID()

@@ -90,7 +90,7 @@ class _LoomMapsSettingsScreenState extends State<LoomMapsSettingsScreen> {
                           keyboardType: TextInputType.url,
                           autocorrect: false,
                           onChanged: preferences.updateCustomTemplate,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             isDense: true,
                             hintText: 'https://…/{z}/{x}/{y}.png',
                             border: InputBorder.none,

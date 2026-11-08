@@ -17,6 +17,7 @@ REPOSITORY = '0800x/Loom'
 if os.getenv('GITHUB_REPOSITORY') != REPOSITORY:
     raise ValueError('Release publication is restricted to ' + REPOSITORY)
 directory = Path(sys.argv[1])
+manager_only = '--manager-only' in sys.argv[2:]
 manifest = json.loads((directory / 'BUILD-MANIFEST.json').read_text())
 revision = manifest['revision']
 requested_revision = os.getenv('LOOM_BUILD_REVISION')
@@ -138,7 +139,8 @@ if not is_tag:
         'without Developer ID or notarization. The pipeline never creates a new production signing key.\n\n'
         + notes
     )
-publish_or_verify(tag, title, assets, notes, primary_extra)
+if not manager_only:
+    publish_or_verify(tag, title, assets, notes, primary_extra)
 
 manager_component_version = release.version()['components']['terminalManager']
 manager_notes = (

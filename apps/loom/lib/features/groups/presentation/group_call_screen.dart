@@ -200,7 +200,7 @@ class _GroupMiniCallBarState extends State<_GroupMiniCallBar> {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: context.loom.textSecondary,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                      fontFeatures: [FontFeature.tabularFigures()],
                     ),
                   ),
                 ],

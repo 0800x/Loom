@@ -14,4 +14,4 @@ export function readBuildCommit(path = new URL('../.loom-build-commit', import.m
 export const runningBuildCommit = readBuildCommit();
 
 
-export const serverVersion = '0.10.10';
+export const serverVersion = '0.10.11';

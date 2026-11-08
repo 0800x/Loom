@@ -6,8 +6,8 @@
   "published": false,
   "components": {
     "client": "0.6.0+34",
-    "node": "0.10.10",
-    "terminalManager": "0.8.6",
+    "node": "0.10.11",
+    "terminalManager": "0.8.7",
     "nodeUi": "0.7.1+2"
   },
   "protocolNamespace": "Loom",
