@@ -144,6 +144,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
       - name: Select and load the existing protected Android signing identity
         env:
           EXPLICIT_ENGINEERING: ${{ github.event_name == 'workflow_dispatch' && inputs.android_signing == 'unsigned-engineering' }}
