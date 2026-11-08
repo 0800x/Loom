@@ -16,4 +16,4 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh workflow run loom-alpha.yml --ref main -f build_target=validate-only
+          gh workflow run loom-alpha.yml --repo 0800x/Loom --ref main -f build_target=validate-only
