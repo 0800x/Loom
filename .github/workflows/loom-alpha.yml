@@ -42,7 +42,7 @@ jobs:
           python-version: '3.12'
       - run: python scripts/release.py preflight
   validate:
-    if: github.event_name != 'workflow_dispatch' || (inputs.build_target != 'android-only' && inputs.build_target != 'node-only')
+    if: (github.event_name == 'push' && (github.ref_type == 'tag' || contains(github.event.head_commit.message || '', '[full-release]'))) || (github.event_name == 'workflow_dispatch' && inputs.build_target != 'android-only' && inputs.build_target != 'node-only')
     needs: preflight
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -127,7 +127,7 @@ jobs:
           path: docs/screenshots/loom-current/
           if-no-files-found: error
   android:
-    if: github.event_name != 'workflow_dispatch' || (inputs.build_target != 'validate-only' && inputs.build_target != 'node-only')
+    if: (github.event_name == 'push' && (github.ref_type == 'tag' || contains(github.event.head_commit.message || '', '[full-release]'))) || (github.event_name == 'workflow_dispatch' && inputs.build_target != 'validate-only' && inputs.build_target != 'node-only')
     needs: preflight
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -268,7 +268,7 @@ jobs:
             exit 1
           fi
   desktop:
-    if: github.event_name != 'workflow_dispatch' || inputs.build_target == 'full-release'
+    if: (github.event_name == 'push' && (github.ref_type == 'tag' || contains(github.event.head_commit.message || '', '[full-release]'))) || (github.event_name == 'workflow_dispatch' && inputs.build_target == 'full-release')
     needs: preflight
     strategy:
       fail-fast: false
@@ -441,7 +441,7 @@ jobs:
           path: dist/identity-audit.json
           if-no-files-found: ignore
   node:
-    if: github.event_name != 'workflow_dispatch' || inputs.build_target == 'full-release' || inputs.build_target == 'node-only'
+    if: (github.event_name == 'push' && (github.ref_type == 'tag' || contains(github.event.head_commit.message || '', '[full-release]'))) || (github.event_name == 'workflow_dispatch' && (inputs.build_target == 'full-release' || inputs.build_target == 'node-only'))
     needs: preflight
     runs-on: ubuntu-24.04
     strategy:
@@ -477,7 +477,7 @@ jobs:
           path: dist/
           if-no-files-found: error
   node-images:
-    if: github.event_name != 'workflow_dispatch' || inputs.build_target == 'full-release' || inputs.build_target == 'node-only'
+    if: (github.event_name == 'push' && (github.ref_type == 'tag' || contains(github.event.head_commit.message || '', '[full-release]'))) || (github.event_name == 'workflow_dispatch' && (inputs.build_target == 'full-release' || inputs.build_target == 'node-only'))
     needs: preflight
     runs-on: ubuntu-24.04
     permissions:
@@ -584,7 +584,7 @@ jobs:
 
   draft:
     needs: [validate, android, desktop, node, node-images]
-    if: github.repository == '0800x/Loom' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.build_target == 'full-release'))
+    if: github.repository == '0800x/Loom' && ((github.event_name == 'push' && (github.ref_type == 'tag' || contains(github.event.head_commit.message || '', '[full-release]'))) || (github.event_name == 'workflow_dispatch' && inputs.build_target == 'full-release'))
     runs-on: ubuntu-24.04
     environment: loom-alpha-publishing
     permissions:
