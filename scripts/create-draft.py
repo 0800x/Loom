@@ -1,9 +1,9 @@
 """Publish version tags and successful main builds as public prereleases.
 
 Publication is idempotent: a retry verifies an existing release and its assets
-instead of failing merely because an earlier attempt created it. A build commit
-may be published after main advances, provided that commit remains in main's
-history and its original artifacts are verified.
+instead of failing merely because an earlier attempt created it. Preview
+publication is restricted to the current main head so queued builds from older
+commits cannot create stale releases.
 """
 import json
 import os
