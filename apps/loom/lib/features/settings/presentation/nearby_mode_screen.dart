@@ -350,7 +350,7 @@ class _LoomNearbyModeScreenState extends State<LoomNearbyModeScreen>
           Text(
             label,
             textAlign: TextAlign.center,
-            style: theme.bodySmall?.copyWith(
+            style: theme.textTheme.bodySmall?.copyWith(
               color: context.loom.textSecondary,
             ),
           ),
