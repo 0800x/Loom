@@ -14,7 +14,7 @@ on:
         default: existing-production-key
   push:
     branches: [main]
-    tags: ['v0.5.0']
+    tags: ['v*']
 permissions:
   contents: read
 concurrency:
@@ -25,7 +25,7 @@ env:
   CI: 'true'
   FLUTTER_SUPPRESS_ANALYTICS: 'true'
   FLUTTER_VERSION: '3.47.0'
-  LOOM_VERSION: '0.5.0'
+  LOOM_VERSION: '0.6.0'
   XCODE_VERSION: '26.3'
   APPROVED_LOOM_REVISION: ${{ vars.APPROVED_LOOM_REVISION }}
   APPROVED_LOOM_TAG: ${{ vars.APPROVED_LOOM_TAG }}
@@ -255,7 +255,7 @@ jobs:
         if: env.LOOM_ANDROID_ENGINEERING_UNSIGNED == 'true' && !(github.event_name == 'workflow_dispatch' && inputs.android_signing == 'unsigned-engineering')
         uses: actions/upload-artifact@v4
         with:
-          name: Loom-diagnostics-0.5.0-android-attempt-${{ github.run_attempt }}
+          name: Loom-diagnostics-${{ env.LOOM_VERSION }}-android-attempt-${{ github.run_attempt }}
           path: dist/
           if-no-files-found: error
       - name: Require signed APKs for the installable candidate
